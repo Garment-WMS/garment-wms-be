@@ -1,0 +1,7 @@
+{
+  "NOT_FOUND": "Không tìm thấy {entity}",
+  "NO_RECORD_FOUND": "Hoạt động không thể hoàn thành vì một hoặc nhiều bản ghi cần thiết đã không được tìm thấy",
+  "FOREIGN_KEY_CONSTRAINT": "Hoạt động không thể hoàn thành do vi phạm ràng buộc khóa ngoại",
+  "UNIQUE_CONSTRAINT": "Hoạt động không thể hoàn thành do vi phạm ràng buộc duy nhất",
+  "DATABASE_CONNECTION_FAILED": "Kết nối cơ sở dữ liệu thất bại"
+}

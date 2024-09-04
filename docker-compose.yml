@@ -1,0 +1,9 @@
+version: '1'
+services:
+  backend:
+    build: ./
+    container_name: tro-tot-backend
+    ports:
+      - '8000:8000'
+    env_file:
+      - .env

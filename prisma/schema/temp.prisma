@@ -1,0 +1,17 @@
+// This use for generate unused enum in prisma client
+// https://github.com/prisma/prisma/issues/24510
+model temp {
+    id   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    role RoleCode? @map("role")
+}
+
+enum RoleCode {
+    RENTER          @map("RENTER")
+    LANDLORD        @map("LANDLORD")
+    STAFF           @map("STAFF")
+    TECHNICAL_STAFF @map("TECHNICAL_STAFF")
+    ADMIN           @map("ADMIN")
+    MANAGER         @map("MANAGER")
+
+    @@map("role_codes")
+}

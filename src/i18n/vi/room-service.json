@@ -1,0 +1,8 @@
+{
+  "add_room_service_successfully": "Thêm dịch vụ vào phòng thành công.",
+  "add_room_service_failed": "Thêm dịch vụ vào phòng thất bại.",
+  "find_successfully": "Lấy danh sách dịch vụ của phòng thành công",
+  "find_one_successfully": "Tìm dịch vụ của phòng thành công",
+  "house_id_not_match": "Dịch vụ và phòng không cùng 1 nhà.",
+  "room_service_object_name": "dịch phụ phòng"
+}

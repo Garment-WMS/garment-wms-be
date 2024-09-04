@@ -1,0 +1,17 @@
+{
+  "service_object_name": "Dịch vụ",
+  "service_not_exist": "Dịch vụ không tồn tại",
+  "service_exist": "Dịch vụ đã tồn tại",
+  "service_not_belong_to_staff": "Dịch vụ không thuộc quyền quản lý của nhân viên",
+  "service_create_success": "Tạo dịch vụ thành công",
+  "service_create_fail": "Tạo dịch vụ thất bại",
+  "service_found": "Tìm thấy dịch vụ",
+  "service_not_found": "Không tìm thấy dịch vụ",
+  "service_updated": "Cập nhật dịch vụ thành công",
+  "service_status_occupied": "Dịch vụ đã có người",
+  "service_status_occupied_conflict": "Dịch vụ đã có người, không thể cập nhật trạng thái",
+  "service_find_error": "Lỗi tìm dịch vụ",
+  "service_image_upload_success": "Tải ảnh lên thành công",
+  "service_image_upload_fail": "Tải ảnh lên thất bại",
+  "service_image_delete_success": "Xóa ảnh thành công"
+}

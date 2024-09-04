@@ -1,0 +1,17 @@
+{
+  "house_object_name": "Nhà",
+  "house_not_exist": "Nhà không tồn tại",
+  "house_exist": "Nhà đã tồn tại",
+  "house_not_belong_to_staff": "Nhà không thuộc quyền quản lý của nhân viên",
+  "house_create_success": "Tạo nhà thành công",
+  "house_create_fail": "Tạo nhà thất bại",
+  "house_found": "Tìm thấy nhà",
+  "house_not_found": "Không tìm thấy nhà",
+  "house_updated": "Cập nhật nhà thành công",
+  "house_status_occupied": "Nhà đã có người",
+  "house_status_occupied_conflict": "Nhà đã có người, không thể cập nhật trạng thái",
+  "house_find_error": "Lỗi tìm nhà",
+  "house_image_upload_success": "Tải ảnh lên thành công",
+  "house_image_upload_fail": "Tải ảnh lên thất bại",
+  "house_image_delete_success": "Xóa ảnh thành công"
+}
