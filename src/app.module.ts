@@ -18,6 +18,7 @@ import { RefreshTokenModule } from './modules/refresh-token/refresh-token.module
 // import { RoleModule } from './modules/role/role.module';
 
 import { UserModule } from './modules/user/user.module';
+import { ExcelModule } from './excel/excel.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { UserModule } from './modules/user/user.module';
     MailModule,
     ImageModule,
     OtpModule,
+    ExcelModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, rolesGuard.RolesGuard],
