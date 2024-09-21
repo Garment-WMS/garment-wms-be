@@ -51,3 +51,30 @@ export const logger = (message: string, level: 'info' | 'error' = 'info') => {
     `[${new Date().toISOString()}] [${level.toUpperCase()}] - ${message}`,
   );
 };
+
+export const compareArray = (arr1: any[], arr2: any[]): boolean => {
+  if (arr1.length !== arr2.length) {
+    console.log('length not equal');
+    return false;
+  }
+  for (let i = 0; i < arr1.length; i++) {
+    if (arr1[i] !== arr2[i]) {
+      return false;
+    }
+  }
+  return true;
+};
+
+export function addMissingStartCharacter(
+  value: any,
+  character: string,
+): string {
+  if (!value) {
+    return '';
+  }
+  value = value.toString();
+  if (!value.startsWith(character)) {
+    return `${character}${value}`;
+  }
+  return value;
+}

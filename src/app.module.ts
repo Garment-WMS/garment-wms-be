@@ -17,6 +17,7 @@ import { OtpModule } from './modules/otp/otp.module';
 import { RefreshTokenModule } from './modules/refresh-token/refresh-token.module';
 // import { RoleModule } from './modules/role/role.module';
 
+import { ExcelModule } from './modules/excel/excel.module';
 import { UserModule } from './modules/user/user.module';
 import { ExcelModule } from './excel/excel.module';
 

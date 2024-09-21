@@ -17,6 +17,9 @@ export type I18nTranslations = {
         "blacklist_token": string;
         "forbidden": string;
     };
+    "excel": {
+        "company_name_empty": string;
+    };
     "house-service": {
         "invalid_status": string;
         "house_service_not_exist": string;
