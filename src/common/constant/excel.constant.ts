@@ -11,3 +11,22 @@ export const SUPPLIER_HEADER = [
   'Fax',
 ];
 export const ITEM_HEADER = ['Item', 'Description', 'Qty', 'Price', 'Total'];
+export const PO_INFO_TABLE = 'POInfo';
+export const PO_INFO_HEADER = [
+  'Expected Finished Date',
+  'Created Date',
+  'PO #',
+];
+
+export const SHIP_TO_HEADER = [
+  'Company Name',
+  'Street Address',
+  'City',
+  'ZIP Code',
+  'Phone',
+  'Fax',
+];
+export const PO_SHEET_NAME = 'PurchaseOrder';
+export const PO_ITEM_TABLE = 'POItem';
+export const SHIP_TO = 'shipTo';
+export const DATE_FORMAT = 'YYYY-MM-DD'; //Based on ISO 8601

@@ -24,6 +24,7 @@ export const isValidEmail = (email: string): boolean => {
 };
 
 import * as bcrypt from 'bcrypt';
+import { isDate } from 'class-validator';
 
 export const hashData = async (data: string): Promise<string> => {
   const salt = await bcrypt.genSalt();
@@ -54,15 +55,28 @@ export const logger = (message: string, level: 'info' | 'error' = 'info') => {
 
 export const compareArray = (arr1: any[], arr2: any[]): boolean => {
   if (arr1.length !== arr2.length) {
-    console.log('length not equal');
     return false;
   }
-  for (let i = 0; i < arr1.length; i++) {
-    if (arr1[i] !== arr2[i]) {
+
+  const frequencyMap = new Map();
+
+  for (const item of arr1) {
+    frequencyMap.set(item, (frequencyMap.get(item) || 0) + 1);
+  }
+
+  for (const item of arr2) {
+    if (!frequencyMap.has(item)) {
       return false;
     }
+    const count = frequencyMap.get(item) - 1;
+    if (count === 0) {
+      frequencyMap.delete(item);
+    } else {
+      frequencyMap.set(item, count);
+    }
   }
-  return true;
+
+  return frequencyMap.size === 0;
 };
 
 export function addMissingStartCharacter(
@@ -77,4 +91,8 @@ export function addMissingStartCharacter(
     return `${character}${value}`;
   }
   return value;
+}
+
+export function validateDate(date: string): boolean {
+  return isDate(date);
 }
