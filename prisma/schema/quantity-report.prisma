@@ -1,0 +1,13 @@
+model quantity_report {
+  id                      String                   @id @db.Uuid
+  quantity_report_type_id String?                  @db.Uuid
+  storage_quantity        Float?
+  recorded_quantity       Float?
+  quantity_disparity      Float?
+  description             String?
+  create_at               DateTime?                @db.Timestamptz(6)
+  update_at               DateTime?                @db.Timestamptz(6)
+  deleted_at              DateTime?                @db.Timestamptz(6)
+  quantity_report_type    quantity_report_type?    @relation(fields: [quantity_report_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  quantity_report_detail  quantity_report_detail[]
+}

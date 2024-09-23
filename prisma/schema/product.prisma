@@ -1,0 +1,35 @@
+model product {
+  id                                              String                        @id @db.Uuid
+  product_type                                    String?                       @db.Uuid
+  name                                            String?                       @db.VarChar
+  code                                            String?                       @unique @db.VarChar
+  width                                           Float?
+  height                                          Float?
+  length                                          Float?
+  min_quantity                                    Float?
+  unit_id                                         String?                       @db.Uuid
+  store_unit_id                                   String?                       @db.Uuid
+  unit_per_store_unit                             Float?
+  store_unit_per_cell                             Float?
+  quantity_per_store_unit                         Float?
+  width_per_store_unit                            Float?
+  height_per_store_unit                           Float?
+  length_per_store_unit                           Float?
+  weight_per_store_unit                           Float?
+  create_at                                       DateTime?                     @db.Timestamptz(6)
+  update_at                                       DateTime?                     @db.Timestamptz(6)
+  deleted_at                                      DateTime?                     @db.Timestamptz(6)
+  annual_production_detail                        annual_production_detail[]
+  delivery_note_detail                            delivery_note_detail[]
+  import_request_detail                           import_request_detail[]
+  inspection_report_detail                        inspection_report_detail[]
+  po_receipt_detail                               po_receipt_detail[]
+  product_type_product_product_typeToproduct_type product_type?                 @relation("product_product_typeToproduct_type", fields: [product_type], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  store_unit                                      store_unit?                   @relation(fields: [store_unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit                                            unit?                         @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product_attribute                               product_attribute[]
+  product_formula                                 product_formula[]
+  product_inspection_criteria                     product_inspection_criteria[]
+  product_receipt                                 product_receipt[]
+  quarterly_production_detail                     quarterly_production_detail[]
+}

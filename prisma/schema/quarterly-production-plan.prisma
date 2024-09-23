@@ -1,0 +1,21 @@
+model quarterly_production_plan {
+  id                          String                        @id @db.Uuid
+  quarter                     String?                       @db.VarChar
+  code                        String?                       @unique @db.VarChar
+  annual_production_plan_id   String?                       @db.Uuid
+  status                      production_status?
+  start_date                  DateTime?                     @db.Date
+  finish_date                 DateTime?                     @db.Date
+  create_at                   DateTime?                     @db.Timestamptz(6)
+  update_at                   DateTime?                     @db.Timestamptz(6)
+  deleted_at                  DateTime?                     @db.Timestamptz(6)
+  purchase_order              purchase_order[]
+  quarterly_production_detail quarterly_production_detail[]
+  annual_production_plan      annual_production_plan?       @relation(fields: [annual_production_plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+enum production_status {
+  NOT_STARTED
+  IN_PROGESS
+  FINISHED
+}

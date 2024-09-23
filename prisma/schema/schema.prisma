@@ -1,11 +1,11 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions", "prismaSchemaFolder"]
+  previewFeatures = ["fullTextSearch", "postgresqlExtensions", "prismaSchemaFolder"]
 }
 
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
   directUrl  = env("DIRECT_URL")
-  extensions = [pgcrypto]
+  extensions = [pg_stat_statements, pgcrypto(schema: "extensions"), pgsodium, supabase_vault, uuid_ossp(map: "uuid-ossp", schema: "extensions")]
 }

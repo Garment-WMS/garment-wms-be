@@ -1,0 +1,20 @@
+model quarterly_production_detail {
+  id                           String                     @id @db.Uuid
+  quarterly_production_plan_id String?                    @db.Uuid
+  product_id                   String?                    @db.Uuid
+  demand_quantity              Float?
+  starting_quantity            Float?
+  quantity_to_produce          Float?
+  reserve_percent_id           String?                    @db.Uuid
+  notation                     String?                    @db.VarChar
+  start_date                   DateTime?                  @db.Date
+  finish_date                  DateTime?                  @db.Date
+  expected_ship_date           DateTime?                  @db.Date
+  create_at                    DateTime?                  @db.Timestamptz(6)
+  update_at                    DateTime?                  @db.Timestamptz(6)
+  deleted_at                   DateTime?                  @db.Timestamptz(6)
+  production_patch_order       production_patch_order[]
+  product                      product?                   @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  quarterly_production_plan    quarterly_production_plan? @relation(fields: [quarterly_production_plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reserve_percent              reserve_percent?           @relation(fields: [reserve_percent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}

@@ -1,0 +1,8 @@
+model warehouse_manager {
+  id         String    @id @db.Uuid
+  user_id    String?   @db.Uuid
+  create_at  DateTime? @db.Timestamp(6)
+  update_at  DateTime? @db.Timestamp(6)
+  deleted_at DateTime? @db.Timestamp(6)
+  users      User?     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}

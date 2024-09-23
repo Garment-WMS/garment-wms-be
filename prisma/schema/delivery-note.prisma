@@ -1,0 +1,13 @@
+model delivery_note {
+  id                   String                 @id @db.Uuid
+  po_receipt_id        String?                @db.Uuid
+  warehouse_staff_id   String?                @db.Uuid
+  create_at            DateTime?              @db.Timestamptz(6)
+  update_at            DateTime?              @db.Timestamptz(6)
+  deleted_at           DateTime?              @db.Timestamptz(6)
+  po_receipt           po_receipt?            @relation(fields: [po_receipt_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouse_staff      warehouse_staff?       @relation(fields: [warehouse_staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  delivery_note_detail delivery_note_detail[]
+  import_request       import_request[]
+  inspection_request   inspection_request[]
+}

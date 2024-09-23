@@ -1,0 +1,12 @@
+model product_receipt {
+  id                String          @id @db.Uuid
+  product_id        String?         @db.Uuid
+  import_receipt_id String?         @db.Uuid
+  quantity          Float?
+  expire_date       DateTime?       @db.Timestamptz(6)
+  create_at         DateTime?       @db.Timestamptz(6)
+  update_at         DateTime?       @db.Timestamptz(6)
+  deleted_at        DateTime?       @db.Timestamptz(6)
+  import_receipt    import_receipt? @relation(fields: [import_receipt_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product           product?        @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}

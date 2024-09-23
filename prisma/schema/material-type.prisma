@@ -1,0 +1,9 @@
+model material_type {
+  id         String     @id @db.Uuid
+  name       String?    @db.VarChar
+  code       String?    @unique @db.VarChar
+  create_at  DateTime?  @db.Timestamptz(6)
+  update_at  DateTime?  @db.Timestamptz(6)
+  deleted_at DateTime?  @db.Timestamptz(6)
+  material   material[]
+}

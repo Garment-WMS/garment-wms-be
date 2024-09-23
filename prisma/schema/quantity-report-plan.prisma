@@ -1,0 +1,8 @@
+model quantity_report_plan {
+  id                 String    @id @db.Uuid
+  quantity_report_id String?   @db.Uuid
+  date               DateTime? @db.Date
+  create_at          DateTime? @db.Timestamptz(6)
+  update_at          DateTime? @db.Timestamptz(6)
+  deleted_at         DateTime? @db.Timestamptz(6)
+}
