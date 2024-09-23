@@ -1,0 +1,12 @@
+model import_receipt {
+  id                 String             @id @db.Uuid
+  warehouse_staff_id String?            @db.Uuid
+  start_at           DateTime?          @db.Timestamptz(6)
+  finish_at          DateTime?          @db.Timestamptz(6)
+  create_at          DateTime?          @db.Timestamptz(6)
+  update_at          DateTime?          @db.Timestamptz(6)
+  deleted_at         DateTime?          @db.Timestamptz(6)
+  warehouse_staff    warehouse_staff?   @relation(fields: [warehouse_staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  material_receipt   material_receipt[]
+  product_receipt    product_receipt[]
+}

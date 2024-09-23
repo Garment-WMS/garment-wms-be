@@ -1,0 +1,9 @@
+model store_unit {
+  id         String     @id @db.Uuid
+  name       String?    @db.VarChar
+  create_at  DateTime?  @db.Timestamp(6)
+  update_at  DateTime?  @db.Timestamp(6)
+  deleted_at DateTime?  @db.Timestamp(6)
+  material   material[]
+  product    product[]
+}

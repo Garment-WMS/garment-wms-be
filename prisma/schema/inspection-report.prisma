@@ -1,0 +1,9 @@
+model inspection_report {
+  id                       String                 @id @db.Uuid
+  inspection_department_id String?                @db.Uuid
+  code                     String?                @unique @db.VarChar
+  create_at                DateTime?              @db.Timestamptz(6)
+  update_at                DateTime?              @db.Timestamptz(6)
+  deleted_at               DateTime?              @db.Timestamptz(6)
+  inspection_department    inspection_department? @relation(fields: [inspection_department_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}

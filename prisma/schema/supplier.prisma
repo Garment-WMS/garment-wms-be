@@ -1,0 +1,14 @@
+model supplier {
+  id                  String              @id @db.Uuid
+  supplier_name       String?             @db.VarChar
+  supplier_code       String?             @unique @db.VarChar
+  address             String?             @db.VarChar
+  representative_name String?             @db.VarChar
+  email               String?             @db.VarChar
+  phone_number        String?             @db.VarChar
+  fax                 String?             @db.VarChar
+  create_at           DateTime?           @db.Timestamptz(6)
+  update_at           DateTime?           @db.Timestamptz(6)
+  deleted_at          DateTime?           @db.Timestamptz(6)
+  material_supplier   material_supplier[]
+}

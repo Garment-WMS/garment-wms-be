@@ -1,0 +1,9 @@
+model production_department {
+  id                      String                    @id @db.Uuid
+  user_id                 String?                   @db.Uuid
+  create_at               DateTime?                 @db.Timestamp(6)
+  update_at               DateTime?                 @db.Timestamp(6)
+  deleted_at              DateTime?                 @db.Timestamp(6)
+  export_material_request export_material_request[]
+  users                   User?                     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}

@@ -1,0 +1,9 @@
+model product_type {
+  id                                         String    @id @db.Uuid
+  name                                       String?   @db.VarChar
+  code                                       String?   @unique @db.VarChar
+  create_at                                  DateTime? @db.Timestamptz(6)
+  update_at                                  DateTime? @db.Timestamptz(6)
+  deleted_at                                 DateTime? @db.Timestamptz(6)
+  product_product_product_typeToproduct_type product[] @relation("product_product_typeToproduct_type")
+}

@@ -1,0 +1,7 @@
+model material_export {
+  id         String    @id @db.Uuid
+  quantity   Float?
+  create_at  DateTime? @db.Timestamptz(6)
+  update_at  DateTime? @db.Timestamptz(6)
+  deleted_at DateTime? @db.Timestamptz(6)
+}
