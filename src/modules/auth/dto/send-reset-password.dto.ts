@@ -1,18 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsEmailCustom,
-  IsNotEmptyCustom,
-  IsURLCustom,
-} from 'src/common/decorator/class-validator-custom.decorator';
+import { IsEmail, IsNotEmpty, IsUrl } from 'class-validator';
 
 export class SendResetPasswordDTO {
   @ApiProperty()
-  @IsNotEmptyCustom()
-  @IsEmailCustom()
+  @IsNotEmpty()
+  @IsEmail()
   email: string;
 
   @ApiProperty()
-  @IsNotEmptyCustom()
-  @IsURLCustom()
+  @IsNotEmpty()
+  @IsUrl()
   clientUrl: string;
 }

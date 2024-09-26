@@ -1,10 +1,12 @@
 import {
+  HttpException,
+  HttpStatus,
   Injectable,
-  OnModuleInit,
-  OnModuleDestroy,
   Logger,
+  OnModuleDestroy,
+  OnModuleInit,
 } from '@nestjs/common';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService
@@ -37,7 +39,17 @@ export class PrismaService
   }
 
   async onModuleInit() {
-    await this.$connect();
+    try {
+      await this.$connect();
+      this.logger.log('Database connected');
+    } catch (error) {
+      this.logger.log('Database connection failed');
+      throw new HttpException(
+        'Database connection failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
     this.$use(this.softDeleteMiddleware);
     this.$use(this.findNotDeletedMiddleware);
 
@@ -115,5 +127,6 @@ export class PrismaService
 
   async onModuleDestroy() {
     await this.$disconnect();
+    this.logger.log('Database disconnected');
   }
 }

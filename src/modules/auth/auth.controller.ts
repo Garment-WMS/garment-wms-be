@@ -5,11 +5,11 @@ import {
   Post,
   UseGuards,
   UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags } from '@nestjs/swagger';
 import { RoleCode } from '@prisma/client';
-import { I18nValidationPipe } from 'nestjs-i18n';
 import { Roles } from 'src/common/decorator/roles.decorator';
 import { RolesGuard } from 'src/common/guard/roles.guard';
 import { GetUser } from '../../common/decorator/get_user.decorator';
@@ -45,71 +45,61 @@ export class AuthController {
 
   //SIGN IN FLOW
   @Post('/renter/login')
-  @UsePipes(new I18nValidationPipe())
+  @UsePipes(new ValidationPipe())
   renterLogin(@Body() body: LoginAuthDTO) {
     return this.authService.loginGeneral(body, RoleCode.RENTER);
   }
 
   @Post('/manager/login')
-  @UsePipes(new I18nValidationPipe())
   managerLogin(@Body() body: LoginAuthDTO) {
     return this.authService.loginGeneral(body, RoleCode.MANAGER);
   }
 
   @Post('/staff/login')
-  @UsePipes(new I18nValidationPipe())
   staffLogin(@Body() body: LoginAuthDTO) {
     return this.authService.loginGeneral(body, RoleCode.STAFF);
   }
 
   @Post('/technical-staff/login')
-  @UsePipes(new I18nValidationPipe())
   technicalStaffLogin(@Body() body: LoginAuthDTO) {
     return this.authService.loginGeneral(body, RoleCode.TECHNICAL_STAFF);
   }
 
   @Post('/admin/login')
-  @UsePipes(new I18nValidationPipe({}))
   adminLogin(@Body() body: LoginAuthDTO) {
     return this.authService.loginGeneral(body, RoleCode.ADMIN);
   }
 
   @Post('/landlord/login')
-  @UsePipes(new I18nValidationPipe())
   landlordLogin(@Body() body: LoginAuthDTO) {
     return this.authService.loginGeneral(body, RoleCode.LANDLORD);
   }
 
   //SIGN UP FLOW
   @Post('/sign-up/renter')
-  @UsePipes(new I18nValidationPipe())
   renterSignUp(@Body() body: SignUpDTO) {
     return this.authService.registerGeneral(body, RoleCode.RENTER);
   }
 
   @Post('/sign-up/landlord')
-  @UsePipes(new I18nValidationPipe())
   landlordSignUp(@Body() body: SignUpDTO) {
     return this.authService.registerGeneral(body, RoleCode.LANDLORD);
   }
 
   //To-do: Need Authen Manager to do this
   @Post('/sign-up/staff')
-  @UsePipes(new I18nValidationPipe())
   staffSignUp(@Body() body: SignUpDTO) {
     return this.authService.registerGeneral(body, RoleCode.STAFF);
   }
 
   //To-do: Need Authen Manager to do this
   @Post('/sign-up/technical-staff')
-  @UsePipes(new I18nValidationPipe())
   technicalStaffSignUp(@Body() body: SignUpDTO) {
     return this.authService.registerGeneral(body, RoleCode.TECHNICAL_STAFF);
   }
 
   //To-do: Need Authen Manager to do this
   @Post('/sign-up/manager')
-  @UsePipes(new I18nValidationPipe())
   managerSignUp(@Body() body: SignUpDTO) {
     return this.authService.registerGeneral(body, RoleCode.MANAGER);
   }

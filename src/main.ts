@@ -2,11 +2,9 @@ import { Logger } from '@nestjs/common';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { useContainer } from 'class-validator';
-import { I18nService } from 'nestjs-i18n';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filter/all-exceptions.filter';
 import { AuthExceptionFilter } from './common/filter/auth-exception.filter';
-import { I18nValidationExceptionFilter } from './common/filter/i18n-validation-exception.filter';
 import { PrismaExceptionFilter } from './common/filter/prisma-exception.filter';
 import { StatusCodeInterceptor } from './common/interceptor/status-code.interceptor';
 
@@ -21,13 +19,10 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
-  // app.useGlobalPipes(new I18nValidationPipe({ whitelist: true }));
-
   app.useGlobalFilters(
     new AllExceptionsFilter(app.get(HttpAdapterHost)),
-    new I18nValidationExceptionFilter(app.get(I18nService)),
     // new ValidationPipeExceptionFilter(app.get(HttpAdapterHost)),
-    new PrismaExceptionFilter(app.get(HttpAdapterHost), app.get(I18nService)),
+    new PrismaExceptionFilter(app.get(HttpAdapterHost)),
     new AuthExceptionFilter(app.get(HttpAdapterHost)),
   );
 
@@ -36,9 +31,9 @@ async function bootstrap() {
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   const config = new DocumentBuilder()
-    .setTitle('trotot API')
+    .setTitle('Garment WMS API')
     .setDescription(
-      'This is trotot API project: A platform for renting houses, apartments, and rooms and franchising real estate.',
+      'Factory warehouse management system for garment material and product',
     )
     .setVersion('1.0')
     .build();

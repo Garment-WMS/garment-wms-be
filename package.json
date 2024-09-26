@@ -36,7 +36,6 @@
     "class-validator": "^0.14.1",
     "firebase": "^10.12.2",
     "firebase-admin": "^12.3.0",
-    "nestjs-i18n": "^10.4.5",
     "nodemailer": "^6.9.14",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

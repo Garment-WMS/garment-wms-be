@@ -1,6 +1,5 @@
 import {
   ArgumentsHost,
-  BadRequestException,
   Catch,
   ExceptionFilter,
   HttpException,
@@ -9,6 +8,8 @@ import {
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 
+import { ValidationError } from 'class-validator';
+import iterate from 'iterare';
 import { apiFailed } from '../dto/api-response';
 import { ApiResponse } from '../dto/response.dto';
 
@@ -37,7 +38,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     let responseBody: ApiResponse;
     if (exception instanceof HttpException) {
-      responseBody = apiFailed(exception.getStatus(), exception.message);
+      responseBody = apiFailed(
+        exception.getStatus(),
+        exception.message,
+        exception.getResponse(),
+      );
     } else {
       responseBody = apiFailed(
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -47,5 +52,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const { httpAdapter } = this.httpAdapterHost;
     httpAdapter.reply(ctx.getResponse(), responseBody, responseBody.statusCode);
+  }
+
+  protected flattenConstraintValidationErrors(
+    validationErrors: ValidationError[],
+  ): any[] {
+    return iterate(validationErrors)
+      .flatten()
+      .map((item) => {
+        //Constraints are the validation error messages
+        return {
+          ...item,
+          constraints: Object?.values(item?.constraints ?? {}),
+        };
+      })
+      .flatten()
+      .toArray();
   }
 }
