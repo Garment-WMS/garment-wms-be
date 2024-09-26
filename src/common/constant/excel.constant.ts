@@ -30,3 +30,9 @@ export const PO_SHEET_NAME = 'PurchaseOrder';
 export const PO_ITEM_TABLE = 'POItem';
 export const SHIP_TO = 'shipTo';
 export const DATE_FORMAT = 'YYYY-MM-DD'; //Based on ISO 8601
+export const DELIVERY_BATCH_INFO_TABLE = 'deliveryBatchInfo';
+export const DELIVERY_BATCH_INFO_HEADER = [
+  'Expected Delivery Date',
+  'Delivery Date',
+];
+export const DELIVERY_BATCH_ITEM_TABLE = 'batchItem';

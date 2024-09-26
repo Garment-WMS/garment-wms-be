@@ -14,6 +14,9 @@ import { I18nService } from 'nestjs-i18n';
 import {
   COMPANY_NAME,
   DATE_FORMAT,
+  DELIVERY_BATCH_INFO_HEADER,
+  DELIVERY_BATCH_INFO_TABLE,
+  DELIVERY_BATCH_ITEM_TABLE,
   ITEM_HEADER,
   ITEM_TABLE_NAME,
   PO_INFO_HEADER,
@@ -72,6 +75,14 @@ export class ExcelService {
         text?: any;
       }
     >();
+    let deliveryBatchItemError = new Map<
+      string,
+      {
+        fieldName: string;
+        value: string;
+        text?: any;
+      }
+    >();
     await workbook.xlsx.load(file.buffer);
     const worksheet = workbook.getWorksheet(PO_SHEET_NAME);
     if (!worksheet) {
@@ -85,8 +96,9 @@ export class ExcelService {
     );
 
     const errorResponseDeliveryBatch = await this.validateDeliveryBatchSheet(
-      worksheet,
+      workbook,
       deliveryBatchError,
+      deliveryBatchItemError,
     );
 
     // if (errorResponse) {
@@ -106,19 +118,238 @@ export class ExcelService {
     return await workbook.xlsx.writeBuffer();
   }
   validateDeliveryBatchSheet(
+    workbook: Workbook,
+    deliveryBatchError: Map<
+      string,
+      { fieldName: string; value: string; text?: any }
+    >,
+    deliveryBatchItemError: Map<
+      string,
+      { fieldName: string; value: string; text?: any }
+    >,
+  ) {
+    const deliveryBatchSheets: Worksheet[] = [];
+
+    workbook.eachSheet((worksheet: Worksheet) => {
+      if (worksheet.name.includes('DeliveryBatch')) {
+        deliveryBatchSheets.push(worksheet);
+      }
+    });
+
+    if (deliveryBatchSheets.length === 0) {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Invalid format, Delivery Batch sheet not found',
+      );
+    }
+
+    for (let i = 0; i < deliveryBatchSheets.length; i++) {
+      const errorResponse = this.checkDeliveryBatchValidation(
+        deliveryBatchSheets[i],
+        deliveryBatchError,
+        deliveryBatchItemError,
+      );
+    }
+  }
+
+  async checkDeliveryBatchValidation(
     worksheet: Worksheet,
     deliveryBatchError: Map<
       string,
       { fieldName: string; value: string; text?: any }
     >,
+    deliveryBatchItemError: Map<
+      string,
+      { fieldName: string; value: string; text?: any }
+    >,
   ) {
-    throw new Error('Method not implemented.');
+    let deliveryBatchErrorSheet = new Map<
+      string,
+      { fieldName: string; value: string; text?: any }
+    >();
+    let deliveryBatchItemErrorSheet = new Map<
+      string,
+      { fieldName: string; value: string; text?: any }
+    >();
+    let deliveryBatchInfoTable;
+    let batchItemTable;
+    worksheet.getTables().forEach((table: any) => {
+      if (table.name.includes(DELIVERY_BATCH_INFO_TABLE)) {
+        deliveryBatchInfoTable = table;
+      }
+      if (table.name.includes(DELIVERY_BATCH_ITEM_TABLE)) {
+        batchItemTable = table;
+      }
+    });
+
+    if (!deliveryBatchInfoTable || !batchItemTable) {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Invalid format, Delivery Batch table not found',
+      );
+    }
+
+    const deliveryBatchInfoValue = this.extractVerticalTable(
+      deliveryBatchInfoTable,
+      worksheet,
+    );
+    const deliveryBatchInfoHeader = this.extractHeader(deliveryBatchInfoValue);
+    if (!compareArray(deliveryBatchInfoHeader, DELIVERY_BATCH_INFO_HEADER)) {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Invalid format, Delivery Batch Info table header is invalid',
+      );
+    }
+
+    const batchItemValue = this.extractVerticalTable(batchItemTable, worksheet);
+    // const batchItemHeader = this.extractHeader(batchItemValue);
+    // if (!compareArray(batchItemHeader, ITEM_HEADER)) {
+    //   return apiFailed(
+    //     HttpStatus.BAD_REQUEST,
+    //     'Invalid format, Delivery Batch Item table header is invalid',
+    //   );
+    // }
+
+    // Check delivery batch info validation
+    const errorResponse = this.checkDeliveryBatchInfoValidation(
+      worksheet,
+      deliveryBatchInfoValue,
+      deliveryBatchErrorSheet,
+    );
+
+    if (deliveryBatchErrorSheet.size > 0) {
+      deliveryBatchErrorSheet.forEach((value, key) => {
+        const cell = worksheet.getCell(key);
+
+        // Set the cell value to the error message
+        cell.value = { richText: [] };
+        cell.value.richText = [
+          //Use to add - between text
+          ...value?.text.reduce((acc, curr, index) => {
+            if (index > 0) {
+              acc.push({ text: ' - ', font: { color: { argb: 'FF0000' } } });
+            }
+            acc.push(curr);
+            return acc;
+          }, []),
+        ];
+      });
+    }
+
+    // Check delivery batch item validation
+    const errorItem = this.validateItemTable2(
+      worksheet,
+      deliveryBatchItemErrorSheet,
+      batchItemValue,
+      batchItemTable,
+    );
+
+    if (deliveryBatchItemErrorSheet.size > 0) {
+      deliveryBatchItemErrorSheet.forEach((value, key) => {
+        const cell = worksheet.getCell(key);
+
+        // Set the cell value to the error message
+        cell.value = { richText: [] };
+        cell.value.richText = [
+          //Use to add - between text
+          ...value?.text.reduce((acc, curr, index) => {
+            if (index > 0) {
+              acc.push({ text: ' - ', font: { color: { argb: 'FF0000' } } });
+            }
+            acc.push(curr);
+            return acc;
+          }, []),
+        ];
+      });
+    }
+  }
+
+  async checkDeliveryBatchInfoValidation(
+    worksheet: Worksheet,
+    deliveryTableInfo,
+    deliveryBatchError: Map<
+      string,
+      { fieldName: string; value: string; text?: any }
+    >,
+  ) {
+    console.log('Delivery Batch Info Table');
+    console.log(deliveryTableInfo);
+    for (let i = 0; i < deliveryTableInfo.length; i++) {
+      if (typeof deliveryTableInfo[i][1] === 'object') {
+        deliveryTableInfo[i][1].value = this.getCellValue(
+          deliveryTableInfo[i][1],
+        );
+      }
+      let value = deliveryTableInfo[i][1].value;
+
+      if (typeof value === 'string' && value !== null) {
+        deliveryTableInfo[i][1].value = value.trim();
+      }
+      console.log(deliveryTableInfo[i][0].value);
+      switch (deliveryTableInfo[i][0].value.split(':')[0].trim()) {
+        case 'Expected Delivery Date':
+          if (
+            this.validateRequired(
+              value,
+              deliveryTableInfo[i][0].value.split(':')[0].trim(),
+              deliveryTableInfo[i][1].address,
+              deliveryBatchError,
+              `${DATE_FORMAT}`,
+            )
+          ) {
+            if (!validateDate(value)) {
+              const text = [
+                { text: `${value}` },
+                {
+                  text: `[Invalid date format, must be ${DATE_FORMAT}]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                deliveryBatchError,
+                deliveryTableInfo[i][1].address,
+                'Expected Delivery Date',
+                value,
+                text,
+              );
+            }
+          }
+          break;
+
+        case 'Delivery Date':
+          if (
+            this.validateRequired(
+              value,
+              deliveryTableInfo[i][0].value.split(':')[0].trim(),
+              deliveryTableInfo[i][1].address,
+              deliveryBatchError,
+              `${DATE_FORMAT}`,
+            )
+          ) {
+            if (!validateDate(value)) {
+              const text = [
+                { text: `${value}` },
+                {
+                  text: `[Invalid date format, must be ${DATE_FORMAT}]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                deliveryBatchError,
+                deliveryTableInfo[i][1].address,
+                'Delivery Date',
+                value,
+                text,
+              );
+            }
+          }
+          break;
+      }
+    }
   }
 
   //Check item validation
-  checkItemValidation(worksheet: Worksheet) {
-    const headerCell = worksheet.getCell('A19:E19');
-  }
+  checkItemDeliveryTable(worksheet: Worksheet) {}
 
   //Check supplier validation
   async checkSupplierValidation(
@@ -150,7 +381,6 @@ export class ExcelService {
     let POInfoTableValue: any[][] = [];
     POInfoTableValue = this.extractVerticalTable(POInfoTable, worksheet);
     const POInfoHeader = this.extractHeader(POInfoTableValue);
-    console.log(compareArray(POInfoHeader, PO_INFO_HEADER));
     if (!compareArray(POInfoHeader, PO_INFO_HEADER)) {
       console.log('Invalid format, POInfo table header is invalid');
       return apiFailed(
@@ -162,9 +392,7 @@ export class ExcelService {
     let shipToTableValue: any[][] = [];
     shipToTableValue = this.extractVerticalTable(shipToTable, worksheet);
     const shipToHeader = this.extractHeader(shipToTableValue);
-    console.log(shipToHeader);
     if (!compareArray(shipToHeader, SHIP_TO_HEADER)) {
-      console.log('Invalid format, ShipTo table header is invalid');
       return apiFailed(
         HttpStatus.BAD_REQUEST,
         'Invalid format, ShipTo table header is invalid',
@@ -362,7 +590,6 @@ export class ExcelService {
                 `${DATE_FORMAT}`,
               )
             ) {
-              console.log(validateDate(value));
               if (!validateDate(value)) {
                 const text = [
                   { text: `${value}` },
@@ -679,7 +906,6 @@ export class ExcelService {
       shipToTable,
     );
 
-    console.log('Error Supplier', supplierError);
     if (supplierError.size > 0) {
       supplierError.forEach((value, key) => {
         const cell = worksheet.getCell(key);
@@ -705,7 +931,6 @@ export class ExcelService {
       listItemError,
       itemList,
     );
-    console.log('Error Item', listItemError);
     if (listItemError.size > 0) {
       listItemError.forEach((value, key) => {
         const cell = worksheet.getCell(key);
@@ -746,9 +971,7 @@ export class ExcelService {
         'Invalid format, Item table not found',
       );
     }
-    console.log(itemTable.table);
     const header = itemTable.table.columns.map((column: any) => column.name);
-    console.log(header);
     //Check if header is valid
     const isHeaderValid = compareArray(header, ITEM_HEADER);
     if (!isHeaderValid) {
@@ -810,7 +1033,6 @@ export class ExcelService {
         errorFlag = false;
         //Add more validation here
         if (!isInt(itemCell.quantityCell.value) && !errorFlag) {
-          console.log(' 1 ', itemCell.quantityCell.value);
           const text = [
             { text: `${itemCell.quantityCell.value}` },
             {
@@ -942,6 +1164,224 @@ export class ExcelService {
           total: itemCell.totalCell.value,
         });
       }
+    }
+  }
+
+  async validateItemTable2(
+    worksheet: Worksheet,
+    listItemError: Map<
+      string,
+      {
+        fieldName: string;
+        value: string;
+        text?: any;
+      }
+    >,
+    itemList: any[],
+    itemTable: any,
+  ) {
+    const header = itemTable.table.columns.map((column: any) => column.name);
+    //Check if header is valid
+    const isHeaderValid = compareArray(header, ITEM_HEADER);
+    if (!isHeaderValid) {
+      return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid format');
+    }
+
+    const [startCell, endCell] = itemTable.table.tableRef.split(':');
+    const startRow = parseInt(startCell.replace(/\D/g, ''), 10);
+    const endRow = parseInt(endCell.replace(/\D/g, ''), 10);
+
+    //Check item validation
+    for (let i = startRow + 1; i < endRow; i++) {
+      let errorFlag = false;
+      const row = worksheet.getRow(i);
+      const itemCell = {
+        itemIdCell: row.getCell(1),
+        descriptionCell: row.getCell(2),
+        quantityCell: row.getCell(3),
+        priceCell: row.getCell(4),
+        totalCell: row.getCell(5),
+      };
+      if (
+        isEmpty(itemCell.itemIdCell.value) &&
+        isEmpty(itemCell.descriptionCell.value) &&
+        isEmpty(itemCell.quantityCell.value) &&
+        isEmpty(itemCell.priceCell.value)
+      ) {
+        console.log('Empty row');
+      } else {
+        if (
+          this.validateRequired(
+            itemCell.itemIdCell.value as string,
+            'Item',
+            itemCell.itemIdCell.address,
+            listItemError,
+          )
+        ) {
+          //Add more validation here
+        } else {
+          errorFlag = true;
+        }
+
+        // Check if description is empty
+        if (
+          this.validateRequired(
+            itemCell.descriptionCell.value as string,
+            'Description',
+            itemCell.descriptionCell.address,
+            listItemError,
+          )
+        ) {
+          //Add more validation here
+        } else {
+          errorFlag = true;
+        }
+
+        // Check if quantity is empty
+        if (
+          this.validateRequired(
+            itemCell.quantityCell.value as string,
+            'Quantity',
+            itemCell.quantityCell.address,
+            listItemError,
+          )
+        ) {
+          errorFlag = false;
+          //Add more validation here
+          if (!isInt(itemCell.quantityCell.value) && !errorFlag) {
+            const text = [
+              { text: `${itemCell.quantityCell.value}` },
+              {
+                text: `[Quantity must be a number]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              itemCell.quantityCell.address,
+              'Quantity',
+              itemCell.quantityCell.value,
+              text,
+            );
+            errorFlag = true;
+          }
+          if (!min(itemCell.quantityCell.value, 0) && !errorFlag) {
+            const text = [
+              { text: `${itemCell.quantityCell.value}` },
+              {
+                text: `[Quantity must be greater than 0]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              itemCell.quantityCell.address,
+              'Quantity',
+              itemCell.quantityCell.value,
+              text,
+            );
+            errorFlag = true;
+          }
+
+          if (!max(itemCell.quantityCell.value, 100000) && !errorFlag) {
+            const text = [
+              { text: `${itemCell.quantityCell.value}` },
+              {
+                text: `[Quantity must be less than 1000000]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              itemCell.quantityCell.address,
+              'Quantity',
+              itemCell.quantityCell.value,
+              text,
+            );
+            errorFlag = true;
+          }
+        } else {
+          errorFlag = true;
+        }
+
+        // Check if price is empty
+        if (
+          this.validateRequired(
+            itemCell.priceCell.value as string,
+            'Price',
+            itemCell.priceCell.address,
+            listItemError,
+          )
+        ) {
+          errorFlag = false;
+          //Add more validation here
+          if (!isNumber(itemCell.priceCell.value) && !errorFlag) {
+            const text = [
+              { text: `${itemCell.priceCell.value}` },
+              {
+                text: `[Price must be a number]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              itemCell.priceCell.address,
+              'Price',
+              itemCell.priceCell.value,
+              text,
+            );
+            errorFlag = true;
+          }
+          if (!min(itemCell.priceCell.value, 0) && !errorFlag) {
+            const text = [
+              { text: `${itemCell.priceCell.value}` },
+              {
+                text: `[Price must be greater than 0]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              itemCell.priceCell.address,
+              'Price',
+              itemCell.priceCell.value,
+              text,
+            );
+            errorFlag = true;
+          }
+
+          if (!max(itemCell.priceCell.value, 100000) && !errorFlag) {
+            const text = [
+              { text: `${itemCell.priceCell.value}` },
+              {
+                text: `[Price must be less than 1000000]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              itemCell.priceCell.address,
+              'Price',
+              itemCell.priceCell.value,
+              text,
+            );
+            errorFlag = true;
+          }
+        } else {
+          errorFlag = true;
+        }
+
+        if (!errorFlag) {
+          itemList.push({
+            itemId: itemCell.itemIdCell.value,
+            description: itemCell.descriptionCell.value,
+            quantity: itemCell.quantityCell.value,
+            price: itemCell.priceCell.value,
+            total: itemCell.totalCell.value,
+          });
+        }
+      }
+      // Check if item name is empty
     }
   }
 

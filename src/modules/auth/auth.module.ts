@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaModule } from 'prisma/prisma.module';
 import { BlacklistTokenModule } from '../blacklist-token/blacklist-token.module';
 import { MailService } from '../mail/mail.service';
 import { OtpService } from '../otp/otp.service';
@@ -21,10 +21,11 @@ import { RefreshTokenStrategy } from './strategy/refresh-token.stategy';
     ConfigModule,
     RefreshTokenModule,
     BlacklistTokenModule,
+    PrismaModule,
   ],
   providers: [
     AuthService,
-    PrismaService,
+    // PrismaService,
     LocalStrategy,
     RefreshTokenStrategy,
     AccessTokenStrategy,

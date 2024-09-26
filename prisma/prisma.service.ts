@@ -1,10 +1,10 @@
 import {
   Injectable,
-  OnModuleInit,
-  OnModuleDestroy,
   Logger,
+  OnModuleDestroy,
+  OnModuleInit,
 } from '@nestjs/common';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService
@@ -38,6 +38,7 @@ export class PrismaService
 
   async onModuleInit() {
     await this.$connect();
+    console.log('Prisma connected');
     this.$use(this.softDeleteMiddleware);
     this.$use(this.findNotDeletedMiddleware);
 
@@ -47,9 +48,9 @@ export class PrismaService
     // this.$on('warn', ({ message }) => {
     //   this.logger.warn(message);
     // });
-    // this.$on('info', ({ message }) => {
-    //   this.logger.debug(message);
-    // });
+    this.$on('info', ({ message }) => {
+      this.logger.debug(message);
+    });
     // this.$on('query', ({ query, params }) => {
     //   this.logger.log(`${query}; ${params}`);
     // });
