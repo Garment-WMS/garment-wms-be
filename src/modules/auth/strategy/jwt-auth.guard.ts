@@ -18,33 +18,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
     if (info instanceof JsonWebTokenError) {
       if (info.name === 'TokenExpiredError') {
-        error.value = info.message;
-        error.constraints = {
-          invalidToken: 'Token expired',
-        };
-        error.target = context.switchToHttp().getRequest().headers;
-        error.property = 'TOKEN_EXPIRED';
-        throw new CustomAuthException(401, 'Token expired', [error]);
+        throw new CustomAuthException(401, 'Token expired', ['TOKEN_EXPIRED']);
       } else {
-        error.value = info.message;
-        error.constraints = {
-          invalidToken: 'Invalid token',
-        };
-        error.property = 'INVALID_TOKEN';
-        error.target = context.switchToHttp().getRequest().headers;
-
-        throw new CustomAuthException(401, 'Invalid token', [error]);
+        throw new CustomAuthException(401, 'Invalid token', ['INVALID_TOKEN']);
       }
     }
     if (info instanceof Error) {
-      error.value = info.message;
-      error.constraints = {
-        invalidToken: 'Unauthorized',
-      };
-      error.property = 'UNAUTHORIZED';
-      error.target = context.switchToHttp().getRequest().headers;
-
-      throw new CustomAuthException(401, 'Unauthorized', [error]);
+      throw new CustomAuthException(401, 'Unauthorized', ['UNAUTHORIZED']);
     }
 
     return super.handleRequest(err, user, info, context, status);

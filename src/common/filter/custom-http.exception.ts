@@ -1,11 +1,11 @@
-export class CustomAuthException {
-  status: number;
-  message: string;
-  errors: any;
-  stack: any;
-  constructor(status: number, message: string, error: any, stack?: any) {}
+import { UnauthorizedException } from '@nestjs/common';
 
-  getStatus() {
-    return this.status;
+export class CustomAuthException extends UnauthorizedException {
+  constructor(statusCode: number, message: string, code: any) {
+    super({ statusCode, message, code });
+  }
+
+  getCode(): string {
+    return (this.getResponse() as any).code;
   }
 }
