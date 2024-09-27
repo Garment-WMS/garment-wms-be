@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import { ValidationError } from 'class-validator';
 import express from 'express';
-import { I18nContext, I18nValidationError } from 'nestjs-i18n';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { CustomAuthException } from 'src/common/filter/custom-http.exception';
 import { BlacklistTokenService } from 'src/modules/blacklist-token/blacklist-token.service';
@@ -32,20 +32,18 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
     const isBlacklisted =
       await this.blackListTokenService.isTokenBlacklisted(token);
     if (isBlacklisted) {
-      const i18n = I18nContext.current();
-
-      let error: I18nValidationError = {
+      let error: ValidationError = {
         property: '',
       };
 
       error.value = token;
       error.constraints = {
-        invalidToken: i18n.t('auth.blacklist_token'),
+        invalidToken: 'Token blacklisted',
       };
       error.property = 'INVALID_TOKEN';
       error.target = req.headers;
 
-      throw new CustomAuthException(401, i18n.t('auth.invalid_token'), [error]);
+      throw new CustomAuthException(401, 'Invalid token', [error]);
     }
     console.log('payload', payload);
     const user: Partial<AuthenUser> = {

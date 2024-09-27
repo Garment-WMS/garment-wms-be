@@ -1,14 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
-  IsEmailCustom,
-  IsEnumCustom,
-  IsNotEmptyCustom,
-  IsPhoneNumberCustom,
-  IsStringCustom,
-  MinLengthCustom,
-} from 'src/common/decorator/class-validator-custom.decorator';
-
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  IsUUID,
+  MinLength,
+} from 'class-validator';
 enum Gender {
   MALE = 'MALE',
   FEMALE = 'FEMALE',
@@ -23,44 +24,44 @@ export class SignUpDTO {
     example: 'nguyenphigv23@gmail.com',
     pattern: '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$',
   })
-  @IsNotEmptyCustom()
-  @IsEmailCustom()
+  @IsNotEmpty()
+  @IsEmail()
   email: string;
 
   @ApiProperty()
-  @IsNotEmptyCustom()
-  @IsPhoneNumberCustom()
+  @IsNotEmpty()
+  @IsPhoneNumber()
   phoneNumber: string;
 
   @ApiProperty()
-  @IsNotEmptyCustom()
-  @IsStringCustom()
+  @IsNotEmpty()
+  @IsString()
   password: string;
 
   @ApiProperty()
-  @IsNotEmptyCustom()
-  @MinLengthCustom(1)
-  @IsStringCustom()
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(1)
   firstName: string;
 
   @ApiProperty()
-  @IsNotEmptyCustom()
-  @IsStringCustom()
+  @IsNotEmpty()
+  @IsString()
   lastName: string;
 
   @ApiProperty()
-  @IsNotEmptyCustom()
-  @IsStringCustom()
+  @IsNotEmpty()
+  @IsString()
   username: string;
 
   @ApiProperty()
-  @IsNotEmptyCustom()
+  @IsNotEmpty()
   @IsDateString()
   dateOfBirth: Date;
 
   @ApiProperty()
-  @IsNotEmptyCustom()
-  @IsEnumCustom(Gender)
+  @IsNotEmpty()
+  @IsEnum(Gender)
   gender: Gender;
 
   // @IsNotEmpty()

@@ -16,6 +16,7 @@ import { RefreshTokenStrategy } from './strategy/refresh-token.stategy';
 @Module({
   controllers: [AuthController],
   imports: [
+    PrismaModule,
     JwtModule.register({}),
     UserModule,
     ConfigModule,
@@ -25,7 +26,6 @@ import { RefreshTokenStrategy } from './strategy/refresh-token.stategy';
   ],
   providers: [
     AuthService,
-    // PrismaService,
     LocalStrategy,
     RefreshTokenStrategy,
     AccessTokenStrategy,

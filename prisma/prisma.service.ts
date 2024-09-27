@@ -1,4 +1,6 @@
 import {
+  HttpException,
+  HttpStatus,
   Injectable,
   Logger,
   OnModuleDestroy,
@@ -37,8 +39,17 @@ export class PrismaService
   }
 
   async onModuleInit() {
-    await this.$connect();
-    console.log('Prisma connected');
+    try {
+      await this.$connect();
+      this.logger.log('Database connected');
+    } catch (error) {
+      this.logger.log('Database connection failed');
+      throw new HttpException(
+        'Database connection failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
     this.$use(this.softDeleteMiddleware);
     this.$use(this.findNotDeletedMiddleware);
 
@@ -116,5 +127,6 @@ export class PrismaService
 
   async onModuleDestroy() {
     await this.$disconnect();
+    this.logger.log('Database disconnected');
   }
 }

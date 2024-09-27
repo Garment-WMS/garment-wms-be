@@ -10,11 +10,10 @@ import {
 } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import * as bcrypt from 'bcrypt';
-import { I18nService, I18nValidationError } from 'nestjs-i18n';
+import { ValidationError } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
-import { I18nTranslations } from 'src/i18n/generated/i18n.generated';
 import { BlacklistTokenService } from '../blacklist-token/blacklist-token.service';
 import { MailService } from '../mail/mail.service';
 import { OtpService } from '../otp/otp.service';
@@ -36,24 +35,23 @@ export class AuthService {
     private prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly otpService: OtpService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   async loginGeneral(body: LoginAuthDTO, role: RoleCode) {
     try {
       const account = await this.handleFindUser(body.email);
       if (!account) {
-        const error: I18nValidationError[] = [
+        const error: ValidationError[] = [
           {
             property: 'email',
             target: { body },
             constraints: {
-              isEmailExist: this.i18n.t('auth.email_not_found'),
+              isEmailExist: 'Email not found',
             },
             children: [],
           },
         ];
-        return apiFailed(404, this.i18n.t('auth.email_not_found'), error);
+        return apiFailed(404, 'Email not found', error);
       }
       const isMatch = await this.validatePassword(
         account.password,
@@ -62,18 +60,18 @@ export class AuthService {
 
       const user = await this.checkRoleSchema(account.id, role);
       if (!user) {
-        const error: I18nValidationError[] = [
+        const error: ValidationError[] = [
           {
             property: 'role',
             target: { body },
             constraints: {
-              isRole: this.i18n.t('auth.role_not_found'),
+              isRole: 'Role not found',
             },
             children: [],
           },
         ];
 
-        return apiFailed(404, this.i18n.t('auth.account_not_found'), error);
+        return apiFailed(404, 'Account not found', error);
       }
 
       if (isMatch) {
@@ -87,7 +85,7 @@ export class AuthService {
         }
         //If access token or refresh token is not generated
         if (accessToken === undefined || refreshToken === undefined) {
-          const error: I18nValidationError[] = [
+          const error: ValidationError[] = [
             {
               property: 'token',
               target: { body },
@@ -106,18 +104,18 @@ export class AuthService {
           'Login success',
         );
       } else {
-        const error: I18nValidationError[] = [
+        const error: ValidationError[] = [
           {
             property: 'password',
             target: { body },
             value: body.password,
             constraints: {
-              isMatch: this.i18n.t('auth.password_not_match'),
+              isMatch: 'Password not match',
             },
             children: [],
           },
         ];
-        return apiFailed(400, this.i18n.t('auth.password_not_match'), error);
+        return apiFailed(400, 'Password not match', error);
       }
     } catch (e) {
       return apiFailed(500, e, 'Internal server error');
