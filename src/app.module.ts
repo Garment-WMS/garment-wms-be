@@ -10,8 +10,9 @@ import { OtpModule } from './modules/otp/otp.module';
 import { RefreshTokenModule } from './modules/refresh-token/refresh-token.module';
 // import { RoleModule } from './modules/role/role.module';
 
+import { ExcelModule } from './modules/excel/excel.module';
+import { PurchaseOrderModule } from './modules/purchase_order/purchase_order.module';
 import { PrismaModule } from 'prisma/prisma.module';
-import { ExcelModule } from './excel/excel.module';
 import { UserModule } from './modules/user/user.module';
 
 @Module({
@@ -25,6 +26,7 @@ import { UserModule } from './modules/user/user.module';
     ImageModule,
     OtpModule,
     ExcelModule,
+    PurchaseOrderModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

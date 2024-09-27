@@ -10,7 +10,7 @@ import {
   min,
   minLength,
 } from 'class-validator';
-import { I18nService } from 'nestjs-i18n';
+import { PrismaService } from 'prisma/prisma.service';
 import {
   COMPANY_NAME,
   DATE_FORMAT,
@@ -26,6 +26,8 @@ import {
   SHIP_TO_HEADER,
   SUPPLIER_HEADER,
   SUPPLIER_TABLE_NAME,
+  TOTAL_PURCHASE_ORDER_HEADER,
+  TOTAL_PURCHASE_ORDER_TABLE,
 } from 'src/common/constant/excel.constant';
 import { apiFailed } from 'src/common/dto/api-response';
 import {
@@ -33,11 +35,11 @@ import {
   compareArray,
   validateDate,
 } from 'src/common/utils/utils';
-import { I18nTranslations } from 'src/i18n/generated/i18n.generated';
+import { CreatePurchaseOrderDto } from '../purchase_order/dto/create-purchase_order.dto';
 
 @Injectable()
 export class ExcelService {
-  constructor(private readonly i18n: I18nService<I18nTranslations>) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async readExcel(file: Express.Multer.File) {
     if (!file) {
@@ -272,8 +274,6 @@ export class ExcelService {
       { fieldName: string; value: string; text?: any }
     >,
   ) {
-    console.log('Delivery Batch Info Table');
-    console.log(deliveryTableInfo);
     for (let i = 0; i < deliveryTableInfo.length; i++) {
       if (typeof deliveryTableInfo[i][1] === 'object') {
         deliveryTableInfo[i][1].value = this.getCellValue(
@@ -285,7 +285,6 @@ export class ExcelService {
       if (typeof value === 'string' && value !== null) {
         deliveryTableInfo[i][1].value = value.trim();
       }
-      console.log(deliveryTableInfo[i][0].value);
       switch (deliveryTableInfo[i][0].value.split(':')[0].trim()) {
         case 'Expected Delivery Date':
           if (
@@ -359,6 +358,7 @@ export class ExcelService {
     supplierTable,
     POInfoTable,
     shipToTable,
+    totalTable,
   ) {
     //Use when set only one error in a cell
     let errorSet = false;
@@ -396,6 +396,17 @@ export class ExcelService {
       return apiFailed(
         HttpStatus.BAD_REQUEST,
         'Invalid format, ShipTo table header is invalid',
+      );
+    }
+
+    let totalTableValue: any[][] = [];
+    totalTableValue = this.extractVerticalTable(totalTable, worksheet);
+    const totalTableHeader = this.extractHeader(shipToTableValue);
+
+    if (!compareArray(totalTableHeader, TOTAL_PURCHASE_ORDER_HEADER)) {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Invalid format, Total table header is invalid',
       );
     }
 
@@ -817,6 +828,35 @@ export class ExcelService {
           break;
       }
     }
+
+    //Total table validation
+    for (let i = 0; i < totalTableValue.length; i++) {
+      errorSet = false;
+      console.log('totalTableValue[i]', totalTableValue[i]);
+      if (typeof shipToTableValue[i][1] === 'object') {
+        shipToTableValue[i][1].value = this.getCellValue(supplierValue[i][1]);
+      }
+      let value = shipToTableValue[i][1].value;
+
+      if (typeof value === 'string' && value !== null) {
+        shipToTableValue[i][1].value = value.trim();
+      }
+      switch (totalTableValue[i][0].value.split(':')[0].trim()) {
+        case 'TOTAL': {
+          if (
+            this.validateRequired(
+              value,
+              totalTableValue[i][0].value.split(':')[0].trim(),
+              totalTableValue[i][1].address,
+              supplierError,
+            )
+          ) {
+            supplierObject['total'] = value;
+          }
+          break;
+        }
+      }
+    }
   }
 
   getCellValue(cell: any): string {
@@ -891,8 +931,15 @@ export class ExcelService {
     const POItemTable = worksheet.getTable(ITEM_TABLE_NAME);
     const shipToTable = worksheet.getTable(SHIP_TO);
     const supplierTable = worksheet.getTable(SUPPLIER_TABLE_NAME);
-
-    if (!POInfoTable || !POItemTable || !shipToTable || !supplierTable) {
+    const totalTable = worksheet.getTable(TOTAL_PURCHASE_ORDER_TABLE);
+    console.log(totalTable);
+    if (
+      !POInfoTable ||
+      !POItemTable ||
+      !shipToTable ||
+      !supplierTable ||
+      !totalTable
+    ) {
       return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid format');
     }
 
@@ -904,6 +951,7 @@ export class ExcelService {
       supplierTable,
       POInfoTable,
       shipToTable,
+      totalTable,
     );
 
     if (supplierError.size > 0) {
@@ -949,6 +997,29 @@ export class ExcelService {
         ];
       });
     }
+    let totalAmount = 0;
+    if (itemList.length > 0) {
+      totalAmount = itemList.reduce((acc, curr) => {
+        return acc + curr['quantity'] * curr['price'];
+      }, 0);
+    }
+    const purchaseOrderObject: CreatePurchaseOrderDto = {
+      previousId: undefined,
+      PONumber: undefined,
+      quarterlyProductionPlanId: undefined,
+      purchasingStaffId: undefined,
+      shippingAddress: '',
+      status: '',
+      currency: '',
+      totalAmount: totalAmount,
+      taxAmount: 0,
+      orderDate: supplierObject['createdDate'],
+      expectedFinishDate: supplierObject['expectedFinishedDate'],
+      finishedDate: undefined,
+      createdAt: new Date(),
+      updatedAt: undefined,
+      deletedAt: undefined,
+    };
   }
 
   async validateItemTable(
@@ -1208,7 +1279,6 @@ export class ExcelService {
         isEmpty(itemCell.quantityCell.value) &&
         isEmpty(itemCell.priceCell.value)
       ) {
-        console.log('Empty row');
       } else {
         if (
           this.validateRequired(

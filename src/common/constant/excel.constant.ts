@@ -36,3 +36,11 @@ export const DELIVERY_BATCH_INFO_HEADER = [
   'Delivery Date',
 ];
 export const DELIVERY_BATCH_ITEM_TABLE = 'batchItem';
+export const TOTAL_PURCHASE_ORDER_TABLE = 'totalPurchaseOrder';
+export const TOTAL_PURCHASE_ORDER_HEADER = [
+  'SUBTOTAL',
+  'TAX',
+  'SHIPPING',
+  'OTHER',
+  'TOTAL',
+];
