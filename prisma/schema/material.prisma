@@ -1,35 +1,25 @@
 model Material {
-  id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  materialTypeId              String?                       @map("material_type_id") @db.Uuid
-  unitId                      String?                       @map("unit_id") @db.Uuid
-  storeUnitId                 String?                       @map("store_unit_id") @db.Uuid
-  name                        String?                       @db.VarChar
-  code                        String?                       @unique @db.VarChar
-  width                       Float?
-  height                      Float?
-  length                      Float?
-  minQuantity                 Float?                        @map("min_quantity")
-  unitPerStoreUnit            Float?                        @map("unit_per_store_unit")
-  storeUnitPerCell            Float?                        @map("store_unit_per_cell")
-  quantityPerStoreUnit        Float?                        @map("quantity_per_store_unit")
-  widthPerStoreUnit           Float?                        @map("width_per_store_unit")
-  heightPerStoreUnit          Float?                        @map("height_per_store_unit")
-  lengthPerStoreUnit          Float?                        @map("length_per_store_unit")
-  weightPerStoreUnit          Float?                        @map("weight_per_store_unit")
-  createdAt                   DateTime?                     @map("created_at") @db.Timestamptz(6)
-  updatedAt                   DateTime?                     @map("updated_at") @db.Timestamptz(6)
-  deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
-  deliveryNoteDetail          DeliveryNoteDetail[]
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialTypeId String?   @map("material_type_id") @db.Uuid
+  name           String?   @db.VarChar
+  code           String?   @unique @db.VarChar
+  width          Float?
+  height         Float?
+  length         Float?
+  minQuantity    Float?    @map("min_quantity")
+  unitId         String?   @map("unit_id") @db.Uuid
+  createdAt      DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime? @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   exportMaterialRequestDetail ExportMaterialRequestDetail[]
   importRequestDetail         ImportRequestDetail[]
   inspectionReportDetail      InspectionReportDetail[]
   materialType                MaterialType?                 @relation(fields: [materialTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  storeUnit                   StoreUnit?                    @relation(fields: [storeUnitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   unit                        Unit?                         @relation(fields: [unitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialAttribute           MaterialAttribute[]
   materialInspectionCriteria  MaterialInspectionCriteria[]
   materialReceipt             MaterialReceipt[]
-  materialSupplier            MaterialSupplier[]
   poReceiptDetail             PoReceiptDetail[]
   productFormula              ProductFormula[]
 

@@ -8,9 +8,9 @@ model InspectionRequest {
   createdAt              DateTime?                @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime?                @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime?                @map("deleted_at") @db.Timestamptz(6)
-  deliveryNote           DeliveryNote?            @relation(fields: [deliveryNoteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  inspectionDepartment   InspectionDepartment?    @relation(fields: [inspectionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  purchasingStaff        PurchasingStaff?         @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  inspectionDepartment InspectionDepartment? @relation(fields: [inspectionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  purchasingStaff      PurchasingStaff?      @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("inspection_request")
 }

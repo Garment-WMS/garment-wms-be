@@ -8,8 +8,9 @@ model ExportMaterialRequest {
   createdAt              DateTime?                    @db.Timestamptz(6)
   updatedAt              DateTime?                    @db.Timestamptz(6)
   deletedAt              DateTime?                    @db.Timestamptz(6)
-  productionDepartment   ProductionDepartment?        @relation(fields: [productionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  reservePercent         ReservePercent?              @relation(fields: [reservePercentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  productionDepartment ProductionDepartment? @relation(fields: [productionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reservePercent       ReservePercent?       @relation(fields: [reservePercentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("export_material_request")
 }

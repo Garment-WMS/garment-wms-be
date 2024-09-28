@@ -1,14 +1,15 @@
 model MaterialReceipt {
-  id              String         @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  materialId      String?        @map("material_id") @db.Uuid
-  importReceiptId String?        @map("import_receipt_id") @db.Uuid
-  quantity        Float?         @map("quantity")
-  expireDate      DateTime?      @map("expire_date") @db.Timestamptz(6)
-  createdAt       DateTime?      @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime?      @map("updated_at") @db.Timestamptz(6)
-  deletedAt       DateTime?      @map("deleted_at") @db.Timestamptz(6)
-  import_receipt  ImportReceipt? @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  material        Material?      @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialId      String?   @map("material_id") @db.Uuid
+  importReceiptId String?   @map("import_receipt_id") @db.Uuid
+  quantity        Float?    @map("quantity")
+  expireDate      DateTime? @map("expire_date") @db.Timestamptz(6)
+  createdAt       DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime? @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  importReceipt ImportReceipt? @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  material      Material?      @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("material_receipt")
 }

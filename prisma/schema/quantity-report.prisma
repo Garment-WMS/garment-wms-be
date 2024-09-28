@@ -1,13 +1,14 @@
 model QuantityReport {
-  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  quantityReportTypeId String?                @map("quantity_report_type_id") @db.Uuid
-  storageQuantity      Float?                 @map("storage_quantity")
-  recordedQuantity     Float?                 @map("recorded_quantity")
-  quantityDisparity    Float?                 @map("quantity_disparity")
-  description          String?                @map("description")
-  createdAt            DateTime?              @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime?              @map("updated_at") @db.Timestamptz(6)
-  deletedAt            DateTime?              @map("deleted_at") @db.Timestamptz(6)
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  quantityReportTypeId String?   @map("quantity_report_type_id") @db.Uuid
+  storageQuantity      Float?    @map("storage_quantity")
+  recordedQuantity     Float?    @map("recorded_quantity")
+  quantityDisparity    Float?    @map("quantity_disparity")
+  description          String?   @map("description")
+  createdAt            DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime? @map("updated_at") @db.Timestamptz(6)
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   quantityReportType   QuantityReportType?    @relation(fields: [quantityReportTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   quantityReportDetail QuantityReportDetail[]
 
