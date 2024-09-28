@@ -59,9 +59,9 @@ export class PrismaService
     // this.$on('warn', ({ message }) => {
     //   this.logger.warn(message);
     // });
-    // this.$on('info', ({ message }) => {
-    //   this.logger.debug(message);
-    // });
+    this.$on('info', ({ message }) => {
+      this.logger.debug(message);
+    });
     // this.$on('query', ({ query, params }) => {
     //   this.logger.log(`${query}; ${params}`);
     // });

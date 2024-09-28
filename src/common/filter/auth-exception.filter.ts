@@ -22,16 +22,16 @@ export class AuthExceptionFilter implements ExceptionFilter {
     logger.verbose('-------------Exception Start-------------');
     logger.error(exception.stack);
     logger.error(exception.message);
-    logger.error(exception.errors);
+    logger.error(exception.getCode());
     logger.error(exception.getStatus());
     logger.verbose('-------------Exception End---------------');
     let responseBody: ApiResponse;
 
     let message = exception.message;
-    let errors = this.flattenConstraintValidationErrors(exception.errors);
+    let code = exception.getCode();
     switch (exception.message) {
       default:
-        responseBody = apiFailed(exception.getStatus(), message, errors);
+        responseBody = apiFailed(exception.getStatus(), message, code);
         break;
     }
 
