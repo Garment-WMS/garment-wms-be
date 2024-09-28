@@ -22,6 +22,7 @@ import { RefreshTokenStrategy } from './strategy/refresh-token.stategy';
     ConfigModule,
     RefreshTokenModule,
     BlacklistTokenModule,
+    PrismaModule,
   ],
   providers: [
     AuthService,
