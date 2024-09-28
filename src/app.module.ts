@@ -10,9 +10,13 @@ import { OtpModule } from './modules/otp/otp.module';
 import { RefreshTokenModule } from './modules/refresh-token/refresh-token.module';
 // import { RoleModule } from './modules/role/role.module';
 
-import { ExcelModule } from './modules/excel/excel.module';
-import { PurchaseOrderModule } from './modules/purchase_order/purchase_order.module';
 import { PrismaModule } from 'prisma/prisma.module';
+import { ExcelModule } from './modules/excel/excel.module';
+import { MaterialModule } from './modules/material/material.module';
+import { PoDeliveryModule } from './modules/po_delivery/po_delivery.module';
+import { PoDeliveryMaterialModule } from './modules/po_delivery_material/po_delivery_material.module';
+import { PurchaseOrderModule } from './modules/purchase_order/purchase_order.module';
+import { SupplierModule } from './modules/supplier/supplier.module';
 import { UserModule } from './modules/user/user.module';
 
 @Module({
@@ -27,6 +31,10 @@ import { UserModule } from './modules/user/user.module';
     OtpModule,
     ExcelModule,
     PurchaseOrderModule,
+    SupplierModule,
+    PoDeliveryModule,
+    PoDeliveryMaterialModule,
+    MaterialModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

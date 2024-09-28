@@ -7,6 +7,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { UUID } from 'crypto';
+import { SupplierDto } from 'src/modules/supplier/dto/supplier.dto';
 
 export class CreatePurchaseOrderDto {
   @IsOptional()
@@ -57,7 +58,11 @@ export class CreatePurchaseOrderDto {
   @IsDate()
   finishedDate: Date;
 
+  Supplier: SupplierDto;
+
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date;
+
+  id: UUID;
 }

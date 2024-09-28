@@ -1,14 +1,13 @@
 import { Workbook, Worksheet } from '@nbelyh/exceljs';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import {
+  isBoolean,
   isEmpty,
   isInt,
   isNumber,
   isPhoneNumber,
   max,
-  maxLength,
   min,
-  minLength,
 } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import {
@@ -35,6 +34,8 @@ import {
   compareArray,
   validateDate,
 } from 'src/common/utils/utils';
+import { PoDeliveryDto } from '../po_delivery/dto/po_delivery.dto';
+import { PoDeliveryMaterialDto } from '../po_delivery_material/dto/po_delivery_material.dto';
 import { CreatePurchaseOrderDto } from '../purchase_order/dto/create-purchase_order.dto';
 
 @Injectable()
@@ -85,41 +86,37 @@ export class ExcelService {
         text?: any;
       }
     >();
+
+    const puchaseOrder: Partial<CreatePurchaseOrderDto> = {};
+    const deliveryBatch: Partial<PoDeliveryDto>[] = [];
+
     await workbook.xlsx.load(file.buffer);
     const worksheet = workbook.getWorksheet(PO_SHEET_NAME);
     if (!worksheet) {
       return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid format');
     }
-    //Validate Purchase Order sheet include item and supplier
+    // Validate Purchase Order sheet include item and supplier
     const errorResponse = await this.validatePurchaseOrderSheet(
       worksheet,
       supplierError,
       listItemError,
+      puchaseOrder,
     );
 
     const errorResponseDeliveryBatch = await this.validateDeliveryBatchSheet(
       workbook,
       deliveryBatchError,
       deliveryBatchItemError,
+      deliveryBatch,
+      puchaseOrder,
     );
 
-    // if (errorResponse) {
-    //   return errorResponse;
-    // }
-
-    // if (supplierError.size > 0 || listItemError.size > 0) {
-    //   const file = await workbook.xlsx.writeBuffer();
-    //   return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid format', file);
-    // }
-    // return apiSuccess(
-    //   HttpStatus.OK,
-    //   'File processed successfully',
-    //   'File processed successfully',
-    // );
+    console.log(deliveryBatch);
+    console.log(puchaseOrder);
 
     return await workbook.xlsx.writeBuffer();
   }
-  validateDeliveryBatchSheet(
+  async validateDeliveryBatchSheet(
     workbook: Workbook,
     deliveryBatchError: Map<
       string,
@@ -129,6 +126,8 @@ export class ExcelService {
       string,
       { fieldName: string; value: string; text?: any }
     >,
+    deliveryBatches: Partial<PoDeliveryDto>[],
+    puchaseOrder: Partial<CreatePurchaseOrderDto>,
   ) {
     const deliveryBatchSheets: Worksheet[] = [];
 
@@ -144,14 +143,18 @@ export class ExcelService {
         'Invalid format, Delivery Batch sheet not found',
       );
     }
-
-    for (let i = 0; i < deliveryBatchSheets.length; i++) {
-      const errorResponse = this.checkDeliveryBatchValidation(
-        deliveryBatchSheets[i],
-        deliveryBatchError,
-        deliveryBatchItemError,
-      );
+    if (puchaseOrder) {
+      for (let i = 0; i < deliveryBatchSheets.length; i++) {
+        const errorResponse = await this.checkDeliveryBatchValidation(
+          deliveryBatchSheets[i],
+          deliveryBatchError,
+          deliveryBatchItemError,
+          deliveryBatches,
+          puchaseOrder,
+        );
+      }
     }
+    //Loop fop each sheet
   }
 
   async checkDeliveryBatchValidation(
@@ -164,6 +167,8 @@ export class ExcelService {
       string,
       { fieldName: string; value: string; text?: any }
     >,
+    deliveryBatches: Partial<PoDeliveryDto>[],
+    puchaseOrder: Partial<CreatePurchaseOrderDto>,
   ) {
     let deliveryBatchErrorSheet = new Map<
       string,
@@ -213,10 +218,12 @@ export class ExcelService {
     // }
 
     // Check delivery batch info validation
+    let deliveryBatchInfo: Partial<PoDeliveryDto> = {};
     const errorResponse = this.checkDeliveryBatchInfoValidation(
       worksheet,
       deliveryBatchInfoValue,
       deliveryBatchErrorSheet,
+      deliveryBatchInfo,
     );
 
     if (deliveryBatchErrorSheet.size > 0) {
@@ -238,14 +245,16 @@ export class ExcelService {
       });
     }
 
+    //
+    let deliveryBatchItems: Partial<PoDeliveryMaterialDto>[] = [];
     // Check delivery batch item validation
     const errorItem = this.validateItemTable2(
       worksheet,
       deliveryBatchItemErrorSheet,
-      batchItemValue,
       batchItemTable,
+      deliveryBatchItems,
     );
-
+    deliveryBatchInfo.PoDeliveryMaterial = deliveryBatchItems;
     if (deliveryBatchItemErrorSheet.size > 0) {
       deliveryBatchItemErrorSheet.forEach((value, key) => {
         const cell = worksheet.getCell(key);
@@ -264,6 +273,8 @@ export class ExcelService {
         ];
       });
     }
+
+    deliveryBatches.push(deliveryBatchInfo);
   }
 
   async checkDeliveryBatchInfoValidation(
@@ -273,7 +284,10 @@ export class ExcelService {
       string,
       { fieldName: string; value: string; text?: any }
     >,
+    deliveryBatchInfo: Partial<PoDeliveryDto>,
   ) {
+    let errorFlag = false;
+
     for (let i = 0; i < deliveryTableInfo.length; i++) {
       if (typeof deliveryTableInfo[i][1] === 'object') {
         deliveryTableInfo[i][1].value = this.getCellValue(
@@ -287,6 +301,7 @@ export class ExcelService {
       }
       switch (deliveryTableInfo[i][0].value.split(':')[0].trim()) {
         case 'Expected Delivery Date':
+          errorFlag = false;
           if (
             this.validateRequired(
               value,
@@ -311,11 +326,35 @@ export class ExcelService {
                 value,
                 text,
               );
+              errorFlag = true;
+            }
+
+            if (new Date(value) < new Date() && !errorFlag) {
+              const text = [
+                { text: `${value.toISOString().split('T')[0]}` },
+                {
+                  text: `[Expected Delivery Date must be after current date]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                deliveryBatchError,
+                deliveryTableInfo[i][1].address,
+                'Expected Delivery Date',
+                value,
+                text,
+              );
+              errorFlag = true;
+            }
+
+            if (!errorFlag) {
+              deliveryBatchInfo.expected_deliver_date = value;
             }
           }
           break;
 
         case 'Delivery Date':
+          errorFlag = false;
           if (
             this.validateRequired(
               value,
@@ -325,7 +364,7 @@ export class ExcelService {
               `${DATE_FORMAT}`,
             )
           ) {
-            if (!validateDate(value)) {
+            if (!validateDate(value) && !errorFlag) {
               const text = [
                 { text: `${value}` },
                 {
@@ -340,10 +379,68 @@ export class ExcelService {
                 value,
                 text,
               );
+              errorFlag = true;
+            }
+
+            if (new Date(value) < new Date() && !errorFlag) {
+              const text = [
+                { text: `${value.toISOString().split('T')[0]}` },
+                {
+                  text: `[Delivery Date must be after current date]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                deliveryBatchError,
+                deliveryTableInfo[i][1].address,
+                'Delivery Date',
+                value,
+                text,
+              );
+              errorFlag = true;
+            }
+
+            if (!errorFlag) {
+              deliveryBatchInfo.deliver_date = value;
+            }
+          }
+          break;
+
+        case 'Is extra':
+          errorFlag = false;
+          if (
+            this.validateRequired(
+              value,
+              deliveryTableInfo[i][0].value.split(':')[0].trim(),
+              deliveryTableInfo[i][1].address,
+              deliveryBatchError,
+            )
+          ) {
+            if (!isBoolean(value)) {
+              const text = [
+                {
+                  text: `[Is extra must be check box, please download the right format]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                deliveryBatchError,
+                deliveryTableInfo[i][1].address,
+                'Is extra',
+                value,
+                text,
+              );
+
+              errorFlag = true;
+            }
+
+            if (!errorFlag) {
+              deliveryBatchInfo.is_extra = value;
             }
           }
           break;
       }
+      //TODO : REturn PO delivery
     }
   }
 
@@ -354,7 +451,7 @@ export class ExcelService {
   async checkSupplierValidation(
     worksheet: Worksheet,
     supplierError,
-    supplierObject,
+    purchaseOrderObject: Partial<CreatePurchaseOrderDto>,
     supplierTable,
     POInfoTable,
     shipToTable,
@@ -362,12 +459,58 @@ export class ExcelService {
   ) {
     //Use when set only one error in a cell
     let errorSet = false;
-
+    let supplierObject = {};
+    let supplier;
     //Suppler table
 
     // Check supplier table header
     let supplierValue: any[][] = [];
     supplierValue = this.extractVerticalTable(supplierTable, worksheet);
+    //Find supplier company through company code
+    for (let i = 0; i < supplierValue.length; i++) {
+      if (supplierValue[i][0].value.includes('Company Code')) {
+        supplier = await this.prismaService.supplier.findUnique({
+          where: {
+            supplier_code: supplierValue[i][1].value,
+          },
+        });
+        if (isEmpty(supplier)) {
+          const text = [
+            { text: `${supplierValue[i][1].value}` },
+            {
+              text: `[Supplier not found]`,
+              font: { color: { argb: 'FF0000' } },
+            },
+          ];
+          this.addError(
+            supplierError,
+            supplierValue[i][1].address,
+            'Company Code',
+            supplierValue[i][1].value,
+            text,
+          );
+        } else {
+          console.log('supplier', supplier.id);
+          if (!purchaseOrderObject.Supplier) {
+            purchaseOrderObject.Supplier = {
+              id: undefined,
+              supplier_name: '',
+              supplier_code: '',
+              address: '',
+              phone_number: '',
+              fax: '',
+              email: '',
+              representative_name: '',
+              create_at: new Date(),
+              update_at: new Date(),
+              deleted_at: null,
+            }; // Initialize Supplier if it is undefined
+          }
+          purchaseOrderObject.Supplier.id = supplier.id;
+        }
+      }
+    }
+
     const supplierHeader = this.extractHeader(supplierValue);
     if (!compareArray(supplierHeader, SUPPLIER_HEADER)) {
       console.log('Invalid format, Supplier table header is invalid');
@@ -393,6 +536,7 @@ export class ExcelService {
     shipToTableValue = this.extractVerticalTable(shipToTable, worksheet);
     const shipToHeader = this.extractHeader(shipToTableValue);
     if (!compareArray(shipToHeader, SHIP_TO_HEADER)) {
+      console.log('Invalid format, ShipTo table header is invalid');
       return apiFailed(
         HttpStatus.BAD_REQUEST,
         'Invalid format, ShipTo table header is invalid',
@@ -401,9 +545,9 @@ export class ExcelService {
 
     let totalTableValue: any[][] = [];
     totalTableValue = this.extractVerticalTable(totalTable, worksheet);
-    const totalTableHeader = this.extractHeader(shipToTableValue);
-
+    const totalTableHeader = this.extractHeader(totalTableValue);
     if (!compareArray(totalTableHeader, TOTAL_PURCHASE_ORDER_HEADER)) {
+      console.log('Invalid format, Total table header is invalid');
       return apiFailed(
         HttpStatus.BAD_REQUEST,
         'Invalid format, Total table header is invalid',
@@ -422,7 +566,9 @@ export class ExcelService {
       }
 
       switch (supplierValue[i][0].value.split(':')[0].trim()) {
-        case 'ZIP Code':
+        case 'Email':
+          errorSet = false;
+
           if (
             this.validateRequired(
               value,
@@ -432,11 +578,28 @@ export class ExcelService {
             )
           ) {
             //Add more validation here
-            supplierObject['supplierZipCode'] = value;
+            if (supplier?.email && value !== supplier?.email && !errorSet) {
+              const text = [
+                { text: `${value}` },
+                {
+                  text: `[Email is not correct]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                supplierError,
+                supplierValue[i][1].address,
+                'Email',
+                value,
+                text,
+              );
+              errorSet = true;
+            }
           }
           break;
 
         case 'Company Name': {
+          errorSet = false;
           if (
             this.validateRequired(
               value,
@@ -445,14 +608,16 @@ export class ExcelService {
               supplierError,
             )
           ) {
-            // Min length and max length check
+            // Is correct supplier name
             if (
-              !((minLength(value, 3) || maxLength(value, 100)) && !errorSet)
+              supplier?.supplier_name &&
+              value !== supplier?.supplier_name &&
+              !errorSet
             ) {
               const text = [
                 { text: `${value}` },
                 {
-                  text: `[Company's name must be between 3 and 100 characters]`,
+                  text: `[Company's name is not correct]`,
                   font: { color: { argb: 'FF0000' } },
                 },
               ];
@@ -466,7 +631,6 @@ export class ExcelService {
               );
               errorSet = true;
             }
-            supplierObject['companyName'] = value;
           }
           break;
         }
@@ -481,8 +645,6 @@ export class ExcelService {
                 supplierError,
               )
             ) {
-              //Add more validation here
-              supplierObject['contactOfDepartment'] = value;
             }
           }
           break;
@@ -511,6 +673,7 @@ export class ExcelService {
           }
           break;
         case 'Phone':
+          errorSet = false;
           if (
             this.validateRequired(
               value,
@@ -538,11 +701,31 @@ export class ExcelService {
               );
               errorSet = true;
             }
-
-            supplierObject['phone'] = value;
+            if (
+              supplier?.phone_numbert &&
+              value !== supplier?.phone_number &&
+              !errorSet
+            ) {
+              const text = [
+                { text: `${value}` },
+                {
+                  text: `[Phone number is not correct]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                supplierError,
+                supplierValue[i][1].address,
+                'Phone',
+                value,
+                text,
+              );
+              errorSet = true;
+            }
           }
           break;
         case 'Fax':
+          errorSet = false;
           if (
             this.validateRequired(
               value,
@@ -551,7 +734,43 @@ export class ExcelService {
               supplierError,
             )
           ) {
-            supplierObject['fax'] = value;
+            value = addMissingStartCharacter(value, '+');
+
+            if (!isPhoneNumber(value)) {
+              const text = [
+                { text: `${value}` },
+                {
+                  text: `[Fax is invalid]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                supplierError,
+                supplierValue[i][1].address,
+                'Fax',
+                value,
+                text,
+              );
+              errorSet = true;
+            }
+
+            if (supplier?.fax && value !== supplier.fax && !errorSet) {
+              const text = [
+                { text: `${value}` },
+                {
+                  text: `[Fax is not correct]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                supplierError,
+                supplierValue[i][1].address,
+                'Fax',
+                value,
+                text,
+              );
+              errorSet = true;
+            }
           }
           break;
         default: {
@@ -568,13 +787,13 @@ export class ExcelService {
         );
       }
       let value = POInfoTableValue[i][1].value;
-
       if (typeof value === 'string' && value !== null) {
         POInfoTableValue[i][1].value = value.trim();
       }
 
       switch (POInfoTableValue[i][0].value.split(':')[0].trim()) {
         case 'PO #': {
+          errorSet = false;
           if (
             this.validateRequired(
               value,
@@ -583,14 +802,13 @@ export class ExcelService {
               supplierError,
             )
           ) {
-            //TODO : Add more validation here
-
-            supplierObject['poNumber'] = value;
+            purchaseOrderObject.PONumber = value;
           }
           break;
         }
 
         case 'Created Date':
+          errorSet = false;
           {
             if (
               this.validateRequired(
@@ -620,7 +838,7 @@ export class ExcelService {
               }
               if (new Date(value) > new Date() && !errorSet) {
                 const text = [
-                  { text: `${value}` },
+                  { text: `${value.toISOString().split('T')[0]}` },
                   {
                     text: `[Created Date must be before current date]`,
                     font: { color: { argb: 'FF0000' } },
@@ -635,11 +853,14 @@ export class ExcelService {
                 );
                 errorSet = true;
               }
-              supplierObject['createdDate'] = value;
+              if (!errorSet) {
+                purchaseOrderObject.orderDate = value;
+              }
             }
           }
           break;
         case 'Expected Finished Date':
+          errorSet = false;
           if (
             this.validateRequired(
               value,
@@ -649,6 +870,8 @@ export class ExcelService {
               `${DATE_FORMAT}`,
             )
           ) {
+            console.log('value', value);
+
             if (!validateDate(value)) {
               const text = [
                 { text: `${value}` },
@@ -666,10 +889,9 @@ export class ExcelService {
               );
               errorSet = true;
             }
-
             if (new Date(value) < new Date() && !errorSet) {
               const text = [
-                { text: `${value}` },
+                { text: `${value.toISOString().split('T')[0]}` },
                 {
                   text: `[Expected Finished Date must be after current date]`,
                   font: { color: { argb: 'FF0000' } },
@@ -685,7 +907,9 @@ export class ExcelService {
               errorSet = true;
             }
 
-            supplierObject['expectedFinishedDate'] = value;
+            if (!errorSet) {
+              purchaseOrderObject.expectedFinishDate = value;
+            }
           }
           break;
         default: {
@@ -697,7 +921,9 @@ export class ExcelService {
     //ShipTo table validation
     for (let i = 0; i < shipToTableValue.length; i++) {
       if (typeof shipToTableValue[i][1] === 'object') {
-        shipToTableValue[i][1].value = this.getCellValue(supplierValue[i][1]);
+        shipToTableValue[i][1].value = this.getCellValue(
+          shipToTableValue[i][1],
+        );
       }
       let value = shipToTableValue[i][1].value;
 
@@ -716,27 +942,26 @@ export class ExcelService {
             )
           ) {
             // Min length and max length check
-            if (
-              !((minLength(value, 3) || maxLength(value, 100)) && !errorSet)
-            ) {
-              const text = [
-                { text: `${value}` },
-                {
-                  text: `[Company's name must be between 3 and 100 characters]`,
-                  font: { color: { argb: 'FF0000' } },
-                },
-              ];
-
-              this.addError(
-                supplierError,
-                shipToTableValue[i][1].address,
-                'Company Name',
-                value,
-                text,
-              );
-              errorSet = true;
-            }
-            supplierObject['shipToCompanyName'] = value;
+            // if (
+            //   !((minLength(value, 3) || maxLength(value, 100)) && !errorSet)
+            // ) {
+            //   const text = [
+            //     { text: `${value}` },
+            //     {
+            //       text: `[Company's name must be between 3 and 100 characters]`,
+            //       font: { color: { argb: 'FF0000' } },
+            //     },
+            //   ];
+            //   this.addError(
+            //     supplierError,
+            //     shipToTableValue[i][1].address,
+            //     'Company Name',
+            //     value,
+            //     text,
+            //   );
+            //   errorSet = true;
+            // }
+            // purchaseOrderObject.shippingAddress = value;
           }
           break;
         }
@@ -750,7 +975,7 @@ export class ExcelService {
               supplierError,
             )
           ) {
-            supplierObject['shipToAddress'] = value;
+            // supplierObject['shipToAddress'] = value;
           }
           break;
 
@@ -763,7 +988,7 @@ export class ExcelService {
               supplierError,
             )
           ) {
-            supplierObject['shipToCity'] = value;
+            // supplierObject['shipToCity'] = value;
           }
           break;
 
@@ -777,7 +1002,7 @@ export class ExcelService {
             )
           ) {
             //Add more validation here
-            supplierObject['shipToZipCode'] = value;
+            // supplierObject['shipToZipCode'] = value;
           }
           break;
 
@@ -809,8 +1034,6 @@ export class ExcelService {
               );
               errorSet = true;
             }
-
-            supplierObject['shipToPhone'] = value;
           }
           break;
 
@@ -823,7 +1046,7 @@ export class ExcelService {
               supplierError,
             )
           ) {
-            supplierObject['shipToFax'] = value;
+            // supplierObject['shipToFax'] = value;
           }
           break;
       }
@@ -832,14 +1055,13 @@ export class ExcelService {
     //Total table validation
     for (let i = 0; i < totalTableValue.length; i++) {
       errorSet = false;
-      console.log('totalTableValue[i]', totalTableValue[i]);
-      if (typeof shipToTableValue[i][1] === 'object') {
-        shipToTableValue[i][1].value = this.getCellValue(supplierValue[i][1]);
+      if (typeof totalTableValue[i][1] === 'object') {
+        totalTableValue[i][1].value = this.getCellValue(totalTableValue[i][1]);
       }
-      let value = shipToTableValue[i][1].value;
+      let value = totalTableValue[i][1].value;
 
       if (typeof value === 'string' && value !== null) {
-        shipToTableValue[i][1].value = value.trim();
+        totalTableValue[i][1].value = value.trim();
       }
       switch (totalTableValue[i][0].value.split(':')[0].trim()) {
         case 'TOTAL': {
@@ -851,10 +1073,53 @@ export class ExcelService {
               supplierError,
             )
           ) {
-            supplierObject['total'] = value;
+            console.log('value', value);
+            purchaseOrderObject.totalAmount = value?.result;
           }
           break;
         }
+
+        case 'TAX':
+          {
+            if (
+              this.validateRequired(
+                value,
+                totalTableValue[i][0].value.split(':')[0].trim(),
+                totalTableValue[i][1].address,
+                supplierError,
+              )
+            ) {
+              //Add more validation here
+              purchaseOrderObject.taxAmount = value;
+            }
+          }
+          break;
+
+        // case 'SHIPPING':
+        //   if (
+        //     this.validateRequired(
+        //       value,
+        //       totalTableValue[i][0].value.split(':')[0].trim(),
+        //       totalTableValue[i][1].address,
+        //       supplierError,
+        //     )
+        //   ) {
+        //     purchaseOrderObject.shippingAmount = value;
+        //   }
+        //   break;
+
+        // case 'OTHER':
+        //   if (
+        //     this.validateRequired(
+        //       value,
+        //       totalTableValue[i][0].value.split(':')[0].trim(),
+        //       totalTableValue[i][1].address,
+        //       supplierError,
+        //     )
+        //   ) {
+        //     purchaseOrderObject.otherAmount = value;
+        //   }
+        //   break;
       }
     }
   }
@@ -922,8 +1187,8 @@ export class ExcelService {
         text?: any;
       }
     >,
+    purchaseOrder: Partial<CreatePurchaseOrderDto>,
   ) {
-    const supplierObject = {};
     const itemList = [];
 
     //Check if all the required tables are present
@@ -932,7 +1197,6 @@ export class ExcelService {
     const shipToTable = worksheet.getTable(SHIP_TO);
     const supplierTable = worksheet.getTable(SUPPLIER_TABLE_NAME);
     const totalTable = worksheet.getTable(TOTAL_PURCHASE_ORDER_TABLE);
-    console.log(totalTable);
     if (
       !POInfoTable ||
       !POItemTable ||
@@ -940,6 +1204,7 @@ export class ExcelService {
       !supplierTable ||
       !totalTable
     ) {
+      console.log('Invalid format');
       return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid format');
     }
 
@@ -947,7 +1212,7 @@ export class ExcelService {
     const errorResponse = await this.checkSupplierValidation(
       worksheet,
       supplierError,
-      supplierObject,
+      purchaseOrder,
       supplierTable,
       POInfoTable,
       shipToTable,
@@ -956,6 +1221,7 @@ export class ExcelService {
 
     if (supplierError.size > 0) {
       supplierError.forEach((value, key) => {
+        console.log('value', key);
         const cell = worksheet.getCell(key);
 
         // Set the cell value to the error message
@@ -974,11 +1240,17 @@ export class ExcelService {
     }
 
     //Item information
-    const errorItem = await this.validateItemTable(
-      worksheet,
-      listItemError,
-      itemList,
-    );
+    const itemTable = worksheet.getTable(ITEM_TABLE_NAME) as any;
+    if (!itemTable) {
+      return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid format');
+    } else {
+      const errorItem = await this.validateItemTable2(
+        worksheet,
+        listItemError,
+        itemTable,
+        itemList,
+      );
+    }
     if (listItemError.size > 0) {
       listItemError.forEach((value, key) => {
         const cell = worksheet.getCell(key);
@@ -1003,23 +1275,24 @@ export class ExcelService {
         return acc + curr['quantity'] * curr['price'];
       }, 0);
     }
-    const purchaseOrderObject: CreatePurchaseOrderDto = {
-      previousId: undefined,
-      PONumber: undefined,
-      quarterlyProductionPlanId: undefined,
-      purchasingStaffId: undefined,
-      shippingAddress: '',
-      status: '',
-      currency: '',
-      totalAmount: totalAmount,
-      taxAmount: 0,
-      orderDate: supplierObject['createdDate'],
-      expectedFinishDate: supplierObject['expectedFinishedDate'],
-      finishedDate: undefined,
-      createdAt: new Date(),
-      updatedAt: undefined,
-      deletedAt: undefined,
-    };
+
+    // const purchaseOrderObject: CreatePurchaseOrderDto = {
+    //   previousId: undefined,
+    //   PONumber: undefined,
+    //   quarterlyProductionPlanId: undefined,
+    //   purchasingStaffId: undefined,
+    //   shippingAddress: '',
+    //   status: '',
+    //   currency: '',
+    //   totalAmount: totalAmount,
+    //   taxAmount: 0,
+    //   orderDate: supplierObject['createdDate'],
+    //   expectedFinishDate: supplierObject['expectedFinishedDate'],
+    //   finishedDate: undefined,
+    //   createdAt: new Date(),
+    //   updatedAt: undefined,
+    //   deletedAt: undefined,
+    // };
   }
 
   async validateItemTable(
@@ -1248,8 +1521,8 @@ export class ExcelService {
         text?: any;
       }
     >,
-    itemList: any[],
     itemTable: any,
+    itemListResult: any[],
   ) {
     const header = itemTable.table.columns.map((column: any) => column.name);
     //Check if header is valid
@@ -1273,6 +1546,9 @@ export class ExcelService {
         priceCell: row.getCell(4),
         totalCell: row.getCell(5),
       };
+      console.log('itemCell', itemCell.descriptionCell.value);
+      console.log('itemCell', itemCell.quantityCell.value);
+      console.log('itemCell', itemCell.priceCell.value);
       if (
         isEmpty(itemCell.itemIdCell.value) &&
         isEmpty(itemCell.descriptionCell.value) &&
@@ -1442,18 +1718,26 @@ export class ExcelService {
         }
 
         if (!errorFlag) {
-          itemList.push({
-            itemId: itemCell.itemIdCell.value,
-            description: itemCell.descriptionCell.value,
-            quantity: itemCell.quantityCell.value,
-            price: itemCell.priceCell.value,
-            total: itemCell.totalCell.value,
+          itemListResult.push({
+            material_id: itemCell.itemIdCell.value as string,
+            quantity: itemCell.quantityCell.value as number,
+            total_ammount: this.getTotalCellValue(itemCell.totalCell),
           });
         }
       }
-      // Check if item name is empty
     }
   }
+
+  getTotalCellValue = (totalCellValue: any): number => {
+    if (
+      totalCellValue &&
+      typeof totalCellValue === 'object' &&
+      'result' in totalCellValue
+    ) {
+      return totalCellValue.result;
+    }
+    return totalCellValue;
+  };
 
   //Extract vetical table from excel
   extractVerticalTable(table: any, worksheet: any) {
@@ -1493,3 +1777,5 @@ export class ExcelService {
 }
 
 //Reminder: Lam tiep cai checkSupplierValidation cho tung row
+
+//Every day, i wonder the existence of my life.
