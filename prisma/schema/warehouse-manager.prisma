@@ -1,8 +1,10 @@
-model warehouse_manager {
-  id         String    @id @db.Uuid
-  user_id    String?   @db.Uuid
-  create_at  DateTime? @db.Timestamp(6)
-  update_at  DateTime? @db.Timestamp(6)
-  deleted_at DateTime? @db.Timestamp(6)
-  users      User?     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model WarehouseManager {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  userId    String?   @map("user_id") @db.Uuid
+  createdAt DateTime? @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamp(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamp(6)
+  users     User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("warehouse_manager")
 }

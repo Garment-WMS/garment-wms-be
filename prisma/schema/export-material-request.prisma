@@ -1,21 +1,25 @@
-model export_material_request {
-  id                       String                          @id @db.Uuid
-  production_department_id String?                         @db.Uuid
-  status                   export_material_request_status?
-  expected_deliver_date    DateTime?                       @db.Date
-  deliver_date             DateTime?                       @db.Date
-  reserve_percent_id       String?                         @db.Uuid
-  create_at                DateTime?                       @db.Timestamptz(6)
-  update_at                DateTime?                       @db.Timestamptz(6)
-  deleted_at               DateTime?                       @db.Timestamptz(6)
-  production_department    production_department?          @relation(fields: [production_department_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  reserve_percent          reserve_percent?                @relation(fields: [reserve_percent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model ExportMaterialRequest {
+  id                     String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  productionDepartmentId String?                      @db.Uuid
+  reservePercentId       String?                      @db.Uuid
+  status                 ExportMaterialRequestStatus?
+  expectedDeliverDate    DateTime?                    @db.Date
+  deliverDate            DateTime?                    @db.Date
+  createdAt              DateTime?                    @db.Timestamptz(6)
+  updatedAt              DateTime?                    @db.Timestamptz(6)
+  deletedAt              DateTime?                    @db.Timestamptz(6)
+  productionDepartment   ProductionDepartment?        @relation(fields: [productionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reservePercent         ReservePercent?              @relation(fields: [reservePercentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("export_material_request")
 }
 
-enum export_material_request_status {
+enum ExportMaterialRequestStatus {
   PENDING
   REJECTED
   APPROVED
   IN_PROGRESS
   FINISHED
+
+  @@map("export_material_request_status")
 }

@@ -1,12 +1,14 @@
-model product_receipt {
-  id                String          @id @db.Uuid
-  product_id        String?         @db.Uuid
-  import_receipt_id String?         @db.Uuid
-  quantity          Float?
-  expire_date       DateTime?       @db.Timestamptz(6)
-  create_at         DateTime?       @db.Timestamptz(6)
-  update_at         DateTime?       @db.Timestamptz(6)
-  deleted_at        DateTime?       @db.Timestamptz(6)
-  import_receipt    import_receipt? @relation(fields: [import_receipt_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  product           product?        @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model ProductReceipt {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  productId       String?        @map("product_id") @db.Uuid
+  importReceiptId String?        @map("import_receipt_id") @db.Uuid
+  quantity        Float?         @map("quantity")
+  expireDate      DateTime?      @map("expire_date") @db.Timestamptz(6)
+  createdAt       DateTime?      @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime?      @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  importReceipt   ImportReceipt? @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product         Product?       @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("product_receipt")
 }

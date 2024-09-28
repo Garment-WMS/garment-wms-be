@@ -1,9 +1,11 @@
-model reserve_percent {
-  id                          String                        @id @db.Uuid
-  percent                     Float?
-  create_at                   DateTime?                     @db.Timestamptz(6)
-  update_at                   DateTime?                     @db.Timestamptz(6)
-  deleted_at                  DateTime?                     @db.Timestamptz(6)
-  export_material_request     export_material_request[]
-  quarterly_production_detail quarterly_production_detail[]
+model ReservePercent {
+  id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  percent                   Float?                      @map("percent")
+  createdAt                 DateTime?                   @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime?                   @map("updated_at") @db.Timestamptz(6)
+  deletedAt                 DateTime?                   @map("deleted_at") @db.Timestamptz(6)
+  exportMaterialRequest     ExportMaterialRequest[]
+  quarterlyProductionDetail QuarterlyProductionDetail[]
+
+  @@map("reserve_percent")
 }

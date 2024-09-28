@@ -1,9 +1,11 @@
-model store_unit {
-  id         String     @id @db.Uuid
-  name       String?    @db.VarChar
-  create_at  DateTime?  @db.Timestamp(6)
-  update_at  DateTime?  @db.Timestamp(6)
-  deleted_at DateTime?  @db.Timestamp(6)
-  material   material[]
-  product    product[]
+model StoreUnit {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  name      String?    @map("name") @db.VarChar
+  createdAt DateTime?  @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime?  @map("updated_at") @db.Timestamp(6)
+  deletedAt DateTime?  @map("deleted_at") @db.Timestamp(6)
+  material  Material[]
+  product   Product[]
+
+  @@map("store_unit")
 }

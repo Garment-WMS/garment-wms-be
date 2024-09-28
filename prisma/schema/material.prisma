@@ -1,35 +1,37 @@
-model material {
-  id                             String                           @id @db.Uuid
-  material_type_id               String?                          @db.Uuid
-  name                           String?                          @db.VarChar
-  code                           String?                          @unique @db.VarChar
-  width                          Float?
-  height                         Float?
-  length                         Float?
-  min_quantity                   Float?
-  unit_id                        String?                          @db.Uuid
-  store_unit_id                  String?                          @db.Uuid
-  unit_per_store_unit            Float?
-  store_unit_per_cell            Float?
-  quantity_per_store_unit        Float?
-  width_per_store_unit           Float?
-  height_per_store_unit          Float?
-  length_per_store_unit          Float?
-  weight_per_store_unit          Float?
-  create_at                      DateTime?                        @db.Timestamptz(6)
-  update_at                      DateTime?                        @db.Timestamptz(6)
-  deleted_at                     DateTime?                        @db.Timestamptz(6)
-  delivery_note_detail           delivery_note_detail[]
-  export_material_request_detail export_material_request_detail[]
-  import_request_detail          import_request_detail[]
-  inspection_report_detail       inspection_report_detail[]
-  material_type                  material_type?                   @relation(fields: [material_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  store_unit                     store_unit?                      @relation(fields: [store_unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  unit                           unit?                            @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  material_attribute             material_attribute[]
-  material_inspection_criteria   material_inspection_criteria[]
-  material_receipt               material_receipt[]
-  material_supplier              material_supplier[]
-  po_receipt_detail              po_receipt_detail[]
-  product_formula                product_formula[]
+model Material {
+  id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialTypeId              String?                       @map("material_type_id") @db.Uuid
+  unitId                      String?                       @map("unit_id") @db.Uuid
+  storeUnitId                 String?                       @map("store_unit_id") @db.Uuid
+  name                        String?                       @db.VarChar
+  code                        String?                       @unique @db.VarChar
+  width                       Float?
+  height                      Float?
+  length                      Float?
+  minQuantity                 Float?                        @map("min_quantity")
+  unitPerStoreUnit            Float?                        @map("unit_per_store_unit")
+  storeUnitPerCell            Float?                        @map("store_unit_per_cell")
+  quantityPerStoreUnit        Float?                        @map("quantity_per_store_unit")
+  widthPerStoreUnit           Float?                        @map("width_per_store_unit")
+  heightPerStoreUnit          Float?                        @map("height_per_store_unit")
+  lengthPerStoreUnit          Float?                        @map("length_per_store_unit")
+  weightPerStoreUnit          Float?                        @map("weight_per_store_unit")
+  createdAt                   DateTime?                     @map("created_at") @db.Timestamptz(6)
+  updatedAt                   DateTime?                     @map("updated_at") @db.Timestamptz(6)
+  deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
+  deliveryNoteDetail          DeliveryNoteDetail[]
+  exportMaterialRequestDetail ExportMaterialRequestDetail[]
+  importRequestDetail         ImportRequestDetail[]
+  inspectionReportDetail      InspectionReportDetail[]
+  materialType                MaterialType?                 @relation(fields: [materialTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  storeUnit                   StoreUnit?                    @relation(fields: [storeUnitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit                        Unit?                         @relation(fields: [unitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialAttribute           MaterialAttribute[]
+  materialInspectionCriteria  MaterialInspectionCriteria[]
+  materialReceipt             MaterialReceipt[]
+  materialSupplier            MaterialSupplier[]
+  poReceiptDetail             PoReceiptDetail[]
+  productFormula              ProductFormula[]
+
+  @@map("material")
 }

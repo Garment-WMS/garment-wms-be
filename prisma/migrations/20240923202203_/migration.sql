@@ -39,8 +39,8 @@ CREATE TABLE "annual_production_detail" (
     "note" VARCHAR,
     "start_date" DATE,
     "finish_date" DATE,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "annual_production_detail_pkey" PRIMARY KEY ("id")
@@ -57,8 +57,8 @@ CREATE TABLE "annual_production_plan" (
     "expected_end_date" DATE,
     "start_date" DATE,
     "finish_date" DATE,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "annual_production_plan_pkey" PRIMARY KEY ("id")
@@ -83,8 +83,8 @@ CREATE TABLE "delivery_note_detail" (
     "material_id" UUID,
     "product_id" UUID,
     "quantity" DOUBLE PRECISION,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "delivery_note_detail_pkey" PRIMARY KEY ("id")
@@ -95,8 +95,8 @@ CREATE TABLE "delivery_note" (
     "id" UUID NOT NULL,
     "po_receipt_id" UUID,
     "warehouse_staff_id" UUID,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "delivery_note_pkey" PRIMARY KEY ("id")
@@ -107,8 +107,8 @@ CREATE TABLE "export_material_request_detail" (
     "id" UUID NOT NULL,
     "material_id" UUID,
     "quantity" DOUBLE PRECISION,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "export_material_request_detail_pkey" PRIMARY KEY ("id")
@@ -122,8 +122,8 @@ CREATE TABLE "export_material_request" (
     "expected_deliver_date" DATE,
     "deliver_date" DATE,
     "reserve_percent_id" UUID,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "export_material_request_pkey" PRIMARY KEY ("id")
@@ -133,8 +133,8 @@ CREATE TABLE "export_material_request" (
 CREATE TABLE "factory_director" (
     "id" UUID NOT NULL,
     "user_id" UUID,
-    "create_at" TIMESTAMP(6),
-    "update_at" TIMESTAMP(6),
+    "created_at" TIMESTAMP(6),
+    "updated_at" TIMESTAMP(6),
     "deleted_at" TIMESTAMP(6),
 
     CONSTRAINT "factory_director_pkey" PRIMARY KEY ("id")
@@ -146,8 +146,8 @@ CREATE TABLE "import_receipt" (
     "warehouse_staff_id" UUID,
     "start_at" TIMESTAMPTZ(6),
     "finish_at" TIMESTAMPTZ(6),
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "import_receipt_pkey" PRIMARY KEY ("id")
@@ -160,8 +160,8 @@ CREATE TABLE "import_request_detail" (
     "material_id" UUID,
     "product_id" UUID,
     "quantity" DOUBLE PRECISION,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "import_request_detail_pkey" PRIMARY KEY ("id")
@@ -177,8 +177,8 @@ CREATE TABLE "import_request" (
     "to" VARCHAR,
     "start_at" TIMESTAMPTZ(6),
     "finish_at" TIMESTAMPTZ(6),
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "import_request_pkey" PRIMARY KEY ("id")
@@ -188,8 +188,8 @@ CREATE TABLE "import_request" (
 CREATE TABLE "inspection_department" (
     "id" UUID NOT NULL,
     "user_id" UUID,
-    "create_at" TIMESTAMP(6),
-    "update_at" TIMESTAMP(6),
+    "created_at" TIMESTAMP(6),
+    "updated_at" TIMESTAMP(6),
     "deleted_at" TIMESTAMP(6),
 
     CONSTRAINT "inspection_department_pkey" PRIMARY KEY ("id")
@@ -203,8 +203,8 @@ CREATE TABLE "inspection_report_detail" (
     "inspected_quantity" DOUBLE PRECISION,
     "defect_quantity" DOUBLE PRECISION,
     "approved_quantity" DOUBLE PRECISION,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "inspection_report_detail_pkey" PRIMARY KEY ("id")
@@ -215,8 +215,8 @@ CREATE TABLE "inspection_report" (
     "id" UUID NOT NULL,
     "inspection_department_id" UUID,
     "code" VARCHAR,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "inspection_report_pkey" PRIMARY KEY ("id")
@@ -230,8 +230,8 @@ CREATE TABLE "inspection_request" (
     "delivery_note_id" UUID,
     "notation" TEXT,
     "status" "inspection_request_status",
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "inspection_request_pkey" PRIMARY KEY ("id")
@@ -253,8 +253,8 @@ CREATE TABLE "material_attribute" (
 CREATE TABLE "material_export" (
     "id" UUID NOT NULL,
     "quantity" DOUBLE PRECISION,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "material_export_pkey" PRIMARY KEY ("id")
@@ -267,8 +267,8 @@ CREATE TABLE "material_inspection_criteria" (
     "name" VARCHAR,
     "code" VARCHAR,
     "criteria" VARCHAR,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "material_inspection_criteria_pkey" PRIMARY KEY ("id")
@@ -279,8 +279,8 @@ CREATE TABLE "material_supplier" (
     "id" UUID NOT NULL,
     "material_id" UUID,
     "supplier_id" UUID,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "material_supplier_pkey" PRIMARY KEY ("id")
@@ -291,8 +291,8 @@ CREATE TABLE "material_type" (
     "id" UUID NOT NULL,
     "name" VARCHAR,
     "code" VARCHAR,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "material_type_pkey" PRIMARY KEY ("id")
@@ -317,8 +317,8 @@ CREATE TABLE "material" (
     "height_per_store_unit" DOUBLE PRECISION,
     "length_per_store_unit" DOUBLE PRECISION,
     "weight_per_store_unit" DOUBLE PRECISION,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "material_pkey" PRIMARY KEY ("id")
@@ -331,8 +331,8 @@ CREATE TABLE "material_receipt" (
     "import_receipt_id" UUID,
     "quantity" DOUBLE PRECISION,
     "expire_date" TIMESTAMPTZ(6),
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "material_receipt_pkey" PRIMARY KEY ("id")
@@ -360,8 +360,8 @@ CREATE TABLE "po_receipt_detail" (
     "quantity" DOUBLE PRECISION,
     "total_ammount" DOUBLE PRECISION,
     "expire_date" TIMESTAMPTZ(6),
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "po_receipt_detail_pkey" PRIMARY KEY ("id")
@@ -377,8 +377,8 @@ CREATE TABLE "po_receipt" (
     "expected_deliver_date" DATE,
     "deliver_date" DATE,
     "status" "po_receipt_status",
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "po_receipt_pkey" PRIMARY KEY ("id")
@@ -390,8 +390,8 @@ CREATE TABLE "product_formula" (
     "product_id" UUID,
     "material_id" UUID,
     "quantity" DOUBLE PRECISION,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "product_formula_pkey" PRIMARY KEY ("id")
@@ -404,8 +404,8 @@ CREATE TABLE "product_inspection_criteria" (
     "name" VARCHAR,
     "code" VARCHAR,
     "criteria" VARCHAR,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "product_inspection_criteria_pkey" PRIMARY KEY ("id")
@@ -418,8 +418,8 @@ CREATE TABLE "product_receipt" (
     "import_receipt_id" UUID,
     "quantity" DOUBLE PRECISION,
     "expire_date" TIMESTAMPTZ(6),
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "product_receipt_pkey" PRIMARY KEY ("id")
@@ -430,8 +430,8 @@ CREATE TABLE "product_type" (
     "id" UUID NOT NULL,
     "name" VARCHAR,
     "code" VARCHAR,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "product_type_pkey" PRIMARY KEY ("id")
@@ -456,8 +456,8 @@ CREATE TABLE "product" (
     "height_per_store_unit" DOUBLE PRECISION,
     "length_per_store_unit" DOUBLE PRECISION,
     "weight_per_store_unit" DOUBLE PRECISION,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "product_pkey" PRIMARY KEY ("id")
@@ -469,8 +469,8 @@ CREATE TABLE "product_attribute" (
     "product_id" UUID,
     "name" VARCHAR,
     "value" VARCHAR,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "product_attribute_pkey" PRIMARY KEY ("id")
@@ -480,8 +480,8 @@ CREATE TABLE "product_attribute" (
 CREATE TABLE "production_department" (
     "id" UUID NOT NULL,
     "user_id" UUID,
-    "create_at" TIMESTAMP(6),
-    "update_at" TIMESTAMP(6),
+    "created_at" TIMESTAMP(6),
+    "updated_at" TIMESTAMP(6),
     "deleted_at" TIMESTAMP(6),
 
     CONSTRAINT "production_department_pkey" PRIMARY KEY ("id")
@@ -495,8 +495,8 @@ CREATE TABLE "production_patch_order" (
     "expected_start_date" DATE,
     "expected_finish_date" DATE,
     "status" "production_patch_order_status",
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "production_patch_order_pkey" PRIMARY KEY ("id")
@@ -516,8 +516,8 @@ CREATE TABLE "purchase_order" (
     "expected_finish_date" DATE,
     "finish_date" DATE,
     "status" "purchase_order_status",
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "purchase_order_pkey" PRIMARY KEY ("id")
@@ -527,8 +527,8 @@ CREATE TABLE "purchase_order" (
 CREATE TABLE "purchasing_staff" (
     "id" UUID NOT NULL,
     "user_id" UUID,
-    "create_at" TIMESTAMP(6),
-    "update_at" TIMESTAMP(6),
+    "created_at" TIMESTAMP(6),
+    "updated_at" TIMESTAMP(6),
     "deleted_at" TIMESTAMP(6),
 
     CONSTRAINT "purchasing_staff_pkey" PRIMARY KEY ("id")
@@ -540,8 +540,8 @@ CREATE TABLE "quantity_report_detail" (
     "quantity_report_id" UUID,
     "storage_quantity" DOUBLE PRECISION,
     "recorded_quantity" DOUBLE PRECISION,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "quantity_report_detail_pkey" PRIMARY KEY ("id")
@@ -552,8 +552,8 @@ CREATE TABLE "quantity_report_plan" (
     "id" UUID NOT NULL,
     "quantity_report_id" UUID,
     "date" DATE,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "quantity_report_plan_pkey" PRIMARY KEY ("id")
@@ -563,8 +563,8 @@ CREATE TABLE "quantity_report_plan" (
 CREATE TABLE "quantity_report_type" (
     "id" UUID NOT NULL,
     "name" VARCHAR,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "quantity_report_type_pkey" PRIMARY KEY ("id")
@@ -578,8 +578,8 @@ CREATE TABLE "quantity_report" (
     "recorded_quantity" DOUBLE PRECISION,
     "quantity_disparity" DOUBLE PRECISION,
     "description" TEXT,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "quantity_report_pkey" PRIMARY KEY ("id")
@@ -598,8 +598,8 @@ CREATE TABLE "quarterly_production_detail" (
     "start_date" DATE,
     "finish_date" DATE,
     "expected_ship_date" DATE,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "quarterly_production_detail_pkey" PRIMARY KEY ("id")
@@ -614,8 +614,8 @@ CREATE TABLE "quarterly_production_plan" (
     "status" "production_status",
     "start_date" DATE,
     "finish_date" DATE,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "quarterly_production_plan_pkey" PRIMARY KEY ("id")
@@ -638,8 +638,8 @@ CREATE TABLE "refresh_tokens" (
 CREATE TABLE "reserve_percent" (
     "id" UUID NOT NULL,
     "percent" DOUBLE PRECISION,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "reserve_percent_pkey" PRIMARY KEY ("id")
@@ -649,8 +649,8 @@ CREATE TABLE "reserve_percent" (
 CREATE TABLE "store_unit" (
     "id" UUID NOT NULL,
     "name" VARCHAR,
-    "create_at" TIMESTAMP(6),
-    "update_at" TIMESTAMP(6),
+    "created_at" TIMESTAMP(6),
+    "updated_at" TIMESTAMP(6),
     "deleted_at" TIMESTAMP(6),
 
     CONSTRAINT "store_unit_pkey" PRIMARY KEY ("id")
@@ -666,8 +666,8 @@ CREATE TABLE "supplier" (
     "email" VARCHAR,
     "phone_number" VARCHAR,
     "fax" VARCHAR,
-    "create_at" TIMESTAMPTZ(6),
-    "update_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6),
+    "updated_at" TIMESTAMPTZ(6),
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "supplier_pkey" PRIMARY KEY ("id")
@@ -685,8 +685,8 @@ CREATE TABLE "temp" (
 CREATE TABLE "unit" (
     "id" UUID NOT NULL,
     "name" VARCHAR,
-    "create_at" TIMESTAMP(6),
-    "update_at" TIMESTAMP(6),
+    "created_at" TIMESTAMP(6),
+    "updated_at" TIMESTAMP(6),
     "deleted_at" TIMESTAMP(6),
 
     CONSTRAINT "unit_pkey" PRIMARY KEY ("id")
@@ -719,8 +719,8 @@ CREATE TABLE "users" (
 CREATE TABLE "warehouse_manager" (
     "id" UUID NOT NULL,
     "user_id" UUID,
-    "create_at" TIMESTAMP(6),
-    "update_at" TIMESTAMP(6),
+    "created_at" TIMESTAMP(6),
+    "updated_at" TIMESTAMP(6),
     "deleted_at" TIMESTAMP(6),
 
     CONSTRAINT "warehouse_manager_pkey" PRIMARY KEY ("id")
@@ -730,8 +730,8 @@ CREATE TABLE "warehouse_manager" (
 CREATE TABLE "warehouse_staff" (
     "id" UUID NOT NULL,
     "user_id" UUID,
-    "create_at" TIMESTAMP(6),
-    "update_at" TIMESTAMP(6),
+    "created_at" TIMESTAMP(6),
+    "updated_at" TIMESTAMP(6),
     "deleted_at" TIMESTAMP(6),
 
     CONSTRAINT "warehouse_staff_pkey" PRIMARY KEY ("id")

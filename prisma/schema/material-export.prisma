@@ -1,7 +1,9 @@
-model material_export {
-  id         String    @id @db.Uuid
-  quantity   Float?
-  create_at  DateTime? @db.Timestamptz(6)
-  update_at  DateTime? @db.Timestamptz(6)
-  deleted_at DateTime? @db.Timestamptz(6)
+model MaterialExport {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  quantity  Float?    @map("quantity")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@map("material_export")
 }

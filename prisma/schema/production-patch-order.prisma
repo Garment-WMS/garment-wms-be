@@ -1,18 +1,22 @@
-model production_patch_order {
-  id                             String                         @id @db.Uuid
-  quarterly_production_detail_id String?                        @db.Uuid
-  quantity_to_produce            Float?
-  expected_start_date            DateTime?                      @db.Date
-  expected_finish_date           DateTime?                      @db.Date
-  status                         production_patch_order_status?
-  create_at                      DateTime?                      @db.Timestamptz(6)
-  update_at                      DateTime?                      @db.Timestamptz(6)
-  deleted_at                     DateTime?                      @db.Timestamptz(6)
-  quarterly_production_detail    quarterly_production_detail?   @relation(fields: [quarterly_production_detail_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model ProductionPatchOrder {
+  id                          String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  quarterlyProductionDetailId String?                     @map("quarterly_production_detail_id") @db.Uuid
+  quantityToProduce           Float?                      @map("quantity_to_produce")
+  expectedStartDate           DateTime?                   @map("expected_start_date") @db.Date
+  expectedFinishDate          DateTime?                   @map("expected_finish_date") @db.Date
+  status                      ProductionPatchOrderStatus? @map("status")
+  createdAt                   DateTime?                   @map("created_at") @db.Timestamptz(6)
+  updatedAt                   DateTime?                   @map("updated_at") @db.Timestamptz(6)
+  deletedAt                   DateTime?                   @map("deleted_at") @db.Timestamptz(6)
+  quarterlyProductionDetail   QuarterlyProductionDetail?  @relation(fields: [quarterlyProductionDetailId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("production_patch_order")
 }
 
-enum production_patch_order_status {
+enum ProductionPatchOrderStatus {
   IN_PROGRESS
   CANCELLED
   FINISHED
+
+  @@map("production_patch_order_status")
 }

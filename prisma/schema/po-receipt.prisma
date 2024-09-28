@@ -1,22 +1,26 @@
-model po_receipt {
-  id                    String              @id @db.Uuid
-  purchase_order_id     String?             @db.Uuid
-  total_ammount         Float?
-  tax_amount            Float?
-  order_date            DateTime?           @db.Date
-  expected_deliver_date DateTime?           @db.Date
-  deliver_date          DateTime?           @db.Date
-  status                po_receipt_status?
-  create_at             DateTime?           @db.Timestamptz(6)
-  update_at             DateTime?           @db.Timestamptz(6)
-  deleted_at            DateTime?           @db.Timestamptz(6)
-  delivery_note         delivery_note[]
-  purchase_order        purchase_order?     @relation(fields: [purchase_order_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  po_receipt_detail     po_receipt_detail[]
+model PoReceipt {
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  purchaseOrderId     String?           @map("purchase_order_id") @db.Uuid
+  totalAmount         Float?            @map("total_ammount")
+  taxAmount           Float?            @map("tax_amount")
+  orderDate           DateTime?         @map("order_date") @db.Date
+  expectedDeliverDate DateTime?         @map("expected_deliver_date") @db.Date
+  deliverDate         DateTime?         @map("deliver_date") @db.Date
+  status              PoReceiptStatus?  @map("status")
+  createdAt           DateTime?         @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime?         @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  deliveryNote        DeliveryNote[]
+  purchaseOrder       PurchaseOrder?    @relation(fields: [purchaseOrderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  poReceiptDetail     PoReceiptDetail[]
+
+  @@map("po_receipt")
 }
 
-enum po_receipt_status {
+enum PoReceiptStatus {
   PENDING
   FINISHED
   CANCELLED
+
+  @@map("po_receipt_status")
 }

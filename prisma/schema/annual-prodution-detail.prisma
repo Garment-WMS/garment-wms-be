@@ -1,16 +1,18 @@
-model annual_production_detail {
-  id                        String                  @id @db.Uuid
-  annual_production_plan_id String?                 @db.Uuid
-  product_id                String?                 @db.Uuid
-  demand_quantity           Float?
-  starting_quantity         Float?
-  quantity_to_produce       Float?
-  note                      String?                 @db.VarChar
-  start_date                DateTime?               @db.Date
-  finish_date               DateTime?               @db.Date
-  create_at                 DateTime?               @db.Timestamptz(6)
-  update_at                 DateTime?               @db.Timestamptz(6)
-  deleted_at                DateTime?               @db.Timestamptz(6)
-  annual_production_plan    annual_production_plan? @relation(fields: [annual_production_plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  product                   product?                @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model AnnualProductionDetail {
+  id                     String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  annualProductionPlanId String?               @map("annual_production_plan_id") @db.Uuid
+  productId              String?               @map("product_id") @db.Uuid
+  demandQuantity         Float?                @map("demand_quantity")
+  startingQuantity       Float?                @map("starting_quantity")
+  quantityToProduce      Float?                @map("quantity_to_produce")
+  note                   String?               @db.VarChar
+  startDate              DateTime?             @map("start_date") @db.Date
+  finishDate             DateTime?             @map("finish_date") @db.Date
+  createdAt              DateTime?             @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime?             @map("updated_at") @db.Timestamptz(6)
+  deletedAt              DateTime?             @map("deleted_at") @db.Timestamptz(6)
+  annualProductionPlan   AnnualProductionPlan? @relation(fields: [annualProductionPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product                Product?              @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("annual_production_detail")
 }
