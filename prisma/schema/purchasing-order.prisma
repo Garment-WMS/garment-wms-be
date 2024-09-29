@@ -16,7 +16,7 @@ model PurchaseOrder {
   updatedAt                 DateTime?            @map("updated_at") @db.Timestamptz(6)
   deletedAt                 DateTime?            @map("deleted_at") @db.Timestamptz(6)
 
-  poReceipt               PoReceipt[]
+  poDelivery              PoDelivery[]
   purchasingStaff         PurchasingStaff?         @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   quarterlyProductionPlan QuarterlyProductionPlan? @relation(fields: [quarterlyProductionPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   supplier                Supplier?                @relation(fields: [supplierId], references: [id], onDelete: NoAction, onUpdate: NoAction)

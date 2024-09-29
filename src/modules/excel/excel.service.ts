@@ -360,7 +360,7 @@ export class ExcelService {
             }
 
             if (!errorFlag) {
-              deliveryBatchInfo.expected_deliver_date = value;
+              deliveryBatchInfo.expectedDeliverDate = value;
             }
           }
           break;
@@ -413,7 +413,7 @@ export class ExcelService {
             }
 
             if (!errorFlag) {
-              deliveryBatchInfo.deliver_date = value;
+              deliveryBatchInfo.deliverDate = value;
             }
           }
           break;
@@ -447,7 +447,7 @@ export class ExcelService {
             }
 
             if (!errorFlag) {
-              deliveryBatchInfo.is_extra = value;
+              deliveryBatchInfo.isExtra = value;
             }
           }
           break;
@@ -483,7 +483,7 @@ export class ExcelService {
       if (supplierValue[i][0].value.includes('Company Code')) {
         supplier = await this.prismaService.supplier.findUnique({
           where: {
-            supplier_code: supplierValue[i][1].value,
+            supplierCode: supplierValue[i][1].value,
           },
         });
         if (isEmpty(supplier)) {
@@ -502,20 +502,19 @@ export class ExcelService {
             text,
           );
         } else {
-          console.log('supplier', supplier.id);
           if (!purchaseOrderObject.Supplier) {
             purchaseOrderObject.Supplier = {
               id: undefined,
-              supplier_name: '',
-              supplier_code: '',
+              supplierName: '',
+              supplierCode: '',
               address: '',
-              phone_number: '',
+              phoneNumber: '',
               fax: '',
               email: '',
-              representative_name: '',
-              create_at: new Date(),
-              update_at: new Date(),
-              deleted_at: null,
+              representativeName: '',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              deletedAt: null,
             }; // Initialize Supplier if it is undefined
           }
           purchaseOrderObject.Supplier.id = supplier.id;
