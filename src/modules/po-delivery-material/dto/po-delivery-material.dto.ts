@@ -1,14 +1,14 @@
-import { po_receipt_detail } from '@prisma/client';
+import { PoDeliveryDetail } from '@prisma/client';
 
-export class PoDeliveryMaterialDto implements po_receipt_detail {
+export class PoDeliveryMaterialDto implements PoDeliveryDetail {
   id: string;
-  po_receipt_id: string;
-  material_id: string;
-  product_id: string;
+  poDeliveryId: string;
+  materialId: string;
+  productId: string;
   quantity: number;
-  total_ammount: number;
-  expire_date: Date;
-  create_at: Date;
-  update_at: Date;
-  deleted_at: Date;
+  totalAmount: number;
+  expireDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date;
 }
