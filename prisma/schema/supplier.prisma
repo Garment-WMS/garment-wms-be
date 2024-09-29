@@ -12,4 +12,6 @@ model Supplier {
   deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   PurchaseOrder PurchaseOrder[]
+
+  @@map("supplier")
 }
