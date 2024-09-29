@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PoDeliveryService } from './po_delivery.service';
+import { PoDeliveryService } from './po-delivery.service';
 import { PoDeliveryController } from './po_delivery.controller';
 
 @Module({
