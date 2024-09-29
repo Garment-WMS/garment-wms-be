@@ -1,12 +1,13 @@
-model ProductionDepartment {
+model WarehouseStaff {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   userId    String?   @map("user_id") @db.Uuid
   createdAt DateTime? @map("created_at") @db.Timestamp(6)
   updatedAt DateTime? @map("updated_at") @db.Timestamp(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamp(6)
 
-  exportMaterialRequests ExportMaterialRequest[]
-  users                  User?                   @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  importReceipt ImportReceipt[]
+  importRequest ImportRequest[]
+  users         User?           @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@map("production_department")
+  @@map("warehouse_staff")
 }

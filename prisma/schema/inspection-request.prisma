@@ -1,21 +1,25 @@
-model inspection_request {
-  id                       String                     @id @db.Uuid
-  purchasing_staff_id      String?                    @db.Uuid
-  inspection_department_id String?                    @db.Uuid
-  delivery_note_id         String?                    @db.Uuid
-  notation                 String?
-  status                   inspection_request_status?
-  create_at                DateTime?                  @db.Timestamptz(6)
-  update_at                DateTime?                  @db.Timestamptz(6)
-  deleted_at               DateTime?                  @db.Timestamptz(6)
-  delivery_note            delivery_note?             @relation(fields: [delivery_note_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  inspection_department    inspection_department?     @relation(fields: [inspection_department_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  purchasing_staff         purchasing_staff?          @relation(fields: [purchasing_staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model InspectionRequest {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  purchasingStaffId      String?                  @map("purchasing_staff_id") @db.Uuid
+  inspectionDepartmentId String?                  @map("inspection_department_id") @db.Uuid
+  deliveryNoteId         String?                  @map("delivery_note_id") @db.Uuid
+  notation               String?
+  status                 InspectionRequestStatus?
+  createdAt              DateTime?                @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime?                @map("updated_at") @db.Timestamptz(6)
+  deletedAt              DateTime?                @map("deleted_at") @db.Timestamptz(6)
+
+  inspectionDepartment InspectionDepartment? @relation(fields: [inspectionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  purchasingStaff      PurchasingStaff?      @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("inspection_request")
 }
 
-enum inspection_request_status {
+enum InspectionRequestStatus {
   PENDING
   CANCELLED
   IN_PROGESS
   FINISHED
+
+  @@map("inspection_request_status")
 }

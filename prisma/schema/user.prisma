@@ -1,27 +1,28 @@
 model User {
-  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                 String                  @unique @map("email")
-  password              String                  @map("password")
-  username              String                  @map("username")
-  avatarUrl             String?                 @map("avatar_url")
-  cidId                 String?                 @map("cid_id") @db.Uuid
-  dateOfBirth           DateTime                @map("date_of_birth")
-  firstName             String                  @map("first_name")
-  gender                Gender                  @map("gender")
-  isDeleted             Boolean?                @default(false) @map("is_deleted")
-  isVerified            Boolean?                @default(false) @map("is_verified")
-  lastName              String                  @map("last_name")
-  phoneNumber           String                  @unique @map("phone_number")
-  status                String?                 @default("active") @map("status")
-  createdAt             DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
-  deletedAt             DateTime?               @map("deleted_at") @db.Timestamptz(6)
-  updatedAt             DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
-  factory_director      factory_director[]
-  inspection_department inspection_department[]
-  production_department production_department[]
-  purchasing_staff      purchasing_staff[]
-  warehouse_manager     warehouse_manager[]
-  warehouse_staff       warehouse_staff[]
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  email       String    @unique @map("email")
+  password    String    @map("password")
+  username    String    @map("username")
+  avatarUrl   String?   @map("avatar_url")
+  cidId       String?   @map("cid_id") @db.Uuid
+  dateOfBirth DateTime  @map("date_of_birth")
+  firstName   String    @map("first_name")
+  gender      Gender    @map("gender")
+  isDeleted   Boolean?  @default(false) @map("is_deleted")
+  isVerified  Boolean?  @default(false) @map("is_verified")
+  lastName    String    @map("last_name")
+  phoneNumber String    @unique @map("phone_number")
+  status      String?   @default("active") @map("status")
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  updatedAt   DateTime? @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  factory_director      FactoryDirector[]
+  inspection_department InspectionDepartment[]
+  production_department ProductionDepartment[]
+  purchasing_staff      PurchasingStaff[]
+  warehouse_manager     WarehouseManager[]
+  warehouse_staff       WarehouseStaff[]
 
   @@map("users")
 }

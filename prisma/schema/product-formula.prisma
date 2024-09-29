@@ -1,12 +1,15 @@
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model product_formula {
-  id          String    @id @db.Uuid
-  product_id  String?   @db.Uuid
-  material_id String?   @db.Uuid
-  quantity    Float?
-  create_at   DateTime? @db.Timestamptz(6)
-  update_at   DateTime? @db.Timestamptz(6)
-  deleted_at  DateTime? @db.Timestamptz(6)
-  material    material? @relation(fields: [material_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  product     product?  @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model ProductFormula {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  productId  String?   @map("product_id") @db.Uuid
+  materialId String?   @map("material_id") @db.Uuid
+  quantity   Float?    @map("quantity")
+  createdAt  DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime? @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  material Material? @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product  Product?  @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("product_formula")
 }

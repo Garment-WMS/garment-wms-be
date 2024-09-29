@@ -1,24 +1,29 @@
-model import_request {
-  id                    String                  @id @db.Uuid
-  delivery_note_id      String?                 @db.Uuid
-  warehouse_staff_id    String?                 @db.Uuid
-  status                import_request_status?
-  from                  String?                 @db.VarChar
-  to                    String?                 @db.VarChar
-  start_at              DateTime?               @db.Timestamptz(6)
-  finish_at             DateTime?               @db.Timestamptz(6)
-  create_at             DateTime?               @db.Timestamptz(6)
-  update_at             DateTime?               @db.Timestamptz(6)
-  deleted_at            DateTime?               @db.Timestamptz(6)
-  delivery_note         delivery_note?          @relation(fields: [delivery_note_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  warehouse_staff       warehouse_staff?        @relation(fields: [warehouse_staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  import_request_detail import_request_detail[]
+model ImportRequest {
+  id               String               @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  poReceiptId      String?              @map("po_receipt_id") @db.Uuid
+  warehouseStaffId String?              @map("warehouse_staff_id") @db.Uuid
+  status           ImportRequestStatus?
+  from             String?              @db.VarChar
+  to               String?              @db.VarChar
+  startAt          DateTime?            @map("start_at") @db.Timestamptz(6)
+  finishAt         DateTime?            @map("finish_at") @db.Timestamptz(6)
+  createdAt        DateTime?            @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime?            @map("updated_at") @db.Timestamptz(6)
+  deletedAt        DateTime?            @map("deleted_at") @db.Timestamptz(6)
+
+  poReceipt           PoReceipt?            @relation(fields: [poReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouseStaff      WarehouseStaff?       @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  importRequestDetail ImportRequestDetail[]
+
+  @@map("import_request")
 }
 
-enum import_request_status {
+enum ImportRequestStatus {
   PENDING
   REJECTED
   APPROVED
   IN_PROGRESS
   FINISHED
+
+  @@map("import_request_status")
 }

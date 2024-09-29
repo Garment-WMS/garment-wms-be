@@ -1,9 +1,13 @@
-model material_attribute {
-  id          String    @id @db.Uuid
-  material_id String?   @db.Uuid
-  name        String?   @db.VarChar
-  value       String?   @db.VarChar
-  created_at  DateTime? @db.Timestamptz(6)
-  updated_at  DateTime? @db.Timestamptz(6)
-  material    material? @relation(fields: [material_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model MaterialAttribute {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialId String?   @map("material_id") @db.Uuid
+  name       String?   @map("name") @db.VarChar
+  value      String?   @map("value") @db.VarChar
+  createdAt  DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime? @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  material Material? @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("material_attribute")
 }

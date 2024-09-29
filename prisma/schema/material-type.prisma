@@ -1,9 +1,11 @@
-model material_type {
-  id         String     @id @db.Uuid
-  name       String?    @db.VarChar
-  code       String?    @unique @db.VarChar
-  create_at  DateTime?  @db.Timestamptz(6)
-  update_at  DateTime?  @db.Timestamptz(6)
-  deleted_at DateTime?  @db.Timestamptz(6)
-  material   material[]
+model MaterialType {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  name      String?    @map("name") @db.VarChar
+  code      String?    @unique @map("code") @db.VarChar
+  createdAt DateTime?  @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime?  @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  material  Material[]
+
+  @@map("material_type")
 }
