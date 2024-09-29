@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { PoDeliveryMaterialService } from './po_delivery_material.service';
-import { PoDeliveryMaterialController } from './po_delivery_material.controller';
+import { PoDeliveryMaterialController } from './po-delivery-material.controller';
+import { PoDeliveryMaterialService } from './po-delivery-material.service';
 
 @Module({
   controllers: [PoDeliveryMaterialController],

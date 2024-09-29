@@ -15,7 +15,7 @@ model Product {
   annualProductionDetail    AnnualProductionDetail[]
   importRequestDetail       ImportRequestDetail[]
   inspectionReportDetail    InspectionReportDetail[]
-  poReceiptDetail           PoReceiptDetail[]
+  poDeliveryDetail          PoDeliveryDetail[]
   productType               ProductType?                @relation(fields: [productTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   unit                      Unit?                       @relation(fields: [unitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productAttribute          ProductAttribute[]

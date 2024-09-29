@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { CreatePoDeliveryMaterialDto } from './dto/create-po_delivery_material.dto';
-import { UpdatePoDeliveryMaterialDto } from './dto/update-po_delivery_material.dto';
+import { CreatePoDeliveryMaterialDto } from './dto/create-po-delivery-material.dto';
+import { UpdatePoDeliveryMaterialDto } from './dto/update-po-delivery-material.dto';
 
 @Injectable()
 export class PoDeliveryMaterialService {
