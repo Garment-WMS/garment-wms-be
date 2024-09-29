@@ -1,7 +1,7 @@
 model ImportReceipt {
   id               String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   warehouseStaffId String?   @map("warehouse_staff_id") @db.Uuid
-  poReceiptId      String?   @map("po_receipt_id") @db.Uuid
+  importRequestId  String?   @map("import_request_id") @db.Uuid
   startAt          DateTime? @map("start_at") @db.Timestamptz(6)
   finishAt         DateTime? @map("finish_at") @db.Timestamptz(6)
   createdAt        DateTime? @map("created_at") @db.Timestamptz(6)

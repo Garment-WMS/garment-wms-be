@@ -14,6 +14,8 @@ import { PrismaModule } from 'prisma/prisma.module';
 import { ExcelModule } from './modules/excel/excel.module';
 import { MaterialModule } from './modules/material/material.module';
 
+import { ImportRequestDetailModule } from './modules/import-request-detail/import-request-detail.module';
+import { ImportRequestModule } from './modules/import-request/import-request.module';
 import { PoDeliveryMaterialModule } from './modules/po-delivery-material/po-delivery-material.module';
 import { PoDeliveryModule } from './modules/po-delivery/po-delivery.module';
 import { PurchaseOrderModule } from './modules/purchase-order/purchase-order.module';
@@ -36,6 +38,8 @@ import { UserModule } from './modules/user/user.module';
     PoDeliveryModule,
     PoDeliveryMaterialModule,
     MaterialModule,
+    ImportRequestModule,
+    ImportRequestDetailModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],
