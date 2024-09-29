@@ -1,5 +1,5 @@
 import { $Enums, po_receipt } from '@prisma/client';
-import { PoDeliveryMaterialDto } from 'src/modules/po_delivery_material/dto/po_delivery_material.dto';
+import { PoDeliveryMaterialDto } from 'src/modules/po-delivery-material/dto/po-delivery-material.dto';
 
 export class PoDeliveryDto implements po_receipt {
   id: string;

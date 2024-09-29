@@ -34,13 +34,17 @@ import {
   compareArray,
   validateDate,
 } from 'src/common/utils/utils';
-import { PoDeliveryDto } from '../po_delivery/dto/po_delivery.dto';
-import { PoDeliveryMaterialDto } from '../po_delivery_material/dto/po_delivery_material.dto';
-import { CreatePurchaseOrderDto } from '../purchase_order/dto/create-purchase_order.dto';
+import { FirebaseService } from '../firebase/firebase.service';
+import { PoDeliveryMaterialDto } from '../po-delivery-material/dto/po-delivery-material.dto';
+import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
+import { CreatePurchaseOrderDto } from '../purchase-order/dto/create-purchase-order.dto';
 
 @Injectable()
 export class ExcelService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly firebaseService: FirebaseService,
+  ) {}
 
   async readExcel(file: Express.Multer.File) {
     if (!file) {
@@ -103,6 +107,10 @@ export class ExcelService {
       puchaseOrder,
     );
 
+    if (errorResponse) {
+      return errorResponse;
+    }
+
     const errorResponseDeliveryBatch = await this.validateDeliveryBatchSheet(
       workbook,
       deliveryBatchError,
@@ -110,11 +118,15 @@ export class ExcelService {
       deliveryBatch,
       puchaseOrder,
     );
-
-    console.log(deliveryBatch);
-    console.log(puchaseOrder);
-
-    return await workbook.xlsx.writeBuffer();
+    const timestamp = Date.now();
+    const fileName = `${timestamp}-${file.originalname}`;
+    const bufferResult = await workbook.xlsx.writeBuffer();
+    const nodeBuffer = Buffer.from(bufferResult);
+    const downloadUrl = await this.firebaseService.uploadBufferToStorage(
+      nodeBuffer,
+      fileName,
+    );
+    return downloadUrl;
   }
   async validateDeliveryBatchSheet(
     workbook: Workbook,

@@ -1,7 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { PoDeliveryService } from './po_delivery.service';
-import { CreatePoDeliveryDto } from './dto/create-po_delivery.dto';
-import { UpdatePoDeliveryDto } from './dto/update-po_delivery.dto';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import { CreatePoDeliveryDto } from './dto/create-po-delivery.dto';
+import { UpdatePoDeliveryDto } from './dto/update-po-delivery.dto';
+import { PoDeliveryService } from './po-delivery.service';
 
 @Controller('po-delivery')
 export class PoDeliveryController {
@@ -23,7 +31,10 @@ export class PoDeliveryController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePoDeliveryDto: UpdatePoDeliveryDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updatePoDeliveryDto: UpdatePoDeliveryDto,
+  ) {
     return this.poDeliveryService.update(+id, updatePoDeliveryDto);
   }
 
