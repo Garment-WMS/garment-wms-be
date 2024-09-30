@@ -3,7 +3,7 @@ model ImportRequestDetail {
   importRequestId String    @map("import_request_id") @db.Uuid
   materialId      String?   @map("material_id") @db.Uuid
   productId       String?   @map("product_id") @db.Uuid
-  quantity        Float?
+  quantityByUom   Float?    @map("quantity_by_uom")
   createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime? @map("updated_at") @db.Timestamptz(6)
   deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)

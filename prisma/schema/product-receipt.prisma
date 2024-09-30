@@ -2,7 +2,7 @@ model ProductReceipt {
   id              String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   productId       String    @map("product_id") @db.Uuid
   importReceiptId String    @map("import_receipt_id") @db.Uuid
-  quantity        Float     @map("quantity")
+  quantityByUom   Float?    @map("quantity_by_uom")
   importDate      DateTime? @map("import_date") @db.Timestamptz(6)
   expireDate      DateTime? @map("expire_date") @db.Timestamptz(6)
   createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
