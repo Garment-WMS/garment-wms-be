@@ -8,6 +8,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { UUID } from 'crypto';
+import { PoDeliveryDto } from 'src/modules/po-delivery/dto/po-delivery.dto';
 import { SupplierDto } from 'src/modules/supplier/dto/supplier.dto';
 
 export class CreatePurchaseOrderDto {
@@ -61,7 +62,7 @@ export class CreatePurchaseOrderDto {
 
   Supplier: SupplierDto;
 
-  poDelivery: Partial<PoDelivery>[];
+  poDelivery: Partial<PoDeliveryDto>[];
 
   createdAt: Date;
   updatedAt: Date;

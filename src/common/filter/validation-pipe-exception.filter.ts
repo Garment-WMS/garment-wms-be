@@ -2,7 +2,6 @@ import {
   ArgumentsHost,
   BadRequestException,
   Catch,
-  ExceptionFilter,
   HttpException,
   HttpStatus,
   Logger,
@@ -12,7 +11,6 @@ import { HttpAdapterHost } from '@nestjs/core';
 
 import { apiFailed } from '../dto/api-response';
 import { ApiResponse } from '../dto/response.dto';
-import { ValidationError } from 'class-validator';
 
 @Catch()
 export class ValidationPipeExceptionFilter extends ValidationPipe {

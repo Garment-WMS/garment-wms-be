@@ -1,8 +1,8 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { CreateMaterialDto } from './dto/create-material.dto';
-import { UpdateMaterialDto } from './dto/update-material.dto';
 
 @Injectable()
 export class MaterialService {
@@ -23,19 +23,48 @@ export class MaterialService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Material not created');
   }
 
-  findAll() {
-    return `This action returns all material`;
+  async findAll() {
+    const result = await this.prismaService.material.findMany();
+    return apiSuccess(HttpStatus.OK, result, 'List of Material');
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} material`;
+  async findByIdWithResponse(id: string) {
+    const result = await this.prismaService.material.findFirst({
+      where: { id },
+    });
+    if (result) {
+      return apiSuccess(HttpStatus.OK, result, 'Material found');
+    }
+    return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
   }
 
-  update(id: number, updateMaterialDto: UpdateMaterialDto) {
-    return `This action updates a #${id} material`;
+  async findById(id: string) {
+    if (!isUUID(id)) {
+      return null;
+    }
+    const result = await this.prismaService.material.findFirst({
+      where: { id },
+    });
+    return result;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} material`;
+  async findByMaterialCode(materialCode: string) {
+    const result = await this.prismaService.material.findFirst({
+      where: { code: materialCode },
+    });
+    if (result) {
+      return apiSuccess(HttpStatus.OK, result, 'Material found');
+    }
+    return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
+  }
+
+  async findByMaterialType(materialType: string) {
+    const result = await this.prismaService.material.findMany({
+      where: { materialType: { id: materialType } },
+    });
+    if (result) {
+      return apiSuccess(HttpStatus.OK, result, 'Material found');
+    }
+    return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
   }
 }

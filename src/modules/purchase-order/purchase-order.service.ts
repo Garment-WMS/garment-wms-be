@@ -1,3 +1,4 @@
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable } from '@nestjs/common';
 import { Prisma, PurchaseOrderStatus } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
@@ -14,6 +15,26 @@ export class PurchaseOrderService {
     private readonly excelService: ExcelService,
   ) {}
 
+  async getPurchaseOrders(
+    filterOption?: GeneratedFindOptions<Prisma.PurchaseOrderWhereInput>,
+  ) {
+    const page = filterOption?.skip
+      ? parseInt(filterOption?.skip.toString())
+      : 1;
+    const limit = filterOption?.take
+      ? parseInt(filterOption?.take.toString())
+      : 10;
+
+    const result = this.prismaService.purchaseOrder.findMany({
+      skip: (page - 1) * limit,
+      take: limit,
+      where: filterOption?.where,
+      orderBy: filterOption?.orderBy,
+    });
+    console.log(filterOption.where);
+    return result;
+  }
+
   async createPurchaseOrder(purchaseOrderDto: PurchaseOrderDto) {
     return this.prismaService.purchaseOrder.create({
       data: purchaseOrderDto,
@@ -23,7 +44,6 @@ export class PurchaseOrderService {
   async createPurchaseOrderWithExcelFile(file: Express.Multer.File) {
     const excelData = await this.excelService.readExcel(file);
     if (excelData instanceof ApiResponse) {
-      console.log('error');
       return excelData;
     } else {
       const createPurchaseOrderData =

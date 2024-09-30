@@ -7,5 +7,6 @@ import { MaterialService } from './material.service';
   controllers: [MaterialController],
   imports: [PrismaModule],
   providers: [MaterialService],
+  exports: [MaterialService],
 })
 export class MaterialModule {}
