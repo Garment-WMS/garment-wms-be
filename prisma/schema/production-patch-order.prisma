@@ -1,13 +1,13 @@
 model ProductionPatchOrder {
-  id                          String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  quarterlyProductionDetailId String?                     @map("quarterly_production_detail_id") @db.Uuid
-  quantityToProduce           Float?                      @map("quantity_to_produce")
-  expectedStartDate           DateTime?                   @map("expected_start_date") @db.Date
-  expectedFinishDate          DateTime?                   @map("expected_finish_date") @db.Date
-  status                      ProductionPatchOrderStatus? @map("status")
-  createdAt                   DateTime?                   @map("created_at") @db.Timestamptz(6)
-  updatedAt                   DateTime?                   @map("updated_at") @db.Timestamptz(6)
-  deletedAt                   DateTime?                   @map("deleted_at") @db.Timestamptz(6)
+  id                          String                     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  quarterlyProductionDetailId String?                    @map("quarterly_production_detail_id") @db.Uuid
+  quantityToProduce           Float                      @map("quantity_to_produce")
+  expectedStartDate           DateTime                   @map("expected_start_date") @db.Date
+  expectedFinishDate          DateTime                   @map("expected_finish_date") @db.Date
+  status                      ProductionPatchOrderStatus @map("status")
+  createdAt                   DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                   DateTime?                  @map("updated_at") @db.Timestamptz(6)
+  deletedAt                   DateTime?                  @map("deleted_at") @db.Timestamptz(6)
 
   quarterlyProductionDetail QuarterlyProductionDetail? @relation(fields: [quarterlyProductionDetailId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 

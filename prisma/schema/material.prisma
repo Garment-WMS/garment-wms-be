@@ -1,14 +1,14 @@
 model Material {
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  materialTypeId String?   @map("material_type_id") @db.Uuid
-  name           String?   @db.VarChar
-  code           String?   @unique @db.VarChar
-  width          Float?
-  height         Float?
-  length         Float?
-  minQuantity    Float?    @map("min_quantity")
-  unitId         String?   @map("unit_id") @db.Uuid
-  createdAt      DateTime? @map("created_at") @db.Timestamptz(6)
+  materialTypeId String    @map("material_type_id") @db.Uuid
+  name           String    @db.VarChar
+  code           String    @unique @db.VarChar
+  width          Float
+  height         Float
+  length         Float
+  minQuantity    Float?    @default(0) @map("min_quantity")
+  uomId          String    @map("uom_id") @db.Uuid
+  createdAt      DateTime  @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime? @map("updated_at") @db.Timestamptz(6)
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
 
@@ -16,12 +16,14 @@ model Material {
   importRequestDetail         ImportRequestDetail[]
   inspectionReportDetail      InspectionReportDetail[]
   materialType                MaterialType?                 @relation(fields: [materialTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  unit                        Unit?                         @relation(fields: [unitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  uom                         Uom?                          @relation(fields: [uomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialAttribute           MaterialAttribute[]
   materialInspectionCriteria  MaterialInspectionCriteria[]
   materialReceipt             MaterialReceipt[]
   poReceiptDetail             PoReceiptDetail[]
   productFormula              ProductFormula[]
+  packagingUnit               PackagingUnit[]
+  materialUnit                MaterialUnit[]
 
   @@map("material")
 }

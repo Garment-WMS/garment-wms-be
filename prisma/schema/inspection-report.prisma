@@ -1,12 +1,12 @@
 model InspectionReport {
   id                     String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  inspectionDepartmentId String?   @map("inspection_department_id") @db.Uuid
+  inspectionDepartmentId String   @map("inspection_department_id") @db.Uuid
   code                   String?   @unique @db.VarChar
-  createdAt              DateTime? @map("created_at") @db.Timestamptz(6)
+  createdAt  DateTime  @map("created_at") @db.Timestamptz(6) @default(now())
   updateAt               DateTime? @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  inspectionDepartment InspectionDepartment? @relation(fields: [inspectionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  inspectionDepartment InspectionDepartment @relation(fields: [inspectionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("inspection_report")
 }

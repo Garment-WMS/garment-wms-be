@@ -1,12 +1,12 @@
 model FactoryDirector {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  userId    String?   @map("user_id") @db.Uuid
-  createdAt DateTime? @map("created_at") @db.Timestamp(6)
+  userId    String    @map("user_id") @db.Uuid
+  createdAt DateTime  @map("created_at") @db.Timestamp(6) @default(now())
   updatedAt DateTime? @map("updated_at") @db.Timestamp(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamp(6)
 
   annualProductionPlan AnnualProductionPlan[]
-  users                User?                  @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                User                   @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("factory_director")
 }

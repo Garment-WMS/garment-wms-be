@@ -1,14 +1,14 @@
 model Product {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  productTypeId String?   @map("product_type") @db.Uuid
-  name          String?   @db.VarChar
-  code          String?   @unique @db.VarChar
-  width         Float?
-  height        Float?
-  length        Float?
-  minQuantity   Float?    @map("min_quantity")
-  unitId        String?   @map("unit_id") @db.Uuid
-  createdAt     DateTime? @map("created_at") @db.Timestamptz(6)
+  productTypeId String    @map("product_type") @db.Uuid
+  name          String    @db.VarChar
+  code          String    @unique @db.VarChar
+  width         Float
+  height        Float
+  length        Float
+  minQuantity   Float     @map("min_quantity")
+  uomId         String    @map("uom_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime? @map("updated_at") @db.Timestamptz(6)
   deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
 
@@ -17,12 +17,13 @@ model Product {
   inspectionReportDetail    InspectionReportDetail[]
   poReceiptDetail           PoReceiptDetail[]
   productType               ProductType?                @relation(fields: [productTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  unit                      Unit?                       @relation(fields: [unitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  uom                       Uom?                        @relation(fields: [uomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productAttribute          ProductAttribute[]
   productFormula            ProductFormula[]
   productInspectionCriteria ProductInspectionCriteria[]
   productReceipt            ProductReceipt[]
   quarterlyProductionDetail QuarterlyProductionDetail[]
+  packagingUnit             PackagingUnit[]
 
   @@map("product")
 }

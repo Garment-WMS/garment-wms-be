@@ -1,25 +1,24 @@
 model PurchaseOrder {
-  id                        String               @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  poNumber                  String?              @map("PO_number") @db.VarChar
-  quarterlyProductionPlanId String?              @map("quarterly_production_plan_id") @db.Uuid
-  purchasingStaffId         String?              @map("purchasing_staff_id") @db.Uuid
-  supplierId                String?              @map("supplier_id") @db.Uuid
-  shippingAddress           String?              @map("shipping_address") @db.VarChar
-  currency                  String?              @db.VarChar
-  totalAmount               Float?               @map("total_ammount")
-  taxAmount                 Float?               @map("tax_amount")
-  orderDate                 DateTime?            @map("order_date") @db.Date
-  expectedFinishDate        DateTime?            @map("expected_finish_date") @db.Date
-  finishDate                DateTime?            @map("finish_date") @db.Date
-  status                    PurchaseOrderStatus? @map("status")
-  createdAt                 DateTime?            @map("created_at") @db.Timestamptz(6)
-  updatedAt                 DateTime?            @map("updated_at") @db.Timestamptz(6)
-  deletedAt                 DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  id                        String              @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  poNumber                  String              @map("PO_number") @db.VarChar
+  quarterlyProductionPlanId String?             @map("quarterly_production_plan_id") @db.Uuid
+  purchasingStaffId         String?             @map("purchasing_staff_id") @db.Uuid
+  supplierId                String              @map("supplier_id") @db.Uuid
+  currency                  String              @db.VarChar
+  totalAmount               Float               @map("total_ammount")
+  taxAmount                 Float               @map("tax_amount")
+  orderDate                 DateTime            @map("order_date") @db.Date
+  expectedFinishDate        DateTime            @map("expected_finish_date") @db.Date
+  finishDate                DateTime            @map("finish_date") @db.Date
+  status                    PurchaseOrderStatus @map("status")
+  createdAt                 DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime?           @map("updated_at") @db.Timestamptz(6)
+  deletedAt                 DateTime?           @map("deleted_at") @db.Timestamptz(6)
 
   poReceipt               PoReceipt[]
   purchasingStaff         PurchasingStaff?         @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   quarterlyProductionPlan QuarterlyProductionPlan? @relation(fields: [quarterlyProductionPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  supplier                Supplier?                @relation(fields: [supplierId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  supplier                Supplier                 @relation(fields: [supplierId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("purchase_order")
 }

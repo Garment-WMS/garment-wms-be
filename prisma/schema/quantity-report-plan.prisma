@@ -1,8 +1,8 @@
 model QuantityReportPlan {
   id               String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  quantityReportId String?   @map("quantity_report_id") @db.Uuid
+  quantityReportId String    @map("quantity_report_id") @db.Uuid
   date             DateTime? @db.Date
-  createdAt        DateTime? @map("created_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime? @map("updated_at") @db.Timestamptz(6)
   deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
 
