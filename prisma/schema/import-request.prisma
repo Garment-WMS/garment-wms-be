@@ -1,15 +1,15 @@
 model ImportRequest {
-  id               String               @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   poReceiptId      String              @map("po_receipt_id") @db.Uuid
-  warehouseStaffId String?              @map("warehouse_staff_id") @db.Uuid
-  status           ImportRequestStatus?
-  from             String?              @db.VarChar
-  to               String?              @db.VarChar
-  startAt          DateTime?            @map("start_at") @db.Timestamptz(6)
-  finishAt         DateTime?            @map("finish_at") @db.Timestamptz(6)
-  createdAt  DateTime  @map("created_at") @db.Timestamptz(6) @default(now())
-  updatedAt        DateTime?            @map("updated_at") @db.Timestamptz(6)
-  deletedAt        DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  warehouseStaffId String?             @map("warehouse_staff_id") @db.Uuid
+  status           ImportRequestStatus @default(PENDING)
+  from             String?             @db.VarChar
+  to               String?             @db.VarChar
+  startAt          DateTime?           @map("start_at") @db.Timestamptz(6)
+  finishAt         DateTime?           @map("finish_at") @db.Timestamptz(6)
+  createdAt        DateTime?           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime?           @map("updated_at") @db.Timestamptz(6)
+  deletedAt        DateTime?           @map("deleted_at") @db.Timestamptz(6)
 
   poDelivery          PoDelivery?           @relation(fields: [poReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warehouseStaff      WarehouseStaff?       @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)

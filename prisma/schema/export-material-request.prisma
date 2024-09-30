@@ -1,16 +1,16 @@
 model ExportMaterialRequest {
-  id                     String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  productionDepartmentId String                       @db.Uuid
-  reservePercentId       String?                      @db.Uuid
-  status                 ExportMaterialRequestStatus?
-  expectedDeliverDate    DateTime                     @db.Date
-  deliverDate            DateTime                     @db.Date
-  createdAt              DateTime                     @db.Timestamptz(6) @default(now())
-  updatedAt              DateTime?                    @db.Timestamptz(6)
-  deletedAt              DateTime?                    @db.Timestamptz(6)
+  id                     String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  productionDepartmentId String                      @map("production_department_id") @db.Uuid
+  reservePercentId       String?                     @map("reserve_percent_id") @db.Uuid
+  status                 ExportMaterialRequestStatus @default(PENDING) @map("status")
+  expectedDeliverDate    DateTime?                   @map("expected_deliver_date") @db.Date
+  deliverDate            DateTime?                   @map("deliver_date") @db.Date
+  createdAt              DateTime?                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime?                   @map("updated_at") @db.Timestamptz(6)
+  deletedAt              DateTime?                   @map("deleted_at") @db.Timestamptz(6)
 
-  productionDepartment ProductionDepartment  @relation(fields: [productionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  reservePercent       ReservePercent?       @relation(fields: [reservePercentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productionDepartment ProductionDepartment @relation(fields: [productionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reservePercent       ReservePercent?      @relation(fields: [reservePercentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("export_material_request")
 }

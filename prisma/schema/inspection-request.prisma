@@ -1,13 +1,13 @@
 model InspectionRequest {
-  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   purchasingStaffId      String                  @map("purchasing_staff_id") @db.Uuid
   inspectionDepartmentId String                  @map("inspection_department_id") @db.Uuid
   deliveryNoteId         String                  @map("delivery_note_id") @db.Uuid
-  notation               String?
+  notation               String?                 @map("notation")
   status                 InspectionRequestStatus
-  createdAt  DateTime  @map("created_at") @db.Timestamptz(6) @default(now())
-  updatedAt              DateTime?                @map("updated_at") @db.Timestamptz(6)
-  deletedAt              DateTime?                @map("deleted_at") @db.Timestamptz(6)
+  createdAt              DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime?               @map("updated_at") @db.Timestamptz(6)
+  deletedAt              DateTime?               @map("deleted_at") @db.Timestamptz(6)
 
   inspectionDepartment InspectionDepartment @relation(fields: [inspectionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   purchasingStaff      PurchasingStaff      @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)

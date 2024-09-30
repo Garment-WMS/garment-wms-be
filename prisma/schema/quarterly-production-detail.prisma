@@ -10,7 +10,7 @@ model QuarterlyProductionDetail {
   startDate                 DateTime  @map("start_date") @db.Date
   finishDate                DateTime? @map("finish_date") @db.Date
   expectedShipDate          DateTime  @map("expected_ship_date") @db.Date
-  createdAt                 DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt                 DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime? @map("updated_at") @db.Timestamptz(6)
   deletedAt                 DateTime? @map("deleted_at") @db.Timestamptz(6)
 

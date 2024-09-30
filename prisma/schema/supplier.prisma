@@ -6,8 +6,8 @@ model Supplier {
   representativeName String    @map("representative_name") @db.VarChar
   email              String    @db.VarChar
   phoneNumber        String    @map("phone_number") @db.VarChar
-  fax                String    @db.VarChar
-  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  fax                String?   @db.VarChar
+  createdAt          DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime? @map("updated_at") @db.Timestamptz(6)
   deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
 

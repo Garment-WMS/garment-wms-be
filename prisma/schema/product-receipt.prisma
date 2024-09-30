@@ -5,7 +5,7 @@ model ProductReceipt {
   quantity        Float     @map("quantity")
   importDate      DateTime? @map("import_date") @db.Timestamptz(6)
   expireDate      DateTime? @map("expire_date") @db.Timestamptz(6)
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime? @map("updated_at") @db.Timestamptz(6)
   deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
 

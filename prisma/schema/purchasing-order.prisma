@@ -10,8 +10,8 @@ model PurchaseOrder {
   orderDate                 DateTime            @map("order_date") @db.Date
   expectedFinishDate        DateTime            @map("expected_finish_date") @db.Date
   finishDate                DateTime            @map("finish_date") @db.Date
-  status                    PurchaseOrderStatus @map("status")
-  createdAt                 DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  status                    PurchaseOrderStatus @default(IN_PROGESS) @map("status")
+  createdAt                 DateTime?           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime?           @map("updated_at") @db.Timestamptz(6)
   deletedAt                 DateTime?           @map("deleted_at") @db.Timestamptz(6)
 
@@ -24,7 +24,8 @@ model PurchaseOrder {
 }
 
 enum PurchaseOrderStatus {
-  PENDING
+  IN_PROGESS
+  CANCELLED
   FINISHED
 
   @@map("purchase_order_status")

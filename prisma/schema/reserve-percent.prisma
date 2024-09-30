@@ -1,7 +1,7 @@
 model ReservePercent {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   percent   Float     @map("percent")
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
