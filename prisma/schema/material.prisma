@@ -20,7 +20,7 @@ model Material {
   materialAttribute           MaterialAttribute[]
   materialInspectionCriteria  MaterialInspectionCriteria[]
   materialReceipt             MaterialReceipt[]
-  poReceiptDetail             PoReceiptDetail[]
+  poDeliveryDetail            PoDeliveryDetail[]
   productFormula              ProductFormula[]
   packagingUnit               PackagingUnit[]
   materialUnit                MaterialUnit[]
