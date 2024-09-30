@@ -6,10 +6,11 @@ model Material {
   width          Float?
   height         Float?
   length         Float?
+  weight         Float?
   minQuantity    Float?    @map("min_quantity")
   unitId         String?   @map("unit_id") @db.Uuid
-  createdAt      DateTime? @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime? @map("updated_at") @db.Timestamptz(6)
+  createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime? @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   exportMaterialRequestDetail ExportMaterialRequestDetail[]
