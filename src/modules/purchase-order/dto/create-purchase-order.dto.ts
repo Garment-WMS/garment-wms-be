@@ -1,3 +1,4 @@
+import { PoDelivery } from '@prisma/client';
 import {
   IsDate,
   IsNotEmpty,
@@ -16,7 +17,7 @@ export class CreatePurchaseOrderDto {
 
   @IsNotEmpty()
   @IsString()
-  PONumber: String;
+  PONumber: string;
 
   @IsNotEmpty()
   @IsUUID()
@@ -59,6 +60,8 @@ export class CreatePurchaseOrderDto {
   finishedDate: Date;
 
   Supplier: SupplierDto;
+
+  poDelivery: Partial<PoDelivery>[];
 
   createdAt: Date;
   updatedAt: Date;

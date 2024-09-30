@@ -110,6 +110,22 @@ export class ExcelService {
     if (errorResponse) {
       return errorResponse;
     }
+    if (supplierError.size > 0 || listItemError.size > 0) {
+      const timestamp = Date.now();
+      const fileName = `${timestamp}-${file.originalname}`;
+      const bufferResult = await workbook.xlsx.writeBuffer();
+      const nodeBuffer = Buffer.from(bufferResult);
+      const downloadUrl = await this.firebaseService.uploadBufferToStorage(
+        nodeBuffer,
+        fileName,
+      );
+
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'There is error in the file',
+        downloadUrl,
+      );
+    }
 
     const errorResponseDeliveryBatch = await this.validateDeliveryBatchSheet(
       workbook,
@@ -118,15 +134,28 @@ export class ExcelService {
       deliveryBatch,
       puchaseOrder,
     );
-    const timestamp = Date.now();
-    const fileName = `${timestamp}-${file.originalname}`;
-    const bufferResult = await workbook.xlsx.writeBuffer();
-    const nodeBuffer = Buffer.from(bufferResult);
-    const downloadUrl = await this.firebaseService.uploadBufferToStorage(
-      nodeBuffer,
-      fileName,
-    );
-    return downloadUrl;
+    if (errorResponseDeliveryBatch) {
+      return errorResponseDeliveryBatch;
+    }
+
+    if (deliveryBatchError.size > 0 || deliveryBatchItemError.size > 0) {
+      console.log('Delivery Batch Error', deliveryBatchError);
+      const timestamp = Date.now();
+      const fileName = `${timestamp}-${file.originalname}`;
+      const bufferResult = await workbook.xlsx.writeBuffer();
+      const nodeBuffer = Buffer.from(bufferResult);
+      const downloadUrl = await this.firebaseService.uploadBufferToStorage(
+        nodeBuffer,
+        fileName,
+      );
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'There is error in the file',
+        downloadUrl,
+      );
+    }
+
+    return puchaseOrder;
   }
   async validateDeliveryBatchSheet(
     workbook: Workbook,
@@ -166,6 +195,7 @@ export class ExcelService {
         );
       }
     }
+    puchaseOrder.poDelivery = deliveryBatches;
     //Loop fop each sheet
   }
 
@@ -237,7 +267,6 @@ export class ExcelService {
       deliveryBatchErrorSheet,
       deliveryBatchInfo,
     );
-
     if (deliveryBatchErrorSheet.size > 0) {
       deliveryBatchErrorSheet.forEach((value, key) => {
         const cell = worksheet.getCell(key);
@@ -254,6 +283,7 @@ export class ExcelService {
             return acc;
           }, []),
         ];
+        deliveryBatchError.set(key, value);
       });
     }
 
@@ -266,7 +296,7 @@ export class ExcelService {
       batchItemTable,
       deliveryBatchItems,
     );
-    deliveryBatchInfo.PoDeliveryMaterial = deliveryBatchItems;
+    deliveryBatchInfo.poDeliveryDetail = deliveryBatchItems;
     if (deliveryBatchItemErrorSheet.size > 0) {
       deliveryBatchItemErrorSheet.forEach((value, key) => {
         const cell = worksheet.getCell(key);
@@ -283,6 +313,7 @@ export class ExcelService {
             return acc;
           }, []),
         ];
+        deliveryBatchItemError.set(key, value);
       });
     }
 
@@ -323,7 +354,7 @@ export class ExcelService {
               `${DATE_FORMAT}`,
             )
           ) {
-            if (!validateDate(value)) {
+            if (!validateDate(value) && !errorFlag) {
               const text = [
                 { text: `${value}` },
                 {
@@ -365,58 +396,58 @@ export class ExcelService {
           }
           break;
 
-        case 'Delivery Date':
-          errorFlag = false;
-          if (
-            this.validateRequired(
-              value,
-              deliveryTableInfo[i][0].value.split(':')[0].trim(),
-              deliveryTableInfo[i][1].address,
-              deliveryBatchError,
-              `${DATE_FORMAT}`,
-            )
-          ) {
-            if (!validateDate(value) && !errorFlag) {
-              const text = [
-                { text: `${value}` },
-                {
-                  text: `[Invalid date format, must be ${DATE_FORMAT}]`,
-                  font: { color: { argb: 'FF0000' } },
-                },
-              ];
-              this.addError(
-                deliveryBatchError,
-                deliveryTableInfo[i][1].address,
-                'Delivery Date',
-                value,
-                text,
-              );
-              errorFlag = true;
-            }
+        // case 'Delivery Date':
+        //   errorFlag = false;
+        //   if (
+        //     this.validateRequired(
+        //       value,
+        //       deliveryTableInfo[i][0].value.split(':')[0].trim(),
+        //       deliveryTableInfo[i][1].address,
+        //       deliveryBatchError,
+        //       `${DATE_FORMAT}`,
+        //     )
+        //   ) {
+        //     if (!validateDate(value) && !errorFlag) {
+        //       const text = [
+        //         { text: `${value}` },
+        //         {
+        //           text: `[Invalid date format, must be ${DATE_FORMAT}]`,
+        //           font: { color: { argb: 'FF0000' } },
+        //         },
+        //       ];
+        //       this.addError(
+        //         deliveryBatchError,
+        //         deliveryTableInfo[i][1].address,
+        //         'Delivery Date',
+        //         value,
+        //         text,
+        //       );
+        //       errorFlag = true;
+        //     }
 
-            if (new Date(value) < new Date() && !errorFlag) {
-              const text = [
-                { text: `${value.toISOString().split('T')[0]}` },
-                {
-                  text: `[Delivery Date must be after current date]`,
-                  font: { color: { argb: 'FF0000' } },
-                },
-              ];
-              this.addError(
-                deliveryBatchError,
-                deliveryTableInfo[i][1].address,
-                'Delivery Date',
-                value,
-                text,
-              );
-              errorFlag = true;
-            }
+        //     if (new Date(value) < new Date() && !errorFlag) {
+        //       const text = [
+        //         { text: `${value.toISOString().split('T')[0]}` },
+        //         {
+        //           text: `[Delivery Date must be after current date]`,
+        //           font: { color: { argb: 'FF0000' } },
+        //         },
+        //       ];
+        //       this.addError(
+        //         deliveryBatchError,
+        //         deliveryTableInfo[i][1].address,
+        //         'Delivery Date',
+        //         value,
+        //         text,
+        //       );
+        //       errorFlag = true;
+        //     }
 
-            if (!errorFlag) {
-              deliveryBatchInfo.deliverDate = value;
-            }
-          }
-          break;
+        //     if (!errorFlag) {
+        //       deliveryBatchInfo.deliverDate = value;
+        //     }
+        //   }
+        //   break;
 
         case 'Is extra':
           errorFlag = false;
@@ -579,7 +610,7 @@ export class ExcelService {
       switch (supplierValue[i][0].value.split(':')[0].trim()) {
         case 'Email':
           errorSet = false;
-
+          value = supplierValue[i][1]?.text || supplierValue[i][1].value;
           if (
             this.validateRequired(
               value,
@@ -694,8 +725,8 @@ export class ExcelService {
               '[(+#)##-###-####]',
             )
           ) {
-            value = addMissingStartCharacter(value, '+');
-            if (!isPhoneNumber(value)) {
+            const numberPhone = addMissingStartCharacter(value, '+');
+            if (!isPhoneNumber(numberPhone)) {
               const text = [
                 { text: `${value}` },
                 {
@@ -714,7 +745,7 @@ export class ExcelService {
             }
             if (
               supplier?.phone_numbert &&
-              value !== supplier?.phone_number &&
+              value != supplier?.phone_number &&
               !errorSet
             ) {
               const text = [
@@ -745,9 +776,9 @@ export class ExcelService {
               supplierError,
             )
           ) {
-            value = addMissingStartCharacter(value, '+');
+            const numberPhone = addMissingStartCharacter(value, '+');
 
-            if (!isPhoneNumber(value)) {
+            if (!isPhoneNumber(numberPhone)) {
               const text = [
                 { text: `${value}` },
                 {
@@ -765,7 +796,7 @@ export class ExcelService {
               errorSet = true;
             }
 
-            if (supplier?.fax && value !== supplier.fax && !errorSet) {
+            if (supplier?.fax && value != supplier.fax && !errorSet) {
               const text = [
                 { text: `${value}` },
                 {
@@ -780,6 +811,7 @@ export class ExcelService {
                 value,
                 text,
               );
+
               errorSet = true;
             }
           }
@@ -881,8 +913,6 @@ export class ExcelService {
               `${DATE_FORMAT}`,
             )
           ) {
-            console.log('value', value);
-
             if (!validateDate(value)) {
               const text = [
                 { text: `${value}` },
@@ -1084,7 +1114,6 @@ export class ExcelService {
               supplierError,
             )
           ) {
-            console.log('value', value);
             purchaseOrderObject.totalAmount = value?.result;
           }
           break;
@@ -1232,7 +1261,6 @@ export class ExcelService {
 
     if (supplierError.size > 0) {
       supplierError.forEach((value, key) => {
-        console.log('value', key);
         const cell = worksheet.getCell(key);
 
         // Set the cell value to the error message
@@ -1557,9 +1585,6 @@ export class ExcelService {
         priceCell: row.getCell(4),
         totalCell: row.getCell(5),
       };
-      console.log('itemCell', itemCell.descriptionCell.value);
-      console.log('itemCell', itemCell.quantityCell.value);
-      console.log('itemCell', itemCell.priceCell.value);
       if (
         isEmpty(itemCell.itemIdCell.value) &&
         isEmpty(itemCell.descriptionCell.value) &&

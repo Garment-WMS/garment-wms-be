@@ -8,5 +8,6 @@ import { ExcelService } from './excel.service';
   controllers: [ExcelController],
   imports: [PrismaModule, FirebaseModule],
   providers: [ExcelService],
+  exports: [ExcelService],
 })
 export class ExcelModule {}

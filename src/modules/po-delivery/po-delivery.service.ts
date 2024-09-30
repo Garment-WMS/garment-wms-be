@@ -1,26 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { CreatePoDeliveryDto } from './dto/create-po-delivery.dto';
-import { UpdatePoDeliveryDto } from './dto/update-po-delivery.dto';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from 'prisma/prisma.service';
 
 @Injectable()
 export class PoDeliveryService {
-  create(createPoDeliveryDto: CreatePoDeliveryDto) {
-    return 'This action adds a new poDelivery';
-  }
+  constructor(private readonly pirsmaService: PrismaService) {}
 
-  findAll() {
-    return `This action returns all poDelivery`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} poDelivery`;
-  }
-
-  update(id: number, updatePoDeliveryDto: UpdatePoDeliveryDto) {
-    return `This action updates a #${id} poDelivery`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} poDelivery`;
+  async createPoDelivery(CreatePoDelivery: Prisma.PoDeliveryCreateInput) {
+    return this.pirsmaService.poDelivery.create({
+      data: CreatePoDelivery,
+    });
   }
 }

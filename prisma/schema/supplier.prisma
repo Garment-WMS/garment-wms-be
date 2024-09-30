@@ -1,17 +1,16 @@
 model Supplier {
-  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  supplierName       String?   @map("supplier_name") @db.VarChar
-  supplierCode       String?   @unique @map("supplier_code") @db.VarChar
-  address            String?   @db.VarChar
-  representativeName String?   @map("representative_name") @db.VarChar
-  email              String?   @db.VarChar
-  phoneNumber        String?   @map("phone_number") @db.VarChar
-  fax                String?   @db.VarChar
-  createdAt          DateTime? @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime? @map("updated_at") @db.Timestamptz(6)
-  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
-
-  PurchaseOrder PurchaseOrder[]
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  supplierName       String?         @map("supplier_name") @db.VarChar
+  supplierCode       String?         @unique @map("supplier_code") @db.VarChar
+  address            String?         @db.VarChar
+  representativeName String?         @map("representative_name") @db.VarChar
+  email              String?         @db.VarChar
+  phoneNumber        String?         @map("phone_number") @db.VarChar
+  fax                String?         @db.VarChar
+  createdAt          DateTime?       @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime?       @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  PurchaseOrder      PurchaseOrder[]
 
   @@map("supplier")
 }
