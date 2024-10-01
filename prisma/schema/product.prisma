@@ -6,13 +6,13 @@ model Product {
   width                     Float                       @map("width")
   height                    Float                       @map("height")
   length                    Float                       @map("length")
+  createdAt                 DateTime?                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime?                   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                 DateTime?                   @map("deleted_at") @db.Timestamptz(6)
   uomId                     String                      @map("uom_id") @db.Uuid
   packagingUnitId           String                      @map("packaging_unit_id") @db.Uuid
   uomPerPackagingUnit       Float                       @map("uom_per_packaging_unit")
   weight                    Float                       @map("weight")
-  createdAt                 DateTime?                   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                 DateTime?                   @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt                 DateTime?                   @map("deleted_at") @db.Timestamptz(6)
   annualProductionDetail    AnnualProductionDetail[]
   importRequestDetail       ImportRequestDetail[]
   inspectionReportDetail    InspectionReportDetail[]

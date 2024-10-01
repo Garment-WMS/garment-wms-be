@@ -5,11 +5,11 @@ model PoDeliveryDetail {
   productId               String?     @map("product_id") @db.Uuid
   totalAmount             Float?      @map("total_ammount")
   expireDate              DateTime?   @map("expire_date") @db.Timestamptz(6)
-  quantityByPackagingUnit Float?      @map("quantity_by_packaging")
-  quantityByUom           Float?      @map("quantity_by_uom")
   createdAt               DateTime?   @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime?   @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt               DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  quantityByPackagingUnit Float?      @map("quantity_by_packaging")
+  quantityByUom           Float?      @map("quantity_by_uom")
   material                Material?   @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   poDelivery              PoDelivery? @relation(fields: [poDeliveryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   product                 Product?    @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
