@@ -27,13 +27,13 @@ export class UomService {
     return apiFailed(HttpStatus.NOT_FOUND, 'UOM not found');
   }
 
-  findAll() {
-    const result = this.prismaService.uom.findMany();
+  async findAll() {
+    const result = await this.prismaService.uom.findMany();
     return apiSuccess(HttpStatus.OK, result, 'UOMs found');
   }
 
-  findByUomName(name: string) {
-    const result = this.prismaService.uom.findMany({
+  async findByUomName(name: string) {
+    const result = await this.prismaService.uom.findMany({
       where: { name },
     });
     return result;

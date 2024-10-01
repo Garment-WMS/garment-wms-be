@@ -21,13 +21,13 @@ export class PackagingUnitService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Packaging Unit');
   }
 
-  findAll() {
-    const result = this.prismaService.packagingUnit.findMany();
+  async findAll() {
+    const result = await this.prismaService.packagingUnit.findMany();
     return apiSuccess(HttpStatus.OK, result, 'Packaging Units found');
   }
 
-  findOne(id: string) {
-    const result = this.prismaService.packagingUnit.findUnique({
+  async findOne(id: string) {
+    const result = await this.prismaService.packagingUnit.findUnique({
       where: { id },
     });
 
