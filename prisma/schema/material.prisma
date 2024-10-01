@@ -26,5 +26,5 @@ model Material {
     importRequestDetail         ImportRequestDetail[]
     inspectionReportDetail      InspectionReportDetail[]
 
-    @@map("material")
+  @@map("material")
 }

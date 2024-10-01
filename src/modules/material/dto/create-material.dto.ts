@@ -37,40 +37,40 @@ export class CreateMaterialDto {
   @MaxLength(50)
   name: string;
 
-  @ApiProperty({})
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(3)
-  @MaxLength(10)
-  code: string;
+  // @ApiProperty({})
+  // @IsNotEmpty()
+  // @IsString()
+  // @MinLength(3)
+  // @MaxLength(10)
+  // code: string;
 
-  @ApiProperty({})
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  width: number;
+  // @ApiProperty({})
+  // @IsNotEmpty()
+  // @IsNumber()
+  // @Min(0)
+  // width: number;
 
-  @ApiProperty({})
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  height: number;
+  // @ApiProperty({})
+  // @IsNotEmpty()
+  // @IsNumber()
+  // @Min(0)
+  // height: number;
 
-  @ApiProperty({})
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  length: number;
+  // @ApiProperty({})
+  // @IsNotEmpty()
+  // @IsNumber()
+  // @Min(0)
+  // length: number;
 
-  @ApiProperty({})
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  weight: number;
+  // @ApiProperty({})
+  // @IsNotEmpty()
+  // @IsNumber()
+  // @Min(0)
+  // weight: number;
 
-  @ApiProperty({})
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  minQuantity: number;
+  // @ApiProperty({})
+  // @IsNotEmpty()
+  // @IsNumber()
+  // @Min(0)
+  // minQuantity: number;
 }
