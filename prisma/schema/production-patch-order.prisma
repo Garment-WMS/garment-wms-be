@@ -6,10 +6,9 @@ model ProductionPatchOrder {
   expectedFinishDate          DateTime                   @map("expected_finish_date") @db.Date
   status                      ProductionPatchOrderStatus @default(IN_PROGRESS) @map("status")
   createdAt                   DateTime?                  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                   DateTime?                  @map("updated_at") @db.Timestamptz(6)
+  updatedAt                   DateTime?                  @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                   DateTime?                  @map("deleted_at") @db.Timestamptz(6)
-
-  quarterlyProductionDetail QuarterlyProductionDetail? @relation(fields: [quarterlyProductionDetailId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  quarterlyProductionDetail   QuarterlyProductionDetail? @relation(fields: [quarterlyProductionDetailId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("production_patch_order")
 }

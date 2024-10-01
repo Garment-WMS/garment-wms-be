@@ -1,19 +1,18 @@
 model AnnualProductionPlan {
-  id                String           @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  factoryDirectorId String           @map("factory_director_id") @db.Uuid
-  year              Int              @map("year")
-  code              String?          @unique @map("code") @db.VarChar
-  status            ProductionStatus @default(PLANNING) @map("status")
-  expectedStartDate DateTime         @map("expected_start_date") @db.Date
-  expectedEndDate   DateTime         @map("expected_end_date") @db.Date
-  startDate         DateTime?        @map("start_date") @db.Date
-  finishDate        DateTime?        @map("finish_date") @db.Date
-  createdAt         DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime?        @map("updated_at") @db.Timestamptz(6)
-  deletedAt         DateTime?        @map("deleted_at") @db.Timestamptz(6)
-
+  id                      String                    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  factoryDirectorId       String                    @map("factory_director_id") @db.Uuid
+  year                    Int                       @map("year")
+  code                    String?                   @unique @map("code") @db.VarChar
+  status                  ProductionStatus          @default(PLANNING) @map("status")
+  expectedStartDate       DateTime                  @map("expected_start_date") @db.Date
+  expectedEndDate         DateTime                  @map("expected_end_date") @db.Date
+  startDate               DateTime?                 @map("start_date") @db.Date
+  finishDate              DateTime?                 @map("finish_date") @db.Date
+  createdAt               DateTime?                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime?                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt               DateTime?                 @map("deleted_at") @db.Timestamptz(6)
   annualProductionDetail  AnnualProductionDetail[]
-  factoryDirector         FactoryDirector?          @relation(fields: [factoryDirectorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  factoryDirector         FactoryDirector           @relation(fields: [factoryDirectorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   quarterlyProductionPlan QuarterlyProductionPlan[]
 
   @@map("annual_production_plan")
