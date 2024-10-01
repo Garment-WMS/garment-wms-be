@@ -5,11 +5,10 @@ model ProductFormula {
   materialId String    @map("material_id") @db.Uuid
   quantity   Float     @map("quantity")
   createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime? @map("updated_at") @db.Timestamptz(6)
+  updatedAt  DateTime? @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
-
-  material Material @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  product  Product  @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  material   Material  @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product    Product   @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("product_formula")
 }
