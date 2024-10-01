@@ -1,12 +1,11 @@
 model PackagingUnit {
-  id        String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  name      String    @map("name") @db.VarChar
-  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime? @map("updated_at") @db.Timestamp(6)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamp(6)
-
-  material Material[]
-  product  Product[]
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  name      String     @map("name") @db.VarChar
+  createdAt DateTime?  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime?  @map("updated_at") @db.Timestamp(6)
+  deletedAt DateTime?  @map("deleted_at") @db.Timestamp(6)
+  Material  Material[]
+  Product   Product[]
 
   @@map("packaging_unit")
 }
