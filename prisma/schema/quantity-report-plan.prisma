@@ -3,7 +3,7 @@ model QuantityReportPlan {
   quantityReportId String    @map("quantity_report_id") @db.Uuid
   date             DateTime? @db.Date
   createdAt        DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime? @map("updated_at") @db.Timestamptz(6)
+  updatedAt        DateTime? @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   @@map("quantity_report_plan")

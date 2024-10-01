@@ -1,23 +1,22 @@
 model QuarterlyProductionDetail {
-  id                        String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  quarterlyProductionPlanId String    @map("quarterly_production_plan_id") @db.Uuid
-  productId                 String    @map("product_id") @db.Uuid
-  demandQuantity            Float     @map("demand_quantity")
-  startingQuantity          Float     @map("starting_quantity")
-  quantityToProduce         Float     @map("quantity_to_produce")
-  reservePercentId          String    @map("reserve_percent_id") @db.Uuid
-  notation                  String    @db.VarChar
-  startDate                 DateTime  @map("start_date") @db.Date
-  finishDate                DateTime? @map("finish_date") @db.Date
-  expectedShipDate          DateTime  @map("expected_ship_date") @db.Date
-  createdAt                 DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                 DateTime? @map("updated_at") @db.Timestamptz(6)
-  deletedAt                 DateTime? @map("deleted_at") @db.Timestamptz(6)
-
-  productionPatchOrder    ProductionPatchOrder[]
-  product                 Product?                 @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  quarterlyProductionPlan QuarterlyProductionPlan? @relation(fields: [quarterlyProductionPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  reservePercent          ReservePercent?          @relation(fields: [reservePercentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                        String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  quarterlyProductionPlanId String                  @map("quarterly_production_plan_id") @db.Uuid
+  productId                 String                  @map("product_id") @db.Uuid
+  demandQuantity            Float                   @map("demand_quantity")
+  startingQuantity          Float                   @map("starting_quantity")
+  quantityToProduce         Float                   @map("quantity_to_produce")
+  reservePercentId          String                  @map("reserve_percent_id") @db.Uuid
+  notation                  String                  @db.VarChar
+  startDate                 DateTime                @map("start_date") @db.Date
+  finishDate                DateTime?               @map("finish_date") @db.Date
+  expectedShipDate          DateTime                @map("expected_ship_date") @db.Date
+  createdAt                 DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                 DateTime?               @map("deleted_at") @db.Timestamptz(6)
+  productionPatchOrder      ProductionPatchOrder[]
+  product                   Product                 @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  quarterlyProductionPlan   QuarterlyProductionPlan @relation(fields: [quarterlyProductionPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reservePercent            ReservePercent          @relation(fields: [reservePercentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("quarterly_production_detail")
 }
