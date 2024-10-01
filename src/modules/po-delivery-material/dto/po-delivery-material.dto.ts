@@ -1,6 +1,8 @@
 import { PoDeliveryDetail } from '@prisma/client';
 
 export class PoDeliveryMaterialDto implements PoDeliveryDetail {
+  quantityByPackagingUnit: number;
+  quantityByUom: number;
   id: string;
   poDeliveryId: string;
   materialId: string;

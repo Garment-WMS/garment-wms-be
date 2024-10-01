@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Prisma } from '@prisma/client';
 import {
   IsNotEmpty,
   IsNumber,
@@ -10,16 +9,26 @@ import {
   MinLength,
 } from 'class-validator';
 
-export class CreateMaterialDto implements Prisma.MaterialCreateInput {
+export class CreateMaterialDto {
   @ApiProperty({})
   @IsNotEmpty()
   @IsUUID()
   materialTypeId: string;
 
-  //   @ApiProperty({})
-  //   @IsNotEmpty()
-  //   @IsUUID()
-  //   unitId: string;
+  @ApiProperty({})
+  @IsNotEmpty()
+  @IsUUID()
+  packagingUnitId: string;
+
+  @ApiProperty({})
+  @IsNotEmpty()
+  @IsUUID()
+  uomId: string;
+
+  @ApiProperty({})
+  @IsNotEmpty()
+  @IsNumber()
+  uomPerPackagingUnit: number;
 
   @ApiProperty({})
   @IsNotEmpty()

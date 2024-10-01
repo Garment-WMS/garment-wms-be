@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
@@ -9,8 +10,30 @@ export class MaterialService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async create(createMaterialDto: CreateMaterialDto) {
+    const { materialTypeId, packagingUnitId, uomId, ...rest } =
+      createMaterialDto;
+
+    const materialInput: Prisma.MaterialCreateInput = {
+      ...rest,
+      materialType: {
+        connect: {
+          id: materialTypeId,
+        },
+      },
+      packagingUnit: {
+        connect: {
+          id: packagingUnitId,
+        },
+      },
+      uom: {
+        connect: {
+          id: uomId,
+        },
+      },
+    };
+
     const result = await this.prismaService.material.create({
-      data: createMaterialDto,
+      data: materialInput,
     });
     if (result) {
       return apiSuccess(

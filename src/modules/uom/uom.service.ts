@@ -1,26 +1,52 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { PrismaService } from 'prisma/prisma.service';
+import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { CreateUomDto } from './dto/create-uom.dto';
-import { UpdateUomDto } from './dto/update-uom.dto';
 
 @Injectable()
 export class UomService {
-  create(createUomDto: CreateUomDto) {
-    return 'This action adds a new uom';
+  constructor(private readonly prismaService: PrismaService) {}
+  async create(createUomDto: CreateUomDto) {
+    const result = await this.prismaService.uom.create({
+      data: { ...createUomDto },
+    });
+    if (result) {
+      return apiSuccess(HttpStatus.CREATED, result, 'UOM created successfully');
+    }
+    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create UOM');
+  }
+
+  async findOne(id: string) {
+    const result = await this.prismaService.uom.findUnique({
+      where: { id },
+    });
+
+    if (result) {
+      return apiSuccess(HttpStatus.OK, result, 'UOM found');
+    }
+    return apiFailed(HttpStatus.NOT_FOUND, 'UOM not found');
   }
 
   findAll() {
-    return `This action returns all uom`;
+    const result = this.prismaService.uom.findMany();
+    return apiSuccess(HttpStatus.OK, result, 'UOMs found');
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} uom`;
+  findByUomName(name: string) {
+    const result = this.prismaService.uom.findMany({
+      where: { name },
+    });
+    return result;
   }
 
-  update(id: number, updateUomDto: UpdateUomDto) {
-    return `This action updates a #${id} uom`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} uom`;
+  async update(id: string, updateUomDto: CreateUomDto) {
+    const result = await this.prismaService.uom.update({
+      where: { id },
+      data: { ...updateUomDto },
+    });
+    if (result) {
+      return apiSuccess(HttpStatus.OK, result, 'UOM updated successfully');
+    }
+    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to update UOM');
   }
 }

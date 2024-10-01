@@ -54,10 +54,12 @@ export class PurchaseOrderService {
         taxAmount: createPurchaseOrderData.taxAmount,
         expectedFinishDate: createPurchaseOrderData.expectedFinishDate,
         orderDate: createPurchaseOrderData.orderDate,
-        status: PurchaseOrderStatus.PENDING,
+        status: PurchaseOrderStatus.IN_PROGESS,
         supplier: {
           connect: { id: createPurchaseOrderData.Supplier.id },
         },
+        currency: 'VND',
+        finishDate: undefined,
       };
 
       await this.prismaService.$transaction(async (prisma) => {
