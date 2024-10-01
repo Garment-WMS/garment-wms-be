@@ -2,7 +2,7 @@ model Product {
   id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   productTypeId             String                      @map("product_type") @db.Uuid
   name                      String                      @map("name") @db.VarChar
-  code                      String                      @unique @map("code") @db.VarChar
+  code                      String?                     @unique @map("code") @db.VarChar
   width                     Float                       @map("width")
   height                    Float                       @map("height")
   length                    Float                       @map("length")
