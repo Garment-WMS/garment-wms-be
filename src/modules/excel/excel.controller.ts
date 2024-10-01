@@ -17,13 +17,5 @@ export class ExcelController {
   async uploadFile(@UploadedFile() file, @Res() res) {
     const fileResult: any = await this.excelService.readExcel(file);
     res.send(fileResult);
-    //Use this when testing
-    // res.set({
-    //   'Content-Type':
-    //     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    //   'Content-Disposition': `attachment; filename=${file.originalname}`,
-    //   'Content-Length': fileResult.length,
-    // });
-    // res.send(fileResult);
   }
 }

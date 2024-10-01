@@ -1,45 +1,43 @@
+import { DirectFilterPipe } from '@chax-at/prisma-filter';
 import {
-  Body,
   Controller,
-  Delete,
   Get,
-  Param,
-  Patch,
   Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
-import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
-import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Prisma } from '@prisma/client';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { PurchaseOrderService } from './purchase-order.service';
 
 @Controller('purchase-order')
 export class PurchaseOrderController {
   constructor(private readonly purchaseOrderService: PurchaseOrderService) {}
 
-  @Post()
-  create(@Body() createPurchaseOrderDto: CreatePurchaseOrderDto) {
-    return this.purchaseOrderService.create(createPurchaseOrderDto);
-  }
-
   @Get()
-  findAll() {
-    return this.purchaseOrderService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.purchaseOrderService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updatePurchaseOrderDto: UpdatePurchaseOrderDto,
+  @UsePipes(new ValidationPipe())
+  async getPurchaseOrders(
+    @Query(
+      new DirectFilterPipe<any, Prisma.PurchaseOrderWhereInput>(
+        ['id', 'poNumber', 'createdAt', 'supplierId'],
+        [],
+      ),
+    )
+    filterDto: FilterDto<Prisma.PurchaseOrderWhereInput>,
   ) {
-    return this.purchaseOrderService.update(+id, updatePurchaseOrderDto);
+    console.log(filterDto);
+    return this.purchaseOrderService.getPurchaseOrders(filterDto.findOptions);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.purchaseOrderService.remove(+id);
+  @Post()
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(@UploadedFile() file) {
+    const fileResult: any =
+      await this.purchaseOrderService.createPurchaseOrderWithExcelFile(file);
+    return fileResult;
   }
 }

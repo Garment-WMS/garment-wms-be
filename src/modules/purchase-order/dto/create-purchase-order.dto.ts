@@ -1,3 +1,4 @@
+import { PoDelivery } from '@prisma/client';
 import {
   IsDate,
   IsNotEmpty,
@@ -7,6 +8,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { UUID } from 'crypto';
+import { PoDeliveryDto } from 'src/modules/po-delivery/dto/po-delivery.dto';
 import { SupplierDto } from 'src/modules/supplier/dto/supplier.dto';
 
 export class CreatePurchaseOrderDto {
@@ -16,7 +18,7 @@ export class CreatePurchaseOrderDto {
 
   @IsNotEmpty()
   @IsString()
-  PONumber: String;
+  PONumber: string;
 
   @IsNotEmpty()
   @IsUUID()
@@ -59,6 +61,8 @@ export class CreatePurchaseOrderDto {
   finishedDate: Date;
 
   Supplier: SupplierDto;
+
+  poDelivery: Partial<PoDeliveryDto>[];
 
   createdAt: Date;
   updatedAt: Date;

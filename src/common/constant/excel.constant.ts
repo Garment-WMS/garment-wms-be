@@ -11,7 +11,7 @@ export const SUPPLIER_HEADER = [
   'Phone',
   'Fax',
 ];
-export const ITEM_HEADER = ['Item', 'Description', 'Qty', 'Price', 'Total'];
+export const ITEM_HEADER = ['Id', 'Description', 'Qty', 'Price', 'Total'];
 export const PO_INFO_TABLE = 'POInfo';
 export const PO_INFO_HEADER = [
   'Expected Finished Date',
