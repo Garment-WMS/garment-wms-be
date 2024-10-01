@@ -1,23 +1,26 @@
 model Material {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  materialTypeId String?   @map("material_type_id") @db.Uuid
-  name           String?   @db.VarChar
-  code           String?   @unique @db.VarChar
-  width          Float?
-  height         Float?
-  length         Float?
-  weight         Float?
-  minQuantity    Float?    @map("min_quantity")
-  unitId         String?   @map("unit_id") @db.Uuid
-  createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime? @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialTypeId      String    @map("material_type_id") @db.Uuid
+  name                String    @map("name") @db.VarChar
+  code                String?   @unique @map("code") @db.VarChar
+  width               Float     @map("width")
+  height              Float     @map("height")
+  length              Float     @map("length")
+  weight              Float     @map("weight")
+  minQuantity         Float?    @default(0) @map("min_quantity")
+  uomId               String    @map("uom_id") @db.Uuid
+  packagingUnitId     String    @map("packaging_unit_id") @db.Uuid
+  uomPerPackagingUnit Float     @map("uom_per_packaging_unit")
+  createdAt           DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime? @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   exportMaterialRequestDetail ExportMaterialRequestDetail[]
   importRequestDetail         ImportRequestDetail[]
   inspectionReportDetail      InspectionReportDetail[]
-  materialType                MaterialType?                 @relation(fields: [materialTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  unit                        Unit?                         @relation(fields: [unitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialType                MaterialType                  @relation(fields: [materialTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  uom                         Uom                           @relation(fields: [uomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  packagingUnit               PackagingUnit                 @relation(fields: [packagingUnitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialAttribute           MaterialAttribute[]
   materialInspectionCriteria  MaterialInspectionCriteria[]
   materialReceipt             MaterialReceipt[]

@@ -1,14 +1,14 @@
 model AnnualProductionDetail {
   id                     String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  annualProductionPlanId String?   @map("annual_production_plan_id") @db.Uuid
-  productId              String?   @map("product_id") @db.Uuid
-  demandQuantity         Float?    @map("demand_quantity")
-  startingQuantity       Float?    @map("starting_quantity")
-  quantityToProduce      Float?    @map("quantity_to_produce")
+  annualProductionPlanId String    @map("annual_production_plan_id") @db.Uuid
+  productId              String    @map("product_id") @db.Uuid
+  demandQuantity         Float     @map("demand_quantity")
+  startingQuantity       Float?    @default(0) @map("starting_quantity")
+  quantityToProduce      Float     @map("quantity_to_produce")
   note                   String?   @db.VarChar
   startDate              DateTime? @map("start_date") @db.Date
   finishDate             DateTime? @map("finish_date") @db.Date
-  createdAt              DateTime? @map("created_at") @db.Timestamptz(6)
+  createdAt              DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime? @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime? @map("deleted_at") @db.Timestamptz(6)
 
