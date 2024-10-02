@@ -17,7 +17,6 @@ model Product {
   importRequestDetail       ImportRequestDetail[]
   inspectionReportDetail    InspectionReportDetail[]
   poDeliveryDetail          PoDeliveryDetail[]
-  packagingUnit             PackagingUnit               @relation(fields: [packagingUnitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productType               ProductType                 @relation(fields: [productTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   uom                       Uom                         @relation(fields: [uomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productAttribute          ProductAttribute[]
@@ -25,6 +24,7 @@ model Product {
   productInspectionCriteria ProductInspectionCriteria[]
   productReceipt            ProductReceipt[]
   quarterlyProductionDetail QuarterlyProductionDetail[]
+  ManufactureOrder          ManufactureOrder[]
 
   @@map("product")
 }

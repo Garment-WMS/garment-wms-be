@@ -8,12 +8,14 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { apiSuccess } from 'src/common/dto/api-response';
-import { CreateImportRequestDto } from './dto/create-import-request.dto';
-import { UpdateImportRequestDto } from './dto/update-import-request.dto';
+import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
+import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 import { ImportRequestService } from './import-request.service';
 
 @Controller('import-request')
+@ApiTags('import-request')
 export class ImportRequestController {
   constructor(private readonly importRequestService: ImportRequestService) {}
 

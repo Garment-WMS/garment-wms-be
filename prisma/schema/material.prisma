@@ -3,10 +3,11 @@ model Material {
   materialTypeId              String                        @map("material_type_id") @db.Uuid
   name                        String                        @map("name") @db.VarChar
   code                        String?                       @unique @map("code") @db.VarChar
-  width                       Float                         @map("width")
-  height                      Float                         @map("height")
-  length                      Float                         @map("length")
-  minQuantity                 Float?                        @default(0) @map("min_quantity")
+  packedWidth                 Float                         @map("packed_width")
+  packedLength                Float                         @map("packed_length")
+  packedHeight                Float                         @map("packed_height")
+  packedWeight                Float                         @map("packed_weight")
+  reorderLevel                Float                         @map("reorder_level")
   createdAt                   DateTime?                     @map("created_at") @db.Timestamptz(6)
   updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
@@ -18,13 +19,13 @@ model Material {
   importRequestDetail         ImportRequestDetail[]
   inspectionReportDetail      InspectionReportDetail[]
   materialType                MaterialType                  @relation(fields: [materialTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  packagingUnit               PackagingUnit                 @relation(fields: [packagingUnitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   uom                         Uom                           @relation(fields: [uomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialAttribute           MaterialAttribute[]
   materialInspectionCriteria  MaterialInspectionCriteria[]
   materialReceipt             MaterialReceipt[]
   poDeliveryDetail            PoDeliveryDetail[]
   productFormula              ProductFormula[]
+  materialExportDetail        MaterialExportDetail[]
 
   @@map("material")
 }
