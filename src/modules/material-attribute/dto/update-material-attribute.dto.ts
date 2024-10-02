@@ -1,4 +1,10 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateMaterialAttributeDto } from './create-material-attribute.dto';
+import { IsOptional, IsString } from 'class-validator';
 
-export class UpdateMaterialAttributeDto extends PartialType(CreateMaterialAttributeDto) {}
+export class UpdateMaterialAttributeDto {
+  @IsOptional()
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  value: any;
+}

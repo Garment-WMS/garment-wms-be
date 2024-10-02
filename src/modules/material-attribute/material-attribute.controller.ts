@@ -1,12 +1,17 @@
 import {
   Body,
   Controller,
+  Delete,
+  Param,
+  Patch,
   Post,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiConflictResponse, ApiTags } from '@nestjs/swagger';
+import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateMaterialAttributeDto } from './dto/create-material-attribute.dto';
+import { UpdateMaterialAttributeDto } from './dto/update-material-attribute.dto';
 import { MaterialAttributeService } from './material-attribute.service';
 
 @Controller('material-attribute')
@@ -35,5 +40,19 @@ export class MaterialAttributeController {
   })
   create(@Body() createMaterialAttributeDto: CreateMaterialAttributeDto) {
     return this.materialAttributeService.create(createMaterialAttributeDto);
+  }
+
+  @Patch(':id')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  update(
+    @Body() updateMaterialAttributeDto: UpdateMaterialAttributeDto,
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.materialAttributeService.update(id, updateMaterialAttributeDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id', new CustomUUIDPipe()) id: string) {
+    return this.materialAttributeService.remove(id);
   }
 }

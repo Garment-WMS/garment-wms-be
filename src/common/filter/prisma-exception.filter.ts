@@ -44,7 +44,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
         if (exception.meta.target) {
           error.property = exception.meta.target as string;
         }
-        responseBody = apiFailed(HttpStatus.BAD_REQUEST, message, [error]);
+        responseBody = apiFailed(HttpStatus.NOT_FOUND, message, [error]);
         break;
       case PrismaErrorEnum.ForeignKeyConstraintFailed:
         message = 'A foreign key constraint was violated on a record';

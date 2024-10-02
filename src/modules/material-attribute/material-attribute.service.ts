@@ -35,11 +35,44 @@ export class MaterialAttributeService {
     return `This action returns a #${id} materialAttribute`;
   }
 
-  update(id: number, updateMaterialAttributeDto: UpdateMaterialAttributeDto) {
-    return `This action updates a #${id} materialAttribute`;
+  async update(
+    id: string,
+    updateMaterialAttributeDto: UpdateMaterialAttributeDto,
+  ) {
+    const updatedAttribute = await this.prismaService.materialAttribute.update({
+      where: { id: id },
+      data: updateMaterialAttributeDto,
+    });
+    if (updatedAttribute) {
+      return apiSuccess(
+        HttpStatus.OK,
+        updatedAttribute,
+        'Material Attribute updated successfully',
+      );
+    }
+    return apiFailed(
+      HttpStatus.BAD_REQUEST,
+      null,
+      'Material Attribute update failed',
+    );
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} materialAttribute`;
+  async remove(id: string) {
+    const deletedAttribute = await this.prismaService.materialAttribute.delete({
+      where: { id: id },
+    });
+
+    if (deletedAttribute) {
+      return apiSuccess(
+        HttpStatus.OK,
+        deletedAttribute,
+        'Material Attribute deleted successfully',
+      );
+    }
+    return apiFailed(
+      HttpStatus.BAD_REQUEST,
+      null,
+      'Material Attribute deletion failed',
+    );
   }
 }
