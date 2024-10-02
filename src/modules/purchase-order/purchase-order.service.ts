@@ -1,7 +1,8 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PurchaseOrderStatus } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
+import { apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
 import { ExcelService } from '../excel/excel.service';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
@@ -25,14 +26,49 @@ export class PurchaseOrderService {
       ? parseInt(filterOption?.take.toString())
       : 10;
 
-    const result = this.prismaService.purchaseOrder.findMany({
+    const result = await this.prismaService.purchaseOrder.findMany({
       skip: (page - 1) * limit,
       take: limit,
       where: filterOption?.where,
       orderBy: filterOption?.orderBy,
+      include: {
+        poDelivery: {
+          select: {
+            id: true,
+            expectedDeliverDate: true,
+            isExtra: true,
+            poDeliveryDetail: {
+              select: {
+                id: true,
+                material: {
+                  select: {
+                    id: true,
+                    name: true,
+                    materialType: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
+                    uom: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
+                    packagingUnit: true,
+                    uomPerPackagingUnit: true,
+                  },
+                },
+                quantityByPackagingUnit: true,
+                totalAmount: true,
+              },
+            },
+          },
+        },
+      },
     });
-    console.log(filterOption.where);
-    return result;
+    return apiSuccess(HttpStatus.OK, result, 'List of Purchase Order');
   }
 
   async createPurchaseOrder(purchaseOrderDto: PurchaseOrderDto) {
@@ -77,11 +113,12 @@ export class PurchaseOrderService {
           const poDeliveryResult = await prisma.poDelivery.create({
             data: poDeliveryCreateInput,
           });
+          console.log(poDelivery.poDeliveryDetail);
           const poDeliveryDetails = poDelivery.poDeliveryDetail.map(
             (material) => ({
-              material_id: material.materialId,
-              quantity: material.quantity,
-              total_ammount: material.totalAmount,
+              materialId: material.materialId,
+              quantityByPackagingUnit: material.quantity,
+              totalAmount: material.totalAmount,
               poDeliveryId: poDeliveryResult.id,
             }),
           );

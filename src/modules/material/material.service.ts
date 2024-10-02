@@ -59,9 +59,7 @@ export class MaterialService {
   }
 
   async findByIdWithResponse(id: string) {
-    const result = await this.prismaService.material.findFirst({
-      where: { id },
-    });
+    const result = await this.findById(id);
     if (result) {
       return apiSuccess(HttpStatus.OK, result, 'Material found');
     }
