@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { CreateMaterialTypeDto } from './dto/create-material-type.dto';
@@ -27,15 +28,23 @@ export class MaterialTypeService {
     }
   }
 
+  async findById(id: string) {
+    if (!isUUID(id)) {
+      return null;
+    }
+    const result = await this.prismaService.materialType.findUnique({
+      where: { id },
+    });
+    return result;
+  }
+
   async findAll() {
     const result = await this.prismaService.materialType.findMany();
     return apiSuccess(HttpStatus.OK, result, 'List of Material Type');
   }
 
   async findOne(id: string) {
-    const result = await this.prismaService.materialType.findFirst({
-      where: { id },
-    });
+    const result = await this.findById(id);
     if (result) {
       return apiSuccess(HttpStatus.OK, result, 'Material Type found');
     }

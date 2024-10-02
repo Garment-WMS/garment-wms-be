@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { CreateUomDto } from './dto/create-uom.dto';
@@ -16,10 +17,18 @@ export class UomService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create UOM');
   }
 
-  async findOne(id: string) {
+  async findById(id: string) {
+    if (!isUUID(id)) {
+      return null;
+    }
     const result = await this.prismaService.uom.findUnique({
       where: { id },
     });
+    return result;
+  }
+
+  async findOne(id: string) {
+    const result = await this.findById(id);
 
     if (result) {
       return apiSuccess(HttpStatus.OK, result, 'UOM found');

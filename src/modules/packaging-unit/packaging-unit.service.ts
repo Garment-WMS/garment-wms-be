@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { CreatePackagingUnitDto } from './dto/create-packaging-unit.dto';
@@ -20,16 +21,22 @@ export class PackagingUnitService {
     }
     return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Packaging Unit');
   }
-
+  async findById(id: string) {
+    if (!isUUID(id)) {
+      return null;
+    }
+    const result = await this.prismaService.packagingUnit.findUnique({
+      where: { id },
+    });
+    return result;
+  }
   async findAll() {
     const result = await this.prismaService.packagingUnit.findMany();
     return apiSuccess(HttpStatus.OK, result, 'Packaging Units found');
   }
 
   async findOne(id: string) {
-    const result = await this.prismaService.packagingUnit.findUnique({
-      where: { id },
-    });
+    const result = this.findById(id);
 
     if (result) {
       return apiSuccess(HttpStatus.OK, result, 'Packaging Unit found');
