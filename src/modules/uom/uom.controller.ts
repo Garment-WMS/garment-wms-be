@@ -28,6 +28,8 @@ export class UomController {
 
   @Get(':id')
   findOne(@Param('id', new CustomUUIDPipe()) id: string) {
-    return 'Find one';
+    return this.uomService.findOne(id);
   }
+
+  
 }

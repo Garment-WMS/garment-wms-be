@@ -14,6 +14,7 @@ import { PrismaModule } from 'prisma/prisma.module';
 import { ExcelModule } from './modules/excel/excel.module';
 import { MaterialModule } from './modules/material/material.module';
 
+import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
 import { MaterialTypeModule } from './modules/material-type/material-type.module';
 import { MaterialUnitModule } from './modules/material-unit/material-unit.module';
 import { PackagingUnitModule } from './modules/packaging-unit/packaging-unit.module';
@@ -44,6 +45,7 @@ import { UserModule } from './modules/user/user.module';
     PackagingUnitModule,
     UomModule,
     MaterialUnitModule,
+    MaterialAttributeModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

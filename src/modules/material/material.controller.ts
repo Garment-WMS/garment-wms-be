@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
   UsePipes,
   ValidationPipe,
@@ -16,5 +17,10 @@ export class MaterialController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   create(@Body() createMaterialDto: CreateMaterialDto) {
     return this.materialService.create(createMaterialDto);
+  }
+
+  @Get()
+  getAllMaterial() {
+    return this.materialService.findAll();
   }
 }

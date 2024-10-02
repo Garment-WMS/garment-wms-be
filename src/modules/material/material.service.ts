@@ -47,7 +47,14 @@ export class MaterialService {
   }
 
   async findAll() {
-    const result = await this.prismaService.material.findMany();
+    const result = await this.prismaService.material.findMany({
+      include: {
+        materialAttribute: true,
+        materialType: true,
+        packagingUnit: true,
+        uom: true,
+      },
+    });
     return apiSuccess(HttpStatus.OK, result, 'List of Material');
   }
 
