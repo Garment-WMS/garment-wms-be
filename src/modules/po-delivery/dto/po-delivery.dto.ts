@@ -15,5 +15,5 @@ export class PoDeliveryDto implements PoDelivery {
   updatedAt: Date;
   deletedAt: Date;
 
-  PoDeliveryMaterial: Partial<PoDeliveryMaterialDto>[];
+  poDeliveryDetail: Partial<PoDeliveryMaterialDto>[];
 }

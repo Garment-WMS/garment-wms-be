@@ -1,7 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { PackagingUnitService } from './packaging-unit.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreatePackagingUnitDto } from './dto/create-packaging-unit.dto';
 import { UpdatePackagingUnitDto } from './dto/update-packaging-unit.dto';
+import { PackagingUnitService } from './packaging-unit.service';
 
 @Controller('packaging-unit')
 export class PackagingUnitController {
@@ -18,12 +27,15 @@ export class PackagingUnitController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.packagingUnitService.findOne(+id);
+  findOne(@Param('id', new CustomUUIDPipe()) id: string) {
+    return this.packagingUnitService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePackagingUnitDto: UpdatePackagingUnitDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updatePackagingUnitDto: UpdatePackagingUnitDto,
+  ) {
     return this.packagingUnitService.update(+id, updatePackagingUnitDto);
   }
 

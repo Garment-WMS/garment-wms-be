@@ -7,7 +7,7 @@ import {
   ISingleFilter,
   ISingleOrder,
 } from '@chax-at/prisma-filter';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsDefined,
@@ -57,7 +57,6 @@ export class Filter<T = any> implements IFilter<T> {
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  @Transform(({ value }) => value - 1, { toClassOnly: true })
   offset = 0;
 
   @Type(() => Number)

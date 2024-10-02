@@ -1,13 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { UomService } from './uom.service';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
+import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateUomDto } from './dto/create-uom.dto';
-import { UpdateUomDto } from './dto/update-uom.dto';
+import { UomService } from './uom.service';
 
 @Controller('uom')
 export class UomController {
   constructor(private readonly uomService: UomService) {}
 
   @Post()
+  @UsePipes(new ValidationPipe())
   create(@Body() createUomDto: CreateUomDto) {
     return this.uomService.create(createUomDto);
   }
@@ -18,17 +27,9 @@ export class UomController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.uomService.findOne(+id);
+  findOne(@Param('id', new CustomUUIDPipe()) id: string) {
+    return this.uomService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUomDto: UpdateUomDto) {
-    return this.uomService.update(+id, updateUomDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.uomService.remove(+id);
-  }
+  
 }

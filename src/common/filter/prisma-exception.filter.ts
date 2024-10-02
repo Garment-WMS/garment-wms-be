@@ -25,6 +25,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
     let logger = new Logger('PrismaExceptionFilter');
     logger.verbose('-------------Exception Start-------------');
     logger.error(exception.stack);
+    logger.error(exception.meta);
     logger.verbose('-------------Exception End---------------');
     let responseBody: ApiResponse;
     let message = exception.message;
@@ -40,6 +41,10 @@ export class PrismaExceptionFilter implements ExceptionFilter {
       case PrismaErrorEnum.OperationDependencyNotFound:
         message =
           'Operation failed because it depends on one or more records that were required but not found';
+        if (exception.meta.target) {
+          error.property = exception.meta.target as string;
+        }
+        responseBody = apiFailed(HttpStatus.NOT_FOUND, message, [error]);
         break;
       case PrismaErrorEnum.ForeignKeyConstraintFailed:
         message = 'A foreign key constraint was violated on a record';
