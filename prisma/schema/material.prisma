@@ -3,16 +3,12 @@ model Material {
   materialTypeId              String                        @map("material_type_id") @db.Uuid
   name                        String                        @map("name") @db.VarChar
   code                        String?                       @unique @map("code") @db.VarChar
-  packedWidth                 Float                         @map("packed_width")
-  packedLength                Float                         @map("packed_length")
-  packedHeight                Float                         @map("packed_height")
   packedWeight                Float                         @map("packed_weight")
   reorderLevel                Float                         @map("reorder_level")
-  createdAt                   DateTime?                     @map("created_at") @db.Timestamptz(6)
+  uomId                       String                        @map("uom_id") @db.Uuid
+  createdAt                   DateTime?                     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
-  uomId                       String                        @map("uom_id") @db.Uuid
-  uomPerPackagingUnit         Float                         @map("uom_per_packaging_unit")
   exportMaterialRequestDetail ExportMaterialRequestDetail[]
   importRequestDetail         ImportRequestDetail[]
   inspectionReportDetail      InspectionReportDetail[]
@@ -21,9 +17,9 @@ model Material {
   materialAttribute           MaterialAttribute[]
   materialInspectionCriteria  MaterialInspectionCriteria[]
   materialReceipt             MaterialReceipt[]
-  poDeliveryDetail            PoDeliveryDetail[]
   productFormula              ProductFormula[]
   materialExportDetail        MaterialExportDetail[]
+  MaterialVariant             MaterialVariant[]
 
   @@map("material")
 }
