@@ -7,6 +7,7 @@ model PurchasingStaff {
   inspectionRequests InspectionRequest[]
   purchaseOrders     PurchaseOrder[]
   users              User                @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ImportRequest      ImportRequest[]
 
   @@map("purchasing_staff")
 }

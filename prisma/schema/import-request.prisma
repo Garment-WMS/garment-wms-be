@@ -1,16 +1,26 @@
 model ImportRequest {
-  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  warehouseStaffId    String?               @map("warehouse_staff_id") @db.Uuid
-  status              ImportRequestStatus   @default(PENDING)
-  from                String?               @db.VarChar
-  to                  String?               @db.VarChar
-  startAt             DateTime?             @map("start_at") @db.Timestamptz(6)
-  finishAt            DateTime?             @map("finish_at") @db.Timestamptz(6)
-  createdAt           DateTime?             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime?             @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt           DateTime?             @map("deleted_at") @db.Timestamptz(6)
-  poReceiptId         String                @map("po_receipt_id") @db.Uuid
-  poDelivery          PoDelivery            @relation(fields: [poReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  warehouseManagerId String?             @map("warehouse_manager_id") @db.Uuid
+  purchasingStaffId  String?             @map("purchasing_staff_id") @db.Uuid
+  warehouseStaffId   String?             @map("warehouse_staff_id") @db.Uuid
+  status             ImportRequestStatus @default(PENDING)
+  description        String?             @db.VarChar
+  rejectReason       String?             @map("reject_reason") @db.VarChar
+  rejectAt           DateTime?           @map("reject_at") @db.Timestamptz(6)
+  cancelReason       String?             @map("cancel_reason") @db.VarChar
+  cancelAt           DateTime?           @map("cancel_at") @db.Timestamptz(6)
+  from               String?             @db.VarChar
+  to                 String?             @db.VarChar
+  startAt            DateTime?           @map("start_at") @db.Timestamptz(6)
+  finishAt           DateTime?           @map("finish_at") @db.Timestamptz(6)
+  createdAt          DateTime?           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime?           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime?           @map("deleted_at") @db.Timestamptz(6)
+  poDeliverytId      String              @map("po_delivery_id") @db.Uuid
+
+  poDelivery          PoDelivery            @relation(fields: [poDeliverytId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouseManager    WarehouseManager?     @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  purchasingStaff     PurchasingStaff?      @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warehouseStaff      WarehouseStaff?       @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   importRequestDetail ImportRequestDetail[]
 
@@ -20,9 +30,12 @@ model ImportRequest {
 enum ImportRequestStatus {
   PENDING
   REJECTED
-  APPROVED
-  IN_PROGRESS
-  FINISHED
+  APPROVED // APPROVED and assign inspection department
+  INSPECTING // INSPECTING
+  INSPECTED // INSPECTED
+  IMPORTING
+  IMPORTED
+  CANCELED
 
   @@map("import_request_status")
 }

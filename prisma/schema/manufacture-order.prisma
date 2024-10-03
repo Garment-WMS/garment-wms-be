@@ -1,0 +1,28 @@
+model ManufactureOrder {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  productId             String                  @map("product_id") @db.Uuid
+  code                  String                  @map("code") @db.VarChar
+  name                  String                  @map("name") @db.VarChar
+  description           String?                 @map("description") @db.VarChar
+  quantity              Float                   @map("quantity")
+  uomId                 String                  @map("uom_id") @db.Uuid
+  canceledAt            DateTime?               @map("canceled_at") @db.Timestamptz(6)
+  canceledBy            String?                 @map("canceled_by") @db.Uuid
+  canceledReason        String?                 @map("canceled_reason") @db.VarChar
+  status                ManufactureOrderStatus  @default(EXECUTING) @map("status")
+  startTime             DateTime?               @map("start_time") @db.Time
+  endTime               DateTime?               @map("end_time") @db.Time
+  createdAt             DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt             DateTime?               @map("deleted_at") @db.Timestamptz(6)
+  product               Product                 @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialExportRequest MaterialExportRequest[]
+
+  @@map("manufacture_order")
+}
+
+enum ManufactureOrderStatus {
+  EXECUTING
+  FINISHED
+  CANCELED
+}
