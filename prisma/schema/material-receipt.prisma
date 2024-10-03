@@ -1,15 +1,21 @@
 model MaterialReceipt {
-  id              String        @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  materialId      String        @map("material_id") @db.Uuid
-  importReceiptId String        @map("import_receipt_id") @db.Uuid
-  expireDate      DateTime?     @map("expire_date") @db.Timestamptz(6)
-  createdAt       DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime?     @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt       DateTime?     @map("deleted_at") @db.Timestamptz(6)
-  importDate      DateTime?     @map("import_date") @db.Timestamptz(6)
-  quantityByUom   Float?        @map("quantity_by_uom")
-  importReceipt   ImportReceipt @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  material        Material      @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialId            String                  @map("material_id") @db.Uuid
+  importReceiptId       String                  @map("import_receipt_id") @db.Uuid
+  uomId                 String?                 @db.Uuid
+  expireDate            DateTime?               @map("expire_date") @db.Timestamptz(6)
+  createdAt             DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt             DateTime?               @map("deleted_at") @db.Timestamptz(6)
+  importDate            DateTime?               @map("import_date") @db.Timestamptz(6)
+  packUnit              String?                 @map("pack_unit")
+  quantityByPack        Float?                  @map("quantity_by_pack")
+  uom                   String                  @map("uom")
+  uomPerPack            Float?                  @map("uom_per_pack")
+  importReceipt         ImportReceipt           @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  material              Material                @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Uom                   Uom?                    @relation(fields: [uomId], references: [id])
+  MaterialExportReceipt MaterialExportReceipt[]
 
   @@map("material_receipt")
 }

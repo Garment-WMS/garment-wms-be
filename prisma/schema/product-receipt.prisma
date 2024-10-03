@@ -2,6 +2,7 @@ model ProductReceipt {
   id              String        @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   productId       String        @map("product_id") @db.Uuid
   importReceiptId String        @map("import_receipt_id") @db.Uuid
+  uomId           String?       @db.Uuid
   expireDate      DateTime?     @map("expire_date") @db.Timestamptz(6)
   createdAt       DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime?     @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -10,6 +11,7 @@ model ProductReceipt {
   quantityByUom   Float?        @map("quantity_by_uom")
   importReceipt   ImportReceipt @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   product         Product       @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Uom             Uom?          @relation(fields: [uomId], references: [id])
 
   @@map("product_receipt")
 }
