@@ -10,19 +10,13 @@ export class MaterialService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async create(createMaterialDto: CreateMaterialDto) {
-    const { materialTypeId, packagingUnitId, uomId, ...rest } =
-      createMaterialDto;
+    const { materialTypeId, uomId, ...rest } = createMaterialDto;
 
     const materialInput: Prisma.MaterialCreateInput = {
       ...rest,
       materialType: {
         connect: {
           id: materialTypeId,
-        },
-      },
-      packagingUnit: {
-        connect: {
-          id: packagingUnitId,
         },
       },
       uom: {
@@ -51,7 +45,6 @@ export class MaterialService {
       include: {
         materialAttribute: true,
         materialType: true,
-        packagingUnit: true,
         uom: true,
       },
     });
@@ -59,9 +52,7 @@ export class MaterialService {
   }
 
   async findByIdWithResponse(id: string) {
-    const result = await this.prismaService.material.findFirst({
-      where: { id },
-    });
+    const result = await this.findById(id);
     if (result) {
       return apiSuccess(HttpStatus.OK, result, 'Material found');
     }
