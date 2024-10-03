@@ -9,7 +9,6 @@ import {
   MinLength,
 } from 'class-validator';
 import { IsMaterialTypeExist } from 'src/modules/material-type/validator/is-material-type-exist.validator';
-import { IsPackagingUnitExist } from 'src/modules/packaging-unit/validation/is-packaging-unit-exist.validation';
 import { IsUomExist } from 'src/modules/uom/validation/is-uom-exist.validation';
 
 export class CreateMaterialDto {
@@ -18,12 +17,6 @@ export class CreateMaterialDto {
   @IsUUID()
   @IsMaterialTypeExist()
   materialTypeId: string;
-
-  @ApiProperty({})
-  @IsNotEmpty()
-  @IsUUID()
-  @IsPackagingUnitExist()
-  packagingUnitId: string;
 
   @ApiProperty({})
   @IsNotEmpty()
@@ -54,29 +47,29 @@ export class CreateMaterialDto {
   @IsNotEmpty()
   @IsNumber()
   @Min(0)
-  width: number;
+  packedWidth: number;
 
   @ApiProperty({})
   @IsNotEmpty()
   @IsNumber()
   @Min(0)
-  height: number;
+  packedHeight: number;
 
   @ApiProperty({})
   @IsNotEmpty()
   @IsNumber()
   @Min(0)
-  length: number;
+  packedLength: number;
 
   @ApiProperty({})
   @IsNotEmpty()
   @IsNumber()
   @Min(0)
-  weight: number;
+  packedWeight: number;
 
   @ApiProperty({})
   @IsNotEmpty()
   @IsNumber()
   @Min(0)
-  minQuantity: number;
+  reorderLevel: number;
 }

@@ -139,13 +139,19 @@ export class ExcelService {
     if (errorResponseDeliveryBatch) {
       return errorResponseDeliveryBatch;
     }
+    console.log('Delivery Batch Error', deliveryBatchError);
+    console.log('Delivery Batch Item Error', deliveryBatchItemError);
+    console.log('Supplier Error', supplierError);
+    console.log('List Item Error', listItemError);
+    listItemError.forEach((value, key) => {
+      console.log('List Item Error', value);
+    });
     if (
       deliveryBatchError.size > 0 ||
       deliveryBatchItemError.size > 0 ||
       supplierError.size > 0 ||
       listItemError.size > 0
     ) {
-      console.log('Delivery Batch Error', deliveryBatchError);
       const timestamp = Date.now();
       const fileName = `${timestamp}-${file.originalname}`;
       const bufferResult = await workbook.xlsx.writeBuffer();
@@ -1392,9 +1398,15 @@ export class ExcelService {
             listItemError,
           )
         ) {
+          console.log('itemCell.itemIdCell.value', itemCell.itemIdCell.value);
+          console.log(
+            'itemCell.itemIdCell.value',
+            this.extractValueFromCellValue(itemCell.itemIdCell.value),
+          );
           material = await this.materialService.findById(
             this.extractValueFromCellValue(itemCell.itemIdCell.value),
           );
+          console.log('material', material);
           if (isEmpty(material)) {
             const text = [
               { text: `${itemCell.itemIdCell.value}` },
@@ -1416,11 +1428,11 @@ export class ExcelService {
           errorFlag = true;
         }
 
-        // Check if description is empty
+        // Check if Material name is empty
         if (
           this.validateRequired(
             itemCell.descriptionCell.value as string,
-            'Description',
+            'Material Name',
             itemCell.descriptionCell.address,
             listItemError,
           )
@@ -1542,33 +1554,15 @@ export class ExcelService {
             );
             errorFlag = true;
           }
-
-          if (!max(itemCell.priceCell.value, 100000) && !errorFlag) {
-            const text = [
-              { text: `${itemCell.priceCell.value}` },
-              {
-                text: `[Price must be less than 1000000]`,
-                font: { color: { argb: 'FF0000' } },
-              },
-            ];
-            this.addError(
-              listItemError,
-              itemCell.priceCell.address,
-              'Price',
-              itemCell.priceCell.value,
-              text,
-            );
-            errorFlag = true;
-          }
         } else {
           errorFlag = true;
         }
 
         if (!errorFlag) {
           itemListResult.push({
-            material_id: itemCell.itemIdCell.value as string,
+            materialId: itemCell.itemIdCell.value as string,
             quantity: itemCell.quantityCell.value as number,
-            total_ammount: this.getTotalCellValue(itemCell.totalCell),
+            totalAmount: this.getTotalCellValue(itemCell.totalCell),
           });
         }
       }
@@ -1627,11 +1621,10 @@ export class ExcelService {
       cell.value = this.getCellValue(cell);
     }
     let value = cell.value;
-
     if (typeof value === 'string' && value !== null) {
       cell.value = value.trim();
     }
-    return cell.value;
+    return cell?.value || cell;
   }
 }
 
