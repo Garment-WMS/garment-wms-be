@@ -40,23 +40,28 @@ export class PurchaseOrderService {
             poDeliveryDetail: {
               select: {
                 id: true,
-                material: {
+                materialVariant: {
                   select: {
                     id: true,
                     name: true,
-                    materialType: {
+                    material: {
                       select: {
                         id: true,
                         name: true,
+                        materialType: {
+                          select: {
+                            id: true,
+                            name: true,
+                          },
+                        },
+                        uom: {
+                          select: {
+                            id: true,
+                            name: true,
+                          },
+                        },
                       },
                     },
-                    uom: {
-                      select: {
-                        id: true,
-                        name: true,
-                      },
-                    },
-                    uomPerPackagingUnit: true,
                   },
                 },
                 totalAmount: true,
@@ -111,11 +116,10 @@ export class PurchaseOrderService {
           const poDeliveryResult = await prisma.poDelivery.create({
             data: poDeliveryCreateInput,
           });
-          console.log(poDelivery.poDeliveryDetail);
           const poDeliveryDetails = poDelivery.poDeliveryDetail.map(
             (material) => ({
-              materialId: material.materialId,
-              quantityByPackagingUnit: material.quantity,
+              materialVariantId: material.materialVariantId,
+              quantityByPackagingUnit: material.quantityByPack,
               totalAmount: material.totalAmount,
               poDeliveryId: poDeliveryResult.id,
             }),

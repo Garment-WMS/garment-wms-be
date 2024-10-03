@@ -24,6 +24,7 @@ import { PurchaseOrderModule } from './modules/purchase-order/purchase-order.mod
 import { SupplierModule } from './modules/supplier/supplier.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
+import { MaterialVariantModule } from './material-variant/material-variant.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { UserModule } from './modules/user/user.module';
     MaterialUnitModule,
     MaterialAttributeModule,
     ImportRequestModule,
+    MaterialVariantModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

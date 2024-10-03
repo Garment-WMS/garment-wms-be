@@ -20,7 +20,7 @@ export class PurchaseOrderController {
 
   @Get()
   @UsePipes(new ValidationPipe())
-  async getPurchaseOrders(
+  getPurchaseOrders(
     @Query(
       new DirectFilterPipe<any, Prisma.PurchaseOrderWhereInput>(
         ['id', 'poNumber', 'createdAt', 'supplierId'],
