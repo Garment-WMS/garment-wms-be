@@ -11,6 +11,7 @@ model ImportRequest {
   cancelAt           DateTime?           @map("cancel_at") @db.Timestamptz(6)
   from               String?             @db.VarChar
   to                 String?             @db.VarChar
+  type               ImportType          @map("type")
   startAt            DateTime?           @map("start_at") @db.Timestamptz(6)
   finishAt           DateTime?           @map("finish_at") @db.Timestamptz(6)
   createdAt          DateTime?           @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -38,4 +39,13 @@ enum ImportRequestStatus {
   CANCELED
 
   @@map("import_request_status")
+}
+
+enum ImportType {
+  MATERIAL_IMPORT_BY_PO
+  PRODUCT_IMPORT_BY_MANUFACTURE_ORDER
+  MATERIAL_IMPORT_BY_REQUEST
+  PRODUCT_IMPORT_BY_REQUEST
+
+  @@map("import_type")
 }

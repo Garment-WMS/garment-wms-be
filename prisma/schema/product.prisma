@@ -13,7 +13,6 @@ model Product {
   packagingUnitId           String                      @map("packaging_unit_id") @db.Uuid
   uomPerPackagingUnit       Float                       @map("uom_per_packaging_unit")
   weight                    Float                       @map("weight")
-  annualProductionDetail    AnnualProductionDetail[]
   importRequestDetail       ImportRequestDetail[]
   inspectionReportDetail    InspectionReportDetail[]
   poDeliveryDetail          PoDeliveryDetail[]

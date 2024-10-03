@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { $Enums } from '@prisma/client';
+import { $Enums, Prisma } from '@prisma/client';
 import {
   IsDateString,
   IsEnum,
@@ -9,7 +9,21 @@ import {
 } from 'class-validator';
 import { CreateImportRequestDetailDto } from '../import-request-detail/create-import-request-detail.dto';
 
-export class CreateImportRequestDto {
+export class CreateImportRequestDto implements Prisma.ImportRequestCreateInput {
+  id?: string;
+  description?: string;
+  rejectReason?: string;
+  rejectAt?: string | Date;
+  cancelReason?: string;
+  cancelAt?: string | Date;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  deletedAt?: string | Date;
+  poDelivery: Prisma.PoDeliveryCreateNestedOneWithoutImportRequestInput;
+  warehouseManager?: Prisma.WarehouseManagerCreateNestedOneWithoutImportRequestInput;
+  purchasingStaff?: Prisma.PurchasingStaffCreateNestedOneWithoutImportRequestInput;
+  warehouseStaff?: Prisma.WarehouseStaffCreateNestedOneWithoutImportRequestInput;
+  importRequestDetail?: Prisma.ImportRequestDetailCreateNestedManyWithoutImportRequestInput;
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsUUID()
   @IsOptional()
