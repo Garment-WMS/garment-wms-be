@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { apiSuccess } from 'src/common/dto/api-response';
+import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 import { ImportRequestService } from './import-request.service';
@@ -38,7 +39,7 @@ export class ImportRequestController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new CustomUUIDPipe()) id: string) {
     return apiSuccess(
       HttpStatus.OK,
       this.importRequestService.findOne(id),
@@ -48,7 +49,7 @@ export class ImportRequestController {
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', new CustomUUIDPipe()) id: string,
     @Body() updateImportRequestDto: UpdateImportRequestDto,
   ) {
     return apiSuccess(
@@ -59,7 +60,7 @@ export class ImportRequestController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new CustomUUIDPipe()) id: string) {
     return apiSuccess(
       HttpStatus.OK,
       this.importRequestService.remove(id),

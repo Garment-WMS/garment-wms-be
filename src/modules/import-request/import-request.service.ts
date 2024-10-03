@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
+import { apiFailed } from 'src/common/dto/api-response';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 
@@ -28,10 +29,16 @@ export class ImportRequestService {
     return this.prismaService.importRequest.findMany();
   }
 
-  findOne(id: string) {
-    return this.prismaService.importRequest.findUnique({
+  async findOne(id: string) {
+    const importRequest = await this.prismaService.importRequest.findUnique({
       where: { id },
     });
+    if (!importRequest) {
+      throw new NotFoundException(
+        apiFailed(HttpStatus.NOT_FOUND, 'Import request not found'),
+      );
+    }
+    return importRequest;
   }
 
   update(id: string, updateImportRequestDto: UpdateImportRequestDto) {
