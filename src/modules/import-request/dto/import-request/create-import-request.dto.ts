@@ -47,4 +47,8 @@ export class CreateImportRequestDto {
 
   @ApiProperty({ required: true, type: [Object] })
   importRequestDetails: CreateImportRequestDetailDto[];
+
+  @ApiProperty({ required: true, type: 'string' })
+  @IsEnum($Enums.ImportType)
+  type: $Enums.ImportType;
 }
