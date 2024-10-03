@@ -3,7 +3,6 @@ model Material {
   materialTypeId              String                        @map("material_type_id") @db.Uuid
   name                        String                        @map("name") @db.VarChar
   code                        String?                       @unique @map("code") @db.VarChar
-  packedWeight                Float                         @map("packed_weight")
   reorderLevel                Float                         @map("reorder_level")
   uomId                       String                        @map("uom_id") @db.Uuid
   createdAt                   DateTime?                     @default(now()) @map("created_at") @db.Timestamptz(6)
