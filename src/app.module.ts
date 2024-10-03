@@ -14,11 +14,10 @@ import { PrismaModule } from 'prisma/prisma.module';
 import { ExcelModule } from './modules/excel/excel.module';
 import { MaterialModule } from './modules/material/material.module';
 
-import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
 import { ImportRequestModule } from './modules/import-request/import-request.module';
+import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
 import { MaterialTypeModule } from './modules/material-type/material-type.module';
 import { MaterialUnitModule } from './modules/material-unit/material-unit.module';
-import { PackagingUnitModule } from './modules/packaging-unit/packaging-unit.module';
 import { PoDeliveryMaterialModule } from './modules/po-delivery-material/po-delivery-material.module';
 import { PoDeliveryModule } from './modules/po-delivery/po-delivery.module';
 import { PurchaseOrderModule } from './modules/purchase-order/purchase-order.module';
@@ -43,7 +42,7 @@ import { UserModule } from './modules/user/user.module';
     PoDeliveryMaterialModule,
     MaterialModule,
     MaterialTypeModule,
-    PackagingUnitModule,
+    // PackagingUnitModule,
     UomModule,
     MaterialUnitModule,
     MaterialAttributeModule,

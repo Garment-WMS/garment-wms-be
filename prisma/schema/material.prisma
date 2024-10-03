@@ -12,9 +12,7 @@ model Material {
   updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
   uomId                       String                        @map("uom_id") @db.Uuid
-  packagingUnitId             String                        @map("packaging_unit_id") @db.Uuid
   uomPerPackagingUnit         Float                         @map("uom_per_packaging_unit")
-  weight                      Float                         @map("weight")
   exportMaterialRequestDetail ExportMaterialRequestDetail[]
   importRequestDetail         ImportRequestDetail[]
   inspectionReportDetail      InspectionReportDetail[]
