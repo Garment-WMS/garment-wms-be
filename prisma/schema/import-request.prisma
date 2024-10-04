@@ -17,9 +17,9 @@ model ImportRequest {
   createdAt          DateTime?           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime?           @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt          DateTime?           @map("deleted_at") @db.Timestamptz(6)
-  poDeliverytId      String              @map("po_delivery_id") @db.Uuid
+  poDeliveryId       String?             @map("po_delivery_id") @db.Uuid
 
-  poDelivery          PoDelivery            @relation(fields: [poDeliverytId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  poDelivery          PoDelivery?           @relation(fields: [poDeliveryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warehouseManager    WarehouseManager?     @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   purchasingStaff     PurchasingStaff?      @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warehouseStaff      WarehouseStaff?       @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)

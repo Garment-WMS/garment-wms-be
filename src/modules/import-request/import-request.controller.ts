@@ -21,49 +21,49 @@ export class ImportRequestController {
   constructor(private readonly importRequestService: ImportRequestService) {}
 
   @Post()
-  create(@Body() createImportRequestDto: CreateImportRequestDto) {
+  async create(@Body() createImportRequestDto: CreateImportRequestDto) {
     return apiSuccess(
       HttpStatus.CREATED,
-      this.importRequestService.create(createImportRequestDto),
+      await this.importRequestService.create(createImportRequestDto),
       'Import request created successfully',
     );
   }
 
   @Get()
-  findAll() {
+  async findAll() {
     return apiSuccess(
       HttpStatus.OK,
-      this.importRequestService.findAll(),
+      await this.importRequestService.findAll(),
       'Import requests fetched successfully',
     );
   }
 
   @Get(':id')
-  findOne(@Param('id', new CustomUUIDPipe()) id: string) {
+  async findOne(@Param('id', new CustomUUIDPipe()) id: string) {
     return apiSuccess(
       HttpStatus.OK,
-      this.importRequestService.findOne(id),
+      await this.importRequestService.findOne(id),
       'Import request fetched successfully',
     );
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id', new CustomUUIDPipe()) id: string,
     @Body() updateImportRequestDto: UpdateImportRequestDto,
   ) {
     return apiSuccess(
       HttpStatus.OK,
-      this.importRequestService.update(id, updateImportRequestDto),
+      await this.importRequestService.update(id, updateImportRequestDto),
       'Import request updated successfully',
     );
   }
 
   @Delete(':id')
-  remove(@Param('id', new CustomUUIDPipe()) id: string) {
+  async remove(@Param('id', new CustomUUIDPipe()) id: string) {
     return apiSuccess(
       HttpStatus.OK,
-      this.importRequestService.remove(id),
+      await this.importRequestService.remove(id),
       'Import request deleted successfully',
     );
   }

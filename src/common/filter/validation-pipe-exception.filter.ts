@@ -12,7 +12,7 @@ import { HttpAdapterHost } from '@nestjs/core';
 import { apiFailed } from '../dto/api-response';
 import { ApiResponse } from '../dto/response.dto';
 
-@Catch()
+@Catch(BadRequestException)
 export class ValidationPipeExceptionFilter extends ValidationPipe {
   constructor(
     private readonly httpAdapterHost: HttpAdapterHost,

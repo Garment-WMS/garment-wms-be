@@ -6,8 +6,8 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filter/all-exceptions.filter';
 import { AuthExceptionFilter } from './common/filter/auth-exception.filter';
 import { PrismaExceptionFilter } from './common/filter/prisma-exception.filter';
-import { ValidationPipeExceptionFilter } from './common/filter/validation-pipe-exception.filter';
 import { StatusCodeInterceptor } from './common/interceptor/status-code.interceptor';
+import { CustomValidationPipe } from './common/pipe/custom-validation.pipe';
 
 async function bootstrap() {
   const logger = new Logger('main.ts');
@@ -20,9 +20,13 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
+  app.useGlobalPipes(
+    new CustomValidationPipe({ transform: true, whitelist: true }),
+  );
+
   app.useGlobalFilters(
     new AllExceptionsFilter(app.get(HttpAdapterHost)),
-    new ValidationPipeExceptionFilter(app.get(HttpAdapterHost)),
+    // new ValidationPipeExceptionFilter(app.get(HttpAdapterHost)),
     new PrismaExceptionFilter(app.get(HttpAdapterHost)),
     new AuthExceptionFilter(app.get(HttpAdapterHost)),
   );

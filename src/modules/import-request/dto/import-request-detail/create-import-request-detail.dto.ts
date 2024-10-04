@@ -2,7 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateImportRequestDetailDto {
-  @ApiProperty()
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsUUID()
   importRequestId: string;
 
@@ -18,5 +19,5 @@ export class CreateImportRequestDetailDto {
 
   @ApiProperty()
   @IsNumber()
-  quantityByUom: number;
+  quantityByPack?: number;
 }
