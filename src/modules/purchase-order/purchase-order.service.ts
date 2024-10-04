@@ -107,7 +107,7 @@ export class PurchaseOrderService {
               console.log(material);
               return {
                 materialVariantId: material.materialVariantId,
-                quantityByPackagingUnit: material.quantityByPack,
+                quantityByPack: material.quantityByPack,
                 totalAmount: material.totalAmount,
                 poDeliveryId: poDeliveryResult.id,
               };

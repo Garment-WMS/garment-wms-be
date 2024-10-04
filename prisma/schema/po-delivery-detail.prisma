@@ -2,7 +2,7 @@ model PoDeliveryDetail {
   id                String           @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   poDeliveryId      String           @map("po_delivery_id") @db.Uuid
   materialVariantId String           @map("material_variant_id") @db.Uuid
-  unitPrice         Float            @map("unit_price")
+  totalAmount       Float            @map("total_amount")
   quantityByPack    Float            @map("quantity_by_pack")
   expiredDate       DateTime?        @map("expired_date") @db.Timestamptz(6)
   createdAt         DateTime?        @map("created_at") @db.Timestamptz(6)

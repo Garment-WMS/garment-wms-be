@@ -128,7 +128,7 @@ export class ImportRequestService {
           data: dto.importRequestDetails,
         },
       },
-      // type: createImportRequestDto.type,
+      import_request_type: 'MATERIAL_BY_PO'
     };
     return this.prismaService.importRequest.create({
       data: createImportRequestInput,

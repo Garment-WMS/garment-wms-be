@@ -15,6 +15,14 @@ import { CreateImportRequestDetailDto } from '../import-request-detail/create-im
 export class CreateImportRequestDto
   implements Prisma.ImportRequestUncheckedCreateInput
 {
+  id?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  deletedAt?: string | Date;
+  cancelAt?: string | Date;
+  rejectAt?: string | Date;
+  import_request_type: $Enums.ImportRequestType;
+  importRequestDetail?: Prisma.ImportRequestDetailUncheckedCreateNestedManyWithoutImportRequestInput;
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsUUID()
   @IsOptional()
