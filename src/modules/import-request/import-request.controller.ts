@@ -1,3 +1,4 @@
+import { DirectFilterPipe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
@@ -7,11 +8,14 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Prisma } from '@prisma/client';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
+import { SearchImportQueryDto } from './dto/import-request/search-import-query.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 import { ImportRequestService } from './import-request.service';
 
@@ -30,11 +34,41 @@ export class ImportRequestController {
   }
 
   @Get()
-  async findAll() {
+  async search(
+    @Query(
+      new DirectFilterPipe<
+        SearchImportQueryDto,
+        Prisma.ImportRequestWhereInput
+      >(
+        [
+          'id',
+          'createdAt',
+          'type',
+          'warehouseManagerId',
+          'purchasingStaffId',
+          'warehouseStaffId',
+          'poDeliveryId',
+          'status',
+        ],
+        [],
+        [{ createdAt: 'desc' }, { id: 'asc' }],
+      ),
+    )
+    filterDto: SearchImportQueryDto,
+  ) {
     return apiSuccess(
       HttpStatus.OK,
-      await this.importRequestService.findAll(),
+      await this.importRequestService.search(filterDto.findOptions),
       'Get import requests successfully',
+    );
+  }
+
+  @Get('/enum')
+  async getEnum() {
+    return apiSuccess(
+      HttpStatus.OK,
+      this.importRequestService.getEnum(),
+      'Get import request status successfully',
     );
   }
 
