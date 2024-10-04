@@ -38,3 +38,14 @@ enum ImportRequestStatus {
 
   @@map("import_request_status")
 }
+
+enum ImportRequestType {
+  MATERIAL_BY_PO
+  MATERIAL_RETURN
+  MATERIAL_NOT_BY_PO
+  PRODUCT_BY_MO
+  PRODUCT_RETURN
+  PRODUCT_NOT_BY_MO
+
+  @@map("import_request_type")
+}

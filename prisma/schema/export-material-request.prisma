@@ -9,7 +9,6 @@ model ExportMaterialRequest {
   reservePercentId       String?                     @map("reserve_percent_id") @db.Uuid
   updatedAt              DateTime?                   @updatedAt @map("updated_at") @db.Timestamptz(6)
   productionDepartment   ProductionDepartment        @relation(fields: [productionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  reserve_percent        reserve_percent?            @relation(fields: [reservePercentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("export_material_request")
 }

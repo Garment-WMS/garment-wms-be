@@ -9,7 +9,6 @@ model Material {
   uomId                       String                        @map("uom_id") @db.Uuid
   reorderLevel                Float                         @map("reorder_level")
   exportMaterialRequestDetail ExportMaterialRequestDetail[]
-  importRequestDetail         ImportRequestDetail[]
   inspectionReportDetail      InspectionReportDetail[]
   materialType                MaterialType                  @relation(fields: [materialTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   uom                         Uom                           @relation(fields: [uomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
