@@ -5,8 +5,8 @@ model InspectionReport {
   createdAt              DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)
   updateAt               DateTime?                @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime?                @map("deleted_at") @db.Timestamptz(6)
-  inspectionDepartment   InspectionDepartment     @relation(fields: [inspectionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   importReceipt          ImportReceipt?
+  inspectionDepartment   InspectionDepartment     @relation(fields: [inspectionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   inspectionReportDetail InspectionReportDetail[]
 
   @@map("inspection_report")

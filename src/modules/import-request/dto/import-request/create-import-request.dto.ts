@@ -1,29 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { $Enums, Prisma } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
   IsDateString,
   IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
+  ValidateNested,
 } from 'class-validator';
 import { CreateImportRequestDetailDto } from '../import-request-detail/create-import-request-detail.dto';
 
-export class CreateImportRequestDto implements Prisma.ImportRequestCreateInput {
-  id?: string;
-  description?: string;
-  rejectReason?: string;
-  rejectAt?: string | Date;
-  cancelReason?: string;
-  cancelAt?: string | Date;
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
-  deletedAt?: string | Date;
-  poDelivery: Prisma.PoDeliveryCreateNestedOneWithoutImportRequestInput;
-  warehouseManager?: Prisma.WarehouseManagerCreateNestedOneWithoutImportRequestInput;
-  purchasingStaff?: Prisma.PurchasingStaffCreateNestedOneWithoutImportRequestInput;
-  warehouseStaff?: Prisma.WarehouseStaffCreateNestedOneWithoutImportRequestInput;
-  importRequestDetail?: Prisma.ImportRequestDetailCreateNestedManyWithoutImportRequestInput;
+export class CreateImportRequestDto
+  implements Prisma.ImportRequestUncheckedCreateInput
+{
+  @ApiProperty({ required: false, type: 'string', format: 'uuid' })
+  @IsUUID()
+  @IsOptional()
+  warehouseManagerId?: string;
+
+  @ApiProperty({ required: false, type: 'string', format: 'uuid' })
+  @IsUUID()
+  @IsOptional()
+  purchasingStaffId?: string;
+
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsUUID()
   @IsOptional()
@@ -40,11 +41,31 @@ export class CreateImportRequestDto implements Prisma.ImportRequestCreateInput {
   status?: $Enums.ImportRequestStatus;
 
   @ApiProperty({ required: false })
+  @IsNotEmpty()
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({ required: false })
+  @IsNotEmpty()
+  @IsString()
+  @IsOptional()
+  rejectReason?: string;
+
+  @ApiProperty({ required: false })
+  @IsNotEmpty()
+  @IsString()
+  @IsOptional()
+  cancelReason?: string;
+
+  @ApiProperty({ required: false })
+  @IsNotEmpty()
   @IsString()
   @IsOptional()
   from?: string;
 
   @ApiProperty({ required: false })
+  @IsNotEmpty()
   @IsString()
   @IsOptional()
   to?: string;
@@ -60,6 +81,8 @@ export class CreateImportRequestDto implements Prisma.ImportRequestCreateInput {
   finishAt?: string | Date;
 
   @ApiProperty({ required: true, type: [Object] })
+  @ValidateNested()
+  @Type(() => CreateImportRequestDetailDto)
   importRequestDetails: CreateImportRequestDetailDto[];
 
   // @ApiProperty({ required: true, type: 'string' })

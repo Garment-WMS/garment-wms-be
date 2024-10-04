@@ -9,16 +9,15 @@ model Material {
   updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
   exportMaterialRequestDetail ExportMaterialRequestDetail[]
-  importRequestDetail         ImportRequestDetail[]
   inspectionReportDetail      InspectionReportDetail[]
   materialType                MaterialType                  @relation(fields: [materialTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   uom                         Uom                           @relation(fields: [uomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialAttribute           MaterialAttribute[]
+  materialExportDetail        MaterialExportDetail[]
   materialInspectionCriteria  MaterialInspectionCriteria[]
   materialReceipt             MaterialReceipt[]
-  productFormula              ProductFormula[]
-  materialExportDetail        MaterialExportDetail[]
   MaterialVariant             MaterialVariant[]
+  productFormula              ProductFormula[]
 
   @@map("material")
 }
