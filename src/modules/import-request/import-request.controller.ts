@@ -34,7 +34,7 @@ export class ImportRequestController {
     return apiSuccess(
       HttpStatus.OK,
       await this.importRequestService.findAll(),
-      'Import requests fetched successfully',
+      'Get import requests successfully',
     );
   }
 
@@ -43,7 +43,7 @@ export class ImportRequestController {
     return apiSuccess(
       HttpStatus.OK,
       await this.importRequestService.findOne(id),
-      'Import request fetched successfully',
+      'Get import request successfully',
     );
   }
 

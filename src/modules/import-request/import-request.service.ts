@@ -123,12 +123,12 @@ export class ImportRequestService {
       to: dto.to,
       startAt: dto.startAt,
       finishAt: dto.finishAt,
+      type: dto.type,
       importRequestDetail: {
         createMany: {
           data: dto.importRequestDetails,
         },
       },
-      import_request_type: 'MATERIAL_BY_PO'
     };
     return this.prismaService.importRequest.create({
       data: createImportRequestInput,
@@ -157,6 +157,7 @@ export class ImportRequestService {
       to: dto.to,
       startAt: dto.startAt,
       finishAt: dto.finishAt,
+      type: dto.type,
       importRequestDetail: dto.importRequestDetails
         ? {
             upsert: dto.importRequestDetails.map((detail) => ({
