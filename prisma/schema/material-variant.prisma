@@ -12,9 +12,9 @@ model MaterialVariant {
   updatedAt           DateTime?             @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt           DateTime?             @map("deleted_at") @db.Timestamptz(6)
   packedWeight        Float                 @map("packed_weight")
+  ImportRequestDetail ImportRequestDetail[]
   material            Material              @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   PoDeliveryDetail    PoDeliveryDetail[]
-  ImportRequestDetail ImportRequestDetail[]
 
   @@map("material_variant")
 }

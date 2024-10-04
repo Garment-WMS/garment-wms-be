@@ -12,6 +12,7 @@ model MaterialReceipt {
   uom                   String                  @map("uom")
   uomId                 String?                 @db.Uuid
   uomPerPack            Float?                  @map("uom_per_pack")
+  InventoryReportDetail InventoryReportDetail[]
   MaterialExportReceipt MaterialExportReceipt[]
   importReceipt         ImportReceipt           @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   material              Material                @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
