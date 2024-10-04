@@ -1,6 +1,8 @@
 import { PoDeliveryDetail } from '@prisma/client';
 
 export class PoDeliveryMaterialDto implements PoDeliveryDetail {
+  total_ammount: number;
+  expire_date: Date;
   id: string;
   poDeliveryId: string;
   materialVariantId: string;

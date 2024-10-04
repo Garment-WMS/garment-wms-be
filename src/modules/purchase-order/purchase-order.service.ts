@@ -8,6 +8,7 @@ import { ExcelService } from '../excel/excel.service';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { PurchaseOrderDto } from './dto/purchase-order.dto';
+import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 
 @Injectable()
 export class PurchaseOrderService {
@@ -120,5 +121,15 @@ export class PurchaseOrderService {
       });
     }
     return excelData;
+  }
+
+  async updatePurchaseOrder(
+    id: string,
+    updatedPurchaseOrderDto: UpdatePurchaseOrderDto,
+  ) {
+    // return this.prismaService.purchaseOrder.update({
+    //   where: { id },
+    //   // data: updatedPurchaseOrderDto,
+    // });
   }
 }
