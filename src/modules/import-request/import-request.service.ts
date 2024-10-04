@@ -20,11 +20,54 @@ export class ImportRequestService {
       ? parseInt(findOptions?.take.toString())
       : Constant.DEFAULT_LIMIT;
 
+    const [data, totalItems] = await this.prismaService.$transaction([
+      this.prismaService.importRequest.findMany({
+        skip: (page - 1) * limit,
+        take: limit,
+        where: findOptions?.where,
+        orderBy: findOptions?.orderBy,
+        include: {
+          importRequestDetail: {
+            include: {
+              materialVariant: {
+                include: {
+                  material: {
+                    include: {
+                      uom: true,
+                      materialType: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+
+          warehouseManager: true,
+          purchasingStaff: true,
+          warehouseStaff: true,
+          poDelivery: true,
+        },
+      }),
+      this.prismaService.importRequest.count({
+        where: findOptions?.where,
+      }),
+    ]);
+
+    return {
+      data,
+      pageMeta: {
+        totalItems,
+        page,
+        limit,
+        totalPages: Math.ceil(totalItems / limit),
+        hasNext: totalItems > page * limit,
+        hasPrevious: page > 1,
+      },
+    };
+  }
+
+  findAll() {
     return this.prismaService.importRequest.findMany({
-      skip: (page - 1) * limit,
-      take: limit,
-      where: findOptions?.where,
-      orderBy: findOptions?.orderBy,
       include: {
         importRequestDetail: {
           include: {
@@ -44,24 +87,6 @@ export class ImportRequestService {
         purchasingStaff: true,
         warehouseStaff: true,
         poDelivery: true,
-        _count: {
-          select: { importRequestDetail: true },
-        },
-      },
-    });
-  }
-
-  findAll() {
-    return this.prismaService.importRequest.findMany({
-      include: {
-        importRequestDetail: true,
-        warehouseManager: true,
-        purchasingStaff: true,
-        warehouseStaff: true,
-        poDelivery: true,
-        _count: {
-          select: { importRequestDetail: true },
-        },
       },
     });
   }
@@ -71,14 +96,24 @@ export class ImportRequestService {
       await this.prismaService.importRequest.findUniqueOrThrow({
         where: { id },
         include: {
-          importRequestDetail: true,
+          importRequestDetail: {
+            include: {
+              materialVariant: {
+                include: {
+                  material: {
+                    include: {
+                      uom: true,
+                      materialType: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
           warehouseManager: true,
           purchasingStaff: true,
           warehouseStaff: true,
           poDelivery: true,
-          _count: {
-            select: { importRequestDetail: true },
-          },
         },
       });
     if (!importRequest) {
