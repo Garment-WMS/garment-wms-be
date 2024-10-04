@@ -1,12 +1,12 @@
 model ImportReceipt {
   id                 String            @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  inspectionReportId String?           @unique @map("inspection_report_id") @db.Uuid
   warehouseStaffId   String?           @map("warehouse_staff_id") @db.Uuid
   startAt            DateTime?         @map("start_at") @db.Timestamptz(6)
   finishAt           DateTime?         @map("finish_at") @db.Timestamptz(6)
   createdAt          DateTime?         @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime?         @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt          DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  inspectionReportId String?           @unique @map("inspection_report_id") @db.Uuid
   inspectionReport   InspectionReport? @relation(fields: [inspectionReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warehouseStaff     WarehouseStaff?   @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialReceipt    MaterialReceipt[]

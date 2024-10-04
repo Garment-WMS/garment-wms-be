@@ -10,8 +10,8 @@ model ManufactureOrder {
   canceledBy            String?                 @map("canceled_by") @db.Uuid
   canceledReason        String?                 @map("canceled_reason") @db.VarChar
   status                ManufactureOrderStatus  @default(EXECUTING) @map("status")
-  startTime             DateTime?               @map("start_time") @db.Time
-  endTime               DateTime?               @map("end_time") @db.Time
+  startTime             DateTime?               @map("start_time") @db.Time(6)
+  endTime               DateTime?               @map("end_time") @db.Time(6)
   createdAt             DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt             DateTime?               @map("deleted_at") @db.Timestamptz(6)

@@ -3,7 +3,6 @@ model MaterialAttribute {
   materialId String    @map("material_id") @db.Uuid
   name       String    @map("name") @db.VarChar
   value      String    @map("value") @db.VarChar
-  type       TypeEnum  @default(STRING) @map("type")
   createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt  DateTime? @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
@@ -11,13 +10,4 @@ model MaterialAttribute {
 
   @@unique([materialId, name])
   @@map("material_attribute")
-}
-
-enum TypeEnum {
-  STRING
-  NUMBER
-  BOOLEAN
-  DATETIME
-
-  @@map("type_enum")
 }

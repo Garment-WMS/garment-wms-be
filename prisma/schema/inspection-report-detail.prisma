@@ -1,20 +1,20 @@
 model InspectionReportDetail {
   id                     String           @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  inspectionReportId     String           @map("inspection_report_id") @db.Uuid
   materialId             String?          @map("material_id") @db.Uuid
   productId              String?          @map("product_id") @db.Uuid
+  createdAt              DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime?        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt              DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  approvedQuantityByPack Float            @map("approved_quantity_by_pack")
+  defectQuantityByPack   Float            @map("defect_quantity_by_pack")
+  inspectionReportId     String           @map("inspection_report_id") @db.Uuid
   packUnit               String?          @map("pack_unit")
   quantityByPack         Float?           @map("quantity_by_pack")
   uom                    String?          @map("uom")
   uomPerPack             Float?           @map("uom_per_pack")
-  defectQuantityByPack   Float            @map("defect_quantity_by_pack")
-  approvedQuantityByPack Float            @map("approved_quantity_by_pack")
-  createdAt              DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt              DateTime?        @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt              DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  InspectionReport       InspectionReport @relation(fields: [inspectionReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   material               Material?        @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   product                Product?         @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  InspectionReport       InspectionReport @relation(fields: [inspectionReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("inspection_report_detail")
 }

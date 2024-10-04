@@ -1,13 +1,13 @@
 model QuantityReportPlan {
   id             String               @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  planStartTime  DateTime             @map("plan_start_time") @db.Time
-  planEndTime    DateTime             @map("plan_end_time") @db.Time
-  startTime      DateTime?            @map("start_time") @db.Time
-  endTime        DateTime?            @map("end_time") @db.Time
-  status         QuantityReportStatus @default(PLANNING) @map("status")
   createdAt      DateTime?            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime?            @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt      DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  endTime        DateTime?            @map("end_time") @db.Time(6)
+  planEndTime    DateTime             @map("plan_end_time") @db.Time(6)
+  planStartTime  DateTime             @map("plan_start_time") @db.Time(6)
+  startTime      DateTime?            @map("start_time") @db.Time(6)
+  status         QuantityReportStatus @default(PLANNING) @map("status")
   QuantityReport QuantityReport?
 
   @@map("quantity_report_plan")

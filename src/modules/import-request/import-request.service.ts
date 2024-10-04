@@ -97,7 +97,7 @@ export class ImportRequestService {
           data: createImportRequestDto.importRequestDetails,
         },
       },
-      type: createImportRequestDto.type,
+      // type: createImportRequestDto.type,
     };
     return this.prismaService.importRequest.create({
       data: createImportRequestInput,

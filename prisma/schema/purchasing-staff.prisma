@@ -4,10 +4,10 @@ model PurchasingStaff {
   createdAt          DateTime?           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime?           @updatedAt @map("updated_at") @db.Timestamp(6)
   deletedAt          DateTime?           @map("deleted_at") @db.Timestamp(6)
+  ImportRequest      ImportRequest[]
   inspectionRequests InspectionRequest[]
   purchaseOrders     PurchaseOrder[]
   users              User                @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  ImportRequest      ImportRequest[]
 
   @@map("purchasing_staff")
 }
