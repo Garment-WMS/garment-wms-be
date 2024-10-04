@@ -63,6 +63,6 @@ export class CreateImportRequestDto implements Prisma.ImportRequestCreateInput {
   importRequestDetails: CreateImportRequestDetailDto[];
 
   @ApiProperty({ required: true, type: 'string' })
-  @IsEnum($Enums.ImportRequestType)
-  type: $Enums.ImportRequestType;
+  @IsEnum($Enums.ImportType)
+  type: $Enums.ImportType;
 }
