@@ -15,6 +15,7 @@ model Product {
   weight                    Float                       @map("weight")
   importRequestDetail       ImportRequestDetail[]
   inspectionReportDetail    InspectionReportDetail[]
+  ManufactureOrder          ManufactureOrder[]
   productType               ProductType                 @relation(fields: [productTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   uom                       Uom                         @relation(fields: [uomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productAttribute          ProductAttribute[]
@@ -24,5 +25,4 @@ model Product {
   quarterlyProductionDetail QuarterlyProductionDetail[]
 
   @@map("product")
-  ManufactureOrder ManufactureOrder[]
 }
