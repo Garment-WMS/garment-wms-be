@@ -1,13 +1,55 @@
-import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { $Enums, Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
-import { apiFailed } from 'src/common/dto/api-response';
+import { Constant } from 'src/common/constant/constant';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 
 @Injectable()
 export class ImportRequestService {
   constructor(private readonly prismaService: PrismaService) {}
+
+  async search(
+    findOptions: GeneratedFindOptions<Prisma.ImportRequestWhereInput>,
+  ) {
+    const page = findOptions?.skip
+      ? parseInt(findOptions?.skip.toString())
+      : Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take
+      ? parseInt(findOptions?.take.toString())
+      : Constant.DEFAULT_LIMIT;
+
+    return this.prismaService.importRequest.findMany({
+      skip: (page - 1) * limit,
+      take: limit,
+      where: findOptions?.where,
+      orderBy: findOptions?.orderBy,
+      include: {
+        importRequestDetail: {
+          include: {
+            materialVariant: {
+              include: {
+                material: {
+                  include: {
+                    uom: true,
+                    materialType: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        warehouseManager: true,
+        purchasingStaff: true,
+        warehouseStaff: true,
+        poDelivery: true,
+        _count: {
+          select: { importRequestDetail: true },
+        },
+      },
+    });
+  }
 
   findAll() {
     return this.prismaService.importRequest.findMany({
@@ -25,23 +67,22 @@ export class ImportRequestService {
   }
 
   async findOne(id: string) {
-    const importRequest = await this.prismaService.importRequest.findUnique({
-      where: { id },
-      include: {
-        importRequestDetail: true,
-        warehouseManager: true,
-        purchasingStaff: true,
-        warehouseStaff: true,
-        poDelivery: true,
-        _count: {
-          select: { importRequestDetail: true },
+    const importRequest =
+      await this.prismaService.importRequest.findUniqueOrThrow({
+        where: { id },
+        include: {
+          importRequestDetail: true,
+          warehouseManager: true,
+          purchasingStaff: true,
+          warehouseStaff: true,
+          poDelivery: true,
+          _count: {
+            select: { importRequestDetail: true },
+          },
         },
-      },
-    });
+      });
     if (!importRequest) {
-      throw new NotFoundException(
-        apiFailed(HttpStatus.NOT_FOUND, 'Import request not found'),
-      );
+      throw new NotFoundException("Import request doesn't exist");
     }
     return importRequest;
   }
@@ -179,5 +220,12 @@ export class ImportRequestService {
     return this.prismaService.importRequest.delete({
       where: { id },
     });
+  }
+
+  getEnum() {
+    return {
+      importRequestType: Object.values($Enums.ImportRequestType),
+      importRequestStatus: Object.values($Enums.ImportRequestType),
+    };
   }
 }

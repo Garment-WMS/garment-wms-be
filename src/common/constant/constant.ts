@@ -5,4 +5,7 @@ export class Constant {
 
   //Equal to 10 MB (10 * 1024 * 1024 bytes)
   static readonly FILE_SIZE: number = 10 * 1024 * 1024;
+
+  public static readonly DEFAULT_OFFSET = 1;
+  public static readonly DEFAULT_LIMIT = 10;
 }

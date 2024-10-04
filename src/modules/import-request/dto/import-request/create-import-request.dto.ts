@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { $Enums, Prisma } from '@prisma/client';
+import { $Enums } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsDateString,
@@ -12,17 +12,7 @@ import {
 } from 'class-validator';
 import { CreateImportRequestDetailDto } from '../import-request-detail/create-import-request-detail.dto';
 
-export class CreateImportRequestDto
-  implements Prisma.ImportRequestUncheckedCreateInput
-{
-  id?: string;
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
-  deletedAt?: string | Date;
-  cancelAt?: string | Date;
-  rejectAt?: string | Date;
-  import_request_type: $Enums.ImportRequestType;
-  importRequestDetail?: Prisma.ImportRequestDetailUncheckedCreateNestedManyWithoutImportRequestInput;
+export class CreateImportRequestDto {
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsUUID()
   @IsOptional()

@@ -24,8 +24,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
 
     let logger = new Logger('PrismaExceptionFilter');
     logger.verbose('-------------Exception Start-------------');
-    logger.error(exception.stack);
-    logger.error(exception.meta);
+    logger.error(exception.stack || exception.message);
     logger.verbose('-------------Exception End---------------');
     let responseBody: ApiResponse;
     let message = exception.message;
@@ -37,18 +36,19 @@ export class PrismaExceptionFilter implements ExceptionFilter {
       target: undefined,
       constraints: undefined,
     };
+
     switch (exception.code) {
       case PrismaErrorEnum.OperationDependencyNotFound:
-        message =
-          'Operation failed because it depends on one or more records that were required but not found';
-        if (exception.meta.target) {
+        if (exception.meta?.target) {
           error.property = exception.meta.target as string;
+          message =
+            'Operation failed because it depends on one or more records that were required but not found';
         }
         responseBody = apiFailed(HttpStatus.NOT_FOUND, message, [error]);
         break;
       case PrismaErrorEnum.ForeignKeyConstraintFailed:
         message = 'A foreign key constraint was violated on a record';
-        if (exception.meta.field_name) {
+        if (exception.meta?.field_name) {
           error.property = exception.meta.field_name as string;
         }
         responseBody = apiFailed(HttpStatus.CONFLICT, message, [error]);
@@ -56,7 +56,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
 
       case PrismaErrorEnum.UniqueConstraintFailed:
         message = 'A unique constraint was violated on a record';
-        if (exception.meta.target) {
+        if (exception?.meta?.target) {
           error.property = exception.meta.target as string;
         }
         responseBody = apiFailed(HttpStatus.CONFLICT, message, [error]);

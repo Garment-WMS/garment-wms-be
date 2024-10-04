@@ -8,8 +8,6 @@ model ImportRequestDetail {
   deletedAt         DateTime?        @map("deleted_at") @db.Timestamptz(6)
   packUnit          String?          @map("pack_unit")
   quantityByPack    Float?           @map("quantity_by_pack")
-  uom               String?          @map("uom")
-  uomPerPack        Float?           @map("uom_per_pack")
   importRequest     ImportRequest    @relation(fields: [importRequestId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialVariant   MaterialVariant? @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   product           Product?         @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)

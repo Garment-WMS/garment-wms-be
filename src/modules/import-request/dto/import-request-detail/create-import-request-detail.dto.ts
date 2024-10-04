@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsUUID } from 'class-validator';
-import { IsMaterialExist } from 'src/modules/material/validation/is-material-exist.validation';
+import { IsNumber, IsOptional, IsUUID, ValidateIf } from 'class-validator';
+import { IsMaterialVariantExist } from 'src/modules/material-variant/validator/is-material-variant-exist.validator';
 
 export class CreateImportRequestDetailDto {
   @ApiProperty({ required: false })
@@ -9,13 +9,13 @@ export class CreateImportRequestDetailDto {
   importRequestId: string;
 
   @ApiProperty({ required: false })
-  @IsOptional()
+  @ValidateIf((o) => o.productId === undefined)
   @IsUUID()
-  @IsMaterialExist()
-  materialId?: string;
+  @IsMaterialVariantExist()
+  materialVariantId?: string;
 
   @ApiProperty({ required: false })
-  @IsOptional()
+  @ValidateIf((o) => o.materialVariantId === undefined)
   @IsUUID()
   productId?: string;
 
