@@ -1,13 +1,13 @@
 model Material {
   id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   materialTypeId              String                        @map("material_type_id") @db.Uuid
+  uomId                       String                        @map("uom_id") @db.Uuid
   name                        String                        @map("name") @db.VarChar
   code                        String?                       @unique @map("code") @db.VarChar
+  reorderLevel                Float                         @map("reorder_level")
   createdAt                   DateTime?                     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
-  uomId                       String                        @map("uom_id") @db.Uuid
-  reorderLevel                Float                         @map("reorder_level")
   exportMaterialRequestDetail ExportMaterialRequestDetail[]
   inspectionReportDetail      InspectionReportDetail[]
   materialType                MaterialType                  @relation(fields: [materialTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
