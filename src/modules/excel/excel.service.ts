@@ -35,6 +35,7 @@ import {
   validateDate,
 } from 'src/common/utils/utils';
 import { FirebaseService } from '../firebase/firebase.service';
+import { MaterialVariantService } from '../material-variant/material-variant.service';
 import { MaterialService } from '../material/material.service';
 import { PoDeliveryMaterialDto } from '../po-delivery-material/dto/po-delivery-material.dto';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
@@ -46,6 +47,7 @@ export class ExcelService {
     private readonly prismaService: PrismaService,
     private readonly firebaseService: FirebaseService,
     private readonly materialService: MaterialService,
+    private readonly materialVariantService: MaterialVariantService,
   ) {}
 
   async readExcel(file: Express.Multer.File) {
@@ -1403,7 +1405,7 @@ export class ExcelService {
             'itemCell.itemIdCell.value',
             this.extractValueFromCellValue(itemCell.itemIdCell.value),
           );
-          material = await this.materialService.findById(
+          material = await this.materialVariantService.findById(
             this.extractValueFromCellValue(itemCell.itemIdCell.value),
           );
           console.log('material', material);
@@ -1560,8 +1562,8 @@ export class ExcelService {
 
         if (!errorFlag) {
           itemListResult.push({
-            materialId: itemCell.itemIdCell.value as string,
-            quantity: itemCell.quantityCell.value as number,
+            materialVariantId: itemCell.itemIdCell.value as string,
+            quantityByPackagingUnit: itemCell.quantityCell.value as number,
             totalAmount: this.getTotalCellValue(itemCell.totalCell),
           });
         }

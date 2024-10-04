@@ -3,6 +3,7 @@ import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { CreateUomDto } from './dto/create-uom.dto';
+import { UpdateUomDto } from './dto/update-uom.dto';
 
 @Injectable()
 export class UomService {
@@ -48,7 +49,7 @@ export class UomService {
     return result;
   }
 
-  async update(id: string, updateUomDto: CreateUomDto) {
+  async update(id: string, updateUomDto: UpdateUomDto) {
     const result = await this.prismaService.uom.update({
       where: { id },
       data: { ...updateUomDto },
