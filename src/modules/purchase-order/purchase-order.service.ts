@@ -39,32 +39,16 @@ export class PurchaseOrderService {
             isExtra: true,
             poDeliveryDetail: {
               select: {
-                id: true,
                 materialVariant: {
-                  select: {
-                    id: true,
-                    name: true,
+                  include: {
                     material: {
-                      select: {
-                        id: true,
-                        name: true,
-                        materialType: {
-                          select: {
-                            id: true,
-                            name: true,
-                          },
-                        },
-                        uom: {
-                          select: {
-                            id: true,
-                            name: true,
-                          },
-                        },
+                      include: {
+                        uom: true,
+                        materialType: true,
                       },
                     },
                   },
                 },
-                totalAmount: true,
               },
             },
           },
@@ -116,14 +100,19 @@ export class PurchaseOrderService {
           const poDeliveryResult = await prisma.poDelivery.create({
             data: poDeliveryCreateInput,
           });
+          console.log(poDelivery);
           const poDeliveryDetails = poDelivery.poDeliveryDetail.map(
-            (material) => ({
-              materialVariantId: material.materialVariantId,
-              quantityByPackagingUnit: material.quantityByPack,
-              totalAmount: material.totalAmount,
-              poDeliveryId: poDeliveryResult.id,
-            }),
+            (material) => {
+              console.log(material);
+              return {
+                materialVariantId: material.materialVariantId,
+                quantityByPackagingUnit: material.quantityByPack,
+                totalAmount: material.totalAmount,
+                poDeliveryId: poDeliveryResult.id,
+              };
+            },
           );
+          console.log(poDeliveryDetails);
           await prisma.poDeliveryDetail.createMany({
             data: poDeliveryDetails,
           });

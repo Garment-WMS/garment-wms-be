@@ -26,11 +26,6 @@ export class CreateMaterialDto {
 
   @ApiProperty({})
   @IsNotEmpty()
-  @IsNumber()
-  uomPerPackagingUnit: number;
-
-  @ApiProperty({})
-  @IsNotEmpty()
   @IsString()
   @MinLength(1)
   @MaxLength(50)
@@ -42,30 +37,6 @@ export class CreateMaterialDto {
   @MinLength(3)
   @MaxLength(10)
   code: string;
-
-  @ApiProperty({})
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  packedWidth: number;
-
-  @ApiProperty({})
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  packedHeight: number;
-
-  @ApiProperty({})
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  packedLength: number;
-
-  @ApiProperty({})
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  packedWeight: number;
 
   @ApiProperty({})
   @IsNotEmpty()
