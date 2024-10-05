@@ -1,6 +1,7 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PurchaseOrderStatus } from '@prisma/client';
+import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
@@ -27,11 +28,69 @@ export class PurchaseOrderService {
       ? parseInt(filterOption?.take.toString())
       : 10;
 
-    const result = await this.prismaService.purchaseOrder.findMany({
-      skip: (page - 1) * limit,
-      take: limit,
-      where: filterOption?.where,
-      orderBy: filterOption?.orderBy,
+    const [result, total] = await this.prismaService.$transaction([
+      this.prismaService.purchaseOrder.findMany({
+        skip: (page - 1) * limit,
+        take: limit,
+        where: filterOption?.where,
+        orderBy: filterOption?.orderBy,
+        include: {
+          poDelivery: {
+            select: {
+              id: true,
+              expectedDeliverDate: true,
+              isExtra: true,
+              poDeliveryDetail: {
+                select: {
+                  materialVariant: {
+                    include: {
+                      material: {
+                        include: {
+                          uom: true,
+                          materialType: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prismaService.purchaseOrder.count({
+        where: filterOption?.where ? filterOption.where : undefined,
+      }),
+    ]);
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: result,
+        pageMeta: {
+          totalItems: total,
+          page: page,
+          limit: limit,
+          totalPages: Math.ceil(total / limit),
+          hasNext: total > page * limit,
+          hasPrevious: page > 1,
+        },
+      },
+      'List of Purchase Order',
+    );
+  }
+
+  async createPurchaseOrder(purchaseOrderDto: PurchaseOrderDto) {
+    return this.prismaService.purchaseOrder.create({
+      data: purchaseOrderDto,
+    });
+  }
+
+  async findById(id: string) {
+    if (!isUUID(id)) {
+      return null;
+    }
+    return this.prismaService.purchaseOrder.findUnique({
+      where: { id },
       include: {
         poDelivery: {
           select: {
@@ -56,17 +115,11 @@ export class PurchaseOrderService {
         },
       },
     });
-    return apiSuccess(HttpStatus.OK, result, 'List of Purchase Order');
-  }
-
-  async createPurchaseOrder(purchaseOrderDto: PurchaseOrderDto) {
-    return this.prismaService.purchaseOrder.create({
-      data: purchaseOrderDto,
-    });
   }
 
   async createPurchaseOrderWithExcelFile(file: Express.Multer.File) {
     const excelData = await this.excelService.readExcel(file);
+    let purchaseOrder = null;
     if (excelData instanceof ApiResponse) {
       return excelData;
     } else {
@@ -86,7 +139,7 @@ export class PurchaseOrderService {
         finishDate: undefined,
       };
 
-      await this.prismaService.$transaction(async (prisma) => {
+      purchaseOrder = await this.prismaService.$transaction(async (prisma) => {
         const purchaseOrder = await prisma.purchaseOrder.create({
           data: createPurchaseOrder,
         });
@@ -101,10 +154,8 @@ export class PurchaseOrderService {
           const poDeliveryResult = await prisma.poDelivery.create({
             data: poDeliveryCreateInput,
           });
-          console.log(poDelivery);
           const poDeliveryDetails = poDelivery.poDeliveryDetail.map(
             (material) => {
-              console.log(material);
               return {
                 materialVariantId: material.materialVariantId,
                 quantityByPack: material.quantityByPack,
@@ -113,23 +164,35 @@ export class PurchaseOrderService {
               };
             },
           );
-          console.log(poDeliveryDetails);
           await prisma.poDeliveryDetail.createMany({
             data: poDeliveryDetails,
           });
         }
+        return purchaseOrder;
       });
     }
-    return excelData;
+    const result = await this.findById(purchaseOrder?.id);
+    if (result) {
+      return apiSuccess(
+        HttpStatus.CREATED,
+        result,
+        'Purchase Order created successfully',
+      );
+    }
+    return apiSuccess(
+      HttpStatus.BAD_REQUEST,
+      null,
+      'Failed to create Purchase Order',
+    );
   }
 
   async updatePurchaseOrder(
     id: string,
     updatedPurchaseOrderDto: UpdatePurchaseOrderDto,
   ) {
-    // return this.prismaService.purchaseOrder.update({
-    //   where: { id },
-    //   // data: updatedPurchaseOrderDto,
-    // });
+    return this.prismaService.purchaseOrder.update({
+      where: { id },
+      data: updatedPurchaseOrderDto,
+    });
   }
 }

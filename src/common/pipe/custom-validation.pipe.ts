@@ -9,6 +9,7 @@ export class CustomValidationPipe extends ValidationPipe {
 
   public createExceptionFactory() {
     return (validationErrors: ValidationError[] = []) => {
+      console.log('validationErrors', validationErrors);
       return new CustomValidationException(
         400,
         'Validation failed',
