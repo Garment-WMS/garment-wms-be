@@ -23,7 +23,7 @@ export class PurchaseOrderController {
   getPurchaseOrders(
     @Query(
       new DirectFilterPipe<any, Prisma.PurchaseOrderWhereInput>(
-        ['id', 'poNumber', 'createdAt', 'supplierId'],
+        ['id', 'poNumber', 'createdAt', 'supplierId', 'currency', 'status'],
         [],
       ),
     )

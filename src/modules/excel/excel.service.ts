@@ -1563,7 +1563,7 @@ export class ExcelService {
         if (!errorFlag) {
           itemListResult.push({
             materialVariantId: itemCell.itemIdCell.value as string,
-            quantityByPackagingUnit: itemCell.quantityCell.value as number,
+            quantityByPack: itemCell.quantityCell.value as number,
             totalAmount: this.getTotalCellValue(itemCell.totalCell),
           });
         }
