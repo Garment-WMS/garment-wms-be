@@ -44,7 +44,7 @@ export class PurchaseOrderService {
                     include: {
                       material: {
                         include: {
-                          MaterialUom: true,
+                          materialUom: true,
                           materialType: true,
                         },
                       },
@@ -101,7 +101,7 @@ export class PurchaseOrderService {
                   include: {
                     material: {
                       include: {
-                        MaterialUom: true,
+                        materialUom: true,
                         materialType: true,
                       },
                     },

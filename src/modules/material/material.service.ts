@@ -19,12 +19,11 @@ export class MaterialService {
           id: materialTypeId,
         },
       },
-      MaterialUom: {
+      materialUom: {
         connect: {
           id: uomId,
         },
       },
-      uomId: '',
     };
 
     const result = await this.prismaService.material.create({
@@ -46,7 +45,7 @@ export class MaterialService {
       include: {
         materialAttribute: true,
         materialType: true,
-        MaterialUom: true,
+        materialUom: true,
       },
     });
     return apiSuccess(HttpStatus.OK, result, 'List of Material');
