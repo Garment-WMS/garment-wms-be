@@ -13,12 +13,8 @@ export class ImportRequestService {
   async search(
     findOptions: GeneratedFindOptions<Prisma.ImportRequestWhereInput>,
   ) {
-    const offset = findOptions?.skip
-      ? parseInt(findOptions?.skip.toString())
-      : Constant.DEFAULT_OFFSET;
-    const limit = findOptions?.take
-      ? parseInt(findOptions?.take.toString())
-      : Constant.DEFAULT_LIMIT;
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
 
     const [data, totalItems] = await this.prismaService.$transaction([
       this.prismaService.importRequest.findMany({
