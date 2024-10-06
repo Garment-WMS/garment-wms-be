@@ -68,7 +68,7 @@ export class ImportRequestController {
     return apiSuccess(
       HttpStatus.OK,
       this.importRequestService.getEnum(),
-      'Get import request status successfully',
+      'Get import request enums successfully',
     );
   }
 
