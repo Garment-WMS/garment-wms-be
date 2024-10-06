@@ -4,6 +4,7 @@ import { $Enums, Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
+import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 
 @Injectable()
@@ -26,27 +27,7 @@ export class ImportRequestService {
         take: limit,
         where: findOptions?.where,
         orderBy: findOptions?.orderBy,
-        include: {
-          importRequestDetail: {
-            include: {
-              materialVariant: {
-                include: {
-                  material: {
-                    include: {
-                      uom: true,
-                      materialType: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-
-          warehouseManager: true,
-          purchasingStaff: true,
-          warehouseStaff: true,
-          poDelivery: true,
-        },
+        include: this.ImportRequestInclude,
       }),
       this.prismaService.importRequest.count({
         where: findOptions?.where,
@@ -69,26 +50,7 @@ export class ImportRequestService {
 
   findAll() {
     return this.prismaService.importRequest.findMany({
-      include: {
-        importRequestDetail: {
-          include: {
-            materialVariant: {
-              include: {
-                material: {
-                  include: {
-                    uom: true,
-                    materialType: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        warehouseManager: true,
-        purchasingStaff: true,
-        warehouseStaff: true,
-        poDelivery: true,
-      },
+      include: this.ImportRequestInclude,
     });
   }
 
@@ -96,26 +58,7 @@ export class ImportRequestService {
     const importRequest =
       await this.prismaService.importRequest.findUniqueOrThrow({
         where: { id },
-        include: {
-          importRequestDetail: {
-            include: {
-              materialVariant: {
-                include: {
-                  material: {
-                    include: {
-                      uom: true,
-                      materialType: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-          warehouseManager: true,
-          purchasingStaff: true,
-          warehouseStaff: true,
-          poDelivery: true,
-        },
+        include: this.ImportRequestInclude,
       });
     if (!importRequest) {
       throw new NotFoundException("Import request doesn't exist");
@@ -268,31 +211,33 @@ export class ImportRequestService {
   // REJECTED
   // APPROVED
   // INSPECTING
-  async managerProcess(
-    isApproved: Boolean,
-    updateImportRequestDto: UpdateImportRequestDto,
-  ) {
-    if (isApproved) {
-      return this.prismaService.importRequest.update({
-        where: { id: updateImportRequestDto.id },
-        data: {
-          status: $Enums.ImportRequestStatus.APPROVED,
-          ...updateImportRequestDto,
-        },
-      });
-    } else if (!isApproved) {
-      return this.prismaService.importRequest.update({
-        where: { id: updateImportRequestDto.id },
-        data: {
-          status: $Enums.ImportRequestStatus.REJECTED,
-          ...updateImportRequestDto,
-        },
-      });
+  async managerProcess(id: string, managerProcess: ManagerProcessDto) {
+    const status = await this.prismaService.importRequest.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    switch (managerProcess.action) {
+      case $Enums.ImportRequestStatus.APPROVED:
+        return this.prismaService.importRequest.update({
+          where: { id: id },
+          data: {
+            status: $Enums.ImportRequestStatus.APPROVED,
+            ...managerProcess,
+          },
+        });
+      case $Enums.ImportRequestStatus.APPROVED:
+        return this.prismaService.importRequest.update({
+          where: { id },
+          data: {
+            status: $Enums.ImportRequestStatus.REJECTED,
+            ...managerProcess,
+          },
+        });
     }
   }
 
   // INSPECTED
-  async inspectionDepartmentInspect() {}
+  async inspectionStaffAddReport() {}
 
   // IMPORTING
   async warehouseStaffImport() {}
@@ -301,4 +246,35 @@ export class ImportRequestService {
   async warehouseStaffFinishImport() {}
 
   // CANCELED
+
+  readonly ImportRequestInclude: Prisma.ImportRequestInclude = {
+    importRequestDetail: {
+      include: {
+        materialVariant: {
+          include: {
+            material: {
+              include: {
+                uom: true,
+                materialType: true,
+              },
+            },
+          },
+        },
+      },
+    },
+    warehouseManager: true,
+    purchasingStaff: true,
+    warehouseStaff: true,
+    poDelivery: {
+      include: {
+        purchaseOrder: {
+          include: {
+            purchasingStaff: true,
+            supplier: true,
+          },
+        },
+        ImportRequest: true,
+      },
+    },
+  };
 }
