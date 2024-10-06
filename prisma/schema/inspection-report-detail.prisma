@@ -8,10 +8,7 @@ model InspectionReportDetail {
   approvedQuantityByPack Float            @map("approved_quantity_by_pack")
   defectQuantityByPack   Float            @map("defect_quantity_by_pack")
   inspectionReportId     String           @map("inspection_report_id") @db.Uuid
-  packUnit               String?          @map("pack_unit")
   quantityByPack         Float?           @map("quantity_by_pack")
-  uom                    String?          @map("uom")
-  uomPerPack             Float?           @map("uom_per_pack")
   InspectionReport       InspectionReport @relation(fields: [inspectionReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   material               Material?        @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   product                Product?         @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)

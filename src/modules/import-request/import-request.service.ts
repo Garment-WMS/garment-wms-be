@@ -25,9 +25,7 @@ export class ImportRequestService {
         orderBy: findOptions?.orderBy,
         include: this.ImportRequestInclude,
       }),
-      this.prismaService.importRequest.count({
-        where: findOptions?.where,
-      }),
+      this.prismaService.importRequest.count(),
     ]);
 
     return {
