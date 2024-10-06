@@ -8,11 +8,11 @@ model ProductReceipt {
   deletedAt             DateTime?               @map("deleted_at") @db.Timestamptz(6)
   importDate            DateTime?               @map("import_date") @db.Timestamptz(6)
   quantityByUom         Float?                  @map("quantity_by_uom")
-  uomId                 String?                 @db.Uuid
+  materialUomId         String?                 @map("material_uom_id") @db.Uuid
   InventoryReportDetail InventoryReportDetail[]
   importReceipt         ImportReceipt           @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   product               Product                 @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  Uom                   Uom?                    @relation(fields: [uomId], references: [id])
+  MaterialUom           MaterialUom?            @relation(fields: [materialUomId], references: [id])
 
   @@map("product_receipt")
 }

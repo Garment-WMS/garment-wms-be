@@ -250,7 +250,7 @@ export class ImportRequestService {
           include: {
             material: {
               include: {
-                uom: true,
+                MaterialUom: true,
                 materialType: true,
               },
             },

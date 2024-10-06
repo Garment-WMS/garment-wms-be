@@ -11,13 +11,15 @@ model Material {
   exportMaterialRequestDetail ExportMaterialRequestDetail[]
   inspectionReportDetail      InspectionReportDetail[]
   materialType                MaterialType                  @relation(fields: [materialTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  uom                         Uom                           @relation(fields: [uomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialAttribute           MaterialAttribute[]
   materialExportDetail        MaterialExportDetail[]
   materialInspectionCriteria  MaterialInspectionCriteria[]
   materialReceipt             MaterialReceipt[]
   MaterialVariant             MaterialVariant[]
   productFormula              ProductFormula[]
+  MaterialUom                 MaterialUom?                  @relation(fields: [materialUomId], references: [id])
+  materialUomId               String?                       @db.Uuid
+  ProductFormulaMaterial      ProductFormulaMaterial[]
 
   @@map("material")
 }

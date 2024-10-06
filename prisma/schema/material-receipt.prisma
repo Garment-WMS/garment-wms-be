@@ -9,14 +9,13 @@ model MaterialReceipt {
   importDate            DateTime?               @map("import_date") @db.Timestamptz(6)
   packUnit              String?                 @map("pack_unit")
   quantityByPack        Float?                  @map("quantity_by_pack")
-  uom                   String                  @map("uom")
-  uomId                 String?                 @db.Uuid
+  materialUomId         String?                 @map("material_uom_id") @db.Uuid
   uomPerPack            Float?                  @map("uom_per_pack")
   InventoryReportDetail InventoryReportDetail[]
   MaterialExportReceipt MaterialExportReceipt[]
   importReceipt         ImportReceipt           @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   material              Material                @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  Uom                   Uom?                    @relation(fields: [uomId], references: [id])
 
   @@map("material_receipt")
+  MaterialUom MaterialUom[]
 }
