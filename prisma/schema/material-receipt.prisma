@@ -18,6 +18,6 @@ model MaterialReceipt {
   material              Material                @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   Uom                   Uom?                    @relation(fields: [uomId], references: [id])
 
+
   @@map("material_receipt")
-  materialUom MaterialUom[]
 }
