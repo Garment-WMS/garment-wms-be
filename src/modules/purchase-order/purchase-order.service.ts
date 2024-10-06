@@ -41,7 +41,7 @@ export class PurchaseOrderService {
               expectedDeliverDate: true,
               isExtra: true,
               poDeliveryDetail: {
-                select: {
+                include: {
                   materialVariant: {
                     include: {
                       material: {
@@ -98,7 +98,7 @@ export class PurchaseOrderService {
             expectedDeliverDate: true,
             isExtra: true,
             poDeliveryDetail: {
-              select: {
+              include: {
                 materialVariant: {
                   include: {
                     material: {
