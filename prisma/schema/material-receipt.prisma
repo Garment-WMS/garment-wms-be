@@ -19,4 +19,5 @@ model MaterialReceipt {
   Uom                   Uom?                    @relation(fields: [uomId], references: [id])
 
   @@map("material_receipt")
+  materialUom MaterialUom[]
 }

@@ -33,7 +33,7 @@ export class ImportRequestService {
                 include: {
                   material: {
                     include: {
-                      uom: true,
+                      materialUom: true,
                       materialType: true,
                     },
                   },
@@ -75,7 +75,7 @@ export class ImportRequestService {
               include: {
                 material: {
                   include: {
-                    uom: true,
+                    materialUom: true,
                     materialType: true,
                   },
                 },
@@ -102,7 +102,7 @@ export class ImportRequestService {
                 include: {
                   material: {
                     include: {
-                      uom: true,
+                      materialUom: true,
                       materialType: true,
                     },
                   },
@@ -263,4 +263,74 @@ export class ImportRequestService {
       importRequestStatus: Object.values($Enums.ImportRequestType),
     };
   }
+
+  // REJECTED
+  // APPROVED
+  // INSPECTING
+  // async managerProcess(id: string, managerProcess: ManagerProcessDto) {
+  //   const status = await this.prismaService.importRequest.findUnique({
+  //     where: { id },
+  //     select: { status: true },
+  //   });
+  //   switch (managerProcess.action) {
+  //     case $Enums.ImportRequestStatus.APPROVED:
+  //       return this.prismaService.importRequest.update({
+  //         where: { id: id },
+  //         data: {
+  //           status: $Enums.ImportRequestStatus.APPROVED,
+  //           ...managerProcess,
+  //         },
+  //       });
+  //     case $Enums.ImportRequestStatus.APPROVED:
+  //       return this.prismaService.importRequest.update({
+  //         where: { id },
+  //         data: {
+  //           status: $Enums.ImportRequestStatus.REJECTED,
+  //           ...managerProcess,
+  //         },
+  //       });
+  //   }
+  // }
+
+  // INSPECTED
+  async inspectionStaffAddReport() {}
+
+  // IMPORTING
+  async warehouseStaffImport() {}
+
+  // IMPORTED
+  async warehouseStaffFinishImport() {}
+
+  // CANCELED
+
+  readonly ImportRequestInclude: Prisma.ImportRequestInclude = {
+    importRequestDetail: {
+      include: {
+        materialVariant: {
+          include: {
+            material: {
+              include: {
+                materialUom: true,
+                materialType: true,
+              },
+            },
+          },
+        },
+      },
+    },
+    warehouseManager: true,
+    purchasingStaff: true,
+    warehouseStaff: true,
+    poDelivery: {
+      include: {
+        purchaseOrder: {
+          include: {
+            purchasingStaff: true,
+            supplier: true,
+          },
+        },
+        ImportRequest: true,
+      },
+    },
+  };
 }
