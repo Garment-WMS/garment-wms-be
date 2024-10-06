@@ -14,12 +14,8 @@ export class ImportRequestService {
   async search(
     findOptions: GeneratedFindOptions<Prisma.ImportRequestWhereInput>,
   ) {
-    const offset = findOptions?.skip
-      ? parseInt(findOptions?.skip.toString())
-      : Constant.DEFAULT_OFFSET;
-    const limit = findOptions?.take
-      ? parseInt(findOptions?.take.toString())
-      : Constant.DEFAULT_LIMIT;
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
 
     const [data, totalItems] = await this.prismaService.$transaction([
       this.prismaService.importRequest.findMany({
@@ -29,9 +25,7 @@ export class ImportRequestService {
         orderBy: findOptions?.orderBy,
         include: this.ImportRequestInclude,
       }),
-      this.prismaService.importRequest.count({
-        where: findOptions?.where,
-      }),
+      this.prismaService.importRequest.count(),
     ]);
 
     return {
@@ -254,8 +248,8 @@ export class ImportRequestService {
           include: {
             material: {
               include: {
-                uom: true,
                 materialType: true,
+                materialAttribute: true,
               },
             },
           },

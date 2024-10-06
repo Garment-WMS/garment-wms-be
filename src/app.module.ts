@@ -25,6 +25,7 @@ import { PurchaseOrderModule } from './modules/purchase-order/purchase-order.mod
 import { SupplierModule } from './modules/supplier/supplier.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
+import { PoPoDeliveryBridgeModule } from './modules/po-po-delivery-bridge/po-po-delivery-bridge.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { UserModule } from './modules/user/user.module';
     MaterialAttributeModule,
     ImportRequestModule,
     MaterialVariantModule,
+    PoPoDeliveryBridgeModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

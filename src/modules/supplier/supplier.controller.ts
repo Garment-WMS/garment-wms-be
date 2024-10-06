@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
   UsePipes,
   ValidationPipe,
@@ -16,5 +17,10 @@ export class SupplierController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   create(@Body() createSupplierDto: CreateSupplierDto) {
     return this.supplierService.create(createSupplierDto);
+  }
+
+  @Get()
+  getAll() {
+    return this.supplierService.getAll();
   }
 }

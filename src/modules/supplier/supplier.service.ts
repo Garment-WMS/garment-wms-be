@@ -7,6 +7,14 @@ import { CreateSupplierDto } from './dto/create-supplier.dto';
 export class SupplierService {
   constructor(private readonly prismaService: PrismaService) {}
 
+  async getAll() {
+    const result = await this.prismaService.supplier.findMany();
+    if (result) {
+      return apiSuccess(HttpStatus.OK, result, 'Supplier fetched successfully');
+    }
+    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to fetch Supplier');
+  }
+
   async create(createSupplierDto: CreateSupplierDto) {
     const result = await this.prismaService.supplier.create({
       data: createSupplierDto,
