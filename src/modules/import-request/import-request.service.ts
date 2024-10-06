@@ -13,7 +13,7 @@ export class ImportRequestService {
   async search(
     findOptions: GeneratedFindOptions<Prisma.ImportRequestWhereInput>,
   ) {
-    const page = findOptions?.skip
+    const offset = findOptions?.skip
       ? parseInt(findOptions?.skip.toString())
       : Constant.DEFAULT_OFFSET;
     const limit = findOptions?.take
@@ -22,7 +22,7 @@ export class ImportRequestService {
 
     const [data, totalItems] = await this.prismaService.$transaction([
       this.prismaService.importRequest.findMany({
-        skip: (page - 1) * limit,
+        skip: offset,
         take: limit,
         where: findOptions?.where,
         orderBy: findOptions?.orderBy,
@@ -57,11 +57,12 @@ export class ImportRequestService {
       data,
       pageMeta: {
         totalItems,
-        page,
+        offset,
         limit,
+        page: Math.ceil(offset / limit) + 1,
         totalPages: Math.ceil(totalItems / limit),
-        hasNext: totalItems > page * limit,
-        hasPrevious: page > 1,
+        hasNext: totalItems > offset + limit,
+        hasPrevious: offset > 0,
       },
     };
   }
@@ -260,7 +261,44 @@ export class ImportRequestService {
   getEnum() {
     return {
       importRequestType: Object.values($Enums.ImportRequestType),
-      importRequestStatus: Object.values($Enums.ImportRequestType),
+      importRequestStatus: Object.values($Enums.ImportRequestStatus),
     };
   }
+
+  // REJECTED
+  // APPROVED
+  // INSPECTING
+  async managerProcess(
+    isApproved: Boolean,
+    updateImportRequestDto: UpdateImportRequestDto,
+  ) {
+    if (isApproved) {
+      return this.prismaService.importRequest.update({
+        where: { id: updateImportRequestDto.id },
+        data: {
+          status: $Enums.ImportRequestStatus.APPROVED,
+          ...updateImportRequestDto,
+        },
+      });
+    } else if (!isApproved) {
+      return this.prismaService.importRequest.update({
+        where: { id: updateImportRequestDto.id },
+        data: {
+          status: $Enums.ImportRequestStatus.REJECTED,
+          ...updateImportRequestDto,
+        },
+      });
+    }
+  }
+
+  // INSPECTED
+  async inspectionDepartmentInspect() {}
+
+  // IMPORTING
+  async warehouseStaffImport() {}
+
+  // IMPORTED
+  async warehouseStaffFinishImport() {}
+
+  // CANCELED
 }
