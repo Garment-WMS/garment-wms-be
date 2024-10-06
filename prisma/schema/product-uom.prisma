@@ -7,5 +7,4 @@ model ProductUom {
     Product        Product[]
 
     @@map("product_uom")
-    ProductReceipt ProductReceipt[]
 }

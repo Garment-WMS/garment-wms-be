@@ -35,13 +35,11 @@ export class PurchaseOrderService {
         where: filterOption?.where,
         orderBy: filterOption?.orderBy,
         include: {
+          supplier: true,
           poDelivery: {
-            select: {
-              id: true,
-              expectedDeliverDate: true,
-              isExtra: true,
+            include: {
               poDeliveryDetail: {
-                select: {
+                include: {
                   materialVariant: {
                     include: {
                       material: {
@@ -98,7 +96,7 @@ export class PurchaseOrderService {
             expectedDeliverDate: true,
             isExtra: true,
             poDeliveryDetail: {
-              select: {
+              include: {
                 materialVariant: {
                   include: {
                     material: {

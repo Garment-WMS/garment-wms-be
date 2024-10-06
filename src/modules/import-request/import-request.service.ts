@@ -4,6 +4,7 @@ import { $Enums, Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
+import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 
 @Injectable()
@@ -13,81 +14,37 @@ export class ImportRequestService {
   async search(
     findOptions: GeneratedFindOptions<Prisma.ImportRequestWhereInput>,
   ) {
-    const page = findOptions?.skip
-      ? parseInt(findOptions?.skip.toString())
-      : Constant.DEFAULT_OFFSET;
-    const limit = findOptions?.take
-      ? parseInt(findOptions?.take.toString())
-      : Constant.DEFAULT_LIMIT;
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
 
     const [data, totalItems] = await this.prismaService.$transaction([
       this.prismaService.importRequest.findMany({
-        skip: (page - 1) * limit,
+        skip: offset,
         take: limit,
         where: findOptions?.where,
         orderBy: findOptions?.orderBy,
-        include: {
-          importRequestDetail: {
-            include: {
-              materialVariant: {
-                include: {
-                  material: {
-                    include: {
-                      materialUom: true,
-                      materialType: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-
-          warehouseManager: true,
-          purchasingStaff: true,
-          warehouseStaff: true,
-          poDelivery: true,
-        },
+        include: this.ImportRequestInclude,
       }),
-      this.prismaService.importRequest.count({
-        where: findOptions?.where,
-      }),
+      this.prismaService.importRequest.count(),
     ]);
 
     return {
       data,
       pageMeta: {
         totalItems,
-        page,
+        offset,
         limit,
+        page: Math.ceil(offset / limit) + 1,
         totalPages: Math.ceil(totalItems / limit),
-        hasNext: totalItems > page * limit,
-        hasPrevious: page > 1,
+        hasNext: totalItems > offset + limit,
+        hasPrevious: offset > 0,
       },
     };
   }
 
   findAll() {
     return this.prismaService.importRequest.findMany({
-      include: {
-        importRequestDetail: {
-          include: {
-            materialVariant: {
-              include: {
-                material: {
-                  include: {
-                    materialUom: true,
-                    materialType: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        warehouseManager: true,
-        purchasingStaff: true,
-        warehouseStaff: true,
-        poDelivery: true,
-      },
+      include: this.ImportRequestInclude,
     });
   }
 
@@ -95,26 +52,7 @@ export class ImportRequestService {
     const importRequest =
       await this.prismaService.importRequest.findUniqueOrThrow({
         where: { id },
-        include: {
-          importRequestDetail: {
-            include: {
-              materialVariant: {
-                include: {
-                  material: {
-                    include: {
-                      materialUom: true,
-                      materialType: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-          warehouseManager: true,
-          purchasingStaff: true,
-          warehouseStaff: true,
-          poDelivery: true,
-        },
+        include: this.ImportRequestInclude,
       });
     if (!importRequest) {
       throw new NotFoundException("Import request doesn't exist");
@@ -260,37 +198,37 @@ export class ImportRequestService {
   getEnum() {
     return {
       importRequestType: Object.values($Enums.ImportRequestType),
-      importRequestStatus: Object.values($Enums.ImportRequestType),
+      importRequestStatus: Object.values($Enums.ImportRequestStatus),
     };
   }
 
   // REJECTED
   // APPROVED
   // INSPECTING
-  // async managerProcess(id: string, managerProcess: ManagerProcessDto) {
-  //   const status = await this.prismaService.importRequest.findUnique({
-  //     where: { id },
-  //     select: { status: true },
-  //   });
-  //   switch (managerProcess.action) {
-  //     case $Enums.ImportRequestStatus.APPROVED:
-  //       return this.prismaService.importRequest.update({
-  //         where: { id: id },
-  //         data: {
-  //           status: $Enums.ImportRequestStatus.APPROVED,
-  //           ...managerProcess,
-  //         },
-  //       });
-  //     case $Enums.ImportRequestStatus.APPROVED:
-  //       return this.prismaService.importRequest.update({
-  //         where: { id },
-  //         data: {
-  //           status: $Enums.ImportRequestStatus.REJECTED,
-  //           ...managerProcess,
-  //         },
-  //       });
-  //   }
-  // }
+  async managerProcess(id: string, managerProcess: ManagerProcessDto) {
+    const status = await this.prismaService.importRequest.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    switch (managerProcess.action) {
+      case $Enums.ImportRequestStatus.APPROVED:
+        return this.prismaService.importRequest.update({
+          where: { id: id },
+          data: {
+            status: $Enums.ImportRequestStatus.APPROVED,
+            ...managerProcess,
+          },
+        });
+      case $Enums.ImportRequestStatus.APPROVED:
+        return this.prismaService.importRequest.update({
+          where: { id },
+          data: {
+            status: $Enums.ImportRequestStatus.REJECTED,
+            ...managerProcess,
+          },
+        });
+    }
+  }
 
   // INSPECTED
   async inspectionStaffAddReport() {}
@@ -310,8 +248,8 @@ export class ImportRequestService {
           include: {
             material: {
               include: {
-                materialUom: true,
                 materialType: true,
+                materialAttribute: true,
               },
             },
           },
