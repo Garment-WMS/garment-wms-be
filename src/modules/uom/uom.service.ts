@@ -9,7 +9,7 @@ import { UpdateUomDto } from './dto/update-uom.dto';
 export class UomService {
   constructor(private readonly prismaService: PrismaService) {}
   async create(createUomDto: CreateUomDto) {
-    const result = await this.prismaService.uom.create({
+    const result = await this.prismaService.materialUom.create({
       data: { ...createUomDto },
     });
     if (result) {
@@ -22,7 +22,7 @@ export class UomService {
     if (!isUUID(id)) {
       return null;
     }
-    const result = await this.prismaService.uom.findUnique({
+    const result = await this.prismaService.materialUom.findUnique({
       where: { id },
     });
     return result;
@@ -38,19 +38,19 @@ export class UomService {
   }
 
   async findAll() {
-    const result = await this.prismaService.uom.findMany();
+    const result = await this.prismaService.materialUom.findMany();
     return apiSuccess(HttpStatus.OK, result, 'UOMs found');
   }
 
   async findByUomName(name: string) {
-    const result = await this.prismaService.uom.findMany({
+    const result = await this.prismaService.materialUom.findMany({
       where: { name },
     });
     return result;
   }
 
   async update(id: string, updateUomDto: UpdateUomDto) {
-    const result = await this.prismaService.uom.update({
+    const result = await this.prismaService.materialUom.update({
       where: { id },
       data: { ...updateUomDto },
     });

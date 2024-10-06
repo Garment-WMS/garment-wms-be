@@ -248,8 +248,8 @@ export class ImportRequestService {
           include: {
             material: {
               include: {
-                uom: true,
                 materialType: true,
+                materialAttribute: true,
               },
             },
           },

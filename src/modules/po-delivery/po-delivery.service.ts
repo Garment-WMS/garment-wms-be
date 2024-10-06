@@ -37,7 +37,7 @@ export class PoDeliveryService {
                 include: {
                   material: {
                     include: {
-                      uom: true,
+                      materialUom: true,
                       materialType: true,
                     },
                   },

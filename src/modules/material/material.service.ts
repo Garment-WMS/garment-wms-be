@@ -19,7 +19,7 @@ export class MaterialService {
           id: materialTypeId,
         },
       },
-      uom: {
+      materialUom: {
         connect: {
           id: uomId,
         },
@@ -45,7 +45,7 @@ export class MaterialService {
       include: {
         materialAttribute: true,
         materialType: true,
-        uom: true,
+        materialUom: true,
       },
     });
     return apiSuccess(HttpStatus.OK, result, 'List of Material');
