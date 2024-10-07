@@ -1,14 +1,16 @@
 model ProductFormula {
   id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  productId              String                   @map("product_id") @db.Uuid
-  materialId             String                   @map("material_id") @db.Uuid
-  quantity               Float                    @map("quantity")
+  productVariantId       String                   @map("product_variant_id") @db.Uuid
+  name                   String                   @map("name") @db.Uuid
+  quantityRangeStart     Float                    @map("quantity_range_start")
+  quantityRangeEnd       Float                    @map("quantity_range_end")
   createdAt              DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime?                @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime?                @map("deleted_at") @db.Timestamptz(6)
-  material               Material                 @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  product                Product                  @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productVariant         ProductVariant           @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   ProductFormulaMaterial ProductFormulaMaterial[]
+  Material               Material?                @relation(fields: [materialId], references: [id])
+  materialId             String?                  @db.Uuid
 
   @@map("product_formula")
 }
