@@ -16,5 +16,6 @@ model MaterialReceipt {
   material              Material                @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
 
+
   @@map("material_receipt")
 }

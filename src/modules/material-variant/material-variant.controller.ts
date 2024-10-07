@@ -1,14 +1,18 @@
+import { DirectFilterPipe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
   Get,
   Param,
+  Patch,
   Post,
-  Put,
+  Query,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Prisma } from '@prisma/client';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateMaterialVariantDto } from './dto/create-material-variant.dto';
 import { UpdateMaterialVariantDto } from './dto/update-material-variant.dto';
@@ -28,11 +32,30 @@ export class MaterialVariantController {
   }
 
   @Get()
-  getAllMaterialVariant() {
-    return this.materialVariantService.findAll();
+  getAllMaterialVariant(
+    @Query(
+      new DirectFilterPipe<any, Prisma.MaterialVariantWhereInput>(
+        ['id', 'materialId', 'createdAt', 'updatedAt', 'name', 'code'],
+        [
+          'material.name',
+          'material.code',
+          'material.materialType.name',
+          'material.materialType.code',
+          'material.materialType.id',
+        ],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.MaterialVariantWhereInput>,
+  ) {
+    return this.materialVariantService.findAll(filterOptions.findOptions);
   }
 
-  @Put('/:id')
+  @Get(':id')
+  getMaterialVariantById(@Param('id', new CustomUUIDPipe()) id: string) {
+    return this.materialVariantService.findByIdWithResponse(id);
+  }
+
+  @Patch('/:id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   update(
     @Param('id', new CustomUUIDPipe()) id: string,
