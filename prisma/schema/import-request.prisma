@@ -1,7 +1,7 @@
 model ImportRequest {
   id                  String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   warehouseStaffId    String?               @map("warehouse_staff_id") @db.Uuid
-  status              ImportRequestStatus   @default(PENDING)
+  status              ImportRequestStatus   @default(ARRIVED)
   type                ImportRequestType     @map("import_request_type")
   from                String?               @db.VarChar
   to                  String?               @db.VarChar
