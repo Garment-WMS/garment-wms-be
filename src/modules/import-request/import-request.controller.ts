@@ -56,6 +56,7 @@ export class ImportRequestController {
     )
     filterDto: SearchImportQueryDto,
   ) {
+    console.log(filterDto);
     return apiSuccess(
       HttpStatus.OK,
       await this.importRequestService.search(filterDto.findOptions),

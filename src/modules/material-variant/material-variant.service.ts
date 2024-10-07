@@ -1,13 +1,27 @@
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { DataResponse } from 'src/common/dto/data-response';
+import { extractPageAndPageSize } from 'src/common/utils/utils';
 import { CreateMaterialVariantDto } from './dto/create-material-variant.dto';
 import { UpdateMaterialVariantDto } from './dto/update-material-variant.dto';
 
 @Injectable()
 export class MaterialVariantService {
   constructor(private readonly prismaService: PrismaService) {}
+
+  includeQuery: Prisma.MaterialVariantInclude = {
+    material: {
+      include: {
+        materialType: true,
+        materialUom: true,
+      },
+    },
+  };
+
   async create(createMaterialVariantDto: CreateMaterialVariantDto) {
     const result = await this.prismaService.materialVariant.create({
       data: createMaterialVariantDto,
@@ -26,9 +40,49 @@ export class MaterialVariantService {
     );
   }
 
-  async findAll() {
-    const result = await this.prismaService.materialVariant.findMany();
-    return apiSuccess(HttpStatus.OK, result, 'List of Material Variant');
+  async findByIdWithResponse(id: string) {
+    const result = await this.findById(id);
+
+    if (result) {
+      return apiSuccess(
+        HttpStatus.OK,
+        result,
+        'Material Variant retrieved successfully',
+      );
+    }
+    return apiFailed(HttpStatus.NOT_FOUND, 'Material Variant not found');
+  }
+  async findAll(
+    filterOption?: GeneratedFindOptions<Prisma.MaterialVariantWhereInput>,
+  ) {
+    const { offset, limit } = await extractPageAndPageSize(filterOption);
+
+    const [result, total] = await this.prismaService.$transaction([
+      this.prismaService.materialVariant.findMany({
+        skip: offset,
+        take: limit,
+        where: filterOption?.where,
+        include: this.includeQuery,
+      }),
+      this.prismaService.materialVariant.count({
+        where: filterOption?.where ? filterOption.where : undefined,
+      }),
+    ]);
+
+    const data: DataResponse = {
+      data: result,
+      pageMeta: {
+        totalItems: total,
+        offset,
+        limit,
+        page: Math.ceil(offset / limit) + 1,
+        totalPages: Math.ceil(total / limit),
+        hasNext: total > offset + limit,
+        hasPrevious: offset > 0,
+      },
+    };
+
+    return apiSuccess(HttpStatus.OK, data, 'List of Material Variant');
   }
 
   async findById(id: string) {
@@ -37,6 +91,7 @@ export class MaterialVariantService {
     }
     const result = await this.prismaService.materialVariant.findUnique({
       where: { id },
+      include: this.includeQuery,
     });
     return result;
   }
