@@ -48,15 +48,22 @@ export class ImportRequestService {
     });
   }
 
-  async findOne(id: string) {
-    const importRequest =
-      await this.prismaService.importRequest.findUniqueOrThrow({
-        where: { id },
-        include: this.ImportRequestInclude,
-      });
+  async findUnique(id: string) {
+    const importRequest = await this.prismaService.importRequest.findUnique({
+      where: { id },
+      include: this.ImportRequestInclude,
+    });
     if (!importRequest) {
       throw new NotFoundException("Import request doesn't exist");
     }
+    return importRequest;
+  }
+
+  async findFirst(id: string) {
+    const importRequest = await this.prismaService.importRequest.findFirst({
+      where: { id },
+      include: this.ImportRequestInclude,
+    });
     return importRequest;
   }
 
@@ -202,9 +209,14 @@ export class ImportRequestService {
     };
   }
 
+  // INSPECTING
+  async purchasingStaffRequestInspection() {}
+
+  // INSPECTED
+  async inspectionStaffAddReport() {}
+
   // REJECTED
   // APPROVED
-  // INSPECTING
   async managerProcess(id: string, managerProcess: ManagerProcessDto) {
     const status = await this.prismaService.importRequest.findUnique({
       where: { id },
@@ -229,9 +241,6 @@ export class ImportRequestService {
         });
     }
   }
-
-  // INSPECTED
-  async inspectionStaffAddReport() {}
 
   // IMPORTING
   async warehouseStaffImport() {}

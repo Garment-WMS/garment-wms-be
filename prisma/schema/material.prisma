@@ -16,7 +16,6 @@ model Material {
   materialInspectionCriteria  MaterialInspectionCriteria[]
   materialReceipt             MaterialReceipt[]
   MaterialVariant             MaterialVariant[]
-  productFormula              ProductFormula[]
   materialUom                 MaterialUom?                  @relation(fields: [materialUomId], references: [id])
   ProductFormulaMaterial      ProductFormulaMaterial[]
 

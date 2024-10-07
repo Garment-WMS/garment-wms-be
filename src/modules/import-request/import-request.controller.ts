@@ -56,6 +56,7 @@ export class ImportRequestController {
     )
     filterDto: SearchImportQueryDto,
   ) {
+    console.log(filterDto);
     return apiSuccess(
       HttpStatus.OK,
       await this.importRequestService.search(filterDto.findOptions),
@@ -76,7 +77,7 @@ export class ImportRequestController {
   async findOne(@Param('id', new CustomUUIDPipe()) id: string) {
     return apiSuccess(
       HttpStatus.OK,
-      await this.importRequestService.findOne(id),
+      await this.importRequestService.findUnique(id),
       'Get import request successfully',
     );
   }

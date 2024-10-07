@@ -25,6 +25,7 @@ export const isValidEmail = (email: string): boolean => {
 
 import * as bcrypt from 'bcrypt';
 import { isDate } from 'class-validator';
+import { Constant } from '../constant/constant';
 
 export const hashData = async (data: string): Promise<string> => {
   const salt = await bcrypt.genSalt();
@@ -95,4 +96,13 @@ export function addMissingStartCharacter(
 
 export function validateDate(date: string): boolean {
   return isDate(date);
+}
+
+export function extractPageAndPageSize(findOptions): {
+  offset: number;
+  limit: number;
+} {
+  const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+  const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+  return { offset, limit };
 }

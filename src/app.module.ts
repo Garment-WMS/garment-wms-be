@@ -21,11 +21,20 @@ import { MaterialUnitModule } from './modules/material-unit/material-unit.module
 import { MaterialVariantModule } from './modules/material-variant/material-variant.module';
 import { PoDeliveryMaterialModule } from './modules/po-delivery-material/po-delivery-material.module';
 import { PoDeliveryModule } from './modules/po-delivery/po-delivery.module';
+import { PoPoDeliveryBridgeModule } from './modules/po-po-delivery-bridge/po-po-delivery-bridge.module';
+import { ProductFormulaMaterialModule } from './modules/product-formula-material/product-formula-material.module';
+import { ProductFormulaModule } from './modules/product-formula/product-formula.module';
+import { ProductPlanModule } from './modules/product-plan/product-plan.module';
+import { ProductTypeModule } from './modules/product-type/product-type.module';
+import { ProductUomModule } from './modules/product-uom/product-uom.module';
+import { ProductVariantModule } from './modules/product-variant/product-variant.module';
+import { ProductModule } from './modules/product/product.module';
 import { PurchaseOrderModule } from './modules/purchase-order/purchase-order.module';
+import { QuarterlyProductDetailModule } from './modules/quarterly-product-detail/quarterly-product-detail.module';
+import { QuarterlyProductPlanModule } from './modules/quarterly-product-plan/quarterly-product-plan.module';
 import { SupplierModule } from './modules/supplier/supplier.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
-import { PoPoDeliveryBridgeModule } from './modules/po-po-delivery-bridge/po-po-delivery-bridge.module';
 
 @Module({
   imports: [
@@ -51,6 +60,15 @@ import { PoPoDeliveryBridgeModule } from './modules/po-po-delivery-bridge/po-po-
     ImportRequestModule,
     MaterialVariantModule,
     PoPoDeliveryBridgeModule,
+    ProductPlanModule,
+    QuarterlyProductPlanModule,
+    QuarterlyProductDetailModule,
+    ProductModule,
+    ProductFormulaModule,
+    ProductTypeModule,
+    ProductUomModule,
+    ProductVariantModule,
+    ProductFormulaMaterialModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],
