@@ -11,7 +11,7 @@ model Product {
   inspectionReportDetail    InspectionReportDetail[]
   ManufactureOrder          ManufactureOrder[]
   productType               ProductType                 @relation(fields: [productTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  ProductUom                ProductUom                  @relation(fields: [productUomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productUom                ProductUom                  @relation(fields: [productUomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productAttribute          ProductAttribute[]
   productFormula            ProductFormula[]
   productInspectionCriteria ProductInspectionCriteria[]
