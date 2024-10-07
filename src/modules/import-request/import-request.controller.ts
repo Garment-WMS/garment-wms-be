@@ -15,9 +15,11 @@ import { Prisma } from '@prisma/client';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
+import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
 import { SearchImportQueryDto } from './dto/import-request/search-import-query.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 import { ImportRequestService } from './import-request.service';
+import { IsImportRequestExistPipe } from './pipe/is-import-request-exist.pipe';
 
 @Controller('import-request')
 @ApiTags('import-request')
@@ -100,6 +102,19 @@ export class ImportRequestController {
       HttpStatus.OK,
       await this.importRequestService.remove(id),
       'Import request deleted successfully',
+    );
+  }
+
+  @Post(':id/manager-process')
+  async managerProcess(
+    @Param('id', IsImportRequestExistPipe)
+    id: string,
+    @Body() managerProcessDto: ManagerProcessDto,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.importRequestService.managerProcess(id, managerProcessDto),
+      'Import request manager process successfully',
     );
   }
 }

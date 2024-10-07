@@ -70,21 +70,21 @@ export class PrismaService
   private notSoftDeletedTables: string[] = ['Role', 'RefreshToken'];
 
   findNotDeletedMiddleware: Prisma.Middleware = async (params, next) => {
-    if (this.notSoftDeletedTables.indexOf(params.model) === -1) {
+    if (this.notSoftDeletedTables.indexOf(params.model) !== -1) {
       return next(params);
     }
     if (
       (params.action.startsWith('find') ||
         params.action === 'aggregate' ||
         params.action === 'count') &&
-      !params.args.where?.deletedAt
+      !params.args?.['where']?.['deletedAt']
     ) {
       return next({
         ...params,
         args: {
           ...params.args,
           where: {
-            ...params.args.where,
+            ...params.args?.['where'],
             deletedAt: null,
           },
         },
@@ -94,7 +94,7 @@ export class PrismaService
   };
 
   softDeleteMiddleware: Prisma.Middleware = async (params, next) => {
-    if (this.notSoftDeletedTables.indexOf(params.model) === -1) {
+    if (this.notSoftDeletedTables.indexOf(params.model) !== -1) {
       return next(params);
     }
     if (params.action === 'delete') {

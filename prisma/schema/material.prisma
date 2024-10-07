@@ -1,23 +1,19 @@
 model Material {
-  id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  materialTypeId              String                        @map("material_type_id") @db.Uuid
-  materialUomId               String?                       @map("material_uom_id") @db.Uuid
-  name                        String                        @map("name") @db.VarChar
-  code                        String?                       @unique @map("code") @db.VarChar
-  reorderLevel                Float                         @map("reorder_level")
-  createdAt                   DateTime?                     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
-  exportMaterialRequestDetail ExportMaterialRequestDetail[]
-  inspectionReportDetail      InspectionReportDetail[]
-  materialType                MaterialType                  @relation(fields: [materialTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  materialAttribute           MaterialAttribute[]
-  materialExportDetail        MaterialExportDetail[]
-  materialInspectionCriteria  MaterialInspectionCriteria[]
-  materialReceipt             MaterialReceipt[]
-  MaterialVariant             MaterialVariant[]
-  materialUom                 MaterialUom?                  @relation(fields: [materialUomId], references: [id])
-  ProductFormulaMaterial      ProductFormulaMaterial[]
+  id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialTypeId             String                       @map("material_type_id") @db.Uuid
+  materialUomId              String?                      @map("material_uom_id") @db.Uuid
+  name                       String                       @map("name") @db.VarChar
+  code                       String?                      @unique @map("code") @db.VarChar
+  reorderLevel               Float                        @map("reorder_level")
+  createdAt                  DateTime?                    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                  DateTime?                    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                  DateTime?                    @map("deleted_at") @db.Timestamptz(6)
+  materialType               MaterialType                 @relation(fields: [materialTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialAttribute          MaterialAttribute[]
+  materialInspectionCriteria MaterialInspectionCriteria[]
+  MaterialVariant            MaterialVariant[]
+  materialUom                MaterialUom?                 @relation(fields: [materialUomId], references: [id])
+  ProductFormulaMaterial     ProductFormulaMaterial[]
 
   @@map("material")
 }

@@ -1,6 +1,6 @@
 model MaterialReceipt {
   id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  materialId            String                  @map("material_id") @db.Uuid
+  materialVariantId     String                  @map("material_variant_id") @db.Uuid
   importReceiptId       String                  @map("import_receipt_id") @db.Uuid
   expireDate            DateTime?               @map("expire_date") @db.Timestamptz(6)
   createdAt             DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -13,9 +13,7 @@ model MaterialReceipt {
   InventoryReportDetail InventoryReportDetail[]
   MaterialExportReceipt MaterialExportReceipt[]
   importReceipt         ImportReceipt           @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  material              Material                @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-
+  materialVariant       MaterialVariant         @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("material_receipt")
 }

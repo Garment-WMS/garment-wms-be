@@ -2,14 +2,14 @@ model ImportRequestDetail {
   id                String           @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   importRequestId   String           @map("import_request_id") @db.Uuid
   materialVariantId String?          @map("material_variant_id") @db.Uuid
-  productId         String?          @map("product_id") @db.Uuid
+  productVariantId  String?          @map("product_variant_id") @db.Uuid
   createdAt         DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime?        @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt         DateTime?        @map("deleted_at") @db.Timestamptz(6)
   quantityByPack    Float?           @map("quantity_by_pack")
   importRequest     ImportRequest    @relation(fields: [importRequestId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialVariant   MaterialVariant? @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  product           Product?         @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productVariant    ProductVariant?  @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("import_request_detail")
 }
