@@ -28,14 +28,15 @@ model ImportRequest {
 }
 
 enum ImportRequestStatus {
+  ARRIVED
+  INSPECTING
+  INSPECTED
+  CANCELED
   PENDING
   REJECTED
   APPROVED
-  INSPECTING
-  INSPECTED
   IMPORTING
   IMPORTED
-  CANCELED
 
   @@map("import_request_status")
 }

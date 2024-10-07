@@ -5,7 +5,7 @@ export class IsImportRequestExistPipe implements PipeTransform {
   constructor(private readonly importRequestService: ImportRequestService) {}
   async transform(value: string) {
     const isImportRequestExist =
-      !!(await this.importRequestService.findOne(value));
+      !!(await this.importRequestService.findFirst(value));
 
     if (!isImportRequestExist) {
       throw new BadRequestException('Import request is not exist');

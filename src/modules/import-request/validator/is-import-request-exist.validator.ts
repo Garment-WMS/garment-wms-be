@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  registerDecorator,
   ValidationArguments,
   ValidatorConstraint,
   ValidatorConstraintInterface,
@@ -12,19 +13,27 @@ export class IsImportRequestExistValidator
   implements ValidatorConstraintInterface
 {
   constructor(private readonly importRequestService: ImportRequestService) {}
-  validate(
+  async validate(
     value: any,
     validationArguments?: ValidationArguments,
-  ): Promise<boolean> | boolean {
-    throw new Error('Method not implemented.');
+  ): Promise<boolean> {
+    const isExist = await this.importRequestService.findFirst(value);
+    return !!isExist;
   }
   defaultMessage?(validationArguments?: ValidationArguments): string {
-    throw new Error('Method not implemented.');
+    return "Import request doesn't exist";
   }
 }
 
 export function IsImportRequestExist() {
   return function (object: object, propertyName: string) {
-    throw new Error('Method not implemented.');
+    registerDecorator({
+      target: object.constructor,
+      propertyName: propertyName,
+      options: {},
+      constraints: [],
+      validator: IsImportRequestExistValidator,
+      async: true,
+    });
   };
 }
