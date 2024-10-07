@@ -7,15 +7,10 @@ model Product {
   createdAt                 DateTime?                   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime?                   @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                 DateTime?                   @map("deleted_at") @db.Timestamptz(6)
-  importRequestDetail       ImportRequestDetail[]
-  inspectionReportDetail    InspectionReportDetail[]
-  ManufactureOrder          ManufactureOrder[]
   productType               ProductType                 @relation(fields: [productTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productUom                ProductUom                  @relation(fields: [productUomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productAttribute          ProductAttribute[]
   productInspectionCriteria ProductInspectionCriteria[]
-  productReceipt            ProductReceipt[]
-  quarterlyProductionDetail QuarterlyProductionDetail[]
   ProductVariant            ProductVariant[]
 
   @@map("product")

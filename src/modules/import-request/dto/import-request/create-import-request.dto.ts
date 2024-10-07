@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { $Enums } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsDateString,
   IsEnum,
   IsNotEmpty,
@@ -10,6 +11,7 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
+import { UniqueInArray } from 'src/common/decorator/validator/unique-property.decorator';
 import { CreateImportRequestDetailDto } from '../import-request-detail/create-import-request-detail.dto';
 
 export class CreateImportRequestDto {
@@ -57,18 +59,6 @@ export class CreateImportRequestDto {
   cancelReason?: string;
 
   @ApiProperty({ required: false })
-  @IsNotEmpty()
-  @IsString()
-  @IsOptional()
-  from?: string;
-
-  @ApiProperty({ required: false })
-  @IsNotEmpty()
-  @IsString()
-  @IsOptional()
-  to?: string;
-
-  @ApiProperty({ required: false })
   @IsDateString()
   @IsOptional()
   startAt?: string | Date;
@@ -80,6 +70,8 @@ export class CreateImportRequestDto {
 
   @ApiProperty({ required: true, type: [Object] })
   @ValidateNested()
+  @IsArray()
+  @UniqueInArray('materialVariantId')
   @Type(() => CreateImportRequestDetailDto)
   importRequestDetails: CreateImportRequestDetailDto[];
 

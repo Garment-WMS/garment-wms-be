@@ -1,6 +1,7 @@
-import { BadRequestException, PipeTransform } from '@nestjs/common';
+import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 import { ImportRequestService } from '../import-request.service';
 
+@Injectable()
 export class IsImportRequestExistPipe implements PipeTransform {
   constructor(private readonly importRequestService: ImportRequestService) {}
   async transform(value: string) {
