@@ -9,8 +9,6 @@ model ProductFormula {
   deletedAt              DateTime?                @map("deleted_at") @db.Timestamptz(6)
   productVariant         ProductVariant           @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   ProductFormulaMaterial ProductFormulaMaterial[]
-  Material               Material?                @relation(fields: [materialId], references: [id])
-  materialId             String?                  @db.Uuid
 
   @@map("product_formula")
 }
