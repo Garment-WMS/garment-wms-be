@@ -1,4 +1,14 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateProductFormulaDto } from './create-product-formula.dto';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsInt, IsOptional } from 'class-validator';
 
-export class UpdateProductFormulaDto extends PartialType(CreateProductFormulaDto) {}
+export class UpdateProductFormulaDto {
+  @ApiProperty()
+  @IsOptional()
+  @IsInt()
+  quantityRangeStart: number;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsInt()
+  quantityRangeEnd: number;
+}

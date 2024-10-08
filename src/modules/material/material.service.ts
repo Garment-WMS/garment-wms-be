@@ -10,7 +10,7 @@ export class MaterialService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async create(createMaterialDto: CreateMaterialDto) {
-    const { materialTypeId, uomId, ...rest } = createMaterialDto;
+    const { materialTypeId, materialUomId, ...rest } = createMaterialDto;
 
     const materialInput: Prisma.MaterialCreateInput = {
       ...rest,
@@ -21,7 +21,7 @@ export class MaterialService {
       },
       materialUom: {
         connect: {
-          id: uomId,
+          id: materialUomId,
         },
       },
     };
