@@ -1,6 +1,6 @@
 model PurchaseOrder {
   id                        String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  poNumber                  String                   @map("PO_number") @db.VarChar
+  poNumber                  String                   @unique @map("PO_number") @db.VarChar
   quarterlyProductionPlanId String?                  @map("quarterly_production_plan_id") @db.Uuid
   purchasingStaffId         String?                  @map("purchasing_staff_id") @db.Uuid
   currency                  String                   @db.VarChar
