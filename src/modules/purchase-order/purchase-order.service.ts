@@ -1,7 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PurchaseOrderStatus } from '@prisma/client';
-import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
@@ -17,6 +16,28 @@ export class PurchaseOrderService {
     private readonly prismaService: PrismaService,
     private readonly excelService: ExcelService,
   ) {}
+
+  queryInclude: Prisma.PurchaseOrderInclude = {
+    supplier: true,
+    poDelivery: {
+      include: {
+        poDeliveryDetail: {
+          include: {
+            materialVariant: {
+              include: {
+                material: {
+                  include: {
+                    materialUom: true,
+                    materialType: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  };
 
   async getPurchaseOrders(
     filterOption?: GeneratedFindOptions<Prisma.PurchaseOrderWhereInput>,
@@ -34,27 +55,7 @@ export class PurchaseOrderService {
         take: limit,
         where: filterOption?.where,
         orderBy: filterOption?.orderBy,
-        include: {
-          supplier: true,
-          poDelivery: {
-            include: {
-              poDeliveryDetail: {
-                include: {
-                  materialVariant: {
-                    include: {
-                      material: {
-                        include: {
-                          materialUom: true,
-                          materialType: true,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+        include: this.queryInclude,
       }),
       this.prismaService.purchaseOrder.count({
         where: filterOption?.where ? filterOption.where : undefined,
@@ -115,33 +116,9 @@ export class PurchaseOrderService {
     });
   } */
   async findById(id: string) {
-    if (!isUUID(id)) {
-      return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid Purchase Order ID');
-    }
-
     const purchaseOrder = await this.prismaService.purchaseOrder.findUnique({
       where: { id },
-      include: {
-        supplier: true, // Including supplier details
-        poDelivery: {
-          include: {
-            poDeliveryDetail: {
-              include: {
-                materialVariant: {
-                  include: {
-                    material: {
-                      include: {
-                        materialUom: true,
-                        materialType: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+      include: this.queryInclude,
     });
     if (!purchaseOrder) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');

@@ -14,6 +14,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Prisma } from '@prisma/client';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
+import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { PurchaseOrderService } from './purchase-order.service';
 
 @Controller('purchase-order')
@@ -44,7 +45,7 @@ export class PurchaseOrderController {
 
   @Get(':id')
   @UsePipes(new ValidationPipe())
-  async getPurchaseOrderById(@Param('id') id: string) {
+  async getPurchaseOrderById(@Param('id', CustomUUIDPipe) id: string) {
     const purchaseOrder = await this.purchaseOrderService.findById(id);
     if (!purchaseOrder) {
       throw new NotFoundException('Purchase Order not found');
