@@ -6,8 +6,10 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
 import { ExcelService } from '../excel/excel.service';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
+import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { PurchaseOrderDto } from './dto/purchase-order.dto';
+import { UpdatePurchaseOrderStatusDto } from './dto/update-purchase-order-status.dto';
 import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 
 @Injectable()
@@ -15,6 +17,7 @@ export class PurchaseOrderService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly excelService: ExcelService,
+    private readonly poDeliveryService: PoDeliveryService,
   ) {}
 
   queryInclude: Prisma.PurchaseOrderInclude = {
@@ -208,5 +211,56 @@ export class PurchaseOrderService {
       where: { id },
       data: updatedPurchaseOrderDto,
     });
+  }
+
+  async updatePurchaseOrderStatus(
+    id: string,
+    updatedPurchaseOrderStatusDto: UpdatePurchaseOrderStatusDto,
+  ) {
+    let result = null;
+    if (
+      updatedPurchaseOrderStatusDto.status === PurchaseOrderStatus.CANCELLED
+    ) {
+      result = await this.prismaService.$transaction(async (prisma) => {
+        await this.poDeliveryService.updatePoDeliveryMaterialStatus(
+          prisma,
+          id,
+          PurchaseOrderStatus.CANCELLED,
+        );
+
+        await prisma.purchaseOrder.update({
+          where: { id },
+          data: {
+            status: PurchaseOrderStatus.CANCELLED,
+          },
+        });
+      });
+      return apiSuccess(HttpStatus.OK, null, 'Purchase Order cancelled');
+    }
+
+    //The finished status is updated based on the status all of the po delivery
+    // if (updatedPurchaseOrderStatusDto.status === PurchaseOrderStatus.FINISHED) {
+    //   result = await this.prismaService.$transaction(async (prisma) => {
+    //     await this.poDeliveryService.updatePoDeliveryMaterialStatus(
+    //       prisma,
+    //       id,
+    //       PurchaseOrderStatus.FINISHED,
+    //     );
+
+    //     await prisma.purchaseOrder.update({
+    //       where: { id },
+    //       data: {
+    //         status: PurchaseOrderStatus.FINISHED,
+    //       },
+    //     });
+    //   });
+    //   return apiSuccess(HttpStatus.OK, null, 'Purchase Order finished');
+    // }
+
+    if (result) {
+      return apiSuccess(HttpStatus.OK, null, 'Purchase Order updated');
+    }
+
+    return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid status');
   }
 }
