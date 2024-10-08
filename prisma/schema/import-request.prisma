@@ -3,8 +3,6 @@ model ImportRequest {
   warehouseStaffId    String?               @map("warehouse_staff_id") @db.Uuid
   status              ImportRequestStatus   @default(ARRIVED)
   type                ImportRequestType     @map("import_request_type")
-  from                String?               @db.VarChar
-  to                  String?               @db.VarChar
   startAt             DateTime?             @map("start_at") @db.Timestamptz(6)
   finishAt            DateTime?             @map("finish_at") @db.Timestamptz(6)
   createdAt           DateTime?             @default(now()) @map("created_at") @db.Timestamptz(6)

@@ -140,8 +140,6 @@ export class ImportRequestService {
       description: dto.description,
       rejectReason: dto.rejectReason,
       cancelReason: dto.cancelReason,
-      from: dto.from,
-      to: dto.to,
       startAt: dto.startAt,
       finishAt: dto.finishAt,
       type: dto.type,
@@ -153,6 +151,7 @@ export class ImportRequestService {
     };
     return this.prismaService.importRequest.create({
       data: createImportRequestInput,
+      include: this.ImportRequestInclude,
     });
   }
 
@@ -174,17 +173,15 @@ export class ImportRequestService {
       description: dto.description,
       rejectReason: dto.rejectReason,
       cancelReason: dto.cancelReason,
-      from: dto.from,
-      to: dto.to,
       startAt: dto.startAt,
       finishAt: dto.finishAt,
       type: dto.type,
       importRequestDetail: dto.importRequestDetails
         ? {
             upsert: dto.importRequestDetails.map((detail) => ({
-              where: { id: detail.id },
-              create: detail,
+              where: { id: detail.materialVariantId },
               update: detail,
+              create: detail,
             })),
           }
         : undefined,
@@ -193,6 +190,7 @@ export class ImportRequestService {
     return this.prismaService.importRequest.update({
       where: { id },
       data: updateImportRequestInput,
+      include: this.ImportRequestInclude,
     });
   }
 
@@ -218,25 +216,32 @@ export class ImportRequestService {
   // REJECTED
   // APPROVED
   async managerProcess(id: string, managerProcess: ManagerProcessDto) {
-    const status = await this.prismaService.importRequest.findUnique({
+    const importRequest = await this.prismaService.importRequest.findUnique({
       where: { id },
       select: { status: true },
     });
+
+    // if (importRequest.status !== $Enums.ImportRequestStatus.PENDING) {
+    //   throw new BadRequestException(
+    //     'Manager only can process PENDING import request',
+    //   );
+    // }
+
     switch (managerProcess.action) {
       case $Enums.ImportRequestStatus.APPROVED:
-        return this.prismaService.importRequest.update({
+        return await this.prismaService.importRequest.update({
           where: { id: id },
           data: {
             status: $Enums.ImportRequestStatus.APPROVED,
-            ...managerProcess,
           },
         });
-      case $Enums.ImportRequestStatus.APPROVED:
-        return this.prismaService.importRequest.update({
+      case $Enums.ImportRequestStatus.REJECTED:
+        return await this.prismaService.importRequest.update({
           where: { id },
           data: {
             status: $Enums.ImportRequestStatus.REJECTED,
-            ...managerProcess,
+            rejectAt: new Date(),
+            rejectReason: managerProcess.rejectReason,
           },
         });
     }
@@ -276,7 +281,6 @@ export class ImportRequestService {
             supplier: true,
           },
         },
-        ImportRequest: true,
       },
     },
   };

@@ -1,5 +1,5 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsOptional, IsUUID } from 'class-validator';
+import { ArrayUnique, IsOptional, IsUUID } from 'class-validator';
 import { CreateImportRequestDetailDto } from './create-import-request-detail.dto';
 
 export class UpdateImportRequestDetailDto extends PartialType(
@@ -11,5 +11,6 @@ export class UpdateImportRequestDetailDto extends PartialType(
   @ApiProperty()
   @IsUUID()
   @IsOptional()
+  @ArrayUnique()
   id: string;
 }

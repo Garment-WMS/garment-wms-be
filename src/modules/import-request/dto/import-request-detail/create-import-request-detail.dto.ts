@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsUUID, ValidateIf } from 'class-validator';
+import {
+  ArrayUnique,
+  IsNumber,
+  IsOptional,
+  IsUUID,
+  ValidateIf,
+} from 'class-validator';
 import { IsMaterialVariantExist } from 'src/modules/material-variant/validator/is-material-variant-exist.validator';
 
 export class CreateImportRequestDetailDto {
@@ -17,7 +23,8 @@ export class CreateImportRequestDetailDto {
   @ApiProperty({ required: false })
   @ValidateIf((o) => o.materialVariantId === undefined)
   @IsUUID()
-  productId?: string;
+  @ArrayUnique()
+  productIdVariantId?: string;
 
   @ApiProperty()
   @IsNumber()

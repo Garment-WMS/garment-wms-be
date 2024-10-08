@@ -1,11 +1,11 @@
 model ExportMaterialRequestDetail {
-  id         String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  materialId String    @map("material_id") @db.Uuid
-  quantity   Float     @map("quantity")
-  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime? @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
-  material   Material  @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialVariantId String          @map("material_variant_id") @db.Uuid
+  quantity          Float           @map("quantity")
+  createdAt         DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime?       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  materialVariant   MaterialVariant @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("export_material_request_detail")
 }
