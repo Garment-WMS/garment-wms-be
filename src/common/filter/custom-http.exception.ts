@@ -1,10 +1,11 @@
-import { I18nValidationException } from 'nestjs-i18n';
+import { UnauthorizedException } from '@nestjs/common';
 
-export class CustomAuthException extends I18nValidationException {
-  code: number;
-  constructor(code: number, message: string, errors: any) {
-    super(errors, code);
-    this.code = code;
-    this.message = message;
+export class CustomAuthException extends UnauthorizedException {
+  constructor(statusCode: number, message: string, code: any) {
+    super({ statusCode, message, code });
+  }
+
+  getCode(): string {
+    return (this.getResponse() as any).code;
   }
 }

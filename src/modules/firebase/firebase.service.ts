@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FirebaseApp, initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore/lite';
+import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 
 @Injectable()
 export class FirebaseService {
@@ -21,5 +22,20 @@ export class FirebaseService {
 
   getFirestoreInstance() {
     return getFirestore(this.app);
+  }
+
+  async uploadBufferToStorage(buffer: Buffer, path: string) {
+    // Implement the method
+    try {
+      const storage = getStorage(this.app);
+      const storageRef = ref(storage, path);
+
+      const result = await uploadBytes(storageRef, buffer, {
+        contentType:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const downloadURL = await getDownloadURL(result.ref);
+      return downloadURL;
+    } catch (e) {}
   }
 }

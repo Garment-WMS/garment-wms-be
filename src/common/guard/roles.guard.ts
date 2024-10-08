@@ -1,9 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RoleCode } from '@prisma/client';
-import { I18nService, I18nValidationError } from 'nestjs-i18n';
+import { ValidationError } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
-import { I18nTranslations } from 'src/i18n/generated/i18n.generated';
 import { AuthenUser } from 'src/modules/auth/dto/authen-user.dto';
 import { ROLES_KEY } from '../decorator/roles.decorator';
 import { CustomAuthException } from '../filter/custom-http.exception';
@@ -13,7 +12,6 @@ export class RolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private prismaService: PrismaService,
-    private i18n: I18nService<I18nTranslations>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -100,9 +98,9 @@ export class RolesGuard implements CanActivate {
       // }
     }
 
-    let error: I18nValidationError = {
+    let error: ValidationError = {
       property: '',
     };
-    throw new CustomAuthException(403, this.i18n.t('auth.forbidden'), [error]);
+    throw new CustomAuthException(403, 'Forbidden', [error]);
   }
 }

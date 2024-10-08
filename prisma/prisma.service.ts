@@ -1,10 +1,12 @@
 import {
+  HttpException,
+  HttpStatus,
   Injectable,
-  OnModuleInit,
-  OnModuleDestroy,
   Logger,
+  OnModuleDestroy,
+  OnModuleInit,
 } from '@nestjs/common';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService
@@ -37,7 +39,17 @@ export class PrismaService
   }
 
   async onModuleInit() {
-    await this.$connect();
+    try {
+      await this.$connect();
+      this.logger.log('Database connected');
+    } catch (error) {
+      this.logger.log('Database connection failed');
+      throw new HttpException(
+        'Database connection failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
     this.$use(this.softDeleteMiddleware);
     this.$use(this.findNotDeletedMiddleware);
 
@@ -47,9 +59,9 @@ export class PrismaService
     // this.$on('warn', ({ message }) => {
     //   this.logger.warn(message);
     // });
-    // this.$on('info', ({ message }) => {
-    //   this.logger.debug(message);
-    // });
+    this.$on('info', ({ message }) => {
+      this.logger.debug(message);
+    });
     // this.$on('query', ({ query, params }) => {
     //   this.logger.log(`${query}; ${params}`);
     // });
@@ -58,21 +70,21 @@ export class PrismaService
   private notSoftDeletedTables: string[] = ['Role', 'RefreshToken'];
 
   findNotDeletedMiddleware: Prisma.Middleware = async (params, next) => {
-    if (this.notSoftDeletedTables.indexOf(params.model) === -1) {
+    if (this.notSoftDeletedTables.indexOf(params.model) !== -1) {
       return next(params);
     }
     if (
       (params.action.startsWith('find') ||
         params.action === 'aggregate' ||
         params.action === 'count') &&
-      !params.args.where?.deletedAt
+      !params.args?.['where']?.['deletedAt']
     ) {
       return next({
         ...params,
         args: {
           ...params.args,
           where: {
-            ...params.args.where,
+            ...params.args?.['where'],
             deletedAt: null,
           },
         },
@@ -82,7 +94,7 @@ export class PrismaService
   };
 
   softDeleteMiddleware: Prisma.Middleware = async (params, next) => {
-    if (this.notSoftDeletedTables.indexOf(params.model) === -1) {
+    if (this.notSoftDeletedTables.indexOf(params.model) !== -1) {
       return next(params);
     }
     if (params.action === 'delete') {
@@ -115,5 +127,6 @@ export class PrismaService
 
   async onModuleDestroy() {
     await this.$disconnect();
+    this.logger.log('Database disconnected');
   }
 }

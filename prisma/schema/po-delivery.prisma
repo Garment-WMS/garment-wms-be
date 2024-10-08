@@ -1,0 +1,27 @@
+model PoDelivery {
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  purchaseOrderId     String?            @map("purchase_order_id") @db.Uuid
+  totalAmount         Float?             @map("total_ammount")
+  taxAmount           Float?             @map("tax_amount")
+  orderDate           DateTime?          @map("order_date") @db.Date
+  expectedDeliverDate DateTime?          @map("expected_deliver_date") @db.Date
+  deliverDate         DateTime?          @map("deliver_date") @db.Date
+  status              PoDeliveryStatus   @default(PENDING) @map("status")
+  isExtra             Boolean            @map("is_extra")
+  createdAt           DateTime?          @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime?          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  ImportRequest       ImportRequest[]
+  purchaseOrder       PurchaseOrder?     @relation(fields: [purchaseOrderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  poDeliveryDetail    PoDeliveryDetail[]
+
+  @@map("po_delivery")
+}
+
+enum PoDeliveryStatus {
+  PENDING
+  FINISHED
+  CANCELLED
+
+  @@map("po_delivery_status")
+}

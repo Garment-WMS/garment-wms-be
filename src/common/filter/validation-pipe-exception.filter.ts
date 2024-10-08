@@ -1,20 +1,11 @@
-import {
-  ArgumentsHost,
-  BadRequestException,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-  Logger,
-  ValidationPipe,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, Logger, ValidationPipe } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 
 import { apiFailed } from '../dto/api-response';
 import { ApiResponse } from '../dto/response.dto';
-import { ValidationError } from 'class-validator';
+import { CustomValidationException } from './custom-validation.exception';
 
-@Catch()
+@Catch(CustomValidationException)
 export class ValidationPipeExceptionFilter extends ValidationPipe {
   constructor(
     private readonly httpAdapterHost: HttpAdapterHost,
@@ -26,7 +17,7 @@ export class ValidationPipeExceptionFilter extends ValidationPipe {
 
   private isLogged: boolean;
 
-  catch(exception: unknown, host: ArgumentsHost): void {
+  catch(exception: CustomValidationException, host: ArgumentsHost): void {
     if (!this.isLogged) {
       const logger = new Logger(ValidationPipeExceptionFilter.name);
       logger.verbose('-------------Exception Start-------------');
@@ -38,18 +29,11 @@ export class ValidationPipeExceptionFilter extends ValidationPipe {
 
     const ctx = host.switchToHttp();
 
-    let responseBody: ApiResponse;
-    if (exception instanceof BadRequestException) {
-      const response = exception.getResponse() as any;
-      responseBody = apiFailed(400, response.message, response.error);
-    } else if (exception instanceof HttpException) {
-      responseBody = apiFailed(exception.getStatus(), exception.message);
-    } else {
-      responseBody = apiFailed(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        'Something went wrong',
-      );
-    }
+    let responseBody: ApiResponse = apiFailed(
+      exception.statusCode,
+      exception.message,
+      exception.error,
+    );
 
     const { httpAdapter } = this.httpAdapterHost;
     httpAdapter.reply(ctx.getResponse(), responseBody, responseBody.statusCode);

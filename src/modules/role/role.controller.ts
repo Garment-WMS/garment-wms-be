@@ -10,7 +10,6 @@
 // } from '@nestjs/common';
 // import { ApiTags } from '@nestjs/swagger';
 // import { Prisma, Role } from '@prisma/client';
-// import { I18nValidationPipe } from 'nestjs-i18n';
 // import { apiSuccess } from 'src/common/dto/api-response';
 // import { ApiResponse } from 'src/common/dto/response.dto';
 // import { CreateRoleReqDto } from './dto/create-role-req.dto';
@@ -35,9 +34,7 @@
 //   }
 
 //   @Post()
-//   async createRole(
-//     @Body(new I18nValidationPipe()) createRoleReqDto: CreateRoleReqDto,
-//   ): Promise<Role> {
+//   async createRole(@Body() createRoleReqDto: CreateRoleReqDto): Promise<Role> {
 //     const role: Prisma.RoleCreateInput = {
 //       name: createRoleReqDto.name,
 //       code: createRoleReqDto.code,

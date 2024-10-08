@@ -1,0 +1,17 @@
+model QuarterlyProductionDetail {
+  id                        String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  quarterlyProductionPlanId String                  @map("quarterly_production_plan_id") @db.Uuid
+  productVariantId          String                  @map("product_variant_id") @db.Uuid
+  quantityToProduce         Float                   @map("quantity_to_produce")
+  note                      String?                 @map("map") @db.VarChar
+  startDate                 DateTime                @map("start_date") @db.Date
+  finishDate                DateTime?               @map("finish_date") @db.Date
+  expectedShipDate          DateTime                @map("expected_ship_date") @db.Date
+  createdAt                 DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                 DateTime?               @map("deleted_at") @db.Timestamptz(6)
+  productVariant            ProductVariant          @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  quarterlyProductionPlan   QuarterlyProductionPlan @relation(fields: [quarterlyProductionPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("quarterly_production_detail")
+}

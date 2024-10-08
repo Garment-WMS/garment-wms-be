@@ -1,0 +1,13 @@
+model MaterialInspectionCriteria {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialId String    @map("material_id") @db.Uuid
+  name       String    @map("name") @db.VarChar
+  code       String    @unique @map("code") @db.VarChar
+  criteria   String    @map("criteria") @db.VarChar
+  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime? @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+  material   Material  @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("material_inspection_criteria")
+}

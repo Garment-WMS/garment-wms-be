@@ -1,0 +1,19 @@
+model MaterialReceipt {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialVariantId     String                  @map("material_variant_id") @db.Uuid
+  importReceiptId       String                  @map("import_receipt_id") @db.Uuid
+  expireDate            DateTime?               @map("expire_date") @db.Timestamptz(6)
+  createdAt             DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt             DateTime?               @map("deleted_at") @db.Timestamptz(6)
+  importDate            DateTime?               @map("import_date") @db.Timestamptz(6)
+  packUnit              String?                 @map("pack_unit")
+  quantityByPack        Float?                  @map("quantity_by_pack")
+  uomPerPack            Float?                  @map("uom_per_pack")
+  InventoryReportDetail InventoryReportDetail[]
+  MaterialExportReceipt MaterialExportReceipt[]
+  importReceipt         ImportReceipt           @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialVariant       MaterialVariant         @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("material_receipt")
+}
