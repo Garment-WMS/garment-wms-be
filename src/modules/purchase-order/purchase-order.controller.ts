@@ -2,6 +2,8 @@ import { DirectFilterPipe } from '@chax-at/prisma-filter';
 import {
   Controller,
   Get,
+  NotFoundException,
+  Param,
   Post,
   Query,
   UploadedFile,
@@ -38,5 +40,15 @@ export class PurchaseOrderController {
     const fileResult: any =
       await this.purchaseOrderService.createPurchaseOrderWithExcelFile(file);
     return fileResult;
+  }
+
+  @Get(':id')
+  @UsePipes(new ValidationPipe())
+  async getPurchaseOrderById(@Param('id') id: string) {
+    const purchaseOrder = await this.purchaseOrderService.findById(id);
+    if (!purchaseOrder) {
+      throw new NotFoundException('Purchase Order not found');
+    }
+    return purchaseOrder;
   }
 }

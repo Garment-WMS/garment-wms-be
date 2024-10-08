@@ -3,7 +3,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PurchaseOrderStatus } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
-import { apiSuccess } from 'src/common/dto/api-response';
+import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
 import { ExcelService } from '../excel/excel.service';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
@@ -83,7 +83,7 @@ export class PurchaseOrderService {
     });
   }
 
-  async findById(id: string) {
+  /* async findById(id: string) {
     if (!isUUID(id)) {
       return null;
     }
@@ -113,6 +113,45 @@ export class PurchaseOrderService {
         },
       },
     });
+  } */
+  async findById(id: string) {
+    if (!isUUID(id)) {
+      return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid Purchase Order ID');
+    }
+
+    const purchaseOrder = await this.prismaService.purchaseOrder.findUnique({
+      where: { id },
+      include: {
+        supplier: true, // Including supplier details
+        poDelivery: {
+          include: {
+            poDeliveryDetail: {
+              include: {
+                materialVariant: {
+                  include: {
+                    material: {
+                      include: {
+                        materialUom: true,
+                        materialType: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!purchaseOrder) {
+      return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');
+    }
+    // Return success response with data
+    return apiSuccess(
+      HttpStatus.OK,
+      purchaseOrder,
+      'Purchase Order retrieved successfully',
+    );
   }
 
   async createPurchaseOrderWithExcelFile(file: Express.Multer.File) {
