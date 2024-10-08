@@ -22,7 +22,7 @@ export class CreateMaterialDto {
   @IsNotEmpty()
   @IsUUID()
   @IsUomExist()
-  uomId: string;
+  materialUomId: string;
 
   @ApiProperty({})
   @IsNotEmpty()
