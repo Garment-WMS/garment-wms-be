@@ -1,9 +1,11 @@
 import { DirectFilterPipe } from '@chax-at/prisma-filter';
 import {
+  Body,
   Controller,
   Get,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Query,
   UploadedFile,
@@ -15,6 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Prisma } from '@prisma/client';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
+import { UpdatePurchaseOrderStatusDto } from './dto/update-purchase-order-status.dto';
 import { PurchaseOrderService } from './purchase-order.service';
 
 @Controller('purchase-order')
@@ -51,5 +54,17 @@ export class PurchaseOrderController {
       throw new NotFoundException('Purchase Order not found');
     }
     return purchaseOrder;
+  }
+
+  @Patch(':id/status')
+  @UsePipes(new ValidationPipe())
+  async updatePurchaseOrder(
+    @Param('id', CustomUUIDPipe) id: string,
+    @Body() updatePurchaseOrderStatusDto: UpdatePurchaseOrderStatusDto,
+  ) {
+    return this.purchaseOrderService.updatePurchaseOrderStatus(
+      id,
+      updatePurchaseOrderStatusDto,
+    );
   }
 }

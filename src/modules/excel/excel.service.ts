@@ -101,7 +101,7 @@ export class ExcelService {
     await workbook.xlsx.load(file.buffer);
     const worksheet = workbook.getWorksheet(PO_SHEET_NAME);
     if (!worksheet) {
-      return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid format');
+      return apiFailed(HttpStatus.UNSUPPORTED_MEDIA_TYPE, 'Invalid format');
     }
     // Validate Purchase Order sheet include item and supplier
     const errorResponse = await this.validatePurchaseOrderSheet(
@@ -247,7 +247,7 @@ export class ExcelService {
 
     if (!deliveryBatchInfoTable || !batchItemTable) {
       return apiFailed(
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
         'Invalid format, Delivery Batch table not found',
       );
     }
@@ -259,7 +259,7 @@ export class ExcelService {
     const deliveryBatchInfoHeader = this.extractHeader(deliveryBatchInfoValue);
     if (!compareArray(deliveryBatchInfoHeader, DELIVERY_BATCH_INFO_HEADER)) {
       return apiFailed(
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
         'Invalid format, Delivery Batch Info table header is invalid',
       );
     }
@@ -569,9 +569,8 @@ export class ExcelService {
 
     const supplierHeader = this.extractHeader(supplierValue);
     if (!compareArray(supplierHeader, SUPPLIER_HEADER)) {
-      console.log('Invalid format, Supplier table header is invalid');
       return apiFailed(
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
         'Invalid format, Supplier table header is invalid',
       );
     }
@@ -583,7 +582,7 @@ export class ExcelService {
     if (!compareArray(POInfoHeader, PO_INFO_HEADER)) {
       console.log('Invalid format, POInfo table header is invalid');
       return apiFailed(
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
         'Invalid format, POInfo table header is invalid',
       );
     }
@@ -594,7 +593,7 @@ export class ExcelService {
     if (!compareArray(shipToHeader, SHIP_TO_HEADER)) {
       console.log('Invalid format, ShipTo table header is invalid');
       return apiFailed(
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
         'Invalid format, ShipTo table header is invalid',
       );
     }
@@ -605,7 +604,7 @@ export class ExcelService {
     if (!compareArray(totalTableHeader, TOTAL_PURCHASE_ORDER_HEADER)) {
       console.log('Invalid format, Total table header is invalid');
       return apiFailed(
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
         'Invalid format, Total table header is invalid',
       );
     }
@@ -859,6 +858,27 @@ export class ExcelService {
               supplierError,
             )
           ) {
+            if (
+              await this.prismaService.purchaseOrder.findUnique({
+                where: { poNumber: value },
+              })
+            ) {
+              const text = [
+                { text: `${value}` },
+                {
+                  text: `[PO number is already exist]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                supplierError,
+                POInfoTableValue[i][1].address,
+                'PO #',
+                value,
+                text,
+              );
+              errorSet = true;
+            }
             purchaseOrderObject.PONumber = value;
           }
           break;
@@ -1258,8 +1278,7 @@ export class ExcelService {
       !supplierTable ||
       !totalTable
     ) {
-      console.log('Invalid format');
-      return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid format');
+      return apiFailed(HttpStatus.UNSUPPORTED_MEDIA_TYPE, 'Invalid format');
     }
 
     //Supplier information
@@ -1295,7 +1314,7 @@ export class ExcelService {
     //Item information
     const itemTable = worksheet.getTable(ITEM_TABLE_NAME) as any;
     if (!itemTable) {
-      return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid format');
+      return apiFailed(HttpStatus.UNSUPPORTED_MEDIA_TYPE, 'Invalid format');
     } else {
       const errorItem = await this.validateItemTable2(
         worksheet,
@@ -1304,7 +1323,6 @@ export class ExcelService {
         itemList,
       );
     }
-    console.log('itemList', itemList);
     if (listItemError.size > 0) {
       listItemError.forEach((value, key) => {
         const cell = worksheet.getCell(key);
@@ -1366,7 +1384,7 @@ export class ExcelService {
     //Check if header is valid
     const isHeaderValid = compareArray(header, ITEM_HEADER);
     if (!isHeaderValid) {
-      return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid format');
+      return apiFailed(HttpStatus.UNSUPPORTED_MEDIA_TYPE, 'Invalid format');
     }
 
     const [startCell, endCell] = itemTable.table.tableRef.split(':');
@@ -1629,7 +1647,5 @@ export class ExcelService {
     return cell?.value || cell;
   }
 }
-
-//Reminder: Lam tiep cai checkSupplierValidation cho tung row
 
 //Every day, i wonder the existence of my life.

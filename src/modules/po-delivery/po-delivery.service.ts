@@ -9,6 +9,23 @@ import { UpdatePoDeliveryDto } from './dto/update-po-delivery.dto';
 export class PoDeliveryService {
   constructor(private readonly pirsmaService: PrismaService) {}
 
+  includeQuery: Prisma.PoDeliveryInclude = {
+    poDeliveryDetail: {
+      include: {
+        materialVariant: {
+          include: {
+            material: {
+              include: {
+                materialUom: true,
+                materialType: true,
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+
   async createPoDelivery(CreatePoDelivery: Prisma.PoDeliveryCreateInput) {
     return this.pirsmaService.poDelivery.create({
       data: CreatePoDelivery,
@@ -30,22 +47,7 @@ export class PoDeliveryService {
         where: {
           id: id,
         },
-        include: {
-          poDeliveryDetail: {
-            include: {
-              materialVariant: {
-                include: {
-                  material: {
-                    include: {
-                      materialUom: true,
-                      materialType: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+        include: this.includeQuery,
       });
     }
     return null;
@@ -61,8 +63,12 @@ export class PoDeliveryService {
     throw new Error('Method not implemented.');
   }
 
-  async updatePoDeliveryMaterialStatus(id: string, status: PoDeliveryStatus) {
-    const result = await this.pirsmaService.poDelivery.update({
+  async updatePoDeliveryMaterialStatus(
+    prisma: any = this.pirsmaService,
+    id: string,
+    status: PoDeliveryStatus,
+  ) {
+    const result = await prisma.poDelivery.update({
       where: { id },
       data: {
         status,
@@ -77,7 +83,7 @@ export class PoDeliveryService {
 
       //If there is no other po delivery with PENDING STATUS, update the purchase order status to FINISHED
       if (!resultWithSameStatus) {
-        await this.pirsmaService.purchaseOrder.update({
+        await prisma.purchaseOrder.update({
           where: { id: result.purchaseOrderId },
           data: {
             status: PoDeliveryStatus.FINISHED,
