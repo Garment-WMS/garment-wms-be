@@ -8,7 +8,7 @@ model PoDelivery {
   deliverDate         DateTime?          @map("deliver_date") @db.Date
   status              PoDeliveryStatus   @default(PENDING) @map("status")
   isExtra             Boolean            @map("is_extra")
-  createdAt           DateTime?          @map("created_at") @db.Timestamptz(6)
+  createdAt           DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime?          @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt           DateTime?          @map("deleted_at") @db.Timestamptz(6)
   ImportRequest       ImportRequest[]
