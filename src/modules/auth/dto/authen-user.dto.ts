@@ -4,7 +4,7 @@ import { IsEnum, IsOptional, IsUUID } from 'class-validator';
 export class AuthenUser {
   @ApiProperty()
   @IsUUID()
-  accountId: string;
+  userId: string;
 
   @ApiProperty()
   user: User;
@@ -47,5 +47,5 @@ export class AuthenUser {
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  facoryDirectorId: string;
+  factoryDirectorId: string;
 }

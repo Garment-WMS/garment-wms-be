@@ -33,8 +33,8 @@ export class AuthService {
 
   async loginGeneral(body: LoginAuthDTO, role: RoleCode) {
     try {
-      const account = await this.handleFindUser(body.email);
-      if (!account) {
+      const userResult = await this.handleFindUser(body.email);
+      if (!userResult) {
         const error: ValidationError[] = [
           {
             property: 'email',
@@ -48,11 +48,11 @@ export class AuthService {
         return apiFailed(404, 'Email not found', error);
       }
       const isMatch = await this.validatePassword(
-        account.password,
+        userResult.password,
         body.password,
       );
 
-      const user = await this.checkRoleSchema(account.id, role);
+      const user = await this.checkRoleSchema(userResult.id, role);
       if (!user) {
         const error: ValidationError[] = [
           {
@@ -65,13 +65,17 @@ export class AuthService {
           },
         ];
 
-        return apiFailed(404, 'Account not found', error);
+        return apiFailed(404, 'User not found', error);
       }
 
       if (isMatch) {
-        const accessToken = await this.generateAccessToken(account, user, role);
+        const accessToken = await this.generateAccessToken(
+          userResult,
+          user,
+          role,
+        );
         const refreshTokenResult =
-          await this.refreshTokenService.generateRefreshToken(account);
+          await this.refreshTokenService.generateRefreshToken(userResult);
 
         let refreshToken;
         if (refreshTokenResult?.refreshToken) {
@@ -91,10 +95,9 @@ export class AuthService {
           ];
           return apiFailed(500, 'Token is not generated', error);
         }
-
         return apiSuccess(
           200,
-          { accessToken, refreshToken, account },
+          { accessToken, refreshToken, user: userResult },
           'Login success',
         );
       } else {
@@ -178,71 +181,70 @@ export class AuthService {
     // Ensure the transaction either succeeds or fails completely
     return await this.prisma.$transaction(
       async (prismaTransaction) => {
-        try {
-          //Hash user's password
-          user.password = await this.hashPassword(user.password);
+        //Hash user's password
+        user.password = await this.hashPassword(user.password);
 
-          //Create User type
-          const userInput: Prisma.UserCreateInput = {
-            ...user,
-            id: undefined,
-            isDeleted: false,
-            isVerified: false,
-            avatarUrl: user.avatarUrl || undefined,
-            cidId: user.cidId || undefined,
-            // roleId: role.id,
-            status: 'active',
-            createdAt: undefined,
-            updatedAt: undefined,
-            deletedAt: undefined,
-          };
-          //Save the renter in DB
-          const userResult = await prismaTransaction.user.create({
-            data: {
-              ...userInput,
-            },
-            // include: {
-            //   role: true, // Include the role object in the result
-            // },
-          });
-          if (!userResult) {
-            return apiFailed(500, 'Created User failed');
-          }
-
-          const addRoleSchemaResult = await this.addRoleSchema(
-            prismaTransaction,
-            userResult.id,
-            roleInput,
-          );
-
-          if (!addRoleSchemaResult) {
-            throw new BadRequestException('Add role schema failed!');
-          }
-
-          const accessToken = await this.generateAccessToken(
-            userResult,
-            addRoleSchemaResult,
-            roleInput,
-          );
-
-          //Generate refresh token and store it
-          const refreshTokenResult =
-            await this.refreshTokenService.generateRefreshToken(userResult);
-
-          let refreshToken;
-          if (refreshTokenResult?.refreshToken) {
-            refreshToken = refreshTokenResult.refreshToken;
-          }
-
-          return apiSuccess(
-            201,
-            { accessToken, refreshToken, user: userResult },
-            'Created user successfully',
-          );
-        } catch (error) {
-          console.log(error);
-          throw error;
+        //Create User type
+        const userInput: Prisma.UserCreateInput = {
+          ...user,
+          id: undefined,
+          isDeleted: false,
+          isVerified: false,
+          avatarUrl: user.avatarUrl || undefined,
+          cidId: user.cidId || undefined,
+          // roleId: role.id,
+          status: 'active',
+          createdAt: undefined,
+          updatedAt: undefined,
+          deletedAt: undefined,
+        };
+        const userResult = await prismaTransaction.user.create({
+          data: {
+            ...userInput,
+          },
+          include: {
+            warehouseStaff: true,
+            warehouseManager: true,
+            factoryDirector: true,
+            inspectionDepartment: true,
+            productionDepartment: true,
+            purchasingStaff: true,
+          },
+        });
+        if (!userResult) {
+          return apiFailed(500, 'Created User failed');
         }
+
+        const addRoleSchemaResult = await this.addRoleSchema(
+          prismaTransaction,
+          userResult.id,
+          roleInput,
+        );
+
+        if (!addRoleSchemaResult) {
+          throw new BadRequestException('Add role schema failed!');
+        }
+
+        const accessToken = await this.generateAccessToken(
+          userResult,
+          addRoleSchemaResult,
+          roleInput,
+        );
+
+        //Generate refresh token and store it
+        const refreshTokenResult =
+          await this.refreshTokenService.generateRefreshToken(userResult);
+
+        let refreshToken;
+        if (refreshTokenResult?.refreshToken) {
+          refreshToken = refreshTokenResult.refreshToken;
+        }
+
+        return apiSuccess(
+          201,
+          { accessToken, refreshToken, user: userResult },
+          'Created user successfully',
+        );
       },
       {
         //After 10s will break
@@ -345,61 +347,65 @@ export class AuthService {
     }
   }
 
-  generateAccessToken(account: { id: string }, user: any, roleCode: RoleCode) {
+  generateAccessToken(
+    user: { id: string },
+    userRoleData: any,
+    roleCode: RoleCode,
+  ) {
     const accessTokenExpiresIn = this.config.get('JWT_ACCESS_TOKEN_EXPIRY');
 
     let payload: any = {
-      accountId: '',
+      userId: '',
       role: '',
     };
 
     switch (roleCode) {
       case RoleCode.WAREHOUSE_STAFF: {
         payload = {
-          accountId: account.id,
+          userId: user.id,
           role: roleCode,
         };
-        payload.warehouseStaffId = user.id;
+        payload.warehouseStaffId = userRoleData.id;
         break;
       }
       case RoleCode.FACTORY_DIRECTOR: {
         payload = {
-          accountId: account.id,
+          userId: user.id,
           role: roleCode,
         };
-        payload.factoryDirectorId = user.id;
+        payload.factoryDirectorId = userRoleData.id;
         break;
       }
       case RoleCode.WAREHOUSE_MANAGER: {
         payload = {
-          accountId: account.id,
+          userId: user.id,
           role: roleCode,
         };
-        payload.warehouseManagerId = user.id;
+        payload.warehouseManagerId = userRoleData.id;
         break;
       }
       case RoleCode.INSPECTION_DEPARTMENT: {
         payload = {
-          accountId: account.id,
+          userId: user.id,
           role: roleCode,
         };
-        payload.inspectionDepartmentId = user.id;
+        payload.inspectionDepartmentId = userRoleData.id;
         break;
       }
       case RoleCode.PRODUCTION_DEPARTMENT: {
         payload = {
-          accountId: account.id,
+          userId: user.id,
           role: roleCode,
         };
-        payload.productionDepartmentId = user.id;
+        payload.productionDepartmentId = userRoleData.id;
         break;
       }
       case RoleCode.PURCHASING_STAFF: {
         payload = {
-          accountId: account.id,
+          userId: user.id,
           role: roleCode,
         };
-        payload.purchasingStaffId = user.id;
+        payload.purchasingStaffId = userRoleData.id;
         break;
       }
     }

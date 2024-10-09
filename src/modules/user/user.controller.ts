@@ -35,7 +35,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   async getMyProfile(@GetUser() user: AuthenUser) {
     try {
-      const result = await this.userService.findOneByUserId(user.accountId);
+      const result = await this.userService.findOneByUserId(user.userId);
 
       if (result) {
         return apiSuccess(200, result, 'Get user success');

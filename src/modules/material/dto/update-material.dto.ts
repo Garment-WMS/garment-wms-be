@@ -1,4 +1,9 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateMaterialDto } from './create-material.dto';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, MinLength } from 'class-validator';
 
-export class UpdateMaterialDto extends PartialType(CreateMaterialDto) {}
+export class UpdateMaterialDto {
+  @ApiProperty()
+  @IsString()
+  @MinLength(3)
+  name: string;
+}

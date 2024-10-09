@@ -22,7 +22,11 @@ async function bootstrap() {
   });
 
   app.useGlobalPipes(
-    new CustomValidationPipe({ transform: true, whitelist: true }),
+    new CustomValidationPipe({
+      transform: true,
+      whitelist: true,
+      stopAtFirstError: true,
+    }),
   );
 
   app.useGlobalFilters(
