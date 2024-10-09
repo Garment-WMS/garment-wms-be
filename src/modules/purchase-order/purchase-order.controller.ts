@@ -2,6 +2,7 @@ import { DirectFilterPipe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
@@ -44,6 +45,12 @@ export class PurchaseOrderController {
     const fileResult: any =
       await this.purchaseOrderService.createPurchaseOrderWithExcelFile(file);
     return fileResult;
+  }
+
+  @Delete(':id')
+  @UsePipes(new ValidationPipe())
+  async deletePurchaseOrder(@Param('id', CustomUUIDPipe) id: string) {
+    return this.purchaseOrderService.deletePurchaseOrder(id);
   }
 
   @Get(':id')

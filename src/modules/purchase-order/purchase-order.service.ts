@@ -42,6 +42,21 @@ export class PurchaseOrderService {
     },
   };
 
+  async deletePurchaseOrder(id: string) {
+    try {
+      await this.prismaService.purchaseOrder.delete({
+        where: { id },
+      });
+    } catch (e) {
+      console.log(e);
+    }
+    return apiSuccess(
+      HttpStatus.OK,
+      null,
+      'Purchase Order deleted successfully',
+    );
+  }
+
   async getPurchaseOrders(
     filterOption?: GeneratedFindOptions<Prisma.PurchaseOrderWhereInput>,
   ) {
