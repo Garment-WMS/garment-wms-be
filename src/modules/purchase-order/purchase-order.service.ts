@@ -148,7 +148,7 @@ export class PurchaseOrderService {
         taxAmount: createPurchaseOrderData.taxAmount,
         expectedFinishDate: createPurchaseOrderData.expectedFinishDate,
         orderDate: createPurchaseOrderData.orderDate,
-        status: PurchaseOrderStatus.IN_PROGESS,
+        status: PurchaseOrderStatus.IN_PROGRESS,
         supplier: {
           connect: { id: createPurchaseOrderData.Supplier.id },
         },
