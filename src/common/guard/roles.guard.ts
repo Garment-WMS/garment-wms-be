@@ -36,6 +36,25 @@ export class RolesGuard implements CanActivate {
     const user: Partial<AuthenUser> = request.user;
     let query = '';
     for (const role of requiredRoles) {
+      switch (role) {
+        case RoleCode.WAREHOUSE_STAFF: {
+          if (user?.purchasingStaffId) {
+            let purchasingStaff;
+            try {
+              purchasingStaff =
+                await this.prismaService.purchasingStaff.findUnique({
+                  where: { id: user.purchasingStaffId },
+                });
+            } catch (error) {
+              return false;
+            }
+            if (purchasingStaff) {
+              return true;
+            }
+          }
+        }
+      }
+
       // switch (role) {
       //   case RoleCode.LANDLORD:
       //     if (user.landLordId) {

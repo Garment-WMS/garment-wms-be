@@ -26,7 +26,6 @@ export class UserService {
     try {
       //Get the user
       const user: User = await this.findOneByUserId(userInput.accountId);
-
       const imageUrl = await this.imageService.addImageToFirebase(
         file,
         user.id,
@@ -66,10 +65,19 @@ export class UserService {
     }
   }
 
-  findOneByUserId(userId: string) {
-    return this.prisma.user.findFirstOrThrow({
+  async findOneByUserId(userId: string) {
+    console.log(userId);
+    return await this.prisma.user.findUniqueOrThrow({
       where: {
         id: userId,
+      },
+      include: {
+        factoryDirector: true,
+        warehouseStaff: true,
+        inspectionDepartment: true,
+        purchasingStaff: true,
+        productionDepartment: true,
+        warehouseManager: true,
       },
     });
   }

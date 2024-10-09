@@ -22,30 +22,30 @@ export class AuthenUser {
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  landLordId: string;
+  warehouseStaffId: string;
 
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  renterId: string;
+  warehouseManagerId: string;
 
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  managerId: string;
+  purchasingStaffId: string;
 
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  staffId: string;
+  inspectionDepartmentId: string;
 
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  adminId: string;
+  productionDepartmentId: string;
 
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  technicalStaffId: string;
+  facoryDirectorId: string;
 }

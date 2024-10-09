@@ -27,7 +27,7 @@ export class RefreshTokenService {
     const refreshTokenExpiresIn = this.config.get('JWT_REFRESH_TOKEN_EXPIRY');
     const secrect = this.config.get('JWT_REFRESH_SECRET');
     const refreshTokenResult = this.jwtService.sign(
-      { userId: user.id },
+      { accountId: user.id },
       { secret: secrect, expiresIn: refreshTokenExpiresIn },
     );
 
