@@ -6,6 +6,8 @@ import {
   Param,
   Patch,
   Post,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateProductTypeDto } from './dto/create-product-type.dto';
@@ -17,7 +19,9 @@ export class ProductTypeController {
   constructor(private readonly productTypeService: ProductTypeService) {}
 
   @Post()
+  @UsePipes(new ValidationPipe({ stopAtFirstError: true }))
   create(@Body() createProductTypeDto: CreateProductTypeDto) {
+    console.log(createProductTypeDto);
     return this.productTypeService.create(createProductTypeDto);
   }
 

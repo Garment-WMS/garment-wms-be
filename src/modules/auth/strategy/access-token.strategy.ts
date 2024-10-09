@@ -48,7 +48,7 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
     console.log('payload', payload);
     const user: Partial<AuthenUser> = {
       ...payload,
-      accountId: payload.accountId,
+      userId: payload.userId,
       accessToken: token,
       role: payload.role,
     };

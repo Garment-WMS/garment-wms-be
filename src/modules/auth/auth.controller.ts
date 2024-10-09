@@ -21,6 +21,7 @@ import { Logout } from './dto/logout.dto';
 import { ResetPasswordDTO } from './dto/reset-password.dto';
 import { SendResetPasswordDTO } from './dto/send-reset-password.dto';
 import { SignUpDTO } from './dto/sign-up.dto';
+import { TestDto } from './dto/test-validator.dto';
 import { VerifyOtpDTO } from './dto/verify-otp.dto';
 import { JwtAuthGuard } from './strategy/jwt-auth.guard';
 import { RefreshJwtAuthGuard } from './strategy/refresh-jwt-auth.guard';
@@ -34,80 +35,93 @@ export class AuthController {
   @Get('/test')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(
-    // RoleCode.LANDLORD,
-    RoleCode.TECHNICAL_STAFF,
-    RoleCode.STAFF,
-    RoleCode.MANAGER,
+    RoleCode.FACTORY_DIRECTOR,
+    RoleCode.WAREHOUSE_MANAGER,
+    RoleCode.WAREHOUSE_STAFF,
   )
   testAuth(@GetUser() user) {
     return user;
   }
 
+  @Post('/test-validator')
+  testAuthValidator(@Body() user: TestDto) {
+    return user;
+  }
+
   //SIGN IN FLOW
-  @Post('/renter/login')
+  @Post('/sign-in/warehouse-staff')
   @UsePipes(new ValidationPipe())
-  renterLogin(@Body() body: LoginAuthDTO) {
-    return this.authService.loginGeneral(body, RoleCode.RENTER);
+  warehouseStaffLogin(@Body() body: LoginAuthDTO) {
+    return this.authService.loginGeneral(body, RoleCode.WAREHOUSE_STAFF);
   }
 
-  @Post('/manager/login')
-  managerLogin(@Body() body: LoginAuthDTO) {
-    return this.authService.loginGeneral(body, RoleCode.MANAGER);
+  @Post('/sign-in/warehouse-manager')
+  @UsePipes(new ValidationPipe())
+  warehouseManagerLogin(@Body() body: LoginAuthDTO) {
+    return this.authService.loginGeneral(body, RoleCode.WAREHOUSE_MANAGER);
   }
 
-  @Post('/staff/login')
-  staffLogin(@Body() body: LoginAuthDTO) {
-    return this.authService.loginGeneral(body, RoleCode.STAFF);
+  @Post('/sign-in/purchasing-staff')
+  @UsePipes(new ValidationPipe())
+  purchasingStaffLogin(@Body() body: LoginAuthDTO) {
+    return this.authService.loginGeneral(body, RoleCode.PURCHASING_STAFF);
   }
 
-  @Post('/technical-staff/login')
-  technicalStaffLogin(@Body() body: LoginAuthDTO) {
-    return this.authService.loginGeneral(body, RoleCode.TECHNICAL_STAFF);
+  @Post('/sign-in/inspection-department')
+  @UsePipes(new ValidationPipe())
+  inspectionDepartmentLogin(@Body() body: LoginAuthDTO) {
+    return this.authService.loginGeneral(body, RoleCode.INSPECTION_DEPARTMENT);
   }
 
-  @Post('/admin/login')
-  adminLogin(@Body() body: LoginAuthDTO) {
-    return this.authService.loginGeneral(body, RoleCode.ADMIN);
+  @Post('/sign-in/production-department')
+  @UsePipes(new ValidationPipe())
+  productionDepartmentLogin(@Body() body: LoginAuthDTO) {
+    return this.authService.loginGeneral(body, RoleCode.PRODUCTION_DEPARTMENT);
   }
-
-  @Post('/landlord/login')
-  landlordLogin(@Body() body: LoginAuthDTO) {
-    return this.authService.loginGeneral(body, RoleCode.LANDLORD);
+  @Post('/sign-in/factory-director')
+  @UsePipes(new ValidationPipe())
+  factoryDirectorLogin(@Body() body: LoginAuthDTO) {
+    return this.authService.loginGeneral(body, RoleCode.FACTORY_DIRECTOR);
   }
 
   //SIGN UP FLOW
-  @Post('/sign-up/renter')
-  renterSignUp(@Body() body: SignUpDTO) {
-    return this.authService.registerGeneral(body, RoleCode.RENTER);
+  @Post('/sign-up/warehouse-staff')
+  warehouseStaffSignUp(@Body() body: SignUpDTO) {
+    return this.authService.registerGeneral(body, RoleCode.WAREHOUSE_STAFF);
   }
 
-  @Post('/sign-up/landlord')
-  landlordSignUp(@Body() body: SignUpDTO) {
-    return this.authService.registerGeneral(body, RoleCode.LANDLORD);
+  @Post('/sign-up/warehouse-manager')
+  warehosueManagerSignUp(@Body() body: SignUpDTO) {
+    return this.authService.registerGeneral(body, RoleCode.WAREHOUSE_MANAGER);
   }
-
-  //To-do: Need Authen Manager to do this
-  @Post('/sign-up/staff')
-  staffSignUp(@Body() body: SignUpDTO) {
-    return this.authService.registerGeneral(body, RoleCode.STAFF);
+  @Post('/sign-up/purchasing-staff')
+  purchasingStaffSignUp(@Body() body: SignUpDTO) {
+    return this.authService.registerGeneral(body, RoleCode.PURCHASING_STAFF);
   }
-
-  //To-do: Need Authen Manager to do this
-  @Post('/sign-up/technical-staff')
-  technicalStaffSignUp(@Body() body: SignUpDTO) {
-    return this.authService.registerGeneral(body, RoleCode.TECHNICAL_STAFF);
+  @Post('/sign-up/production-department')
+  productionDepartmentSignUp(@Body() body: SignUpDTO) {
+    return this.authService.registerGeneral(
+      body,
+      RoleCode.PRODUCTION_DEPARTMENT,
+    );
   }
-
-  //To-do: Need Authen Manager to do this
-  @Post('/sign-up/manager')
-  managerSignUp(@Body() body: SignUpDTO) {
-    return this.authService.registerGeneral(body, RoleCode.MANAGER);
+  @Post('/sign-up/inspection-department')
+  inspectionDepartmentSignUp(@Body() body: SignUpDTO) {
+    return this.authService.registerGeneral(
+      body,
+      RoleCode.INSPECTION_DEPARTMENT,
+    );
+  }
+  @Post('/sign-up/factory-director')
+  factoryDirectorSignUp(@Body() body: SignUpDTO) {
+    return this.authService.registerGeneral(body, RoleCode.FACTORY_DIRECTOR);
   }
 
   @Get('/refresh-token')
   @UseGuards(RefreshJwtAuthGuard)
   refreshToken(@GetUser() user: AuthenUser) {
-    return this.authService.refreshToken(user.refreshToken, user.accountId);
+    console.log('refresh token', user);
+    return this.authService.refreshToken(user.refreshToken, user.userId);
   }
 
   @Post('/logout')

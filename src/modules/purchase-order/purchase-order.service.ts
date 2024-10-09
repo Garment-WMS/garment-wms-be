@@ -42,6 +42,21 @@ export class PurchaseOrderService {
     },
   };
 
+  async deletePurchaseOrder(id: string) {
+    try {
+      await this.prismaService.purchaseOrder.delete({
+        where: { id },
+      });
+    } catch (e) {
+      console.log(e);
+    }
+    return apiSuccess(
+      HttpStatus.OK,
+      null,
+      'Purchase Order deleted successfully',
+    );
+  }
+
   async getPurchaseOrders(
     filterOption?: GeneratedFindOptions<Prisma.PurchaseOrderWhereInput>,
   ) {
@@ -148,7 +163,7 @@ export class PurchaseOrderService {
         taxAmount: createPurchaseOrderData.taxAmount,
         expectedFinishDate: createPurchaseOrderData.expectedFinishDate,
         orderDate: createPurchaseOrderData.orderDate,
-        status: PurchaseOrderStatus.IN_PROGESS,
+        status: PurchaseOrderStatus.IN_PROGRESS,
         supplier: {
           connect: { id: createPurchaseOrderData.Supplier.id },
         },

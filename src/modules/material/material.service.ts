@@ -4,9 +4,26 @@ import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { CreateMaterialDto } from './dto/create-material.dto';
+import { UpdateMaterialDto } from './dto/update-material.dto';
 
 @Injectable()
 export class MaterialService {
+  async update(id: string, updateMaterialDto: UpdateMaterialDto) {
+    const material = await this.findById(id);
+    if (!material) {
+      return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
+    }
+
+    const result = await this.prismaService.material.update({
+      where: { id },
+      data: updateMaterialDto,
+    });
+
+    if (result) {
+      return apiSuccess(HttpStatus.OK, result, 'Material updated successfully');
+    }
+    return apiFailed(HttpStatus.BAD_REQUEST, 'Material not updated');
+  }
   constructor(private readonly prismaService: PrismaService) {}
 
   async create(createMaterialDto: CreateMaterialDto) {

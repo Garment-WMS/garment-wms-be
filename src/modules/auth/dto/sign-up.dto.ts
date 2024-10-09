@@ -82,10 +82,5 @@ export class SignUpDTO {
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  roleId?: string;
-
-  @ApiProperty()
-  @IsOptional()
-  @IsUUID()
   cidId?: string;
 }

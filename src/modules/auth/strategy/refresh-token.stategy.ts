@@ -35,7 +35,7 @@ export class RefreshTokenStrategy extends PassportStrategy(
       // accessToken: '',
       // role: payload?.role,
       // user: undefined,
-      // refreshToken: refreshToken,
+      refreshToken: refreshToken,
     };
     return user;
   }
