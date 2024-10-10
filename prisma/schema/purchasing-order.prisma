@@ -6,6 +6,8 @@ model PurchaseOrder {
   currency                  String                   @db.VarChar
   totalAmount               Float                    @map("total_ammount")
   taxAmount                 Float                    @map("tax_amount")
+  shippingAmount            Float?                   @default(0) @map("shipping_amount")
+  otherAmount               Float?                   @default(0) @map("other_amount")
   orderDate                 DateTime                 @map("order_date") @db.Date
   expectedFinishDate        DateTime                 @map("expected_finish_date") @db.Date
   finishDate                DateTime?                @map("finish_date") @db.Date
