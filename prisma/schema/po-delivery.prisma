@@ -1,8 +1,6 @@
 model PoDelivery {
   id                  String             @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   purchaseOrderId     String             @map("purchase_order_id") @db.Uuid
-  totalAmount         Float?             @map("total_ammount")
-  orderDate           DateTime?          @map("order_date") @db.Date
   expectedDeliverDate DateTime?          @map("expected_deliver_date") @db.Date
   deliverDate         DateTime?          @map("deliver_date") @db.Date
   status              PoDeliveryStatus   @default(PENDING) @map("status")

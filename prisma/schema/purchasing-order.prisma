@@ -4,7 +4,7 @@ model PurchaseOrder {
   quarterlyProductionPlanId String?                  @map("quarterly_production_plan_id") @db.Uuid
   purchasingStaffId         String?                  @map("purchasing_staff_id") @db.Uuid
   currency                  String                   @db.VarChar
-  totalAmount               Float                    @map("total_ammount")
+  subTotalAmount            Float?                   @default(0) @map("sub_total_amount")
   taxAmount                 Float                    @map("tax_amount")
   shippingAmount            Float?                   @default(0) @map("shipping_amount")
   otherAmount               Float?                   @default(0) @map("other_amount")
