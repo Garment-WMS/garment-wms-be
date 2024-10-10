@@ -264,7 +264,6 @@ export class PurchaseOrderService {
     }
 
     const nextCode = `${Constant.PO_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
-    console.log(nextCode);
     return nextCode;
   }
 }

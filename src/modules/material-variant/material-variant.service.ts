@@ -96,6 +96,14 @@ export class MaterialVariantService {
     return result;
   }
 
+  async findByMaterialCode(materialCode: string) {
+    const result = await this.prismaService.materialVariant.findUnique({
+      where: { code:materialCode },
+      include: this.includeQuery,
+    });
+    return result;
+  }
+
   async update(id: string, updateMaterialVariantDto: UpdateMaterialVariantDto) {
     const materialVariant = await this.findById(id);
     if (!materialVariant) {
