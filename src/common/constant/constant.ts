@@ -8,4 +8,5 @@ export class Constant {
 
   public static readonly DEFAULT_OFFSET = 0;
   public static readonly DEFAULT_LIMIT = 10;
+  public static readonly PO_CODE_PREFIX = 'PO';
 }

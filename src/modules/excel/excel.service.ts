@@ -114,22 +114,6 @@ export class ExcelService {
     if (errorResponse) {
       return errorResponse;
     }
-    // if (supplierError.size > 0 || listItemError.size > 0) {
-    //   const timestamp = Date.now();
-    //   const fileName = `${timestamp}-${file.originalname}`;
-    //   const bufferResult = await workbook.xlsx.writeBuffer();
-    //   const nodeBuffer = Buffer.from(bufferResult);
-    //   const downloadUrl = await this.firebaseService.uploadBufferToStorage(
-    //     nodeBuffer,
-    //     fileName,
-    //   );
-
-    //   return apiFailed(
-    //     HttpStatus.BAD_REQUEST,
-    //     'There is error in the file',
-    //     downloadUrl,
-    //   );
-    // }
 
     const errorResponseDeliveryBatch = await this.validateDeliveryBatchSheet(
       workbook,
@@ -141,13 +125,6 @@ export class ExcelService {
     if (errorResponseDeliveryBatch) {
       return errorResponseDeliveryBatch;
     }
-    console.log('Delivery Batch Error', deliveryBatchError);
-    console.log('Delivery Batch Item Error', deliveryBatchItemError);
-    console.log('Supplier Error', supplierError);
-    console.log('List Item Error', listItemError);
-    listItemError.forEach((value, key) => {
-      console.log('List Item Error', value);
-    });
     if (
       deliveryBatchError.size > 0 ||
       deliveryBatchItemError.size > 0 ||
@@ -580,7 +557,6 @@ export class ExcelService {
     POInfoTableValue = this.extractVerticalTable(POInfoTable, worksheet);
     const POInfoHeader = this.extractHeader(POInfoTableValue);
     if (!compareArray(POInfoHeader, PO_INFO_HEADER)) {
-      console.log('Invalid format, POInfo table header is invalid');
       return apiFailed(
         HttpStatus.UNSUPPORTED_MEDIA_TYPE,
         'Invalid format, POInfo table header is invalid',
@@ -847,44 +823,45 @@ export class ExcelService {
         POInfoTableValue[i][1].value = value.trim();
       }
 
+      //Po Number
       switch (POInfoTableValue[i][0].value.split(':')[0].trim()) {
-        case 'PO #': {
-          errorSet = false;
-          if (
-            this.validateRequired(
-              value,
-              POInfoTableValue[i][0].value.split(':')[0].trim(),
-              POInfoTableValue[i][1].address,
-              supplierError,
-            )
-          ) {
-            if (
-              await this.prismaService.purchaseOrder.findUnique({
-                where: { poNumber: value },
-              })
-            ) {
-              const text = [
-                { text: `${value}` },
-                {
-                  text: `[PO number is already exist]`,
-                  font: { color: { argb: 'FF0000' } },
-                },
-              ];
-              this.addError(
-                supplierError,
-                POInfoTableValue[i][1].address,
-                'PO #',
-                value,
-                text,
-              );
-              errorSet = true;
-            }
-            purchaseOrderObject.PONumber = value;
-          }
-          break;
-        }
+        // case 'PO #': {
+        //   errorSet = false;
+        //   if (
+        //     this.validateRequired(
+        //       value,
+        //       POInfoTableValue[i][0].value.split(':')[0].trim(),
+        //       POInfoTableValue[i][1].address,
+        //       supplierError,
+        //     )
+        //   ) {
+        //     if (
+        //       await this.prismaService.purchaseOrder.findUnique({
+        //         where: { poNumber: value },
+        //       })
+        //     ) {
+        //       const text = [
+        //         { text: `${value}` },
+        //         {
+        //           text: `[PO number is already exist]`,
+        //           font: { color: { argb: 'FF0000' } },
+        //         },
+        //       ];
+        //       this.addError(
+        //         supplierError,
+        //         POInfoTableValue[i][1].address,
+        //         'PO #',
+        //         value,
+        //         text,
+        //       );
+        //       errorSet = true;
+        //     }
+        //     purchaseOrderObject.PONumber = value;
+        //   }
+        //   break;
+        // }
 
-        case 'Created Date':
+        case 'Ordered Date':
           errorSet = false;
           {
             if (
@@ -1139,7 +1116,7 @@ export class ExcelService {
         totalTableValue[i][1].value = value.trim();
       }
       switch (totalTableValue[i][0].value.split(':')[0].trim()) {
-        case 'TOTAL': {
+        case 'SUBTOTAL': {
           if (
             this.validateRequired(
               value,
@@ -1148,7 +1125,8 @@ export class ExcelService {
               supplierError,
             )
           ) {
-            purchaseOrderObject.totalAmount = value?.result;
+            console.log('value', value);
+            purchaseOrderObject.subTotal = value?.result;
           }
           break;
         }
@@ -1169,31 +1147,31 @@ export class ExcelService {
           }
           break;
 
-        // case 'SHIPPING':
-        //   if (
-        //     this.validateRequired(
-        //       value,
-        //       totalTableValue[i][0].value.split(':')[0].trim(),
-        //       totalTableValue[i][1].address,
-        //       supplierError,
-        //     )
-        //   ) {
-        //     purchaseOrderObject.shippingAmount = value;
-        //   }
-        //   break;
+        case 'SHIPPING':
+          if (
+            this.validateRequired(
+              value,
+              totalTableValue[i][0].value.split(':')[0].trim(),
+              totalTableValue[i][1].address,
+              supplierError,
+            )
+          ) {
+            purchaseOrderObject.shippingAmount = value;
+          }
+          break;
 
-        // case 'OTHER':
-        //   if (
-        //     this.validateRequired(
-        //       value,
-        //       totalTableValue[i][0].value.split(':')[0].trim(),
-        //       totalTableValue[i][1].address,
-        //       supplierError,
-        //     )
-        //   ) {
-        //     purchaseOrderObject.otherAmount = value;
-        //   }
-        //   break;
+        case 'OTHER':
+          if (
+            this.validateRequired(
+              value,
+              totalTableValue[i][0].value.split(':')[0].trim(),
+              totalTableValue[i][1].address,
+              supplierError,
+            )
+          ) {
+            purchaseOrderObject.otherAmount = value;
+          }
+          break;
       }
     }
   }
@@ -1292,6 +1270,10 @@ export class ExcelService {
       totalTable,
     );
 
+    if (errorResponse) {
+      return errorResponse;
+    }
+
     if (supplierError.size > 0) {
       supplierError.forEach((value, key) => {
         const cell = worksheet.getCell(key);
@@ -1347,24 +1329,6 @@ export class ExcelService {
         return acc + curr['quantity'] * curr['price'];
       }, 0);
     }
-
-    // const purchaseOrderObject: CreatePurchaseOrderDto = {
-    //   previousId: undefined,
-    //   PONumber: undefined,
-    //   quarterlyProductionPlanId: undefined,
-    //   purchasingStaffId: undefined,
-    //   shippingAddress: '',
-    //   status: '',
-    //   currency: '',
-    //   totalAmount: totalAmount,
-    //   taxAmount: 0,
-    //   orderDate: supplierObject['createdDate'],
-    //   expectedFinishDate: supplierObject['expectedFinishedDate'],
-    //   finishedDate: undefined,
-    //   createdAt: new Date(),
-    //   updatedAt: undefined,
-    //   deletedAt: undefined,
-    // };
   }
 
   async validateItemTable2(

@@ -1,4 +1,3 @@
-import { PoDelivery } from '@prisma/client';
 import {
   IsDate,
   IsNotEmpty,
@@ -59,6 +58,18 @@ export class CreatePurchaseOrderDto {
   @IsOptional()
   @IsDate()
   finishedDate: Date;
+
+  @IsOptional()
+  @IsNumber()
+  shippingAmount: number;
+
+  @IsOptional()
+  @IsNumber()
+  otherAmount: number;
+  
+  @IsOptional()
+  @IsNumber()
+  subTotal: number;
 
   Supplier: SupplierDto;
 

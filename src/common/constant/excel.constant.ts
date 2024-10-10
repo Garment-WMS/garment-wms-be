@@ -15,8 +15,8 @@ export const ITEM_HEADER = ['Id', 'Material Name', 'Qty', 'Price', 'Total'];
 export const PO_INFO_TABLE = 'POInfo';
 export const PO_INFO_HEADER = [
   'Expected Finished Date',
-  'Created Date',
-  'PO #',
+  'Ordered Date',
+  // 'PO #',
 ];
 
 export const SHIP_TO_HEADER = [
