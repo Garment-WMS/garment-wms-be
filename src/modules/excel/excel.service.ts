@@ -114,7 +114,6 @@ export class ExcelService {
     if (errorResponse) {
       return errorResponse;
     }
-    console.log('deliveryBatchItemErrorSheet', listItemError);
 
     const errorResponseDeliveryBatch = await this.validateDeliveryBatchSheet(
       workbook,
@@ -1333,12 +1332,6 @@ export class ExcelService {
         ];
       });
     }
-    let totalAmount = 0;
-    if (itemList.length > 0) {
-      totalAmount = itemList.reduce((acc, curr) => {
-        return acc + curr['quantity'] * curr['price'];
-      }, 0);
-    }
   }
 
   async validateItemTable2(
@@ -1399,7 +1392,6 @@ export class ExcelService {
           material = await this.materialVariantService.findByMaterialCode(
             this.extractValueFromCellValue(itemCell.itemIdCell.value),
           );
-          console.log('material', material);
           materialid = material?.id;
           if (isEmpty(material)) {
             const text = [

@@ -124,11 +124,17 @@ export class PurchaseOrderService {
     if (excelData instanceof ApiResponse) {
       return excelData;
     } else {
+      let subTotalAmount = 0;
+      excelData.poDelivery.forEach((poDelivery) => {
+        poDelivery.poDeliveryDetail.forEach((material) => {
+          subTotalAmount += material.totalAmount;
+        });
+      });
       const PoNumber = await this.generateNextPoNumber();
       const createPurchaseOrderData =
         excelData as Partial<CreatePurchaseOrderDto>;
       const createPurchaseOrder: Prisma.PurchaseOrderCreateInput = {
-        subTotalAmount: createPurchaseOrderData.subTotal,
+        subTotalAmount: subTotalAmount,
         taxAmount: createPurchaseOrderData.taxAmount,
         expectedFinishDate: createPurchaseOrderData.expectedFinishDate,
         orderDate: createPurchaseOrderData.orderDate,
