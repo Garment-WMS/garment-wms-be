@@ -2,6 +2,7 @@ import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PurchaseOrderStatus } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
 import { ExcelService } from '../excel/excel.service';
@@ -101,38 +102,6 @@ export class PurchaseOrderService {
       data: purchaseOrderDto,
     });
   }
-
-  /* async findById(id: string) {
-    if (!isUUID(id)) {
-      return null;
-    }
-    return this.prismaService.purchaseOrder.findUnique({
-      where: { id },
-      include: {
-        poDelivery: {
-          select: {
-            id: true,
-            expectedDeliverDate: true,
-            isExtra: true,
-            poDeliveryDetail: {
-              include: {
-                materialVariant: {
-                  include: {
-                    material: {
-                      include: {
-                        materialUom: true,
-                        materialType: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-  } */
   async findById(id: string) {
     const purchaseOrder = await this.prismaService.purchaseOrder.findUnique({
       where: { id },
@@ -155,11 +124,11 @@ export class PurchaseOrderService {
     if (excelData instanceof ApiResponse) {
       return excelData;
     } else {
+      const PoNumber = await this.generateNextPoNumber();
       const createPurchaseOrderData =
         excelData as Partial<CreatePurchaseOrderDto>;
       const createPurchaseOrder: Prisma.PurchaseOrderCreateInput = {
-        poNumber: createPurchaseOrderData.PONumber,
-        totalAmount: createPurchaseOrderData.totalAmount,
+        subTotalAmount: createPurchaseOrderData.subTotal,
         taxAmount: createPurchaseOrderData.taxAmount,
         expectedFinishDate: createPurchaseOrderData.expectedFinishDate,
         orderDate: createPurchaseOrderData.orderDate,
@@ -169,6 +138,9 @@ export class PurchaseOrderService {
         },
         currency: 'VND',
         finishDate: undefined,
+        shippingAmount: createPurchaseOrderData.shippingAmount,
+        otherAmount: createPurchaseOrderData.otherAmount,
+        poNumber: PoNumber,
       };
 
       purchaseOrder = await this.prismaService.$transaction(async (prisma) => {
@@ -277,5 +249,22 @@ export class PurchaseOrderService {
     }
 
     return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid status');
+  }
+
+  async generateNextPoNumber() {
+    const lastPo: any = await this.prismaService.$queryRaw<
+      { poNumber: string }[]
+    >`SELECT "PO_number" FROM "purchase_order" ORDER BY CAST(SUBSTRING("PO_number", 4) AS INT) DESC LIMIT 1`;
+
+    const poNumber = lastPo[0]?.PO_number;
+    let nextCodeNumber = 1;
+    if (poNumber) {
+      const currentCodeNumber = parseInt(poNumber.replace(/^PO-?/, ''), 10);
+      nextCodeNumber = currentCodeNumber + 1;
+    }
+
+    const nextCode = `${Constant.PO_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
+    console.log(nextCode);
+    return nextCode;
   }
 }
