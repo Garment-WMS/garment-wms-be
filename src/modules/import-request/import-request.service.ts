@@ -3,6 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { $Enums, Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
+import { DataResponse } from 'src/common/dto/data-response';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
@@ -16,8 +17,28 @@ export class ImportRequestService {
   ) {
     const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
-
-    const [data, totalItems] = await this.prismaService.$transaction([
+    // ARRIVED: 'ARRIVED',
+    //   INSPECTING: 'INSPECTING',
+    //   INSPECTED: 'INSPECTED',
+    //   CANCELED: 'CANCELED',
+    //   PENDING: 'PENDING',
+    //   REJECTED: 'REJECTED',
+    //   APPROVED: 'APPROVED',
+    //   IMPORTING: 'IMPORTING',
+    //   IMPORTED: 'IMPORTED'
+    const [
+      data,
+      total,
+      totalArrived,
+      totalInspecting,
+      totalInspected,
+      totalCanceled,
+      totalPending,
+      totalRejected,
+      totalApproved,
+      totalImporting,
+      totalImported,
+    ] = await this.prismaService.$transaction([
       this.prismaService.importRequest.findMany({
         skip: offset,
         take: limit,
@@ -25,21 +46,67 @@ export class ImportRequestService {
         orderBy: findOptions?.orderBy,
         include: this.ImportRequestInclude,
       }),
-      this.prismaService.importRequest.count(),
+      this.prismaService.importRequest.count(
+        findOptions?.where
+          ? {
+              where: findOptions.where,
+            }
+          : undefined,
+      ),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.ARRIVED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.INSPECTING },
+      }),
+
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.INSPECTED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.CANCELED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.PENDING },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.REJECTED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.APPROVED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.IMPORTING },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.IMPORTED },
+      }),
     ]);
 
-    return {
+    const dataResponse: DataResponse | any = {
       data,
       pageMeta: {
-        totalItems,
-        offset,
-        limit,
+        offset: offset,
+        limit: limit,
         page: Math.ceil(offset / limit) + 1,
-        totalPages: Math.ceil(totalItems / limit),
-        hasNext: totalItems > offset + limit,
+        total: total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: total > offset + limit,
         hasPrevious: offset > 0,
       },
+      statistics: {
+        totalArrived,
+        totalInspecting,
+        totalInspected,
+        totalCanceled,
+        totalPending,
+        totalRejected,
+        totalApproved,
+        totalImporting,
+        totalImported,
+      },
     };
+    return dataResponse;
   }
 
   findAll() {

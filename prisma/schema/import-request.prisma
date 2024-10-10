@@ -21,6 +21,7 @@ model ImportRequest {
   warehouseManager    WarehouseManager?     @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warehouseStaff      WarehouseStaff?       @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   importRequestDetail ImportRequestDetail[]
+  inspectionRequest   InspectionRequest[]
 
   @@map("import_request")
 }
