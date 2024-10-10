@@ -30,20 +30,20 @@ export class ProductVariantController {
   }
 
   @Get(':id')
-  findOne(@Param('id', new CustomUUIDPipe()) id: string) {
+  findOne(@Param('id', CustomUUIDPipe) id: string) {
     return this.productVariantService.findOne(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id', new CustomUUIDPipe()) id: string,
+    @Param('id', CustomUUIDPipe) id: string,
     @Body() updateProductVariantDto: UpdateProductVariantDto,
   ) {
     return this.productVariantService.update(id, updateProductVariantDto);
   }
 
   @Delete(':id')
-  remove(@Param('id', new CustomUUIDPipe()) id: string) {
+  remove(@Param('id', CustomUUIDPipe) id: string) {
     return this.productVariantService.remove(id);
   }
 }

@@ -5,6 +5,7 @@ import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
+import { getPageMeta } from 'src/common/utils/utils';
 import { ExcelService } from '../excel/excel.service';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
@@ -64,14 +65,7 @@ export class PurchaseOrderService {
       HttpStatus.OK,
       {
         data: result,
-        pageMeta: {
-          totalItems: total,
-          page: page,
-          limit: limit,
-          totalPages: Math.ceil(total / limit),
-          hasNext: total > page * limit,
-          hasPrevious: page > 1,
-        },
+        pageMeta: getPageMeta(page, limit, total),
       },
       'List of Purchase Order',
     );

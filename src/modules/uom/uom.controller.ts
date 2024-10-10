@@ -29,14 +29,14 @@ export class UomController {
   }
 
   @Get(':id')
-  findOne(@Param('id', new CustomUUIDPipe()) id: string) {
+  findOne(@Param('id', CustomUUIDPipe) id: string) {
     return this.uomService.findOne(id);
   }
 
   @Patch(':id')
   @UsePipes(new ValidationPipe())
   update(
-    @Param('id', new CustomUUIDPipe()) id: string,
+    @Param('id', CustomUUIDPipe) id: string,
     @Body() updateUomDto: UpdateUomDto,
   ) {
     return this.uomService.update(id, updateUomDto);

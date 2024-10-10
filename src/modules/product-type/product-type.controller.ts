@@ -27,7 +27,7 @@ export class ProductTypeController {
   }
 
   @Get(':id')
-  findOne(@Param('id', new CustomUUIDPipe()) id: string) {
+  findOne(@Param('id', CustomUUIDPipe) id: string) {
     return this.productTypeService.findByIdWithResponse(id);
   }
 
