@@ -12,6 +12,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { UniqueInArray } from 'src/common/decorator/validator/unique-property.decorator';
+import { IsPoDeliveryExist } from 'src/modules/po-delivery/validator/is-po-delivery-exist.validator';
 import { CreateImportRequestDetailDto } from '../import-request-detail/create-import-request-detail.dto';
 
 export class CreateImportRequestDto {
@@ -32,6 +33,7 @@ export class CreateImportRequestDto {
 
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsUUID()
+  @IsPoDeliveryExist()
   poDeliveryId: string;
 
   //tips: @IsEnum(type) and @ApiProperty(type) cause dependency cycle

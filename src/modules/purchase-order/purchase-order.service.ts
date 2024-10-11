@@ -1,6 +1,10 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma, PurchaseOrderStatus } from '@prisma/client';
+import {
+  ImportRequestDetail,
+  Prisma,
+  PurchaseOrderStatus,
+} from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -280,4 +284,6 @@ export class PurchaseOrderService {
     const nextCode = `${Constant.PO_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
     return nextCode;
   }
+
+ 
 }

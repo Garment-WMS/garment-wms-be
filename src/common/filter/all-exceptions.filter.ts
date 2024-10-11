@@ -40,7 +40,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       responseBody = apiFailed(
         exception.getStatus(),
-        exception.message,
+        'exception.message',
         exception.getResponse(),
       );
     } else {
