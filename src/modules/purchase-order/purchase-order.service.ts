@@ -1,6 +1,7 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PurchaseOrderStatus } from '@prisma/client';
+import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
@@ -102,11 +103,8 @@ export class PurchaseOrderService {
       data: purchaseOrderDto,
     });
   }
-  async findById(id: string) {
-    const purchaseOrder = await this.prismaService.purchaseOrder.findUnique({
-      where: { id },
-      include: this.queryInclude,
-    });
+  async findByIdWithResponse(id: string) {
+    const purchaseOrder = await this.findById(id);
     if (!purchaseOrder) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');
     }
@@ -116,6 +114,16 @@ export class PurchaseOrderService {
       purchaseOrder,
       'Purchase Order retrieved successfully',
     );
+  }
+
+  async findById(id: string) {
+    if (!isUUID(id)) {
+      return null;
+    }
+    return this.prismaService.purchaseOrder.findUnique({
+      where: { id },
+      include: this.queryInclude,
+    });
   }
 
   async createPurchaseOrderWithExcelFile(file: Express.Multer.File) {

@@ -3,11 +3,15 @@ import { PoDeliveryStatus, Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
+import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
 import { UpdatePoDeliveryDto } from './dto/update-po-delivery.dto';
 
 @Injectable()
 export class PoDeliveryService {
-  constructor(private readonly pirsmaService: PrismaService) {}
+  constructor(
+    private readonly pirsmaService: PrismaService,
+    private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
+  ) {}
 
   includeQuery: Prisma.PoDeliveryInclude = {
     poDeliveryDetail: {
