@@ -17,6 +17,7 @@ import { MaterialModule } from './modules/material/material.module';
 import { ImportReceiptModule } from './modules/import-receipt/import-receipt.module';
 import { ImportRequestModule } from './modules/import-request/import-request.module';
 import { InspectionReportModule } from './modules/inspection-report/inspection-report.module';
+import { InspectionRequestModule } from './modules/inspection-request/inspection-request.module';
 import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
 import { MaterialTypeModule } from './modules/material-type/material-type.module';
 import { MaterialUnitModule } from './modules/material-unit/material-unit.module';
@@ -73,6 +74,7 @@ import { UserModule } from './modules/user/user.module';
     ProductFormulaMaterialModule,
     ImportReceiptModule,
     InspectionReportModule,
+    InspectionRequestModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

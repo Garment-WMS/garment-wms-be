@@ -53,7 +53,16 @@ export class ImportRequestController {
           'status',
         ],
         [],
-        [{ createdAt: 'desc' }, { id: 'asc' }],
+        [
+          { createdAt: 'desc' },
+          { id: 'asc' },
+          { status: 'asc' },
+          { type: 'asc' },
+          { warehouseManagerId: 'asc' },
+          { purchasingStaffId: 'asc' },
+          { warehouseStaffId: 'asc' },
+          { poDeliveryId: 'asc' },
+        ],
       ),
     )
     filterDto: SearchImportQueryDto,

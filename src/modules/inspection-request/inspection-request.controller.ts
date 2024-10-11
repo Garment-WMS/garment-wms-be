@@ -10,6 +10,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
@@ -19,6 +20,7 @@ import { UpdateInspectionRequestDto } from './dto/update-inspection-request.dto'
 import { InspectionRequestService } from './inspection-request.service';
 
 @Controller('inspection-request')
+@ApiTags('inspection-request')
 export class InspectionRequestController {
   constructor(
     private readonly inspectionRequestService: InspectionRequestService,
@@ -31,19 +33,50 @@ export class InspectionRequestController {
         UpdateInspectionRequestDto,
         Prisma.InspectionRequestWhereInput
       >(
-        ['id', 'inspectionDepartmentId'],
+        [
+          'id',
+          'inspectionDepartmentId',
+          'purchasingStaffId',
+          'importRequestId',
+          'status',
+          'createdAt',
+        ],
         [],
-        [{ createdAt: 'desc' }, { id: 'asc' }],
+        [
+          { createdAt: 'desc' },
+          { id: 'asc' },
+          { status: 'asc' },
+          { inspectionDepartmentId: 'asc' },
+          { purchasingStaffId: 'asc' },
+          { importRequestId: 'asc' },
+        ],
       ),
     )
     filterOptions: FilterDto<Prisma.InspectionRequestWhereInput>,
   ) {
-    return this.inspectionRequestService.search(filterOptions.findOptions);
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.inspectionRequestService.search(filterOptions.findOptions),
+      'Get import request successfully',
+    );
+  }
+
+  @Get('enum')
+  async getEnum() {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.inspectionRequestService.getEnum(),
+      'Get import request enum successfully',
+    );
   }
 
   @Get(':id')
   async findOne(@Param('id', CustomUUIDPipe) id: string) {
-    return this.inspectionRequestService.findUnique(id);
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.inspectionRequestService.findUnique(id),
+      'Get import request successfully',
+    );
   }
 
   @Post()

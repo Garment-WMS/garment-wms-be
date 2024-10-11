@@ -17,15 +17,6 @@ export class ImportRequestService {
   ) {
     const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
-    // ARRIVED: 'ARRIVED',
-    //   INSPECTING: 'INSPECTING',
-    //   INSPECTED: 'INSPECTED',
-    //   CANCELED: 'CANCELED',
-    //   PENDING: 'PENDING',
-    //   REJECTED: 'REJECTED',
-    //   APPROVED: 'APPROVED',
-    //   IMPORTING: 'IMPORTING',
-    //   IMPORTED: 'IMPORTED'
     const [
       data,
       total,
@@ -83,7 +74,7 @@ export class ImportRequestService {
       }),
     ]);
 
-    const dataResponse: DataResponse | any = {
+    const dataResponse: DataResponse = {
       data,
       pageMeta: {
         offset: offset,
@@ -135,61 +126,6 @@ export class ImportRequestService {
   }
 
   async create(dto: CreateImportRequestDto) {
-    //check if warehouseManagerId, purchasingStaffId, warehouseStaffId, poDeliveryId exist
-    // const isWarehouseManagerExistPromise =
-    //   this.prismaService.warehouseManager.findUniqueOrThrow({
-    //     where: { id: createImportRequestDto.warehouseManagerId },
-    //   });
-
-    // const isPurchasingStaffExistPromise =
-    //   this.prismaService.purchasingStaff.findUniqueOrThrow({
-    //     where: { id: createImportRequestDto.purchasingStaffId },
-    //   });
-
-    // const isWarehouseStaffExistPromise =
-    //   this.prismaService.warehouseStaff.findUniqueOrThrow({
-    //     where: { id: createImportRequestDto.warehouseStaffId },
-    //   });
-
-    // const isPoDeliveryExistPromise =
-    //   this.prismaService.poDelivery.findUniqueOrThrow({
-    //     where: { id: createImportRequestDto.poDeliveryId },
-    //   });
-
-    // const relationPromises = [];
-    // if (createImportRequestDto.warehouseManagerId) {
-    //   relationPromises.push(isWarehouseManagerExistPromise);
-    // }
-    // if (createImportRequestDto.purchasingStaffId) {
-    //   relationPromises.push(isPurchasingStaffExistPromise);
-    // }
-    // if (createImportRequestDto.warehouseStaffId) {
-    //   relationPromises.push(isWarehouseStaffExistPromise);
-    // }
-    // relationPromises.push(isPoDeliveryExistPromise);
-
-    // await Promise.allSettled(relationPromises).then((results) => {
-    //   let validationErrors: ValidationError[] = [];
-    //   results.forEach((result, index) => {
-    //     if (result) {
-    //       validationErrors.push({
-    //         property: index.toString(),
-    //         value: undefined,
-    //         contexts: {},
-    //         children: [],
-    //         target: createImportRequestDto,
-    //         constraints: { isExist: 'Id not found' },
-    //       });
-    //     }
-    //   });
-    //   if (validationErrors.length > 0) {
-    //     Logger.verbose('Validation error', validationErrors);
-    //     throw new BadRequestException(
-    //       apiFailed(HttpStatus.BAD_REQUEST, 'Invalid data', validationErrors),
-    //     );
-    //   }
-    // });
-
     const createImportRequestInput: Prisma.ImportRequestCreateInput = {
       warehouseManager: dto.warehouseManagerId
         ? { connect: { id: dto.warehouseManagerId } }
@@ -200,9 +136,9 @@ export class ImportRequestService {
       warehouseStaff: dto.warehouseStaffId
         ? { connect: { id: dto.warehouseStaffId } }
         : undefined,
-      poDelivery: {
-        connect: { id: dto.poDeliveryId },
-      },
+      poDelivery: dto.poDeliveryId
+        ? { connect: { id: dto.poDeliveryId } }
+        : undefined,
       status: dto.status,
       description: dto.description,
       rejectReason: dto.rejectReason,
@@ -223,6 +159,10 @@ export class ImportRequestService {
   }
 
   update(id: string, dto: UpdateImportRequestDto) {
+    const detailIds = dto.importRequestDetails
+      .filter((detail) => detail.id)
+      .map((detail) => detail.id);
+
     const updateImportRequestInput: Prisma.ImportRequestUpdateInput = {
       warehouseManager: dto.warehouseManagerId
         ? { connect: { id: dto.warehouseManagerId } }
@@ -246,14 +186,19 @@ export class ImportRequestService {
       importRequestDetail: dto.importRequestDetails
         ? {
             upsert: dto.importRequestDetails.map((detail) => ({
-              where: { id: detail.materialVariantId },
+              where: { id: detail.id },
               update: detail,
               create: detail,
             })),
+            deleteMany: {
+              id: {
+                notIn: detailIds,
+              },
+            },
           }
         : undefined,
-      // type: updateImportRequestDto.type,
     };
+
     return this.prismaService.importRequest.update({
       where: { id },
       data: updateImportRequestInput,

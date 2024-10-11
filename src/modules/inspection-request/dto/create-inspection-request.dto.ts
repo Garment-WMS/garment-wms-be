@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { $Enums } from '@prisma/client';
 import {
+  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -28,6 +29,12 @@ export class CreateInspectionRequestDto {
   note?: string;
 
   @ApiProperty({ required: true })
+  @IsOptional()
   @IsEnum($Enums.InspectionRequestStatus)
   status: $Enums.InspectionRequestStatus;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDateString()
+  createdAt?: string;
 }

@@ -1,6 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { $Enums, Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
@@ -54,11 +54,6 @@ export class InspectionRequestService {
           id: createInspectionRequestDto.purchasingStaffId,
         },
       },
-      inspectionReport: {
-        connect: {
-          id: createInspectionRequestDto.importRequestId,
-        },
-      },
       status: createInspectionRequestDto.status,
       note: createInspectionRequestDto.note,
     };
@@ -98,34 +93,42 @@ export class InspectionRequestService {
     return inspectionRequest;
   }
 
+  async getEnum() {
+    return { InspectionRequestStatus: $Enums.InspectionRequestStatus };
+  }
+
   async update(
     id: string,
     updateInspectionRequestDto: UpdateInspectionRequestDto,
   ) {
     const inspectionRequestUpdateInput: Prisma.InspectionRequestUpdateInput = {
-      importRequest: {
-        connect: {
-          id: updateInspectionRequestDto.importRequestId,
-        },
-      },
-      inspectionDepartment: {
-        connect: {
-          id: updateInspectionRequestDto.inspectionDepartmentId,
-        },
-      },
-      purchasingStaff: {
-        connect: {
-          id: updateInspectionRequestDto.purchasingStaffId,
-        },
-      },
-      inspectionReport: {
-        connect: {
-          id: updateInspectionRequestDto.importRequestId,
-        },
-      },
       status: updateInspectionRequestDto.status,
       note: updateInspectionRequestDto.note,
     };
+
+    if (updateInspectionRequestDto.importRequestId) {
+      inspectionRequestUpdateInput.importRequest = {
+        connect: {
+          id: updateInspectionRequestDto.importRequestId,
+        },
+      };
+    }
+
+    if (updateInspectionRequestDto.inspectionDepartmentId) {
+      inspectionRequestUpdateInput.inspectionDepartment = {
+        connect: {
+          id: updateInspectionRequestDto.inspectionDepartmentId,
+        },
+      };
+    }
+
+    if (updateInspectionRequestDto.purchasingStaffId) {
+      inspectionRequestUpdateInput.purchasingStaff = {
+        connect: {
+          id: updateInspectionRequestDto.purchasingStaffId,
+        },
+      };
+    }
 
     const inspectionRequest = await this.prismaService.inspectionRequest.update(
       {
@@ -148,7 +151,11 @@ export class InspectionRequestService {
   }
 
   public inspectionRequestInclude: Prisma.InspectionRequestInclude = {
-    importRequest: true,
+    importRequest: {
+      include: {
+        importRequestDetail: true,
+      },
+    },
     inspectionDepartment: true,
     purchasingStaff: true,
     inspectionReport: true,
