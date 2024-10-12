@@ -4,6 +4,7 @@ import { $Enums, Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
+import { nonExistUUID } from 'src/common/utils/utils';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
@@ -186,7 +187,9 @@ export class ImportRequestService {
       importRequestDetail: dto.importRequestDetails
         ? {
             upsert: dto.importRequestDetails.map((detail) => ({
-              where: { id: detail.id },
+              where: {
+                id: detail.id || nonExistUUID,
+              }, // Use a non-existent UUID if undefined or empty
               update: detail,
               create: detail,
             })),

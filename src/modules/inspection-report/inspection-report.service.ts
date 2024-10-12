@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
-import { getPageMeta } from 'src/common/utils/utils';
+import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
 import { CreateInspectionReportDto } from './dto/inspection-report/create-inspection-report.dto';
 import { UpdateInspectionReportDto } from './dto/inspection-report/update-inspection-report.dto';
 
@@ -91,7 +91,7 @@ export class InspectionReportService {
   async update(id: string, dto: UpdateInspectionReportDto) {
     // Extract the IDs of the details to be updated
     const detailIds = dto.inspectionReportDetail
-      .filter((detail) => detail.id)
+      ?.filter((detail) => detail.id)
       .map((detail) => detail.id);
 
     const inspectionReportUpdateInput: Prisma.InspectionReportUpdateInput = {
@@ -111,7 +111,9 @@ export class InspectionReportService {
       inspectionReportDetail: dto.inspectionReportDetail
         ? {
             upsert: dto.inspectionReportDetail.map((detail) => ({
-              where: { id: detail.id },
+              where: {
+                id: detail.id || nonExistUUID,
+              }, // Use a non-existent UUID if undefined or empty
               update: detail,
               create: detail,
             })),

@@ -7,11 +7,6 @@ import { IsProductVariantExist } from 'src/modules/product-variant/validator/is-
 export class CreateInspectionReportDetailDto
   implements Prisma.InspectionReportDetailCreateWithoutInspectionReportInput
 {
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsUUID()
-  id: string;
-
   @ApiProperty({ required: true, type: 'string', format: 'uuid' })
   @IsOptional()
   @IsUUID()
