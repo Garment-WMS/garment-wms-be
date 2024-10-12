@@ -55,7 +55,7 @@ export class MaterialTypeController {
   @Get(':id')
   @ApiResponse({ status: 200, description: 'Material Type found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  findOne(@Param('id', new CustomUUIDPipe()) id: string) {
+  findOne(@Param('id', CustomUUIDPipe) id: string) {
     return this.materialTypeService.findOne(id);
   }
 }

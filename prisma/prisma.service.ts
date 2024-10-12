@@ -52,6 +52,7 @@ export class PrismaService
 
     this.$use(this.softDeleteMiddleware);
     this.$use(this.findNotDeletedMiddleware);
+    this.$use(this.generateCodeMiddleware);
 
     // this.$on('error', ({ message }) => {
     //   this.logger.error(message);
@@ -122,6 +123,60 @@ export class PrismaService
       });
     }
 
+    return next(params);
+  };
+
+  modelsWithCode = [
+    'AnnualProductionPlan',
+    'ImportReceipt',
+    'InspectionReport',
+    'ManufacturingOrder',
+    'MaterialInspectionCriteria',
+    'MaterialType',
+    'MaterialVariant',
+    'Material',
+    'ProductInspectionCriteria',
+    'ProductType',
+    'ProductVariant',
+    'Product',
+    'QuarterlyProductionPlan',
+    'Supplier',
+  ];
+
+  generateCodeMiddleware: Prisma.Middleware = async (params, next) => {
+    if (
+      (params.action === 'create' || params.action === 'createMany') &&
+      this.modelsWithCode.includes(params.model)
+    ) {
+      const modelName = params.model;
+      const prefix = modelName
+        .split(/(?=[A-Z])/)
+        .map((word) => word.charAt(0).toUpperCase())
+        .join('');
+
+      if (params.action === 'create') {
+        if (params.args.data && params.args.data.code === undefined) {
+          // Count the existing records in the table
+          const count = await this[modelName].count();
+          const nextNumber = (count + 1).toString().padStart(6, '0');
+          const code = `${prefix}${nextNumber}`;
+          params.args.data.code = code;
+        }
+      } else if (params.action === 'createMany') {
+        if (params.args.data && Array.isArray(params.args.data)) {
+          const count = await Prisma[modelName.toLowerCase()].count();
+          params.args.data.forEach((item, index) => {
+            if (item.code === undefined) {
+              const nextNumber = (count + index + 1)
+                .toString()
+                .padStart(6, '0');
+              const code = `${prefix}${nextNumber}`;
+              item.code = code;
+            }
+          });
+        }
+      }
+    }
     return next(params);
   };
 

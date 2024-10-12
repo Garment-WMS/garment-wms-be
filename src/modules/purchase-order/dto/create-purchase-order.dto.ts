@@ -1,7 +1,7 @@
 import {
   IsDate,
+  IsInt,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -40,11 +40,11 @@ export class CreatePurchaseOrderDto {
   currency: string;
 
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   totalAmount: number;
 
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   taxAmount: number;
 
   @IsNotEmpty()
@@ -60,15 +60,15 @@ export class CreatePurchaseOrderDto {
   finishedDate: Date;
 
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   shippingAmount: number;
 
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   otherAmount: number;
-  
+
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   subTotal: number;
 
   Supplier: SupplierDto;

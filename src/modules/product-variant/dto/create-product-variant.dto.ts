@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 import { IsProductExist } from 'src/modules/product/validator/is-product-exist.validator';
 
 export class CreateProductVariantDto {
@@ -21,22 +21,22 @@ export class CreateProductVariantDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   width: number;
 
   @ApiProperty()
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   height: number;
 
   @ApiProperty()
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   length: number;
 
   @ApiProperty()
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   weight: number;
 
   @ApiProperty()

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsUUID } from 'class-validator';
+import { IsInt, IsNotEmpty, IsUUID } from 'class-validator';
 import { IsMaterialExist } from 'src/modules/material/validation/is-material-exist.validation';
 
 export class NestedCreateProductFormulaMaterialDto {
@@ -11,7 +11,7 @@ export class NestedCreateProductFormulaMaterialDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   quantityByUom: number;
 
   productFormulaId: string;

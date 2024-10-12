@@ -26,6 +26,7 @@ export const isValidEmail = (email: string): boolean => {
 import * as bcrypt from 'bcrypt';
 import { isDate } from 'class-validator';
 import { Constant } from '../constant/constant';
+import { PageMeta } from '../dto/page-meta';
 
 export const hashData = async (data: string): Promise<string> => {
   const salt = await bcrypt.genSalt();
@@ -106,3 +107,22 @@ export function extractPageAndPageSize(findOptions): {
   const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
   return { offset, limit };
 }
+
+export function getPageMeta(
+  total: number,
+  offset: number,
+  limit: number,
+): PageMeta {
+  const pageMeta: PageMeta = {
+    total: total,
+    offset: offset,
+    limit: limit,
+    page: Math.ceil(offset / limit) + 1,
+    totalPages: Math.ceil(total / limit),
+    hasNext: offset + limit < total,
+    hasPrevious: offset > 0,
+  };
+  return pageMeta;
+}
+
+export const nonExistUUID: string = '00000000-0000-0000-0000-000000000000';

@@ -1,6 +1,10 @@
 model ImportReceipt {
   id                 String            @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  warehouseStaffId   String?           @map("warehouse_staff_id") @db.Uuid
+  warehouseStaffId   String            @map("warehouse_staff_id") @db.Uuid
+  warehouseManagerId String            @map("warehouse_manager_id") @db.Uuid
+  code               String            @unique @map("code") @db.VarChar
+  type               ReceiptType       @map("type")
+  note               String?           @map("note") @db.Text
   startAt            DateTime?         @map("start_at") @db.Timestamptz(6)
   finishAt           DateTime?         @map("finish_at") @db.Timestamptz(6)
   createdAt          DateTime?         @map("created_at") @db.Timestamptz(6)
@@ -11,6 +15,12 @@ model ImportReceipt {
   warehouseStaff     WarehouseStaff?   @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialReceipt    MaterialReceipt[]
   productReceipt     ProductReceipt[]
+  warehouseManager   WarehouseManager? @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("import_receipt")
+}
+
+enum ReceiptType {
+  MATERIAL
+  PRODUCT
 }
