@@ -31,7 +31,7 @@ export class MaterialController {
   }
 
   @Get(':id')
-  getMaterialById(@Param('id', new CustomUUIDPipe()) id: string) {
+  getMaterialById(@Param('id', CustomUUIDPipe) id: string) {
     return this.materialService.findByIdWithResponse(id);
   }
 

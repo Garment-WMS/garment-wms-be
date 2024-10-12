@@ -2,14 +2,16 @@ model InspectionRequest {
   id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   purchasingStaffId      String                  @map("purchasing_staff_id") @db.Uuid
   inspectionDepartmentId String                  @map("inspection_department_id") @db.Uuid
-  deliveryNoteId         String                  @map("delivery_note_id") @db.Uuid
-  notation               String?                 @map("notation")
-  status                 InspectionRequestStatus
+  importRequestId        String?                 @map("import_request_id") @db.Uuid
+  note                   String?                 @map("note")
+  status                 InspectionRequestStatus @default(PENDING) @map("status")
   createdAt              DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime?               @map("deleted_at") @db.Timestamptz(6)
   inspectionDepartment   InspectionDepartment    @relation(fields: [inspectionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   purchasingStaff        PurchasingStaff         @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  importRequest          ImportRequest?          @relation(fields: [importRequestId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  inspectionReport       InspectionReport[]
 
   @@map("inspection_request")
 }
@@ -17,8 +19,8 @@ model InspectionRequest {
 enum InspectionRequestStatus {
   PENDING
   CANCELLED
-  IN_PROGESS
-  FINISHED
+  INSPECTING
+  INSPECTED
 
   @@map("inspection_request_status")
 }

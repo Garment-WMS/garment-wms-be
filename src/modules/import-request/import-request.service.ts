@@ -3,6 +3,8 @@ import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { $Enums, Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
+import { DataResponse } from 'src/common/dto/data-response';
+import { nonExistUUID } from 'src/common/utils/utils';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
@@ -21,8 +23,19 @@ export class ImportRequestService {
   ) {
     const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
-
-    const [data, totalItems] = await this.prismaService.$transaction([
+    const [
+      data,
+      total,
+      totalArrived,
+      totalInspecting,
+      totalInspected,
+      totalCanceled,
+      totalPending,
+      totalRejected,
+      totalApproved,
+      totalImporting,
+      totalImported,
+    ] = await this.prismaService.$transaction([
       this.prismaService.importRequest.findMany({
         skip: offset,
         take: limit,
@@ -30,21 +43,67 @@ export class ImportRequestService {
         orderBy: findOptions?.orderBy,
         include: this.ImportRequestInclude,
       }),
-      this.prismaService.importRequest.count(),
+      this.prismaService.importRequest.count(
+        findOptions?.where
+          ? {
+              where: findOptions.where,
+            }
+          : undefined,
+      ),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.ARRIVED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.INSPECTING },
+      }),
+
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.INSPECTED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.CANCELED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.PENDING },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.REJECTED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.APPROVED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.IMPORTING },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.IMPORTED },
+      }),
     ]);
 
-    return {
+    const dataResponse: DataResponse = {
       data,
       pageMeta: {
-        totalItems,
-        offset,
-        limit,
+        offset: offset,
+        limit: limit,
         page: Math.ceil(offset / limit) + 1,
-        totalPages: Math.ceil(totalItems / limit),
-        hasNext: totalItems > offset + limit,
+        total: total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: total > offset + limit,
         hasPrevious: offset > 0,
       },
+      statistics: {
+        totalArrived,
+        totalInspecting,
+        totalInspected,
+        totalCanceled,
+        totalPending,
+        totalRejected,
+        totalApproved,
+        totalImporting,
+        totalImported,
+      },
     };
+    return dataResponse;
   }
 
   findAll() {
@@ -73,61 +132,6 @@ export class ImportRequestService {
   }
 
   async create(dto: CreateImportRequestDto) {
-    //check if warehouseManagerId, purchasingStaffId, warehouseStaffId, poDeliveryId exist
-    // const isWarehouseManagerExistPromise =
-    //   this.prismaService.warehouseManager.findUniqueOrThrow({
-    //     where: { id: createImportRequestDto.warehouseManagerId },
-    //   });
-
-    // const isPurchasingStaffExistPromise =
-    //   this.prismaService.purchasingStaff.findUniqueOrThrow({
-    //     where: { id: createImportRequestDto.purchasingStaffId },
-    //   });
-
-    // const isWarehouseStaffExistPromise =
-    //   this.prismaService.warehouseStaff.findUniqueOrThrow({
-    //     where: { id: createImportRequestDto.warehouseStaffId },
-    //   });
-
-    // const isPoDeliveryExistPromise =
-    //   this.prismaService.poDelivery.findUniqueOrThrow({
-    //     where: { id: createImportRequestDto.poDeliveryId },
-    //   });
-
-    // const relationPromises = [];
-    // if (createImportRequestDto.warehouseManagerId) {
-    //   relationPromises.push(isWarehouseManagerExistPromise);
-    // }
-    // if (createImportRequestDto.purchasingStaffId) {
-    //   relationPromises.push(isPurchasingStaffExistPromise);
-    // }
-    // if (createImportRequestDto.warehouseStaffId) {
-    //   relationPromises.push(isWarehouseStaffExistPromise);
-    // }
-    // relationPromises.push(isPoDeliveryExistPromise);
-
-    // await Promise.allSettled(relationPromises).then((results) => {
-    //   let validationErrors: ValidationError[] = [];
-    //   results.forEach((result, index) => {
-    //     if (result) {
-    //       validationErrors.push({
-    //         property: index.toString(),
-    //         value: undefined,
-    //         contexts: {},
-    //         children: [],
-    //         target: createImportRequestDto,
-    //         constraints: { isExist: 'Id not found' },
-    //       });
-    //     }
-    //   });
-    //   if (validationErrors.length > 0) {
-    //     Logger.verbose('Validation error', validationErrors);
-    //     throw new BadRequestException(
-    //       apiFailed(HttpStatus.BAD_REQUEST, 'Invalid data', validationErrors),
-    //     );
-    //   }
-    // });
-
     const createImportRequestInput: Prisma.ImportRequestCreateInput = {
       warehouseManager: dto.warehouseManagerId
         ? { connect: { id: dto.warehouseManagerId } }
@@ -138,9 +142,9 @@ export class ImportRequestService {
       warehouseStaff: dto.warehouseStaffId
         ? { connect: { id: dto.warehouseStaffId } }
         : undefined,
-      poDelivery: {
-        connect: { id: dto.poDeliveryId },
-      },
+      poDelivery: dto.poDeliveryId
+        ? { connect: { id: dto.poDeliveryId } }
+        : undefined,
       status: dto.status,
       description: dto.description,
       rejectReason: dto.rejectReason,
@@ -172,6 +176,10 @@ export class ImportRequestService {
   }
 
   update(id: string, dto: UpdateImportRequestDto) {
+    const detailIds = dto.importRequestDetails
+      .filter((detail) => detail.id)
+      .map((detail) => detail.id);
+
     const updateImportRequestInput: Prisma.ImportRequestUpdateInput = {
       warehouseManager: dto.warehouseManagerId
         ? { connect: { id: dto.warehouseManagerId } }
@@ -195,14 +203,21 @@ export class ImportRequestService {
       importRequestDetail: dto.importRequestDetails
         ? {
             upsert: dto.importRequestDetails.map((detail) => ({
-              where: { id: detail.materialVariantId },
+              where: {
+                id: detail.id || nonExistUUID,
+              }, // Use a non-existent UUID if undefined or empty
               update: detail,
               create: detail,
             })),
+            deleteMany: {
+              id: {
+                notIn: detailIds,
+              },
+            },
           }
         : undefined,
-      // type: updateImportRequestDto.type,
     };
+
     return this.prismaService.importRequest.update({
       where: { id },
       data: updateImportRequestInput,

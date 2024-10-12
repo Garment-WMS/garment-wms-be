@@ -37,7 +37,7 @@ export class SupplierService {
 
   async findSupplierBySupplierCode(supplierCode: string) {
     return this.prismaService.supplier.findFirst({
-      where: { supplierCode: supplierCode },
+      where: { code: supplierCode },
     });
   }
 }

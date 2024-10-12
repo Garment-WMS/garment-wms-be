@@ -51,14 +51,14 @@ export class MaterialVariantController {
   }
 
   @Get(':id')
-  getMaterialVariantById(@Param('id', new CustomUUIDPipe()) id: string) {
+  getMaterialVariantById(@Param('id', CustomUUIDPipe) id: string) {
     return this.materialVariantService.findByIdWithResponse(id);
   }
 
   @Patch('/:id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   update(
-    @Param('id', new CustomUUIDPipe()) id: string,
+    @Param('id', CustomUUIDPipe) id: string,
     @Body()
     updateMaterialVariantDto: UpdateMaterialVariantDto,
   ) {

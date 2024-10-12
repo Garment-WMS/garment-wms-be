@@ -53,12 +53,20 @@ export class ImportRequestController {
           'status',
         ],
         [],
-        [{ createdAt: 'desc' }, { id: 'asc' }],
+        [
+          { createdAt: 'desc' },
+          { id: 'asc' },
+          { status: 'asc' },
+          { type: 'asc' },
+          { warehouseManagerId: 'asc' },
+          { purchasingStaffId: 'asc' },
+          { warehouseStaffId: 'asc' },
+          { poDeliveryId: 'asc' },
+        ],
       ),
     )
     filterDto: SearchImportQueryDto,
   ) {
-    console.log(filterDto);
     return apiSuccess(
       HttpStatus.OK,
       await this.importRequestService.search(filterDto.findOptions),
@@ -76,7 +84,7 @@ export class ImportRequestController {
   }
 
   @Get(':id')
-  async findOne(@Param('id', new CustomUUIDPipe()) id: string) {
+  async findOne(@Param('id', CustomUUIDPipe) id: string) {
     return apiSuccess(
       HttpStatus.OK,
       await this.importRequestService.findUnique(id),
@@ -86,7 +94,7 @@ export class ImportRequestController {
 
   @Patch(':id')
   async update(
-    @Param('id', new CustomUUIDPipe()) id: string,
+    @Param('id', CustomUUIDPipe) id: string,
     @Body() updateImportRequestDto: UpdateImportRequestDto,
   ) {
     return apiSuccess(
@@ -97,7 +105,7 @@ export class ImportRequestController {
   }
 
   @Delete(':id')
-  async remove(@Param('id', new CustomUUIDPipe()) id: string) {
+  async remove(@Param('id', CustomUUIDPipe) id: string) {
     return apiSuccess(
       HttpStatus.OK,
       await this.importRequestService.remove(id),

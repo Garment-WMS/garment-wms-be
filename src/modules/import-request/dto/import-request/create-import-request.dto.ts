@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { $Enums } from '@prisma/client';
+import { $Enums, RoleCode } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -13,22 +13,26 @@ import {
 } from 'class-validator';
 import { UniqueInArray } from 'src/common/decorator/validator/unique-property.decorator';
 import { IsPoDeliveryExist } from 'src/modules/po-delivery/validator/is-po-delivery-exist.validator';
+import { IsUserRoleExist } from 'src/modules/user/validator/is-user-of-role-exist.validator';
 import { CreateImportRequestDetailDto } from '../import-request-detail/create-import-request-detail.dto';
 
 export class CreateImportRequestDto {
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsUUID()
   @IsOptional()
+  @IsUserRoleExist(RoleCode.WAREHOUSE_MANAGER)
   warehouseManagerId?: string;
 
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsUUID()
   @IsOptional()
+  @IsUserRoleExist(RoleCode.PURCHASING_STAFF)
   purchasingStaffId?: string;
 
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsUUID()
   @IsOptional()
+  @IsUserRoleExist(RoleCode.WAREHOUSE_STAFF)
   warehouseStaffId?: string;
 
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
@@ -70,10 +74,10 @@ export class CreateImportRequestDto {
   @IsOptional()
   finishAt?: string | Date;
 
-  @ApiProperty({ required: true, type: [Object] })
-  @ValidateNested()
+  @ApiProperty({ required: true, type: [CreateImportRequestDetailDto] })
+  @ValidateNested({ each: true })
   @IsArray()
-  @UniqueInArray('materialVariantId')
+  @UniqueInArray(['materialVariantId'])
   @Type(() => CreateImportRequestDetailDto)
   importRequestDetails: CreateImportRequestDetailDto[];
 

@@ -5,7 +5,7 @@ import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
-import { extractPageAndPageSize } from 'src/common/utils/utils';
+import { extractPageAndPageSize, getPageMeta } from 'src/common/utils/utils';
 import { CreateMaterialVariantDto } from './dto/create-material-variant.dto';
 import { UpdateMaterialVariantDto } from './dto/update-material-variant.dto';
 
@@ -71,15 +71,7 @@ export class MaterialVariantService {
 
     const data: DataResponse = {
       data: result,
-      pageMeta: {
-        totalItems: total,
-        offset,
-        limit,
-        page: Math.ceil(offset / limit) + 1,
-        totalPages: Math.ceil(total / limit),
-        hasNext: total > offset + limit,
-        hasPrevious: offset > 0,
-      },
+      pageMeta: getPageMeta(total, offset, limit),
     };
 
     return apiSuccess(HttpStatus.OK, data, 'List of Material Variant');

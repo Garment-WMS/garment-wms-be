@@ -1,7 +1,7 @@
 model InspectionReportDetail {
   id                     String           @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  materialVariantId      String           @map("material_variant_id") @db.Uuid
-  productVariantId       String           @map("product_variant_id") @db.Uuid
+  materialVariantId      String?          @map("material_variant_id") @db.Uuid
+  productVariantId       String?          @map("product_variant_id") @db.Uuid
   createdAt              DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime?        @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime?        @map("deleted_at") @db.Timestamptz(6)
@@ -9,9 +9,9 @@ model InspectionReportDetail {
   defectQuantityByPack   Float            @map("defect_quantity_by_pack")
   inspectionReportId     String           @map("inspection_report_id") @db.Uuid
   quantityByPack         Float?           @map("quantity_by_pack")
-  InspectionReport       InspectionReport @relation(fields: [inspectionReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  materialVariant        MaterialVariant  @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productVariant         ProductVariant   @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  inspectionReport       InspectionReport @relation(fields: [inspectionReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialVariant        MaterialVariant? @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productVariant         ProductVariant?  @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("inspection_report_detail")
 }
