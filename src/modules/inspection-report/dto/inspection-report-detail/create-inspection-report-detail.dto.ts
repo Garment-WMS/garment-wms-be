@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
-import { IsNumber, IsOptional, IsUUID, ValidateIf } from 'class-validator';
+import { IsInt, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 import { IsMaterialVariantExist } from 'src/modules/material-variant/validator/is-material-variant-exist.validator';
 import { IsProductVariantExist } from 'src/modules/product-variant/validator/is-product-variant-exist.validator';
 
@@ -18,15 +18,15 @@ export class CreateInspectionReportDetailDto
   inspectionReportId: string;
 
   @ApiProperty({ required: true, type: 'number' })
-  @IsNumber()
+  @IsInt()
   quantityByPack?: number;
 
   @ApiProperty({ required: true, type: 'number' })
-  @IsNumber()
+  @IsInt()
   approvedQuantityByPack: number;
 
   @ApiProperty({ required: true, type: 'number' })
-  @IsNumber()
+  @IsInt()
   defectQuantityByPack: number;
 
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })

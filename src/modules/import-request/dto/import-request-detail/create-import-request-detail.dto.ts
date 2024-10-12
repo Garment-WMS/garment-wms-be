@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   ArrayUnique,
-  IsNumber,
+  IsInt,
   IsOptional,
   IsUUID,
   ValidateIf,
@@ -27,6 +27,6 @@ export class CreateImportRequestDetailDto {
   productIdVariantId?: string;
 
   @ApiProperty()
-  @IsNumber()
+  @IsInt()
   quantityByPack?: number;
 }

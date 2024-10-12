@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsInt,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -20,7 +20,7 @@ export class CreateQuarterlyProductDetailDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   quantityToProduce: number;
 
   @ApiProperty()

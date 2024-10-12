@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsInt,
   IsNotEmpty,
-  IsNumber,
   IsString,
   IsUUID,
   Min,
@@ -33,33 +33,33 @@ export class CreateMaterialVariantDto {
 
   @ApiProperty({})
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   uomPerPack: number;
 
   @ApiProperty({})
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   @NotEquals(0)
   @Min(0)
   packedWidth: number;
 
   @ApiProperty({})
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   @NotEquals(0)
   @Min(0)
   packedHeight: number;
 
   @ApiProperty({})
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   @NotEquals(0)
   @Min(0)
   packedLength: number;
 
   @ApiProperty({})
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   @NotEquals(0)
   @Min(0)
   packedWeight: number;

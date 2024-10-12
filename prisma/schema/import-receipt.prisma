@@ -1,9 +1,9 @@
 model ImportReceipt {
   id                 String            @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  warehouseStaffId   String?           @map("warehouse_staff_id") @db.Uuid
-  warehouseManagerId String?           @map("warehouse_manager_id") @db.Uuid
-  code               String?           @map("code")
-  type               ReceiptType?      @map("type")
+  warehouseStaffId   String            @map("warehouse_staff_id") @db.Uuid
+  warehouseManagerId String            @map("warehouse_manager_id") @db.Uuid
+  code               String            @unique @map("code") @db.VarChar
+  type               ReceiptType       @map("type")
   note               String?           @map("note") @db.Text
   startAt            DateTime?         @map("start_at") @db.Timestamptz(6)
   finishAt           DateTime?         @map("finish_at") @db.Timestamptz(6)
