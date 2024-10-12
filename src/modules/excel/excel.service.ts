@@ -184,8 +184,12 @@ export class ExcelService {
           deliveryBatches,
           puchaseOrder,
         );
+        if (errorResponse) {
+          return errorResponse;
+        }
       }
     }
+
     puchaseOrder.poDelivery = deliveryBatches;
     //Loop fop each sheet
   }
@@ -287,6 +291,11 @@ export class ExcelService {
       batchItemTable,
       deliveryBatchItems,
     );
+    console.log('errorItem', errorItem);
+    if (errorItem) {
+      return errorItem;
+    }
+
     deliveryBatchInfo.poDeliveryDetail = deliveryBatchItems;
     if (deliveryBatchItemErrorSheet.size > 0) {
       deliveryBatchItemErrorSheet.forEach((value, key) => {
@@ -1323,12 +1332,6 @@ export class ExcelService {
         ];
       });
     }
-    let totalAmount = 0;
-    if (itemList.length > 0) {
-      totalAmount = itemList.reduce((acc, curr) => {
-        return acc + curr['quantity'] * curr['price'];
-      }, 0);
-    }
   }
 
   async validateItemTable2(
@@ -1345,6 +1348,7 @@ export class ExcelService {
     itemListResult: any[],
   ) {
     const header = itemTable.table.columns.map((column: any) => column.name);
+    console.log('header', header);
     //Check if header is valid
     const isHeaderValid = compareArray(header, ITEM_HEADER);
     if (!isHeaderValid) {
@@ -1357,7 +1361,9 @@ export class ExcelService {
 
     //Check item validation
     for (let i = startRow + 1; i < endRow; i++) {
+      let materialid;
       let material;
+      let isError = false;
       let errorFlag = false;
       const row = worksheet.getRow(i);
       const itemCell = {
@@ -1367,6 +1373,7 @@ export class ExcelService {
         priceCell: row.getCell(4),
         totalCell: row.getCell(5),
       };
+      console.log('itemCell', itemCell.itemIdCell.value);
       if (
         isEmpty(itemCell.itemIdCell.value) &&
         isEmpty(itemCell.descriptionCell.value) &&
@@ -1377,20 +1384,15 @@ export class ExcelService {
         if (
           this.validateRequired(
             itemCell.itemIdCell.value as string,
-            'Id',
+            'Material Code',
             itemCell.itemIdCell.address,
             listItemError,
           )
         ) {
-          console.log('itemCell.itemIdCell.value', itemCell.itemIdCell.value);
-          console.log(
-            'itemCell.itemIdCell.value',
+          material = await this.materialVariantService.findByMaterialCode(
             this.extractValueFromCellValue(itemCell.itemIdCell.value),
           );
-          material = await this.materialVariantService.findById(
-            this.extractValueFromCellValue(itemCell.itemIdCell.value),
-          );
-          console.log('material', material);
+          materialid = material?.id;
           if (isEmpty(material)) {
             const text = [
               { text: `${itemCell.itemIdCell.value}` },
@@ -1406,9 +1408,11 @@ export class ExcelService {
               itemCell.itemIdCell.value,
               text,
             );
-            errorFlag = false;
+            errorFlag = true;
+            isError = true;
           }
         } else {
+          isError = true;
           errorFlag = true;
         }
 
@@ -1423,6 +1427,7 @@ export class ExcelService {
         ) {
           //Add more validation here
         } else {
+          isError = true;
           errorFlag = true;
         }
 
@@ -1452,6 +1457,7 @@ export class ExcelService {
               itemCell.quantityCell.value,
               text,
             );
+            isError = true;
             errorFlag = true;
           }
           if (!min(itemCell.quantityCell.value, 0) && !errorFlag) {
@@ -1469,6 +1475,7 @@ export class ExcelService {
               itemCell.quantityCell.value,
               text,
             );
+            isError = true;
             errorFlag = true;
           }
 
@@ -1488,6 +1495,7 @@ export class ExcelService {
               text,
             );
             errorFlag = true;
+            isError = true;
           }
         } else {
           errorFlag = true;
@@ -1519,6 +1527,7 @@ export class ExcelService {
               itemCell.priceCell.value,
               text,
             );
+            isError = true;
             errorFlag = true;
           }
           if (!min(itemCell.priceCell.value, 0) && !errorFlag) {
@@ -1536,15 +1545,16 @@ export class ExcelService {
               itemCell.priceCell.value,
               text,
             );
-            errorFlag = true;
+            isError = true;
+            errorFlag = false;
           }
         } else {
           errorFlag = true;
         }
-
-        if (!errorFlag) {
+        console.log(materialid);
+        if (!isError) {
           itemListResult.push({
-            materialVariantId: itemCell.itemIdCell.value as string,
+            materialVariantId: materialid as string,
             quantityByPack: itemCell.quantityCell.value as number,
             totalAmount: this.getTotalCellValue(itemCell.totalCell),
           });

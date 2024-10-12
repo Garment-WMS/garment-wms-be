@@ -1,6 +1,11 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma, PurchaseOrderStatus } from '@prisma/client';
+import {
+  ImportRequestDetail,
+  Prisma,
+  PurchaseOrderStatus,
+} from '@prisma/client';
+import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
@@ -96,11 +101,8 @@ export class PurchaseOrderService {
       data: purchaseOrderDto,
     });
   }
-  async findById(id: string) {
-    const purchaseOrder = await this.prismaService.purchaseOrder.findUnique({
-      where: { id },
-      include: this.queryInclude,
-    });
+  async findByIdWithResponse(id: string) {
+    const purchaseOrder = await this.findById(id);
     if (!purchaseOrder) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');
     }
@@ -112,17 +114,33 @@ export class PurchaseOrderService {
     );
   }
 
+  async findById(id: string) {
+    if (!isUUID(id)) {
+      return null;
+    }
+    return this.prismaService.purchaseOrder.findUnique({
+      where: { id },
+      include: this.queryInclude,
+    });
+  }
+
   async createPurchaseOrderWithExcelFile(file: Express.Multer.File) {
     const excelData = await this.excelService.readExcel(file);
     let purchaseOrder = null;
     if (excelData instanceof ApiResponse) {
       return excelData;
     } else {
+      let subTotalAmount = 0;
+      excelData.poDelivery.forEach((poDelivery) => {
+        poDelivery.poDeliveryDetail.forEach((material) => {
+          subTotalAmount += material.totalAmount;
+        });
+      });
       const PoNumber = await this.generateNextPoNumber();
       const createPurchaseOrderData =
         excelData as Partial<CreatePurchaseOrderDto>;
       const createPurchaseOrder: Prisma.PurchaseOrderCreateInput = {
-        subTotalAmount: createPurchaseOrderData.subTotal,
+        subTotalAmount: subTotalAmount,
         taxAmount: createPurchaseOrderData.taxAmount,
         expectedFinishDate: createPurchaseOrderData.expectedFinishDate,
         orderDate: createPurchaseOrderData.orderDate,
@@ -258,7 +276,8 @@ export class PurchaseOrderService {
     }
 
     const nextCode = `${Constant.PO_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
-    console.log(nextCode);
     return nextCode;
   }
+
+ 
 }

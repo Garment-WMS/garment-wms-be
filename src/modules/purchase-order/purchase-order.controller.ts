@@ -56,7 +56,7 @@ export class PurchaseOrderController {
   @Get(':id')
   @UsePipes(new ValidationPipe())
   async getPurchaseOrderById(@Param('id', CustomUUIDPipe) id: string) {
-    const purchaseOrder = await this.purchaseOrderService.findById(id);
+    const purchaseOrder = await this.purchaseOrderService.findByIdWithResponse(id);
     if (!purchaseOrder) {
       throw new NotFoundException('Purchase Order not found');
     }
