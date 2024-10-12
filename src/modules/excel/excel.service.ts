@@ -505,7 +505,7 @@ export class ExcelService {
       if (supplierValue[i][0].value.includes('Company Code')) {
         supplier = await this.prismaService.supplier.findUnique({
           where: {
-            supplierCode: supplierValue[i][1].value,
+            code: supplierValue[i][1].value,
           },
         });
         if (isEmpty(supplier)) {
@@ -528,7 +528,7 @@ export class ExcelService {
             purchaseOrderObject.Supplier = {
               id: undefined,
               supplierName: '',
-              supplierCode: '',
+              code: '',
               address: '',
               phoneNumber: '',
               fax: '',
