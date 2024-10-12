@@ -33,21 +33,21 @@ export class ProductController {
   }
 
   @Get(':id')
-  findOne(@Param('id', new CustomUUIDPipe()) id: string) {
+  findOne(@Param('id', CustomUUIDPipe) id: string) {
     return this.productService.findByIdWithResponse(id);
   }
 
   @Patch(':id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   update(
-    @Param('id', new CustomUUIDPipe()) id: string,
+    @Param('id', CustomUUIDPipe) id: string,
     @Body() updateProductDto: UpdateProductDto,
   ) {
     return this.productService.update(id, updateProductDto);
   }
 
   @Delete(':id')
-  remove(@Param('id', new CustomUUIDPipe()) id: string) {
+  remove(@Param('id', CustomUUIDPipe) id: string) {
     return this.productService.remove(id);
   }
 }

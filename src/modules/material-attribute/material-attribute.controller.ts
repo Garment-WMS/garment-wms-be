@@ -46,13 +46,13 @@ export class MaterialAttributeController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   update(
     @Body() updateMaterialAttributeDto: UpdateMaterialAttributeDto,
-    @Param('id', new CustomUUIDPipe()) id: string,
+    @Param('id', CustomUUIDPipe) id: string,
   ) {
     return this.materialAttributeService.update(id, updateMaterialAttributeDto);
   }
 
   @Delete(':id')
-  remove(@Param('id', new CustomUUIDPipe()) id: string) {
+  remove(@Param('id', CustomUUIDPipe) id: string) {
     return this.materialAttributeService.remove(id);
   }
 }

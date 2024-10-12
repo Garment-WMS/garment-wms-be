@@ -2,8 +2,10 @@ import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PurchaseOrderStatus } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
+import { getPageMeta } from 'src/common/utils/utils';
 import { ExcelService } from '../excel/excel.service';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
@@ -42,6 +44,21 @@ export class PurchaseOrderService {
     },
   };
 
+  async deletePurchaseOrder(id: string) {
+    try {
+      await this.prismaService.purchaseOrder.delete({
+        where: { id },
+      });
+    } catch (e) {
+      console.log(e);
+    }
+    return apiSuccess(
+      HttpStatus.OK,
+      null,
+      'Purchase Order deleted successfully',
+    );
+  }
+
   async getPurchaseOrders(
     filterOption?: GeneratedFindOptions<Prisma.PurchaseOrderWhereInput>,
   ) {
@@ -68,14 +85,7 @@ export class PurchaseOrderService {
       HttpStatus.OK,
       {
         data: result,
-        pageMeta: {
-          totalItems: total,
-          page: page,
-          limit: limit,
-          totalPages: Math.ceil(total / limit),
-          hasNext: total > page * limit,
-          hasPrevious: page > 1,
-        },
+        pageMeta: getPageMeta(page, limit, total),
       },
       'List of Purchase Order',
     );
@@ -86,38 +96,6 @@ export class PurchaseOrderService {
       data: purchaseOrderDto,
     });
   }
-
-  /* async findById(id: string) {
-    if (!isUUID(id)) {
-      return null;
-    }
-    return this.prismaService.purchaseOrder.findUnique({
-      where: { id },
-      include: {
-        poDelivery: {
-          select: {
-            id: true,
-            expectedDeliverDate: true,
-            isExtra: true,
-            poDeliveryDetail: {
-              include: {
-                materialVariant: {
-                  include: {
-                    material: {
-                      include: {
-                        materialUom: true,
-                        materialType: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-  } */
   async findById(id: string) {
     const purchaseOrder = await this.prismaService.purchaseOrder.findUnique({
       where: { id },
@@ -140,20 +118,23 @@ export class PurchaseOrderService {
     if (excelData instanceof ApiResponse) {
       return excelData;
     } else {
+      const PoNumber = await this.generateNextPoNumber();
       const createPurchaseOrderData =
         excelData as Partial<CreatePurchaseOrderDto>;
       const createPurchaseOrder: Prisma.PurchaseOrderCreateInput = {
-        poNumber: createPurchaseOrderData.PONumber,
-        totalAmount: createPurchaseOrderData.totalAmount,
+        subTotalAmount: createPurchaseOrderData.subTotal,
         taxAmount: createPurchaseOrderData.taxAmount,
         expectedFinishDate: createPurchaseOrderData.expectedFinishDate,
         orderDate: createPurchaseOrderData.orderDate,
-        status: PurchaseOrderStatus.IN_PROGESS,
+        status: PurchaseOrderStatus.IN_PROGRESS,
         supplier: {
           connect: { id: createPurchaseOrderData.Supplier.id },
         },
         currency: 'VND',
         finishDate: undefined,
+        shippingAmount: createPurchaseOrderData.shippingAmount,
+        otherAmount: createPurchaseOrderData.otherAmount,
+        poNumber: PoNumber,
       };
 
       purchaseOrder = await this.prismaService.$transaction(async (prisma) => {
@@ -262,5 +243,22 @@ export class PurchaseOrderService {
     }
 
     return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid status');
+  }
+
+  async generateNextPoNumber() {
+    const lastPo: any = await this.prismaService.$queryRaw<
+      { poNumber: string }[]
+    >`SELECT "PO_number" FROM "purchase_order" ORDER BY CAST(SUBSTRING("PO_number", 4) AS INT) DESC LIMIT 1`;
+
+    const poNumber = lastPo[0]?.PO_number;
+    let nextCodeNumber = 1;
+    if (poNumber) {
+      const currentCodeNumber = parseInt(poNumber.replace(/^PO-?/, ''), 10);
+      nextCodeNumber = currentCodeNumber + 1;
+    }
+
+    const nextCode = `${Constant.PO_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
+    console.log(nextCode);
+    return nextCode;
   }
 }

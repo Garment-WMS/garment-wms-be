@@ -4,12 +4,13 @@ model temp {
 }
 
 enum RoleCode {
-  RENTER          @map("RENTER")
-  LANDLORD        @map("LANDLORD")
-  STAFF           @map("STAFF")
-  TECHNICAL_STAFF @map("TECHNICAL_STAFF")
-  ADMIN           @map("ADMIN")
-  MANAGER         @map("MANAGER")
+  ADMIN                 @map("ADMIN")
+  WAREHOUSE_STAFF       @map("WAREHOUSE_STAFF")
+  WAREHOUSE_MANAGER     @map("WAREHOUSE_MANAGER")
+  FACTORY_DIRECTOR      @map("FACTORY_DIRECTOR")
+  INSPECTION_DEPARTMENT @map("INSPECTION_DEPARTMENT")
+  PRODUCTION_DEPARTMENT @map("PRODUCTION_DEPARTMENT")
+  PURCHASING_STAFF      @map("PURCHASING_STAFF")
 
   @@map("role_codes")
 }

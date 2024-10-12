@@ -29,7 +29,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
     let responseBody: ApiResponse;
     let message = exception.message;
     let error: ValidationError = {
-      property: '',
+      property: undefined,
       value: undefined,
       contexts: {},
       children: [],
@@ -48,18 +48,15 @@ export class PrismaExceptionFilter implements ExceptionFilter {
         break;
       case PrismaErrorEnum.ForeignKeyConstraintFailed:
         message = 'A foreign key constraint was violated on a record';
-        if (exception.meta?.field_name) {
-          error.property = exception.meta.field_name as string;
+        if (exception.meta?.field_name) {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+          error.property = exception.meta.target as string;
         }
         responseBody = apiFailed(HttpStatus.CONFLICT, message, [error]);
         break;
 
       case PrismaErrorEnum.UniqueConstraintFailed:
-        message = 'A unique constraint was violated on a record';
-        if (exception?.meta?.target) {
-          error.property = exception.meta.target as string;
-        }
-        responseBody = apiFailed(HttpStatus.CONFLICT, message, [error]);
+        message = `An operation failed because it would violate a primary key constraint ${exception.meta.target}`;
+        responseBody = apiFailed(HttpStatus.CONFLICT, message, exception.meta);
         break;
       case PrismaErrorEnum.DatabaseConnectionFailed:
         message = 'Database connection failed';

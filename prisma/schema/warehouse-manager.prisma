@@ -1,11 +1,12 @@
 model WarehouseManager {
   id            String          @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  userId        String          @map("user_id") @db.Uuid
+  userId        String          @map("user_id") @db.Uuid @unique
   createdAt     DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime?       @updatedAt @map("updated_at") @db.Timestamp(6)
   deletedAt     DateTime?       @map("deleted_at") @db.Timestamp(6)
   ImportRequest ImportRequest[]
   users         User            @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ImportReceipt ImportReceipt[]
 
   @@map("warehouse_manager")
 }
