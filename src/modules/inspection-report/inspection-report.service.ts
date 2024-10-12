@@ -41,13 +41,15 @@ export class InspectionReportService {
   }
 
   async findUnique(id: string) {
-    const inspectionReport = this.prismaService.inspectionReport.findUnique({
-      where: { id },
-      include: this.inspectionReportInclude,
-    });
+    const inspectionReport =
+      await this.prismaService.inspectionReport.findUnique({
+        where: { id },
+        include: this.inspectionReportInclude,
+      });
     if (!inspectionReport) {
       throw new NotFoundException('Inspection report not found');
     }
+    return inspectionReport;
   }
 
   findFirst(id: string) {
