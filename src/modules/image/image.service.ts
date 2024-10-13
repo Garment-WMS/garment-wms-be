@@ -1,25 +1,19 @@
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { FirebaseError } from 'firebase/app';
 import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
-import { UpdateImageDto } from './dto/update-image.dto';
-import { FirebaseService } from '../firebase/firebase.service';
-import {
+  deleteObject,
+  getDownloadURL,
   getStorage,
   ref,
   uploadBytes,
-  getDownloadURL,
-  deleteObject,
 } from 'firebase/storage';
-import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { Constant } from 'src/common/constant/constant';
+import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiGeneral } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
-import { FirebaseError } from 'firebase/app';
-import { Constant } from 'src/common/constant/constant';
+import { FirebaseService } from '../firebase/firebase.service';
 import { ImageResponse } from './dto/image-response.dto';
-import { PathConstants } from 'src/common/constant/path.constant';
+import { UpdateImageDto } from './dto/update-image.dto';
 
 @Injectable()
 export class ImageService {
@@ -55,7 +49,8 @@ export class ImageService {
       const snapshot = await uploadBytes(storageRef, file.buffer, {
         contentType: file.mimetype,
       });
-      return snapshot.metadata.name;
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      return downloadURL;
     } catch (error) {
       console.error('Error uploading file:', error);
       return error;
