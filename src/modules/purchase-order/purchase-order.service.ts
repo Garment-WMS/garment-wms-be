@@ -98,16 +98,11 @@ export class PurchaseOrderService {
   async getPurchaseOrders(
     filterOption?: GeneratedFindOptions<Prisma.PurchaseOrderWhereInput>,
   ) {
-    const page = filterOption?.skip
-      ? parseInt(filterOption?.skip.toString())
-      : 1;
-    const limit = filterOption?.take
-      ? parseInt(filterOption?.take.toString())
-      : 10;
-
+    const page = filterOption?.skip || Constant.DEFAULT_OFFSET;
+    const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
     const [result, total] = await this.prismaService.$transaction([
       this.prismaService.purchaseOrder.findMany({
-        skip: (page - 1) * limit,
+        skip: page,
         take: limit,
         where: filterOption?.where,
         orderBy: filterOption?.orderBy,
@@ -121,7 +116,7 @@ export class PurchaseOrderService {
       HttpStatus.OK,
       {
         data: result,
-        pageMeta: getPageMeta(page, limit, total),
+        pageMeta: getPageMeta(total, page, limit),
       },
       'List of Purchase Order',
     );
