@@ -1,10 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
-import {
-  ImportRequestDetail,
-  Prisma,
-  PurchaseOrderStatus,
-} from '@prisma/client';
+import { Prisma, PurchaseOrderStatus } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -48,6 +44,41 @@ export class PurchaseOrderService {
       },
     },
   };
+
+  async getPurchaseOrderStatistics() {
+    const [total, inProgress, finished, cancelled] =
+      await this.prismaService.$transaction([
+        this.prismaService.purchaseOrder.count(),
+        this.prismaService.purchaseOrder.count({
+          where: { status: PurchaseOrderStatus.IN_PROGRESS },
+        }),
+        this.prismaService.purchaseOrder.count({
+          where: { status: PurchaseOrderStatus.FINISHED },
+        }),
+        this.prismaService.purchaseOrder.count({
+          where: { status: PurchaseOrderStatus.CANCELLED },
+        }),
+      ]);
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        total,
+        inProgress,
+        finished,
+        cancelled,
+      },
+      'Purchase Order statistics',
+    );
+  }
+
+  async getPurchaseOrderStatus() {
+    return apiSuccess(
+      HttpStatus.OK,
+      Object.values(PurchaseOrderStatus),
+      'List of Purchase Order Status',
+    );
+  }
 
   async deletePurchaseOrder(id: string) {
     try {
@@ -124,7 +155,10 @@ export class PurchaseOrderService {
     });
   }
 
-  async createPurchaseOrderWithExcelFile(file: Express.Multer.File) {
+  async createPurchaseOrderWithExcelFile(
+    file: Express.Multer.File,
+    purchasingStaffId: string,
+  ) {
     const excelData = await this.excelService.readExcel(file);
     let purchaseOrder = null;
     if (excelData instanceof ApiResponse) {
@@ -149,6 +183,9 @@ export class PurchaseOrderService {
           connect: { id: createPurchaseOrderData.Supplier.id },
         },
         currency: 'VND',
+        purchasingStaff: {
+          connect: { id: purchasingStaffId },
+        },
         finishDate: undefined,
         shippingAmount: createPurchaseOrderData.shippingAmount,
         otherAmount: createPurchaseOrderData.otherAmount,
@@ -278,6 +315,4 @@ export class PurchaseOrderService {
     const nextCode = `${Constant.PO_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
     return nextCode;
   }
-
- 
 }

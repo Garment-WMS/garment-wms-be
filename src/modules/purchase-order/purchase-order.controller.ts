@@ -10,14 +10,20 @@ import {
   Post,
   Query,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Prisma } from '@prisma/client';
+import { Prisma, RoleCode } from '@prisma/client';
+import { GetUser } from 'src/common/decorator/get_user.decorator';
+import { Roles } from 'src/common/decorator/roles.decorator';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
+import { RolesGuard } from 'src/common/guard/roles.guard';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { UpdatePurchaseOrderStatusDto } from './dto/update-purchase-order-status.dto';
 import { PurchaseOrderService } from './purchase-order.service';
 
@@ -30,20 +36,63 @@ export class PurchaseOrderController {
   getPurchaseOrders(
     @Query(
       new DirectFilterPipe<any, Prisma.PurchaseOrderWhereInput>(
-        ['id', 'poNumber', 'createdAt', 'supplierId', 'currency', 'status'],
-        [],
+        [
+          'id',
+          'poNumber',
+          'createdAt',
+          'orderDate',
+          'finishDate',
+          'supplierId',
+          'currency',
+          'status',
+          'quarterlyProductionPlan',
+        ],
+        ['quarterlyProductionPlan'],
+        [
+          {
+            createdAt: 'desc',
+          },
+          {
+            id: 'asc',
+          },
+          {
+            taxAmount: 'asc',
+          },
+          {
+            finishDate: 'asc',
+          },
+          {
+            orderDate: 'asc',
+          },
+          {
+            poNumber: 'asc',
+          },
+        ],
       ),
     )
     filterDto: FilterDto<Prisma.PurchaseOrderWhereInput>,
   ) {
     return this.purchaseOrderService.getPurchaseOrders(filterDto.findOptions);
   }
+  @Get('status')
+  getPurchaseOrderStatus() {
+    return this.purchaseOrderService.getPurchaseOrderStatus();
+  }
+  @Get('statistics')
+  getPurchaseOrderStatistics() {
+    return this.purchaseOrderService.getPurchaseOrderStatistics();
+  }
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.PURCHASING_STAFF)
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file) {
+  async uploadFile(@UploadedFile() file, @GetUser() user: AuthenUser) {
     const fileResult: any =
-      await this.purchaseOrderService.createPurchaseOrderWithExcelFile(file);
+      await this.purchaseOrderService.createPurchaseOrderWithExcelFile(
+        file,
+        user.purchasingStaffId,
+      );
     return fileResult;
   }
 
@@ -56,7 +105,8 @@ export class PurchaseOrderController {
   @Get(':id')
   @UsePipes(new ValidationPipe())
   async getPurchaseOrderById(@Param('id', CustomUUIDPipe) id: string) {
-    const purchaseOrder = await this.purchaseOrderService.findByIdWithResponse(id);
+    const purchaseOrder =
+      await this.purchaseOrderService.findByIdWithResponse(id);
     if (!purchaseOrder) {
       throw new NotFoundException('Purchase Order not found');
     }
