@@ -11,6 +11,8 @@ model PurchaseOrder {
   orderDate                 DateTime                 @map("order_date") @db.Date
   expectedFinishDate        DateTime                 @map("expected_finish_date") @db.Date
   finishDate                DateTime?                @map("finish_date") @db.Date
+  cancelledAt               DateTime?                @map("cancelled_at") @db.Timestamptz(6)
+  cancelledReason           String?                  @map("cancelled_reason") @db.VarChar
   status                    PurchaseOrderStatus      @default(IN_PROGRESS) @map("status")
   createdAt                 DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime?                @updatedAt @map("updated_at") @db.Timestamptz(6)
