@@ -5,6 +5,8 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { importRequestInclude } from '../import-request/import-request.service';
+import { inspectionReportInclude } from '../inspection-report/inspection-report.service';
 import { CreateInspectionRequestDto } from './dto/create-inspection-request.dto';
 import { UpdateInspectionRequestDto } from './dto/update-inspection-request.dto';
 
@@ -23,7 +25,7 @@ export class InspectionRequestService {
         where: findOptions?.where,
         skip: offset,
         take: limit,
-        include: this.inspectionRequestInclude,
+        include: inspectionRequestInclude,
       }),
       this.prismaService.inspectionRequest.count({
         where: findOptions?.where,
@@ -61,7 +63,7 @@ export class InspectionRequestService {
     const inspectionRequest = await this.prismaService.inspectionRequest.create(
       {
         data: inspectionRequestCreateInput,
-        include: this.inspectionRequestInclude,
+        include: inspectionRequestInclude,
       },
     );
     return inspectionRequest;
@@ -76,7 +78,7 @@ export class InspectionRequestService {
       where: {
         id: id,
       },
-      include: this.inspectionRequestInclude,
+      include: inspectionRequestInclude,
     });
     if (!inspectionRequest)
       throw new NotFoundException(`Inspection Request with id ${id} not found`);
@@ -88,7 +90,7 @@ export class InspectionRequestService {
       where: {
         id: id,
       },
-      include: this.inspectionRequestInclude,
+      include: inspectionRequestInclude,
     });
     return inspectionRequest;
   }
@@ -136,7 +138,7 @@ export class InspectionRequestService {
           id: id,
         },
         data: inspectionRequestUpdateInput,
-        include: this.inspectionRequestInclude,
+        include: inspectionRequestInclude,
       },
     );
     return inspectionRequest;
@@ -149,15 +151,23 @@ export class InspectionRequestService {
       },
     });
   }
-
-  public inspectionRequestInclude: Prisma.InspectionRequestInclude = {
-    importRequest: {
-      include: {
-        importRequestDetail: true,
-      },
-    },
-    inspectionDepartment: true,
-    purchasingStaff: true,
-    inspectionReport: true,
-  };
 }
+
+export const inspectionRequestInclude: Prisma.InspectionRequestInclude = {
+  importRequest: {
+    include: importRequestInclude,
+  },
+  inspectionDepartment: {
+    include: {
+      users: true,
+    },
+  },
+  purchasingStaff: {
+    include: {
+      users: true,
+    },
+  },
+  inspectionReport: {
+    include: inspectionReportInclude,
+  },
+};

@@ -42,7 +42,7 @@ export class ImportRequestService {
         take: limit,
         where: findOptions?.where,
         orderBy: findOptions?.orderBy,
-        include: this.ImportRequestInclude,
+        include: importRequestInclude,
       }),
       this.prismaService.importRequest.count(
         findOptions?.where
@@ -109,14 +109,14 @@ export class ImportRequestService {
 
   findAll() {
     return this.prismaService.importRequest.findMany({
-      include: this.ImportRequestInclude,
+      include: importRequestInclude,
     });
   }
 
   async findUnique(id: string) {
     const importRequest = await this.prismaService.importRequest.findUnique({
       where: { id },
-      include: this.ImportRequestInclude,
+      include: importRequestInclude,
     });
     if (!importRequest) {
       throw new NotFoundException("Import request doesn't exist");
@@ -127,7 +127,7 @@ export class ImportRequestService {
   async findFirst(id: string) {
     const importRequest = await this.prismaService.importRequest.findFirst({
       where: { id },
-      include: this.ImportRequestInclude,
+      include: importRequestInclude,
     });
     return importRequest;
   }
@@ -174,7 +174,7 @@ export class ImportRequestService {
     const [result, updatePoDelivery] = await this.prismaService.$transaction([
       this.prismaService.importRequest.create({
         data: createImportRequestInput,
-        include: this.ImportRequestInclude,
+        include: importRequestInclude,
       }),
       this.poDeliveryService.updateStatus(
         dto.poDeliveryId,
@@ -230,7 +230,7 @@ export class ImportRequestService {
     return this.prismaService.importRequest.update({
       where: { id },
       data: updateImportRequestInput,
-      include: this.ImportRequestInclude,
+      include: importRequestInclude,
     });
   }
 
@@ -294,34 +294,49 @@ export class ImportRequestService {
   async warehouseStaffFinishImport() {}
 
   // CANCELED
-
-  readonly ImportRequestInclude: Prisma.ImportRequestInclude = {
-    importRequestDetail: {
-      include: {
-        materialVariant: {
-          include: {
-            material: {
-              include: {
-                materialType: true,
-                materialAttribute: true,
-              },
+}
+export const importRequestInclude: Prisma.ImportRequestInclude = {
+  importRequestDetail: {
+    include: {
+      materialVariant: {
+        include: {
+          material: {
+            include: {
+              materialType: true,
+              materialAttribute: true,
             },
           },
         },
       },
     },
-    warehouseManager: true,
-    purchasingStaff: true,
-    warehouseStaff: true,
-    poDelivery: {
-      include: {
-        purchaseOrder: {
-          include: {
-            purchasingStaff: true,
-            supplier: true,
+  },
+  warehouseManager: {
+    include: {
+      users: true,
+    },
+  },
+  purchasingStaff: {
+    include: {
+      users: true,
+    },
+  },
+  warehouseStaff: {
+    include: {
+      users: true,
+    },
+  },
+  poDelivery: {
+    include: {
+      purchaseOrder: {
+        include: {
+          purchasingStaff: {
+            include: {
+              users: true,
+            },
           },
+          supplier: true,
         },
       },
     },
-  };
-}
+  },
+};
