@@ -4,4 +4,6 @@ export class PathConstants {
   static readonly IMAGE_PATH = 'images';
   static readonly VIDEO_PATH = 'videos';
   static readonly HOUSE_PATH = 'houses';
+  static readonly MATERIAL_PATH = 'materials';
+  static readonly PRODUCT_PATH = 'products';
 }

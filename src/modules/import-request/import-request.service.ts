@@ -1,11 +1,12 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { $Enums, Prisma } from '@prisma/client';
+import { isNotEmpty } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
-import { nonExistUUID } from 'src/common/utils/utils';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
+import { nonExistUUID } from 'src/common/utils/utils';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
@@ -162,17 +163,25 @@ export class ImportRequestService {
       dto.poDeliveryId,
       dto.importRequestDetails,
     );
-    if (errorResponse) {
+    if (isNotEmpty(errorResponse)) {
       throw new CustomValidationException(
         HttpStatus.BAD_REQUEST,
         'Invalid data',
         errorResponse,
       );
     }
-    return this.prismaService.importRequest.create({
-      data: createImportRequestInput,
-      include: this.ImportRequestInclude,
-    });
+
+    const [result, updatePoDelivery] = await this.prismaService.$transaction([
+      this.prismaService.importRequest.create({
+        data: createImportRequestInput,
+        include: this.ImportRequestInclude,
+      }),
+      this.poDeliveryService.updateStatus(
+        dto.poDeliveryId,
+        $Enums.PoDeliveryStatus.IMPORTING,
+      ),
+    ]);
+    return result;
   }
 
   update(id: string, dto: UpdateImportRequestDto) {

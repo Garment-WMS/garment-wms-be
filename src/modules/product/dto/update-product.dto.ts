@@ -5,17 +5,19 @@ export class UpdateProductDto {
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  productTypeId: string;
+  productTypeId?: string;
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  productUomId: string;
+  productUomId?: string;
   @ApiProperty()
   @IsOptional()
   @IsString()
-  name: string;
+  name?: string;
   @ApiProperty()
   @IsOptional()
   @IsString()
-  code: string;
+  code?: string;
+
+  image;
 }

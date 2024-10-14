@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { $Enums } from '@prisma/client';
+import { $Enums, PurchaseOrderStatus } from '@prisma/client';
 import { IsEnum, IsOptional } from 'class-validator';
 
 export class UpdatePurchaseOrderDto {
   @ApiProperty({ required: false })
-  @IsEnum($Enums.PurchaseOrderStatus)
+  @IsEnum([PurchaseOrderStatus.FINISHED])
   @IsOptional()
   status?: $Enums.PurchaseOrderStatus;
 }

@@ -1,6 +1,8 @@
 import { $Enums, PurchaseOrder } from '@prisma/client';
 
 export class PurchaseOrderDto implements PurchaseOrder {
+  cancelledAt: Date;
+  cancelledReason: string;
   subTotalAmount: number;
   shippingAmount: number;
   otherAmount: number;
