@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { IsInt, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 import { IsMaterialVariantExist } from 'src/modules/material-variant/validator/is-material-variant-exist.validator';
 import { IsProductVariantExist } from 'src/modules/product-variant/validator/is-product-variant-exist.validator';
+import { IsInspectionReportNotExist } from '../../validator/is-inspection-report-not-exist.validator';
 
 export class CreateInspectionReportDetailDto
   implements Prisma.InspectionReportDetailCreateWithoutInspectionReportInput
@@ -10,6 +11,7 @@ export class CreateInspectionReportDetailDto
   @ApiProperty({ required: true, type: 'string', format: 'uuid' })
   @IsOptional()
   @IsUUID()
+  @IsInspectionReportNotExist()
   inspectionReportId: string;
 
   @ApiProperty({ required: true, type: 'number' })
