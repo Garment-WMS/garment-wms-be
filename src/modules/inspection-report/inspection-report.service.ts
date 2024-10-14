@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
-import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
+import { getPageMeta } from 'src/common/utils/utils';
 import { CreateInspectionReportDto } from './dto/inspection-report/create-inspection-report.dto';
 import { UpdateInspectionReportDto } from './dto/inspection-report/update-inspection-report.dto';
 
@@ -112,16 +112,28 @@ export class InspectionReportService {
         ? {
             upsert: dto.inspectionReportDetail.map((detail) => ({
               where: {
-                id: detail.id || nonExistUUID,
+                id: detail.id,
               }, // Use a non-existent UUID if undefined or empty
-              update: detail,
-              create: detail,
-            })),
-            deleteMany: {
-              id: {
-                notIn: detailIds,
+              deleteMany: {
+                id: {
+                  notIn: detailIds,
+                },
               },
-            },
+              update: {
+                approvedQuantityByPack: detail.approvedQuantityByPack,
+                defectQuantityByPack: detail.defectQuantityByPack,
+                quantityByPack: detail.quantityByPack,
+                materialVariantId: detail.materialVariantId,
+                productVariantId: detail.productVariantId,
+              },
+              create: {
+                approvedQuantityByPack: detail.approvedQuantityByPack,
+                defectQuantityByPack: detail.defectQuantityByPack,
+                quantityByPack: detail.quantityByPack,
+                materialVariantId: detail.materialVariantId,
+                productVariantId: detail.productVariantId,
+              },
+            })),
           }
         : undefined,
     };

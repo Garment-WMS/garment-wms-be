@@ -47,7 +47,6 @@ export class CreateImportRequestDto {
   status?: $Enums.ImportRequestStatus;
 
   @ApiProperty({ required: false })
-  @IsNotEmpty()
   @IsString()
   @IsOptional()
   description?: string;
