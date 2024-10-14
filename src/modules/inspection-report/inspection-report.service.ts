@@ -23,7 +23,7 @@ export class InspectionReportService {
         take: limit,
         where: findOptions?.where,
         orderBy: findOptions?.orderBy,
-        include: this.inspectionReportInclude,
+        include: inspectionReportInclude,
       }),
       this.prismaService.inspectionReport.count(
         findOptions?.where
@@ -44,7 +44,7 @@ export class InspectionReportService {
     const inspectionReport =
       await this.prismaService.inspectionReport.findUnique({
         where: { id },
-        include: this.inspectionReportInclude,
+        include: inspectionReportInclude,
       });
     if (!inspectionReport) {
       throw new NotFoundException('Inspection report not found');
@@ -55,7 +55,7 @@ export class InspectionReportService {
   findFirst(id: string) {
     return this.prismaService.inspectionReport.findFirst({
       where: { id },
-      include: this.inspectionReportInclude,
+      include: inspectionReportInclude,
     });
   }
 
@@ -84,7 +84,7 @@ export class InspectionReportService {
     };
     return this.prismaService.inspectionReport.create({
       data: inspectionReportCreateInput,
-      include: this.inspectionReportInclude,
+      include: inspectionReportInclude,
     });
   }
 
@@ -141,7 +141,7 @@ export class InspectionReportService {
     return this.prismaService.inspectionReport.update({
       where: { id },
       data: inspectionReportUpdateInput,
-      include: this.inspectionReportInclude,
+      include: inspectionReportInclude,
     });
   }
 
@@ -150,29 +150,33 @@ export class InspectionReportService {
       where: { id },
     });
   }
-
-  public inspectionReportInclude: Prisma.InspectionReportInclude = {
-    inspectionRequest: {
-      include: {
-        importRequest: true,
-        inspectionDepartment: true,
-        purchasingStaff: true,
-      },
-    },
-    inspectionDepartment: true,
-    inspectionReportDetail: {
-      include: {
-        materialVariant: {
-          include: {
-            material: true,
-          },
-        },
-        productVariant: {
-          include: {
-            product: true,
-          },
-        },
-      },
-    },
-  };
 }
+
+export const inspectionReportInclude: Prisma.InspectionReportInclude = {
+  inspectionRequest: {
+    include: {
+      importRequest: true,
+      inspectionDepartment: true,
+      purchasingStaff: true,
+    },
+  },
+  inspectionDepartment: {
+    include: {
+      users: true,
+    },
+  },
+  inspectionReportDetail: {
+    include: {
+      materialVariant: {
+        include: {
+          material: true,
+        },
+      },
+      productVariant: {
+        include: {
+          product: true,
+        },
+      },
+    },
+  },
+};
