@@ -1,17 +1,23 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { $Enums, Prisma } from '@prisma/client';
+import { isNotEmpty } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
+import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { nonExistUUID } from 'src/common/utils/utils';
+import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 
 @Injectable()
 export class ImportRequestService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly poDeliveryService: PoDeliveryService,
+  ) {}
 
   async search(
     findOptions: GeneratedFindOptions<Prisma.ImportRequestWhereInput>,
@@ -153,10 +159,29 @@ export class ImportRequestService {
         },
       },
     };
-    return this.prismaService.importRequest.create({
-      data: createImportRequestInput,
-      include: this.ImportRequestInclude,
-    });
+    const errorResponse = await this.poDeliveryService.checkIsPoDeliveryValid(
+      dto.poDeliveryId,
+      dto.importRequestDetails,
+    );
+    if (isNotEmpty(errorResponse)) {
+      throw new CustomValidationException(
+        HttpStatus.BAD_REQUEST,
+        'Invalid data',
+        errorResponse,
+      );
+    }
+
+    const [result, updatePoDelivery] = await this.prismaService.$transaction([
+      this.prismaService.importRequest.create({
+        data: createImportRequestInput,
+        include: this.ImportRequestInclude,
+      }),
+      this.poDeliveryService.updateStatus(
+        dto.poDeliveryId,
+        $Enums.PoDeliveryStatus.IMPORTING,
+      ),
+    ]);
+    return result;
   }
 
   update(id: string, dto: UpdateImportRequestDto) {

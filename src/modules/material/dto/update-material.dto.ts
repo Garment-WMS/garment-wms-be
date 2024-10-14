@@ -1,9 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MinLength } from 'class-validator';
+import { IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpdateMaterialDto {
   @ApiProperty()
+  @IsOptional()
   @IsString()
   @MinLength(3)
-  name: string;
+  name?: string;
+
+  image;
 }

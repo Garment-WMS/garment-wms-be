@@ -7,15 +7,20 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags } from '@nestjs/swagger';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductService } from './product.service';
 
+@ApiTags('Product')
 @Controller('product')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
@@ -35,6 +40,15 @@ export class ProductController {
   @Get(':id')
   findOne(@Param('id', CustomUUIDPipe) id: string) {
     return this.productService.findByIdWithResponse(id);
+  }
+
+  @Post(':id/image')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.productService.addImage(file, id);
   }
 
   @Patch(':id')

@@ -49,72 +49,16 @@ export class AuthController {
   }
 
   //SIGN IN FLOW
-  @Post('/sign-in/warehouse-staff')
+  @Post('/sign-in')
   @UsePipes(new ValidationPipe())
   warehouseStaffLogin(@Body() body: LoginAuthDTO) {
-    return this.authService.loginGeneral(body, RoleCode.WAREHOUSE_STAFF);
-  }
-
-  @Post('/sign-in/warehouse-manager')
-  @UsePipes(new ValidationPipe())
-  warehouseManagerLogin(@Body() body: LoginAuthDTO) {
-    return this.authService.loginGeneral(body, RoleCode.WAREHOUSE_MANAGER);
-  }
-
-  @Post('/sign-in/purchasing-staff')
-  @UsePipes(new ValidationPipe())
-  purchasingStaffLogin(@Body() body: LoginAuthDTO) {
-    return this.authService.loginGeneral(body, RoleCode.PURCHASING_STAFF);
-  }
-
-  @Post('/sign-in/inspection-department')
-  @UsePipes(new ValidationPipe())
-  inspectionDepartmentLogin(@Body() body: LoginAuthDTO) {
-    return this.authService.loginGeneral(body, RoleCode.INSPECTION_DEPARTMENT);
-  }
-
-  @Post('/sign-in/production-department')
-  @UsePipes(new ValidationPipe())
-  productionDepartmentLogin(@Body() body: LoginAuthDTO) {
-    return this.authService.loginGeneral(body, RoleCode.PRODUCTION_DEPARTMENT);
-  }
-  @Post('/sign-in/factory-director')
-  @UsePipes(new ValidationPipe())
-  factoryDirectorLogin(@Body() body: LoginAuthDTO) {
-    return this.authService.loginGeneral(body, RoleCode.FACTORY_DIRECTOR);
+    return this.authService.loginGeneral(body, body.role);
   }
 
   //SIGN UP FLOW
-  @Post('/sign-up/warehouse-staff')
+  @Post('/sign-up')
   warehouseStaffSignUp(@Body() body: SignUpDTO) {
-    return this.authService.registerGeneral(body, RoleCode.WAREHOUSE_STAFF);
-  }
-
-  @Post('/sign-up/warehouse-manager')
-  warehosueManagerSignUp(@Body() body: SignUpDTO) {
-    return this.authService.registerGeneral(body, RoleCode.WAREHOUSE_MANAGER);
-  }
-  @Post('/sign-up/purchasing-staff')
-  purchasingStaffSignUp(@Body() body: SignUpDTO) {
-    return this.authService.registerGeneral(body, RoleCode.PURCHASING_STAFF);
-  }
-  @Post('/sign-up/production-department')
-  productionDepartmentSignUp(@Body() body: SignUpDTO) {
-    return this.authService.registerGeneral(
-      body,
-      RoleCode.PRODUCTION_DEPARTMENT,
-    );
-  }
-  @Post('/sign-up/inspection-department')
-  inspectionDepartmentSignUp(@Body() body: SignUpDTO) {
-    return this.authService.registerGeneral(
-      body,
-      RoleCode.INSPECTION_DEPARTMENT,
-    );
-  }
-  @Post('/sign-up/factory-director')
-  factoryDirectorSignUp(@Body() body: SignUpDTO) {
-    return this.authService.registerGeneral(body, RoleCode.FACTORY_DIRECTOR);
+    return this.authService.registerGeneral(body, body.role);
   }
 
   @Get('/refresh-token')

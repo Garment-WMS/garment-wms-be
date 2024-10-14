@@ -1,13 +1,29 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { PoDeliveryStatus, Prisma } from '@prisma/client';
-import { isUUID } from 'class-validator';
+import { PoDeliveryStatus, Prisma, PrismaClient } from '@prisma/client';
+import { DefaultArgs } from '@prisma/client/runtime/library';
+import { isUUID, ValidationError } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
+import { CreateImportRequestDetailDto } from '../import-request/dto/import-request-detail/create-import-request-detail.dto';
+import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
 import { UpdatePoDeliveryDto } from './dto/update-po-delivery.dto';
 
 @Injectable()
 export class PoDeliveryService {
-  constructor(private readonly pirsmaService: PrismaService) {}
+  updateStatus(poDeliveryId: string, PoDeliveryStatus: PoDeliveryStatus) {
+    return this.pirsmaService.poDelivery.update({
+      where: {
+        id: poDeliveryId,
+      },
+      data: {
+        status: PoDeliveryStatus,
+      },
+    });
+  }
+  constructor(
+    private readonly pirsmaService: PrismaService,
+    private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
+  ) {}
 
   includeQuery: Prisma.PoDeliveryInclude = {
     poDeliveryDetail: {
@@ -59,8 +75,21 @@ export class PoDeliveryService {
     });
   }
 
-  updatePoDelivery(id: string, updatePoDeliveryDto: UpdatePoDeliveryDto) {
-    throw new Error('Method not implemented.');
+  async updatePoDelivery(id: string, updatePoDeliveryDto: UpdatePoDeliveryDto) {
+    const result = await this.updatePoDeliveryMaterialStatus(
+      this.pirsmaService,
+      id,
+      updatePoDeliveryDto.status,
+    );
+
+    if (result) {
+      return apiSuccess(
+        HttpStatus.OK,
+        result,
+        'Update po delivery successfully',
+      );
+    }
+    return apiSuccess(HttpStatus.NOT_FOUND, null, 'Po delivery not found');
   }
 
   async updatePoDeliveryMaterialStatus(
@@ -84,7 +113,10 @@ export class PoDeliveryService {
       //If there is no other po delivery with PENDING STATUS, update the purchase order status to FINISHED
       if (!resultWithSameStatus) {
         await prisma.purchaseOrder.update({
-          where: { id: result.purchaseOrderId },
+          where: {
+            id: result.purchaseOrderId,
+            status: PoDeliveryStatus.PENDING,
+          },
           data: {
             status: PoDeliveryStatus.FINISHED,
           },
@@ -98,5 +130,110 @@ export class PoDeliveryService {
       );
     }
     return apiSuccess(HttpStatus.NOT_FOUND, null, 'Po delivery not found');
+  }
+
+  async updatePoDeliveryMaterialStatusByPoId(
+    prisma: Omit<
+      PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+    > = this.pirsmaService,
+    poId: string,
+    status: PoDeliveryStatus,
+  ) {
+    const result = await prisma.poDelivery.updateMany({
+      where: { purchaseOrderId: poId, status: PoDeliveryStatus.PENDING },
+      data: {
+        status,
+      },
+    });
+
+    return !!result.count;
+  }
+
+  async findById(id: string) {
+    if (!isUUID(id)) {
+      return null;
+    }
+    const result = await this.pirsmaService.poDelivery.findUnique({
+      where: { id },
+      include: this.includeQuery,
+    });
+    return result;
+  }
+
+  async checkIsPoDeliveryValid(
+    poDeliveryId: string,
+    importRequestDetails: CreateImportRequestDetailDto[],
+  ) {
+    const poDelivery = await this.findById(poDeliveryId);
+    let error: ValidationError[] = [];
+
+    // if (!poDelivery) {
+    //   return apiFailed(HttpStatus.NOT_FOUND, 'Po delivery not found');
+    // }
+
+    //Check if the po delivery is already finished
+    // if (poDelivery.status === PoDeliveryStatus.FINISHED) {
+    //   return apiFailed(HttpStatus.BAD_REQUEST, 'Po delivery already finished');
+    // }
+
+    // //Check if the po delivery is already cancelled
+    // if (poDelivery.status === PoDeliveryStatus.CANCELLED) {
+    //   return apiFailed(HttpStatus.BAD_REQUEST, 'Po delivery already cancelled');
+    // }
+
+    // if (poDelivery.poDeliveryDetail.length === 0) {
+    //   return apiFailed(HttpStatus.BAD_REQUEST, 'Po delivery detail is empty');
+    // }
+
+    importRequestDetails.forEach((importRequestDetail) => {
+      const isExist = poDelivery.poDeliveryDetail.some((poDeliveryDetail) => {
+        return (
+          poDeliveryDetail.materialVariantId ===
+          importRequestDetail.materialVariantId
+        );
+      });
+
+      if (!isExist) {
+        error.push({
+          property: 'materialVariantId',
+          children: [],
+          target: importRequestDetail,
+          constraints: {
+            isExist: 'Material variant not found in po delivery',
+          },
+          value: importRequestDetail.materialVariantId,
+          contexts: {},
+        });
+      } else {
+        const isValidQuantity = poDelivery.poDeliveryDetail.some(
+          (poDeliveryDetail) => {
+            return (
+              poDeliveryDetail.materialVariantId ===
+                importRequestDetail.materialVariantId &&
+              poDeliveryDetail.quantityByPack >=
+                importRequestDetail.quantityByPack
+            );
+          },
+        );
+        if (!isValidQuantity) {
+          error.push({
+            property: 'quantityByPack',
+            children: [],
+            target: importRequestDetail,
+            constraints: {
+              isExist: 'Quantity by pack is invalid',
+            },
+            value: importRequestDetail.quantityByPack,
+            contexts: {},
+          });
+        }
+      }
+    });
+
+    if (error.length > 0) {
+      return error;
+    }
+    return null;
   }
 }

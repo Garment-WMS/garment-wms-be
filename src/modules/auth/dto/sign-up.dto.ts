@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { RoleCode } from '@prisma/client';
 import {
   IsDateString,
   IsEmail,
@@ -83,4 +84,9 @@ export class SignUpDTO {
   @IsOptional()
   @IsUUID()
   cidId?: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsEnum(RoleCode)
+  role: RoleCode;
 }
