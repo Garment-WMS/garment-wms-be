@@ -2,18 +2,59 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
+import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { ImageService } from '../image/image.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private readonly imageService: ImageService,
+  ) {}
 
   includeQuery: Prisma.ProductInclude = {
     productType: true,
     productUom: true,
   };
+
+  async addImage(file: Express.Multer.File, id: string) {
+    const product = await this.findById(id);
+    let oldImageUrl = '';
+    if (!product) {
+      return apiFailed(HttpStatus.NOT_FOUND, 'Product not found');
+    }
+
+    if (product.image) {
+      oldImageUrl = product.image;
+    }
+
+    const imageUrl = await this.imageService.addImageToFirebase(
+      file,
+      id,
+      PathConstants.PRODUCT_PATH,
+    );
+    let result;
+    if (imageUrl) {
+      const updateProductDto: UpdateProductDto = {
+        image: imageUrl,
+      };
+      result = await this.update(id, updateProductDto);
+    }
+
+    //To ignore this error
+    try {
+      await this.imageService.deleteImageUrl(oldImageUrl);
+    } catch (e) {}
+
+    if (result) {
+      return apiSuccess(HttpStatus.OK, result, 'Image uploaded successfully');
+    }
+
+    return apiFailed(HttpStatus.BAD_REQUEST, 'Image not uploaded');
+  }
 
   async create(createProductDto: CreateProductDto) {
     const result = await this.prismaService.product.create({
