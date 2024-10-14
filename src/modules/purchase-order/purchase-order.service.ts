@@ -10,6 +10,7 @@ import { getPageMeta } from 'src/common/utils/utils';
 import { ExcelService } from '../excel/excel.service';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
+import { CancelledPurchaseOrderDto } from './dto/cancelled-purchase-order.dto';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { PurchaseOrderDto } from './dto/purchase-order.dto';
 import { UpdatePurchaseOrderStatusDto } from './dto/update-purchase-order-status.dto';
@@ -44,6 +45,43 @@ export class PurchaseOrderService {
       },
     },
   };
+
+  async cancelledPurchaseOrder(
+    id: string,
+    cancelPurchaseOrder: CancelledPurchaseOrderDto,
+  ) {
+    const purchaseOrder = await this.findById(id);
+    if (!purchaseOrder) {
+      return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');
+    }
+    if (purchaseOrder.status !== PurchaseOrderStatus.IN_PROGRESS) {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Purchase Order status is finished or cancelled, you cannot update the status',
+      );
+    }
+    const result = await this.prismaService.$transaction(async (prisma) => {
+      await this.poDeliveryService.updatePoDeliveryMaterialStatusByPoId(
+        prisma,
+        id,
+        PurchaseOrderStatus.CANCELLED,
+      );
+
+      const result = await prisma.purchaseOrder.update({
+        where: { id },
+        data: {
+          status: PurchaseOrderStatus.CANCELLED,
+          cancelledReason: cancelPurchaseOrder.cancelledReason,
+        },
+      });
+      return result;
+    });
+
+    if (result) {
+      return apiSuccess(HttpStatus.OK, result, 'Purchase Order cancelled');
+    }
+    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to cancel Purchase Order');
+  }
 
   async getPurchaseOrderStatistics() {
     const [total, inProgress, finished, cancelled] =
@@ -249,11 +287,25 @@ export class PurchaseOrderService {
     updatedPurchaseOrderStatusDto: UpdatePurchaseOrderStatusDto,
   ) {
     let result = null;
+
+    const purchaseOrder = await this.findById(id);
+
+    if (!purchaseOrder) {
+      return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');
+    }
+
+    if (purchaseOrder.status !== PurchaseOrderStatus.IN_PROGRESS) {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Purchase Order status is finished or cancelled, you cannot update the status',
+      );
+    }
+
     if (
       updatedPurchaseOrderStatusDto.status === PurchaseOrderStatus.CANCELLED
     ) {
       result = await this.prismaService.$transaction(async (prisma) => {
-        await this.poDeliveryService.updatePoDeliveryMaterialStatus(
+        await this.poDeliveryService.updatePoDeliveryMaterialStatusByPoId(
           prisma,
           id,
           PurchaseOrderStatus.CANCELLED,
@@ -269,27 +321,30 @@ export class PurchaseOrderService {
       return apiSuccess(HttpStatus.OK, null, 'Purchase Order cancelled');
     }
 
-    //The finished status is updated based on the status all of the po delivery
-    // if (updatedPurchaseOrderStatusDto.status === PurchaseOrderStatus.FINISHED) {
-    //   result = await this.prismaService.$transaction(async (prisma) => {
-    //     await this.poDeliveryService.updatePoDeliveryMaterialStatus(
-    //       prisma,
-    //       id,
-    //       PurchaseOrderStatus.FINISHED,
-    //     );
+    if (updatedPurchaseOrderStatusDto.status === PurchaseOrderStatus.FINISHED) {
+      result = await this.prismaService.$transaction(async (prisma) => {
+        await this.poDeliveryService.updatePoDeliveryMaterialStatusByPoId(
+          prisma,
+          id,
+          PurchaseOrderStatus.FINISHED,
+        );
 
-    //     await prisma.purchaseOrder.update({
-    //       where: { id },
-    //       data: {
-    //         status: PurchaseOrderStatus.FINISHED,
-    //       },
-    //     });
-    //   });
-    //   return apiSuccess(HttpStatus.OK, null, 'Purchase Order finished');
-    // }
+        await prisma.purchaseOrder.update({
+          where: { id },
+          data: {
+            status: PurchaseOrderStatus.FINISHED,
+          },
+        });
+      });
+      return apiSuccess(HttpStatus.OK, null, 'Purchase Order finished');
+    }
 
     if (result) {
-      return apiSuccess(HttpStatus.OK, null, 'Purchase Order updated');
+      return apiSuccess(
+        HttpStatus.OK,
+        await this.findById(id),
+        'Purchase Order updated',
+      );
     }
 
     return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid status');
@@ -310,4 +365,34 @@ export class PurchaseOrderService {
     const nextCode = `${Constant.PO_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
     return nextCode;
   }
+
+  //Get warning before changing status, this should besed on all Po Deliveries status
+  // async getStatusWarning(
+  //   id: string,
+  //   updatedPurchaseOrderStatusDto: UpdatePurchaseOrderStatusDto,
+  // ) {
+  //   const purchaseOrder = await this.findById(id);
+  //   if (!purchaseOrder) {
+  //     return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');
+  //   }
+
+  //   if (purchaseOrder.status !== PurchaseOrderStatus.IN_PROGRESS) {
+  //     return apiFailed(
+  //       HttpStatus.BAD_REQUEST,
+  //       'Purchase Order status is finished or cancelled, you cannot update the status',
+  //     );
+  //   }
+
+  //   if (
+  //     updatedPurchaseOrderStatusDto.status === PurchaseOrderStatus.CANCELLED
+  //   ) {
+  //     return apiSuccess(HttpStatus.OK, null, 'Purchase Order cancelled');
+  //   }
+
+  //   if (updatedPurchaseOrderStatusDto.status === PurchaseOrderStatus.FINISHED) {
+  //     return apiSuccess(HttpStatus.OK, null, 'Purchase Order finished');
+  //   }
+
+  //   return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid status');
+  // }
 }

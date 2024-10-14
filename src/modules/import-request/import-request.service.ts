@@ -163,7 +163,6 @@ export class ImportRequestService {
       dto.poDeliveryId,
       dto.importRequestDetails,
     );
-    console.log(isNotEmpty(errorResponse));
     if (isNotEmpty(errorResponse)) {
       throw new CustomValidationException(
         HttpStatus.BAD_REQUEST,
@@ -171,10 +170,18 @@ export class ImportRequestService {
         errorResponse,
       );
     }
-    return this.prismaService.importRequest.create({
-      data: createImportRequestInput,
-      include: this.ImportRequestInclude,
-    });
+
+    const [result, updatePoDelivery] = await this.prismaService.$transaction([
+      this.prismaService.importRequest.create({
+        data: createImportRequestInput,
+        include: this.ImportRequestInclude,
+      }),
+      this.poDeliveryService.updateStatus(
+        dto.poDeliveryId,
+        $Enums.PoDeliveryStatus.IMPORTING,
+      ),
+    ]);
+    return result;
   }
 
   update(id: string, dto: UpdateImportRequestDto) {

@@ -26,6 +26,7 @@ import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { UpdatePurchaseOrderStatusDto } from './dto/update-purchase-order-status.dto';
 import { PurchaseOrderService } from './purchase-order.service';
+import { CancelledPurchaseOrderDto } from './dto/cancelled-purchase-order.dto';
 
 @Controller('purchase-order')
 export class PurchaseOrderController {
@@ -78,7 +79,7 @@ export class PurchaseOrderController {
   getPurchaseOrderStatus() {
     return this.purchaseOrderService.getPurchaseOrderStatus();
   }
-  @Get('statistics')
+  @Get('statistic')
   getPurchaseOrderStatistics() {
     return this.purchaseOrderService.getPurchaseOrderStatistics();
   }
@@ -122,6 +123,17 @@ export class PurchaseOrderController {
     return this.purchaseOrderService.updatePurchaseOrderStatus(
       id,
       updatePurchaseOrderStatusDto,
+    );
+  }
+  @Patch(':id/cancel')
+  @UsePipes(new ValidationPipe())
+  async cancelPurchaseOrder(
+    @Param('id', CustomUUIDPipe) id: string,
+    @Body() cancelPurchaseOrder: CancelledPurchaseOrderDto,
+  ) {
+    return this.purchaseOrderService.cancelledPurchaseOrder(
+      id,
+      cancelPurchaseOrder,
     );
   }
 }
