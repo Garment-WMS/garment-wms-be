@@ -5,14 +5,17 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateMaterialDto } from './dto/create-material.dto';
-import { MaterialService } from './material.service';
 import { UpdateMaterialDto } from './dto/update-material.dto';
+import { MaterialService } from './material.service';
 
 @Controller('material')
 @ApiTags('Material')
@@ -28,6 +31,15 @@ export class MaterialController {
   @Get()
   getAllMaterial() {
     return this.materialService.findAll();
+  }
+
+  @Post(':id/image')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.materialService.addImage(file, id);
   }
 
   @Get(':id')

@@ -2,6 +2,7 @@ model Material {
   id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   materialTypeId             String                       @map("material_type_id") @db.Uuid
   materialUomId              String?                      @map("material_uom_id") @db.Uuid
+  image                      String?                      @map("image") @db.VarChar
   name                       String                       @map("name") @db.VarChar
   code                       String                       @unique @map("code") @db.VarChar
   reorderLevel               Float                        @map("reorder_level")

@@ -52,7 +52,6 @@ export class ImageService {
       const downloadURL = await getDownloadURL(snapshot.ref);
       return downloadURL;
     } catch (error) {
-      console.error('Error uploading file:', error);
       return error;
     }
   }
@@ -214,7 +213,22 @@ export class ImageService {
       throw error;
     }
   }
+  async deleteImageUrl(imageUrl: string): Promise<void> {
+    try {
+      const storage = getStorage();
+      const decodedUrl = decodeURIComponent(imageUrl);
+      console.log('Decoded URL:', decodedUrl);
+      const baseUrl =
+        'https://firebasestorage.googleapis.com/v0/b/tro-tot.appspot.com/o/';
+      const filePath = decodedUrl.replace(baseUrl, '').split('?')[0];
 
+      const fileRef = ref(storage, filePath);
+      await deleteObject(fileRef);
+      console.log('Image deleted successfully');
+    } catch (error) {
+      console.error('Error deleting image:', error);
+    }
+  }
   async getImageWithPathAndImageName(
     id: string,
     fileName: string,
