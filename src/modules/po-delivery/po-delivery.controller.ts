@@ -7,10 +7,12 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { UpdatePoDeliveryDto } from './dto/update-po-delivery.dto';
 import { PoDeliveryService } from './po-delivery.service';
 
+@ApiTags('po-delivery')
 @Controller('po-delivery')
 export class PoDeliveryController {
   constructor(private readonly poDeliveryService: PoDeliveryService) {}

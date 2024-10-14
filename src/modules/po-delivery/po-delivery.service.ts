@@ -1,14 +1,25 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { PoDeliveryStatus, Prisma } from '@prisma/client';
+import { PoDeliveryStatus, Prisma, PrismaClient } from '@prisma/client';
+import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isUUID, ValidationError } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
-import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { apiSuccess } from 'src/common/dto/api-response';
 import { CreateImportRequestDetailDto } from '../import-request/dto/import-request-detail/create-import-request-detail.dto';
 import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
 import { UpdatePoDeliveryDto } from './dto/update-po-delivery.dto';
 
 @Injectable()
 export class PoDeliveryService {
+  updateStatus(poDeliveryId: string, PoDeliveryStatus: PoDeliveryStatus) {
+    return this.pirsmaService.poDelivery.update({
+      where: {
+        id: poDeliveryId,
+      },
+      data: {
+        status: PoDeliveryStatus,
+      },
+    });
+  }
   constructor(
     private readonly pirsmaService: PrismaService,
     private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
@@ -64,8 +75,21 @@ export class PoDeliveryService {
     });
   }
 
-  updatePoDelivery(id: string, updatePoDeliveryDto: UpdatePoDeliveryDto) {
-    throw new Error('Method not implemented.');
+  async updatePoDelivery(id: string, updatePoDeliveryDto: UpdatePoDeliveryDto) {
+    const result = await this.updatePoDeliveryMaterialStatus(
+      this.pirsmaService,
+      id,
+      updatePoDeliveryDto.status,
+    );
+
+    if (result) {
+      return apiSuccess(
+        HttpStatus.OK,
+        result,
+        'Update po delivery successfully',
+      );
+    }
+    return apiSuccess(HttpStatus.NOT_FOUND, null, 'Po delivery not found');
   }
 
   async updatePoDeliveryMaterialStatus(
@@ -89,7 +113,10 @@ export class PoDeliveryService {
       //If there is no other po delivery with PENDING STATUS, update the purchase order status to FINISHED
       if (!resultWithSameStatus) {
         await prisma.purchaseOrder.update({
-          where: { id: result.purchaseOrderId },
+          where: {
+            id: result.purchaseOrderId,
+            status: PoDeliveryStatus.PENDING,
+          },
           data: {
             status: PoDeliveryStatus.FINISHED,
           },
@@ -103,6 +130,24 @@ export class PoDeliveryService {
       );
     }
     return apiSuccess(HttpStatus.NOT_FOUND, null, 'Po delivery not found');
+  }
+
+  async updatePoDeliveryMaterialStatusByPoId(
+    prisma: Omit<
+      PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+    > = this.pirsmaService,
+    poId: string,
+    status: PoDeliveryStatus,
+  ) {
+    const result = await prisma.poDelivery.updateMany({
+      where: { purchaseOrderId: poId, status: PoDeliveryStatus.PENDING },
+      data: {
+        status,
+      },
+    });
+
+    return !!result.count;
   }
 
   async findById(id: string) {
@@ -122,7 +167,6 @@ export class PoDeliveryService {
   ) {
     const poDelivery = await this.findById(poDeliveryId);
     let error: ValidationError[] = [];
-
 
     // if (!poDelivery) {
     //   return apiFailed(HttpStatus.NOT_FOUND, 'Po delivery not found');
@@ -186,6 +230,10 @@ export class PoDeliveryService {
         }
       }
     });
-    return error;
+
+    if (error.length > 0) {
+      return error;
+    }
+    return null;
   }
 }
