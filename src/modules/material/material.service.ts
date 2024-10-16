@@ -196,5 +196,5 @@ export const materialInclude: Prisma.MaterialInclude = {
   materialAttribute: true,
   materialType: true,
   materialUom: true,
-  MaterialVariant: true,
+  materialVariant: true,
 };
