@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { MaterialService } from '../material/material.service';
@@ -39,6 +39,7 @@ export class MaterialReceiptService {
       inspectionReportId: string;
       quantityByPack: number | null;
     }[],
+    prismaInstance: PrismaClient = this.prismaService,
   ) {
     const materialReceiptsInput: Prisma.MaterialReceiptCreateManyInput[] =
       inspectionReportDetail.map((detail) => {
@@ -49,7 +50,7 @@ export class MaterialReceiptService {
         };
       });
 
-    return this.prismaService.materialReceipt.createMany({
+    return prismaInstance.materialReceipt.createMany({
       data: materialReceiptsInput,
     });
   }

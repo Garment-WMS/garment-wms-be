@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { MaterialService } from '../material/material.service';
@@ -19,12 +20,50 @@ export class InventoryStockService {
   }
 
   async findAll() {
-    const inventoryStocks = await this.materialService.findAllWithoutResponse();
+    const inventoryStocks = await this.materialService.findMaterialStock();
+    inventoryStocks.forEach((material: any) => {
+      material.numberOfMaterialVariant = material.materialVariant.length;
+
+      if (material.numberOfMaterialVariant > 0) {
+        material.onHand = material.materialVariant.reduce(
+          (totalAcc, materialVariantEl) => {
+            let variantTotal = 0;
+            if (materialVariantEl.inventoryStock) {
+              variantTotal = materialVariantEl.inventoryStock.quantityByPack;
+            }
+            return totalAcc + variantTotal;
+          },
+          0,
+        );
+      } else {
+        material.onHand = 0;
+      }
+    });
+
     return apiSuccess(
       HttpStatus.OK,
       inventoryStocks,
       'Get all inventory stock successfully',
     );
+  }
+
+  updateMaterialStock(
+    materialVariantId: string,
+    quantity: number,
+    prismaInstance: PrismaClient = this.prismaService,
+  ) {
+    return prismaInstance.inventoryStock.upsert({
+      where: {
+        materialVariantId: materialVariantId,
+      },
+      update: {
+        quantityByPack: { increment: quantity },
+      },
+      create: {
+        materialVariantId,
+        quantityByPack: quantity,
+      },
+    });
   }
 
   findOne(id: number) {

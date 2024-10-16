@@ -170,6 +170,9 @@ export class MaterialService {
   findMaterialStock() {
     return this.prismaService.material.findMany({
       include: {
+        materialAttribute: true,
+        materialType: true,
+        materialUom: true,
         materialVariant: {
           include: {
             inventoryStock: true,

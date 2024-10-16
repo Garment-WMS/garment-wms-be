@@ -1,8 +1,9 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { PoDeliveryStatus, Prisma } from '@prisma/client';
+import { PoDeliveryStatus, Prisma, PrismaClient } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { InspectionReportService } from '../inspection-report/inspection-report.service';
+import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreateImportReceiptDto } from './dto/create-import-receipt.dto';
@@ -15,6 +16,7 @@ export class ImportReceiptService {
     private readonly materialReceiptService: MaterialReceiptService,
     private readonly inspectionReportService: InspectionReportService,
     private readonly poDeliveryService: PoDeliveryService,
+    private readonly inventoryStockService: InventoryStockService,
   ) {}
 
   includeQuery: Prisma.ImportReceiptInclude = {
@@ -55,29 +57,45 @@ export class ImportReceiptService {
       finishAt: createImportReceiptDto.finishAt,
     };
 
-    const importReceipt = await this.prismaService.importReceipt.create({
-      data: importReceiptInput,
-    });
+    const result = await this.prismaService.$transaction(
+      async (prismaInstance: PrismaClient) => {
+        const importReceipt = await prismaInstance.importReceipt.create({
+          data: importReceiptInput,
+        });
+        if (importReceipt) {
+          const materialReceipts =
+            await this.materialReceiptService.createMaterialReceipts(
+              importReceipt.id,
+              inspectionReport.inspectionReportDetail,
+              prismaInstance,
+            );
 
-    if (importReceipt) {
-      const materialReceipts =
-        await this.materialReceiptService.createMaterialReceipts(
-          importReceipt.id,
-          inspectionReport.inspectionReportDetail,
-        );
-      const poDeliveryUpdate =
-        await this.poDeliveryService.updatePoDeliveryMaterialStatus(
-          this.prismaService,
-          inspectionReport.inspectionRequest.importRequest.poDeliveryId,
-          PoDeliveryStatus.FINISHED,
-        );
-      if (materialReceipts && poDeliveryUpdate) {
-        return apiSuccess(
-          HttpStatus.CREATED,
-          importReceipt,
-          'Create import receipt successfully',
-        );
-      }
+          if (materialReceipts) {
+            inspectionReport.inspectionReportDetail.forEach(async (detail) => {
+              await this.inventoryStockService.updateMaterialStock(
+                detail.materialVariantId,
+                detail.approvedQuantityByPack,
+                prismaInstance,
+              );
+            });
+          }
+
+          const poDeliveryUpdate =
+            await this.poDeliveryService.updatePoDeliveryMaterialStatus(
+              inspectionReport.inspectionRequest.importRequest.poDeliveryId,
+              PoDeliveryStatus.FINISHED,
+              prismaInstance,
+            );
+        }
+        return importReceipt;
+      },
+    );
+    if (result) {
+      return apiSuccess(
+        HttpStatus.CREATED,
+        result,
+        'Create import receipt successfully',
+      );
     }
     return apiFailed(
       HttpStatus.INTERNAL_SERVER_ERROR,
