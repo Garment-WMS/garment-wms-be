@@ -1,7 +1,7 @@
 model InspectionReport {
   id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   inspectionRequestId    String                   @unique @map("inspection_request_id") @db.Uuid
-  inspectionDepartmentId String                   @unique @map("inspection_department_id") @db.Uuid
+  inspectionDepartmentId String                   @map("inspection_department_id") @db.Uuid
   code                   String                   @unique @db.VarChar
   createdAt              DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)
   updateAt               DateTime?                @updatedAt @map("updated_at") @db.Timestamptz(6)
