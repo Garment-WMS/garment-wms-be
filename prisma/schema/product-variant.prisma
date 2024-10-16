@@ -20,4 +20,5 @@ model ProductVariant {
     quarterlyProductionDetail QuarterlyProductionDetail[]
 
     @@map("product_variant")
+    InventoryStock InventoryStock[]
 }

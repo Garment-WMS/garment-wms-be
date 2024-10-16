@@ -12,9 +12,9 @@ model Material {
   materialType               MaterialType                 @relation(fields: [materialTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialAttribute          MaterialAttribute[]
   materialInspectionCriteria MaterialInspectionCriteria[]
-  MaterialVariant            MaterialVariant[]
+  materialVariant            MaterialVariant[]
   materialUom                MaterialUom?                 @relation(fields: [materialUomId], references: [id])
-  ProductFormulaMaterial     ProductFormulaMaterial[]
+  productFormulaMaterial     ProductFormulaMaterial[]
 
   @@map("material")
 }
