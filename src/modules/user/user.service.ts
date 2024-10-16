@@ -1,6 +1,8 @@
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable } from '@nestjs/common';
 import { Prisma, RoleCode, User } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
@@ -8,6 +10,33 @@ import { ImageService } from '../image/image.service';
 
 @Injectable()
 export class UserService {
+  async search(findOptions: GeneratedFindOptions<Prisma.UserWhereInput>) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        skip: offset,
+        take: limit,
+        where: findOptions?.where,
+        orderBy: findOptions?.orderBy,
+        include: userInclude,
+      }),
+      this.prisma.user.count(
+        findOptions?.where
+          ? {
+              where: findOptions.where,
+            }
+          : undefined,
+      ),
+    ]);
+    return {
+      data,
+      total,
+    };
+  }
+
+  async update() {}
+
   async IsUserRoleExist(value: any, role: RoleCode) {
     console.log(value, role);
     switch (role) {
@@ -177,3 +206,12 @@ export class UserService {
     });
   }
 }
+
+export const userInclude: Prisma.UserInclude = {
+  factoryDirector: true,
+  warehouseStaff: true,
+  inspectionDepartment: true,
+  purchasingStaff: true,
+  productionDepartment: true,
+  warehouseManager: true,
+};

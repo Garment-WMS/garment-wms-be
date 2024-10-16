@@ -40,9 +40,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       responseBody = apiFailed(
         exception.getStatus(),
-        'exception.message',
+        exception.message,
         exception.getResponse(),
       );
+    } else if (
+      exception instanceof Error &&
+      exception.message.includes('is not filterable')
+    ) {
+      responseBody = apiFailed(HttpStatus.BAD_REQUEST, exception.message);
     } else {
       responseBody = apiFailed(
         HttpStatus.INTERNAL_SERVER_ERROR,
