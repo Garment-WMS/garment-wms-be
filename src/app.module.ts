@@ -38,6 +38,9 @@ import { QuarterlyProductPlanModule } from './modules/quarterly-product-plan/qua
 import { SupplierModule } from './modules/supplier/supplier.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
+import { MaterialReceiptModule } from './modules/material-receipt/material-receipt.module';
+import { InventoryReportModule } from './modules/inventory-report/inventory-report.module';
+import { InventoryStockModule } from './modules/inventory-stock/inventory-stock.module';
 
 @Module({
   imports: [
@@ -75,6 +78,9 @@ import { UserModule } from './modules/user/user.module';
     ImportReceiptModule,
     InspectionReportModule,
     InspectionRequestModule,
+    MaterialReceiptModule,
+    InventoryReportModule,
+    InventoryStockModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

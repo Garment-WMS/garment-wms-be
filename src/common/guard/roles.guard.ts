@@ -35,7 +35,6 @@ export class RolesGuard implements CanActivate {
     const user: Partial<AuthenUser> = request.user;
     let query = '';
     for (const role of requiredRoles) {
-      console.log(user);
       switch (role) {
         case RoleCode.WAREHOUSE_STAFF: {
           if (user?.purchasingStaffId) {

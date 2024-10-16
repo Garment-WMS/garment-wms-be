@@ -119,9 +119,39 @@ export class MaterialService {
         materialAttribute: true,
         materialType: true,
         materialUom: true,
+        materialVariant: true,
       },
     });
     return apiSuccess(HttpStatus.OK, result, 'List of Material');
+  }
+
+  findAllWithoutResponse() {
+    const result = this.prismaService.material.findMany({
+      include: {
+        materialAttribute: true,
+        materialType: true,
+        materialUom: true,
+        materialVariant: {
+          include: {
+            materialReceipt: true,
+            inventoryStock: true,
+          },
+        },
+      },
+    });
+    return result;
+  }
+
+  findMaterialStock() {
+    return this.prismaService.material.findMany({
+      include: {
+        materialVariant: {
+          include: {
+            inventoryStock: true,
+          },
+        },
+      },
+    });
   }
 
   async findByIdWithResponse(id: string) {
