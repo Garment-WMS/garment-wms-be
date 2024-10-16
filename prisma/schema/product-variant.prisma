@@ -18,7 +18,7 @@ model ProductVariant {
     inspectionReportDetail    InspectionReportDetail[]
     productReceipt            ProductReceipt[]
     quarterlyProductionDetail QuarterlyProductionDetail[]
+    InventoryStock            InventoryStock?
 
     @@map("product_variant")
-    InventoryStock InventoryStock[]
 }

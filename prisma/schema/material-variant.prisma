@@ -19,7 +19,7 @@ model MaterialVariant {
   materialExportDetail        MaterialExportDetail[]
   materialReceipt             MaterialReceipt[]
   exportMaterialRequestDetail ExportMaterialRequestDetail[]
-  inventoryStock              InventoryStock[]
+  inventoryStock              InventoryStock?
 
   @@map("material_variant")
 }

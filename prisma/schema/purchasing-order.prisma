@@ -30,6 +30,7 @@ enum PurchaseOrderStatus {
   IN_PROGRESS
   CANCELLED
   FINISHED
+  
 
   @@map("purchase_order_status")
 }
