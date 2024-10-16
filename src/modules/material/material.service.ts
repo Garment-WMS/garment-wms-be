@@ -1,9 +1,13 @@
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { DataResponse } from 'src/common/dto/data-response';
+import { getPageMeta } from 'src/common/utils/utils';
 import { ImageService } from '../image/image.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
@@ -14,6 +18,32 @@ export class MaterialService {
     private readonly prismaService: PrismaService,
     private readonly imageService: ImageService,
   ) {}
+
+  async search(
+    findOptions: GeneratedFindOptions<Prisma.MaterialScalarWhereWithAggregatesInput>,
+  ) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.material.findMany({
+        skip: offset,
+        take: limit,
+        where: findOptions?.where,
+        orderBy: findOptions?.orderBy,
+        include: materialInclude,
+      }),
+      this.prismaService.material.count({
+        where: findOptions?.where,
+      }),
+    ]);
+
+    const dataResponse: DataResponse = {
+      data,
+      pageMeta: getPageMeta(total, offset, limit),
+    };
+
+    return apiSuccess(HttpStatus.OK, dataResponse, 'List of Material');
+  }
 
   async addImage(file: Express.Multer.File, id: string) {
     const material = await this.findById(id);
@@ -115,11 +145,7 @@ export class MaterialService {
 
   async findAll() {
     const result = await this.prismaService.material.findMany({
-      include: {
-        materialAttribute: true,
-        materialType: true,
-        materialUom: true,
-      },
+      include: materialInclude,
     });
     return apiSuccess(HttpStatus.OK, result, 'List of Material');
   }
@@ -138,6 +164,7 @@ export class MaterialService {
     }
     const result = await this.prismaService.material.findFirst({
       where: { id },
+      include: materialInclude,
     });
     return result;
   }
@@ -145,6 +172,7 @@ export class MaterialService {
   async findByMaterialCode(materialCode: string) {
     const result = await this.prismaService.material.findFirst({
       where: { code: materialCode },
+      include: materialInclude,
     });
     if (result) {
       return apiSuccess(HttpStatus.OK, result, 'Material found');
@@ -155,6 +183,7 @@ export class MaterialService {
   async findByMaterialType(materialType: string) {
     const result = await this.prismaService.material.findMany({
       where: { materialType: { id: materialType } },
+      include: materialInclude,
     });
     if (result) {
       return apiSuccess(HttpStatus.OK, result, 'Material found');
@@ -162,3 +191,10 @@ export class MaterialService {
     return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
   }
 }
+
+export const materialInclude: Prisma.MaterialInclude = {
+  materialAttribute: true,
+  materialType: true,
+  materialUom: true,
+  MaterialVariant: true,
+};
