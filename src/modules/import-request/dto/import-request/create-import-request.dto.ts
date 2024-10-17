@@ -76,7 +76,7 @@ export class CreateImportRequestDto {
   @ApiProperty({ required: true, type: [CreateImportRequestDetailDto] })
   @ValidateNested({ each: true })
   @IsArray()
-  @UniqueInArray(['materialVariantId'])
+  @UniqueInArray(['materialVariantId', 'productIdVariantId'])
   @Type(() => CreateImportRequestDetailDto)
   importRequestDetails: CreateImportRequestDetailDto[];
 
