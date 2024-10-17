@@ -13,10 +13,11 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 import { apiSuccess } from 'src/common/dto/api-response';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
-import { SearchImportQueryDto } from './dto/import-request/search-import-query.dto';
+import { PurchasingStaffProcessDto } from './dto/import-request/purchasing-staff-process.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 import { ImportRequestService } from './import-request.service';
 import { IsImportRequestExistPipe } from './pipe/is-import-request-exist.pipe';
@@ -38,10 +39,7 @@ export class ImportRequestController {
   @Get()
   async search(
     @Query(
-      new DirectFilterPipe<
-        SearchImportQueryDto,
-        Prisma.ImportRequestWhereInput
-      >(
+      new DirectFilterPipe<any, Prisma.ImportRequestWhereInput>(
         [
           'id',
           'createdAt',
@@ -51,8 +49,9 @@ export class ImportRequestController {
           'warehouseStaffId',
           'poDeliveryId',
           'status',
+          'inspectionRequest',
         ],
-        [],
+        ['inspectionRequest.inspectionReport.id'],
         [
           { createdAt: 'desc' },
           { id: 'asc' },
@@ -65,7 +64,7 @@ export class ImportRequestController {
         ],
       ),
     )
-    filterDto: SearchImportQueryDto,
+    filterDto: FilterDto<Prisma.ImportRequestWhereInput>,
   ) {
     return apiSuccess(
       HttpStatus.OK,
@@ -132,6 +131,22 @@ export class ImportRequestController {
       HttpStatus.OK,
       await this.importRequestService.managerProcess(id, managerProcessDto),
       'Import request manager process successfully',
+    );
+  }
+
+  @Post(':id/purchasing-staff-process')
+  async purchasingStaffProcess(
+    @Param('id', IsImportRequestExistPipe)
+    id: string,
+    @Body() purchasingStaffProcessDto: PurchasingStaffProcessDto,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.importRequestService.purchasingStaffRequestInspection(
+        id,
+        purchasingStaffProcessDto,
+      ),
+      'Import request purchasing staff process successfully',
     );
   }
 }

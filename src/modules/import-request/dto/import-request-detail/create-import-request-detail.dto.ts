@@ -4,9 +4,11 @@ import {
   IsInt,
   IsOptional,
   IsUUID,
+  Min,
   ValidateIf,
 } from 'class-validator';
 import { IsMaterialVariantExist } from 'src/modules/material-variant/validator/is-material-variant-exist.validator';
+import { IsProductVariantExist } from 'src/modules/product-variant/validator/is-product-variant-exist.validator';
 
 export class CreateImportRequestDetailDto {
   @ApiProperty({ required: false })
@@ -24,9 +26,11 @@ export class CreateImportRequestDetailDto {
   @ValidateIf((o) => o.materialVariantId === undefined)
   @IsUUID()
   @ArrayUnique()
+  @IsProductVariantExist()
   productIdVariantId?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: true })
   @IsInt()
-  quantityByPack?: number;
+  @Min(1)
+  quantityByPack: number;
 }

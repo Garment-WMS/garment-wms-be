@@ -4,7 +4,7 @@ model InspectionRequest {
   inspectionDepartmentId String                  @map("inspection_department_id") @db.Uuid
   importRequestId        String?                 @map("import_request_id") @db.Uuid
   note                   String?                 @map("note")
-  status                 InspectionRequestStatus @default(PENDING) @map("status")
+  status                 InspectionRequestStatus @default(INSPECTING) @map("status")
   createdAt              DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime?               @map("deleted_at") @db.Timestamptz(6)
@@ -17,7 +17,6 @@ model InspectionRequest {
 }
 
 enum InspectionRequestStatus {
-  PENDING
   CANCELLED
   INSPECTING
   INSPECTED

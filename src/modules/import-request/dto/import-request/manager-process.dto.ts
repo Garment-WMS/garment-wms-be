@@ -1,7 +1,11 @@
 import { ApiProperty, PickType } from '@nestjs/swagger';
-import { $Enums } from '@prisma/client';
 import { IsEnum, IsNotEmpty } from 'class-validator';
 import { UpdateImportRequestDto } from './update-import-request.dto';
+
+export enum ManagerAction {
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
 
 export class ManagerProcessDto extends PickType(UpdateImportRequestDto, [
   'description',
@@ -9,6 +13,6 @@ export class ManagerProcessDto extends PickType(UpdateImportRequestDto, [
 ]) {
   @ApiProperty({ required: true })
   @IsNotEmpty()
-  @IsEnum($Enums.ImportRequestStatus)
+  @IsEnum(ManagerAction)
   action: string;
 }

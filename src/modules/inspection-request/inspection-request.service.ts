@@ -59,13 +59,21 @@ export class InspectionRequestService {
       status: createInspectionRequestDto.status,
       note: createInspectionRequestDto.note,
     };
-
-    const inspectionRequest = await this.prismaService.inspectionRequest.create(
-      {
-        data: inspectionRequestCreateInput,
-        include: inspectionRequestInclude,
-      },
-    );
+    const [inspectionRequest, importRequest] =
+      await this.prismaService.$transaction([
+        this.prismaService.inspectionRequest.create({
+          data: inspectionRequestCreateInput,
+          include: inspectionRequestInclude,
+        }),
+        this.prismaService.importRequest.update({
+          where: {
+            id: createInspectionRequestDto.importRequestId,
+          },
+          data: {
+            status: $Enums.ImportRequestStatus.INSPECTING,
+          },
+        }),
+      ]);
     return inspectionRequest;
   }
 

@@ -75,22 +75,14 @@ export class PrismaService
       return next(params);
     }
     if (
-      (params.action.startsWith('find') ||
-        params.action === 'aggregate' ||
-        params.action === 'count' ||
-        params.action === 'groupBy') &&
-      !params.args?.['where']?.['deletedAt']
+      params.action.startsWith('find') ||
+      params.action === 'aggregate' ||
+      params.action === 'count' ||
+      params.action === 'groupBy'
     ) {
-      return next({
-        ...params,
-        args: {
-          ...params.args,
-          where: {
-            ...params.args?.['where'],
-            deletedAt: null,
-          },
-        },
-      });
+      addDeletedAtNull(params.args);
+
+      return next(params);
     }
     return next(params);
   };
@@ -186,3 +178,18 @@ export class PrismaService
     this.logger.log('Database disconnected');
   }
 }
+
+export const addDeletedAtNull = (obj: any) => {
+  if (obj && typeof obj === 'object') {
+    Object.keys(obj).forEach((key) => {
+      if (key === 'where' && typeof obj[key] === 'object') {
+        if (!obj[key].deletedAt) {
+          obj[key].deletedAt = null;
+        }
+        addDeletedAtNull(obj[key]);
+      } else if (typeof obj[key] === 'object') {
+        addDeletedAtNull(obj[key]);
+      }
+    });
+  }
+};

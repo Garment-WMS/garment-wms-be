@@ -1,5 +1,10 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { $Enums, Prisma, PrismaClient } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isNotEmpty } from 'class-validator';
@@ -11,6 +16,7 @@ import { nonExistUUID } from 'src/common/utils/utils';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
+import { PurchasingStaffProcessDto } from './dto/import-request/purchasing-staff-process.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 
 @Injectable()
@@ -251,10 +257,60 @@ export class ImportRequestService {
   }
 
   // INSPECTING
-  async purchasingStaffRequestInspection() {}
-
-  // INSPECTED
-  async inspectionStaffAddReport() {}
+  async purchasingStaffRequestInspection(
+    id: string,
+    purchasingStaffProcessDto: PurchasingStaffProcessDto,
+  ) {
+    const importRequest = await this.prismaService.importRequest.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    if (
+      purchasingStaffProcessDto.action == $Enums.ImportRequestStatus.CANCELED
+    ) {
+      const allowCancel: $Enums.ImportRequestStatus[] = [
+        $Enums.ImportRequestStatus.ARRIVED,
+        $Enums.ImportRequestStatus.INSPECTED,
+        $Enums.ImportRequestStatus.PENDING,
+      ];
+      if (!allowCancel.includes(importRequest.status)) {
+        throw new BadRequestException(
+          `Purchasing staff only can cancel import request with status ${allowCancel.join(
+            ', ',
+          )}`,
+        );
+      }
+      return await this.prismaService.importRequest.update({
+        where: { id: id },
+        data: {
+          status: $Enums.ImportRequestStatus.CANCELED,
+          cancelReason: purchasingStaffProcessDto.cancelReason,
+        },
+      });
+    } else if (
+      purchasingStaffProcessDto.action == $Enums.ImportRequestStatus.PENDING
+    ) {
+      const allowPending: $Enums.ImportRequestStatus[] = [
+        $Enums.ImportRequestStatus.INSPECTED,
+      ];
+      if (!allowPending.includes(importRequest.status)) {
+        throw new BadRequestException(
+          `Purchasing staff only can pending import request with status ${allowPending.join(
+            ', ',
+          )}`,
+        );
+      }
+      return await this.prismaService.importRequest.update({
+        where: { id: id },
+        data: {
+          status: $Enums.ImportRequestStatus.PENDING,
+          description: purchasingStaffProcessDto.description,
+        },
+      });
+    } else {
+      throw new BadRequestException('Action not allowed');
+    }
+  }
 
   // REJECTED
   // APPROVED
@@ -264,11 +320,11 @@ export class ImportRequestService {
       select: { status: true },
     });
 
-    // if (importRequest.status !== $Enums.ImportRequestStatus.PENDING) {
-    //   throw new BadRequestException(
-    //     'Manager only can process PENDING import request',
-    //   );
-    // }
+    if (importRequest.status !== $Enums.ImportRequestStatus.PENDING) {
+      throw new BadRequestException(
+        `Manager only can process ${$Enums.ImportRequestStatus.PENDING} import request`,
+      );
+    }
 
     switch (managerProcess.action) {
       case $Enums.ImportRequestStatus.APPROVED:
@@ -307,6 +363,7 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
             include: {
               materialType: true,
               materialAttribute: true,
+              materialInspectionCriteria: true,
             },
           },
         },

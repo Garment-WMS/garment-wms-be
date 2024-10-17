@@ -29,10 +29,7 @@ export class InspectionRequestController {
   @Get()
   async search(
     @Query(
-      new DirectFilterPipe<
-        UpdateInspectionRequestDto,
-        Prisma.InspectionRequestWhereInput
-      >(
+      new DirectFilterPipe<any, Prisma.InspectionRequestWhereInput>(
         [
           'id',
           'inspectionDepartmentId',
