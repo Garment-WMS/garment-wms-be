@@ -21,19 +21,19 @@ export class InventoryStockService {
   }
 
   async findAll() {
-    // const inventoryStocks = await this.materialService.findMaterialStock();
-    const inventoryStocks = await this.prismaService.material.findMany({
-      include: {
-        materialAttribute: true,
-        materialType: true,
-        materialUom: true,
-        materialVariant: {
-          include: {
-            inventoryStock: true,
-          },
-        },
-      },
-    });
+    const inventoryStocks = await this.materialService.findMaterialStock();
+    // const inventoryStocks = await this.prismaService.material.findMany({
+    //   include: {
+    //     materialAttribute: true,
+    //     materialType: true,
+    //     materialUom: true,
+    //     materialVariant: {
+    //       include: {
+    //         inventoryStock: true,
+    //       },
+    //     },
+    //   },
+    // });
 
     inventoryStocks.forEach((material: MaterialStock) => {
       material.numberOfMaterialVariant = material.materialVariant.length;
