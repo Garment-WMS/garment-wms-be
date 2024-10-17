@@ -5,6 +5,7 @@ import { apiSuccess } from 'src/common/dto/api-response';
 import { MaterialService } from '../material/material.service';
 import { ProductService } from '../product/product.service';
 import { CreateInventoryStockDto } from './dto/create-inventory-stock.dto';
+import { MaterialStock } from './dto/stock-material.dto';
 import { UpdateInventoryStockDto } from './dto/update-inventory-stock.dto';
 
 @Injectable()
@@ -20,24 +21,33 @@ export class InventoryStockService {
   }
 
   async findAll() {
-    const inventoryStocks = await this.materialService.findMaterialStock();
-    inventoryStocks.forEach((material: any) => {
-      material.numberOfMaterialVariant = material.materialVariant.length;
-
-      if (material.numberOfMaterialVariant > 0) {
-        material.onHand = material.materialVariant.reduce(
-          (totalAcc, materialVariantEl) => {
-            let variantTotal = 0;
-            if (materialVariantEl.inventoryStock) {
-              variantTotal = materialVariantEl.inventoryStock.quantityByPack;
-            }
-            return totalAcc + variantTotal;
+    // const inventoryStocks = await this.materialService.findMaterialStock();
+    const inventoryStocks = await this.prismaService.material.findMany({
+      include: {
+        materialAttribute: true,
+        materialType: true,
+        materialUom: true,
+        materialVariant: {
+          include: {
+            inventoryStock: true,
           },
-          0,
-        );
-      } else {
-        material.onHand = 0;
-      }
+        },
+      },
+    });
+
+    inventoryStocks.forEach((material: MaterialStock) => {
+      material.numberOfMaterialVariant = material.materialVariant.length;
+      material.onHand = material?.materialVariant?.reduce(
+        (totalAcc, materialVariantEl) => {
+          let variantTotal = 0;
+          //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+          if (materialVariantEl.inventoryStock) {
+            variantTotal = materialVariantEl.inventoryStock.quantityByPack;
+          }
+          return totalAcc + variantTotal;
+        },
+        0,
+      );
     });
 
     return apiSuccess(

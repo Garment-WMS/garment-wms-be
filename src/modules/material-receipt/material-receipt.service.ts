@@ -60,84 +60,52 @@ export class MaterialReceiptService {
   }
 
   async findAll() {
-    const allMaterial = await this.materialService.findAllWithoutResponse();
-    const allMaterialReceipt =
-      await this.prismaService.materialReceipt.findMany({
-        include: this.includeQuery,
-      });
-
-    const acc = allMaterial.reduce((acc, material) => {
-      acc[material.id] = {
-        ...material,
-        materialVariant: [],
-      };
-      return acc;
-    }, {});
-
-    allMaterialReceipt.forEach((materialReceipt) => {
-      const materialId = materialReceipt.materialVariant.materialId;
-      const materialVariantId = materialReceipt.materialVariant.id;
-
-      if (!acc[materialId]) {
-        acc[materialId] = {
-          ...allMaterial.find((item) => item.id === materialId),
-          materialVariant: [],
-        };
-      }
-
-      const variantIndex = acc[materialId].materialVariant.findIndex(
-        (variant) => variant.id === materialVariantId,
-      );
-
-      if (variantIndex === -1) {
-        acc[materialId].materialVariant.push({
-          ...materialReceipt.materialVariant,
-          onHand: materialReceipt.quantityByPack,
-        });
-      } else {
-        acc[materialId].variants[variantIndex].onHand +=
-          materialReceipt.quantityByPack;
-      }
-    });
-
-    const result = Object.values(acc);
-    return result;
-  }
-
-  //Will have to get all export material receipt and inventory report to calculate onHand
-  async findAll2() {
-    const allMaterial = await this.materialService.findAllWithoutResponse();
-
-    allMaterial.forEach((material: any) => {
-      material.numberOfMaterialVariant = material.materialVariant.length;
-
-      if (material.numberOfMaterialVariant > 0) {
-        material.onHand = material.materialVariant.reduce(
-          (totalAcc, materialVariantEl) => {
-            const variantTotal = materialVariantEl.materialReceipt.reduce(
-              (acc, el) => {
-                if (el.quantityByPack !== undefined) {
-                  return acc + el.quantityByPack;
-                }
-                return acc;
-              },
-              0,
-            );
-            return totalAcc + variantTotal;
-          },
-          0,
-        );
-      } else {
-        material.onHand = 0;
-      }
+    const materialReceipts = await this.prismaService.materialReceipt.findMany({
+      include: this.includeQuery,
     });
 
     return apiSuccess(
       HttpStatus.OK,
-      allMaterial,
+      materialReceipts,
       'Get all material receipt successfully',
     );
   }
+
+  //Will have to get all export material receipt and inventory report to calculate onHand
+  // async findAllMaterialStock() {
+  //   const allMaterial = await this.materialService.findAllWithoutResponse();
+
+  //   allMaterial.forEach((material: any) => {
+  //     material.numberOfMaterialVariant = material.materialVariant.length;
+
+  //     if (material.numberOfMaterialVariant > 0) {
+  //       material.onHand = material.materialVariant.reduce(
+  //         (totalAcc, materialVariantEl) => {
+  //           const variantTotal = materialVariantEl.materialReceipt.reduce(
+  //             (acc, el) => {
+  //               if (el.quantityByPack !== undefined) {
+  //                 return acc + el.quantityByPack;
+  //               }
+  //               return acc;
+  //             },
+  //             0,
+  //           );
+  //           return totalAcc + variantTotal;
+  //         },
+  //         0,
+  //       );
+  //     } else {
+  //       material.onHand = 0;
+  //     }
+  //   });
+
+  //   return apiSuccess(
+  //     HttpStatus.OK,
+  //     allMaterial,
+  //     'Get all material receipt successfully',
+  //   );
+  // }
+
   findOne(id: number) {
     return `This action returns a #${id} materialReceipt`;
   }

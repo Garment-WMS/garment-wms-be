@@ -36,7 +36,7 @@ export class MaterialReceiptController {
     @Query(new DirectFilterPipe<any, Prisma.MaterialWhereInput>([]))
     filterDto: FilterDto<Prisma.MaterialWhereInput>,
   ) {
-    return this.materialReceiptService.findAll2();
+    return this.materialReceiptService.findAll();
   }
 
   @Get(':id')

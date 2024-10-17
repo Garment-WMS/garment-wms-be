@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from 'prisma/prisma.module';
+import { ImportRequestModule } from '../import-request/import-request.module';
 import { InspectionReportModule } from '../inspection-report/inspection-report.module';
 import { InventoryStockModule } from '../inventory-stock/inventory-stock.module';
 import { MaterialReceiptModule } from '../material-receipt/material-receipt.module';
@@ -15,6 +16,7 @@ import { ImportReceiptService } from './import-receipt.service';
     InspectionReportModule,
     PoDeliveryModule,
     InventoryStockModule,
+    ImportRequestModule,
   ],
   providers: [ImportReceiptService],
 })

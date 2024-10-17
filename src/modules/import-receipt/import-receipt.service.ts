@@ -1,7 +1,8 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { PoDeliveryStatus, Prisma, PrismaClient } from '@prisma/client';
+import { $Enums, PoDeliveryStatus, Prisma, PrismaClient } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { ImportRequestService } from '../import-request/import-request.service';
 import { InspectionReportService } from '../inspection-report/inspection-report.service';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
@@ -17,6 +18,7 @@ export class ImportReceiptService {
     private readonly inspectionReportService: InspectionReportService,
     private readonly poDeliveryService: PoDeliveryService,
     private readonly inventoryStockService: InventoryStockService,
+    private readonly importRequestService: ImportRequestService,
   ) {}
 
   includeQuery: Prisma.ImportReceiptInclude = {
@@ -78,14 +80,22 @@ export class ImportReceiptService {
                 prismaInstance,
               );
             });
+          } else {
+            throw new Error('Create material receipt failed');
           }
 
-          const poDeliveryUpdate =
-            await this.poDeliveryService.updatePoDeliveryMaterialStatus(
-              inspectionReport.inspectionRequest.importRequest.poDeliveryId,
-              PoDeliveryStatus.FINISHED,
-              prismaInstance,
-            );
+          await this.poDeliveryService.updatePoDeliveryMaterialStatus(
+            inspectionReport.inspectionRequest.importRequest.poDeliveryId,
+            PoDeliveryStatus.FINISHED,
+            prismaInstance,
+          );
+
+          //Udpate Import Request Status
+          await this.importRequestService.updateImportRequestStatus(
+            inspectionReport.inspectionRequest.importRequestId,
+            $Enums.ImportRequestStatus.IMPORTING,
+            prismaInstance,
+          );
         }
         return importReceipt;
       },
