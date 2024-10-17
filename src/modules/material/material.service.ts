@@ -24,16 +24,20 @@ export class MaterialService {
     materialAttribute: true,
     materialType: true,
     materialUom: true,
-    materialVariant: true,
+    materialVariant: {
+      include: {
+        inventoryStock: true,
+      },
+    },
   };
 
-  materialStockInclude: Prisma.MaterialInclude = {
+  materialStockInclude = {
     materialAttribute: true,
     materialType: true,
     materialUom: true,
     materialVariant: {
       include: {
-        inventoryStock: true,
+        inventoryStock: true, // Make sure to include inventoryStock
       },
     },
   };
@@ -237,10 +241,25 @@ export class MaterialService {
     if (!isUUID(id)) {
       return null;
     }
-    const result = await this.prismaService.material.findFirst({
+    const result: MaterialStock = await this.prismaService.material.findFirst({
       where: { id },
-      include: this.materialInclude,
+      include: this.materialStockInclude,
     });
+
+    result.numberOfMaterialVariant = result.materialVariant.length;
+
+    result.onHand = result?.materialVariant?.reduce(
+      (totalAcc, materialVariantEl) => {
+        let variantTotal = 0;
+        //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+        if (materialVariantEl.inventoryStock) {
+          variantTotal = materialVariantEl.inventoryStock.quantityByPack;
+        }
+        return totalAcc + variantTotal;
+      },
+      0,
+    );
+
     return result;
   }
 
