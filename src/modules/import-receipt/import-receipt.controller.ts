@@ -15,6 +15,7 @@ import { RoleCode } from '@prisma/client';
 import { GetUser } from 'src/common/decorator/get_user.decorator';
 import { Roles } from 'src/common/decorator/roles.decorator';
 import { RolesGuard } from 'src/common/guard/roles.guard';
+import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateImportReceiptDto } from './dto/create-import-receipt.dto';
@@ -46,8 +47,13 @@ export class ImportReceiptController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.importReceiptService.findOne(+id);
+  findOne(@Param('id', CustomUUIDPipe) id: string) {
+    return this.importReceiptService.findOne(id);
+  }
+
+  @Patch('/:id/finish/')
+  finishImportReceipt(@Param('id', CustomUUIDPipe) id: string) {
+    return this.importReceiptService.finishImportReceipt(id);
   }
 
   @Patch(':id')
