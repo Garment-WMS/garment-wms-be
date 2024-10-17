@@ -90,12 +90,15 @@ export class ImportReceiptService {
             prismaInstance,
           );
 
-          //Udpate Import Request Status
-          await this.importRequestService.updateImportRequestStatus(
-            inspectionReport.inspectionRequest.importRequestId,
-            $Enums.ImportRequestStatus.IMPORTING,
-            prismaInstance,
-          );
+          //Update import receipt status to IMPORTING
+          await this.prismaService.importReceipt.update({
+            where: {
+              id: importReceipt.id,
+            },
+            data: {
+              status: $Enums.ReceiptStatus.IMPORTING,
+            },
+          });
         }
         return importReceipt;
       },

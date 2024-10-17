@@ -77,7 +77,8 @@ export class PrismaService
     if (
       (params.action.startsWith('find') ||
         params.action === 'aggregate' ||
-        params.action === 'count') &&
+        params.action === 'count' ||
+        params.action === 'groupBy') &&
       !params.args?.['where']?.['deletedAt']
     ) {
       return next({
