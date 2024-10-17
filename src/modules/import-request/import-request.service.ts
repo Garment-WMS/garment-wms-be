@@ -1,6 +1,7 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { $Enums, Prisma } from '@prisma/client';
+import { $Enums, Prisma, PrismaClient } from '@prisma/client';
+import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isNotEmpty } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -110,6 +111,25 @@ export class ImportRequestService {
   findAll() {
     return this.prismaService.importRequest.findMany({
       include: importRequestInclude,
+    });
+  }
+
+  updateImportRequestStatus(
+    importRequestId: any,
+    requestStatus: $Enums.ImportRequestStatus,
+    prismaInstance: PrismaClient<
+      Prisma.PrismaClientOptions,
+      never,
+      DefaultArgs
+    > = this.prismaService,
+  ) {
+    return prismaInstance.importRequest.update({
+      where: {
+        id: importRequestId,
+      },
+      data: {
+        status: requestStatus,
+      },
     });
   }
 

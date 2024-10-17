@@ -45,7 +45,6 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
 
       throw new CustomAuthException(401, 'Invalid token', [error]);
     }
-    console.log('payload', payload);
     const user: Partial<AuthenUser> = {
       ...payload,
       userId: payload.userId,

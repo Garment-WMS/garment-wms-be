@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { PoDeliveryStatus, Prisma, PrismaClient } from '@prisma/client';
+import { $Enums, PoDeliveryStatus, Prisma, PrismaClient } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isUUID, ValidationError } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
@@ -77,9 +77,9 @@ export class PoDeliveryService {
 
   async updatePoDelivery(id: string, updatePoDeliveryDto: UpdatePoDeliveryDto) {
     const result = await this.updatePoDeliveryMaterialStatus(
-      this.pirsmaService,
       id,
       updatePoDeliveryDto.status,
+      this.pirsmaService,
     );
 
     if (result) {
@@ -93,11 +93,11 @@ export class PoDeliveryService {
   }
 
   async updatePoDeliveryMaterialStatus(
-    prisma: any = this.pirsmaService,
     id: string,
     status: PoDeliveryStatus,
+    prismaInstance: PrismaClient = this.pirsmaService,
   ) {
-    const result = await prisma.poDelivery.update({
+    const result = await prismaInstance.poDelivery.update({
       where: { id },
       data: {
         status,
@@ -112,13 +112,13 @@ export class PoDeliveryService {
 
       //If there is no other po delivery with PENDING STATUS, update the purchase order status to FINISHED
       if (!resultWithSameStatus) {
-        await prisma.purchaseOrder.update({
+        await prismaInstance.purchaseOrder.update({
           where: {
             id: result.purchaseOrderId,
-            status: PoDeliveryStatus.PENDING,
+            status: $Enums.PurchaseOrderStatus.IN_PROGRESS,
           },
           data: {
-            status: PoDeliveryStatus.FINISHED,
+            status: $Enums.PurchaseOrderStatus.FINISHED,
           },
         });
       }
