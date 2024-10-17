@@ -74,6 +74,15 @@ export class ImportRequestController {
     );
   }
 
+  @Get('/statistic')
+  async getStatistic() {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.importRequestService.getStatistic(),
+      'Get import request statistic successfully',
+    );
+  }
+
   @Get('/enum')
   async getEnum() {
     return apiSuccess(

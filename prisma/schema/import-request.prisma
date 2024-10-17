@@ -34,8 +34,6 @@ enum ImportRequestStatus {
   PENDING
   REJECTED
   APPROVED
-  IMPORTING
-  IMPORTED
 
   @@map("import_request_status")
 }
