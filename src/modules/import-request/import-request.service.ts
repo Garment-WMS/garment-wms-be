@@ -25,19 +25,7 @@ export class ImportRequestService {
   ) {
     const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
-    const [
-      data,
-      total,
-      totalArrived,
-      totalInspecting,
-      totalInspected,
-      totalCanceled,
-      totalPending,
-      totalRejected,
-      totalApproved,
-      totalImporting,
-      totalImported,
-    ] = await this.prismaService.$transaction([
+    const [data, total] = await this.prismaService.$transaction([
       this.prismaService.importRequest.findMany({
         skip: offset,
         take: limit,
@@ -52,34 +40,6 @@ export class ImportRequestService {
             }
           : undefined,
       ),
-      this.prismaService.importRequest.count({
-        where: { status: $Enums.ImportRequestStatus.ARRIVED },
-      }),
-      this.prismaService.importRequest.count({
-        where: { status: $Enums.ImportRequestStatus.INSPECTING },
-      }),
-
-      this.prismaService.importRequest.count({
-        where: { status: $Enums.ImportRequestStatus.INSPECTED },
-      }),
-      this.prismaService.importRequest.count({
-        where: { status: $Enums.ImportRequestStatus.CANCELED },
-      }),
-      this.prismaService.importRequest.count({
-        where: { status: $Enums.ImportRequestStatus.PENDING },
-      }),
-      this.prismaService.importRequest.count({
-        where: { status: $Enums.ImportRequestStatus.REJECTED },
-      }),
-      this.prismaService.importRequest.count({
-        where: { status: $Enums.ImportRequestStatus.APPROVED },
-      }),
-      this.prismaService.importRequest.count({
-        where: { status: $Enums.ImportRequestStatus.IMPORTING },
-      }),
-      this.prismaService.importRequest.count({
-        where: { status: $Enums.ImportRequestStatus.IMPORTED },
-      }),
     ]);
 
     const dataResponse: DataResponse = {
@@ -93,19 +53,42 @@ export class ImportRequestService {
         hasNext: total > offset + limit,
         hasPrevious: offset > 0,
       },
-      statistics: {
-        totalArrived,
-        totalInspecting,
-        totalInspected,
-        totalCanceled,
-        totalPending,
-        totalRejected,
-        totalApproved,
-        totalImporting,
-        totalImported,
-      },
     };
     return dataResponse;
+  }
+
+  async getStatistic() {
+    const [total, pending, approved, rejected, importing] =
+      await this.prismaService.$transaction([
+        this.prismaService.importRequest.count(),
+        this.prismaService.importRequest.count({
+          where: {
+            status: $Enums.ImportRequestStatus.PENDING,
+          },
+        }),
+        this.prismaService.importRequest.count({
+          where: {
+            status: $Enums.ImportRequestStatus.APPROVED,
+          },
+        }),
+        this.prismaService.importRequest.count({
+          where: {
+            status: $Enums.ImportRequestStatus.REJECTED,
+          },
+        }),
+        this.prismaService.importRequest.count({
+          where: {
+            status: $Enums.ImportRequestStatus.CANCELED,
+          },
+        }),
+      ]);
+
+    return {
+      total,
+      pending,
+      approved,
+      rejected,
+    };
   }
 
   findAll() {
