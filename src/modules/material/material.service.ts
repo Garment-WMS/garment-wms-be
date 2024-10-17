@@ -10,6 +10,7 @@ import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ImageService } from '../image/image.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
+import { MaterialStock } from './dto/stock-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 
 @Injectable()
@@ -18,6 +19,28 @@ export class MaterialService {
     private readonly prismaService: PrismaService,
     private readonly imageService: ImageService,
   ) {}
+
+  materialInclude: Prisma.MaterialInclude = {
+    materialAttribute: true,
+    materialType: true,
+    materialUom: true,
+    materialVariant: {
+      include: {
+        inventoryStock: true,
+      },
+    },
+  };
+
+  materialStockInclude = {
+    materialAttribute: true,
+    materialType: true,
+    materialUom: true,
+    materialVariant: {
+      include: {
+        inventoryStock: true, // Make sure to include inventoryStock
+      },
+    },
+  };
 
   async search(
     findOptions: GeneratedFindOptions<Prisma.MaterialScalarWhereWithAggregatesInput>,
@@ -30,12 +53,36 @@ export class MaterialService {
         take: limit,
         where: findOptions?.where,
         orderBy: findOptions?.orderBy,
-        include: materialInclude,
+        include: {
+          materialAttribute: true,
+          materialType: true,
+          materialUom: true,
+          materialVariant: {
+            include: {
+              inventoryStock: true,
+            },
+          },
+        },
       }),
       this.prismaService.material.count({
         where: findOptions?.where,
       }),
     ]);
+
+    data.forEach((material: MaterialStock) => {
+      material.numberOfMaterialVariant = material.materialVariant.length;
+      material.onHand = material?.materialVariant?.reduce(
+        (totalAcc, materialVariantEl) => {
+          let variantTotal = 0;
+          //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+          if (materialVariantEl.inventoryStock) {
+            variantTotal = materialVariantEl.inventoryStock.quantityByPack;
+          }
+          return totalAcc + variantTotal;
+        },
+        0,
+      );
+    });
 
     const dataResponse: DataResponse = {
       data,
@@ -145,7 +192,7 @@ export class MaterialService {
 
   async findAll() {
     const result = await this.prismaService.material.findMany({
-      include: materialInclude,
+      include: this.materialInclude,
     });
     return apiSuccess(HttpStatus.OK, result, 'List of Material');
   }
@@ -194,17 +241,32 @@ export class MaterialService {
     if (!isUUID(id)) {
       return null;
     }
-    const result = await this.prismaService.material.findFirst({
+    const result: MaterialStock = await this.prismaService.material.findFirst({
       where: { id },
-      include: materialInclude,
+      include: this.materialStockInclude,
     });
+
+    result.numberOfMaterialVariant = result.materialVariant.length;
+
+    result.onHand = result?.materialVariant?.reduce(
+      (totalAcc, materialVariantEl) => {
+        let variantTotal = 0;
+        //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+        if (materialVariantEl.inventoryStock) {
+          variantTotal = materialVariantEl.inventoryStock.quantityByPack;
+        }
+        return totalAcc + variantTotal;
+      },
+      0,
+    );
+
     return result;
   }
 
   async findByMaterialCode(materialCode: string) {
     const result = await this.prismaService.material.findFirst({
       where: { code: materialCode },
-      include: materialInclude,
+      include: this.materialInclude,
     });
     if (result) {
       return apiSuccess(HttpStatus.OK, result, 'Material found');
@@ -215,7 +277,7 @@ export class MaterialService {
   async findByMaterialType(materialType: string) {
     const result = await this.prismaService.material.findMany({
       where: { materialType: { id: materialType } },
-      include: materialInclude,
+      include: this.materialInclude,
     });
     if (result) {
       return apiSuccess(HttpStatus.OK, result, 'Material found');
@@ -223,10 +285,3 @@ export class MaterialService {
     return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
   }
 }
-
-export const materialInclude: Prisma.MaterialInclude = {
-  materialAttribute: true,
-  materialType: true,
-  materialUom: true,
-  materialVariant: true,
-};
