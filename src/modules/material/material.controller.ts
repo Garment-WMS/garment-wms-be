@@ -38,6 +38,7 @@ export class MaterialController {
           'materialUomId',
           'reorderLevel',
           'updatedAt',
+          'code',
         ],
         ['materialType.name', 'materialType.code', 'materialUom.name'],
         [
