@@ -22,7 +22,7 @@ export class InventoryStockController {
     return this.inventoryStockService.create(createInventoryStockDto);
   }
 
-  @Get()
+  @Get('/material')
   findAll() {
     return this.inventoryStockService.findAll();
   }
