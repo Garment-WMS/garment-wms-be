@@ -3,6 +3,7 @@ import { $Enums, PoDeliveryStatus, Prisma, PrismaClient } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isUUID, ValidationError } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { CreateImportRequestDetailDto } from '../import-request/dto/import-request-detail/create-import-request-detail.dto';
 import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
@@ -235,5 +236,21 @@ export class PoDeliveryService {
       return error;
     }
     return null;
+  }
+
+  async generateNextPoNumber() {
+    const lastPo: any = await this.pirsmaService.$queryRaw<
+      { poNumber: string }[]
+    >`SELECT "code" FROM "po_delivery" ORDER BY CAST(SUBSTRING("code", 4) AS INT) DESC LIMIT 1`;
+
+    const poNumber = lastPo[0]?.PO_number;
+    let nextCodeNumber = 1;
+    if (poNumber) {
+      const currentCodeNumber = parseInt(poNumber.replace(/^POD-?/, ''), 10);
+      nextCodeNumber = currentCodeNumber + 1;
+    }
+
+    const nextCode = `${Constant.POD_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
+    return nextCode;
   }
 }
