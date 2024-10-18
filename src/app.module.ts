@@ -16,9 +16,13 @@ import { MaterialModule } from './modules/material/material.module';
 
 import { ImportReceiptModule } from './modules/import-receipt/import-receipt.module';
 import { ImportRequestModule } from './modules/import-request/import-request.module';
+import { InspectionDepartmentModule } from './modules/inspection-department/inspection-department.module';
 import { InspectionReportModule } from './modules/inspection-report/inspection-report.module';
 import { InspectionRequestModule } from './modules/inspection-request/inspection-request.module';
+import { InventoryReportModule } from './modules/inventory-report/inventory-report.module';
+import { InventoryStockModule } from './modules/inventory-stock/inventory-stock.module';
 import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
+import { MaterialReceiptModule } from './modules/material-receipt/material-receipt.module';
 import { MaterialTypeModule } from './modules/material-type/material-type.module';
 import { MaterialUnitModule } from './modules/material-unit/material-unit.module';
 import { MaterialVariantModule } from './modules/material-variant/material-variant.module';
@@ -38,9 +42,7 @@ import { QuarterlyProductPlanModule } from './modules/quarterly-product-plan/qua
 import { SupplierModule } from './modules/supplier/supplier.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
-import { MaterialReceiptModule } from './modules/material-receipt/material-receipt.module';
-import { InventoryReportModule } from './modules/inventory-report/inventory-report.module';
-import { InventoryStockModule } from './modules/inventory-stock/inventory-stock.module';
+import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
 
 @Module({
   imports: [
@@ -81,6 +83,8 @@ import { InventoryStockModule } from './modules/inventory-stock/inventory-stock.
     MaterialReceiptModule,
     InventoryReportModule,
     InventoryStockModule,
+    InspectionDepartmentModule,
+    WarehouseStaffModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

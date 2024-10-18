@@ -222,7 +222,7 @@ export class PoDeliveryService {
             children: [],
             target: importRequestDetail,
             constraints: {
-              isExist: 'Quantity by pack is invalid',
+              min: 'Quantity by pack must be less than or equal to po delivery',
             },
             value: importRequestDetail.quantityByPack,
             contexts: {},

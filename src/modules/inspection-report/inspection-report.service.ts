@@ -1,6 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { $Enums, Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
@@ -59,7 +59,7 @@ export class InspectionReportService {
     });
   }
 
-  create(dto: CreateInspectionReportDto) {
+  async create(dto: CreateInspectionReportDto) {
     const inspectionReportCreateInput: Prisma.InspectionReportCreateInput = {
       code: dto.code,
       inspectionRequest: dto.inspectionRequestId
@@ -82,10 +82,48 @@ export class InspectionReportService {
         },
       },
     };
-    return this.prismaService.inspectionReport.create({
-      data: inspectionReportCreateInput,
-      include: inspectionReportInclude,
-    });
+
+    const importRequestId =
+      await this.prismaService.inspectionRequest.findFirst({
+        where: {
+          id: dto.inspectionRequestId,
+        },
+      });
+
+    let importRequestPromise = undefined;
+    if (importRequestId) {
+      importRequestPromise = this.prismaService.importRequest.update({
+        where: {
+          id: importRequestId.importRequestId,
+        },
+        data: {
+          status: $Enums.ImportRequestStatus.INSPECTED,
+        },
+      });
+    }
+
+    const [data, inspectionRequest, importRequest] =
+      await this.prismaService.$transaction([
+        this.prismaService.inspectionReport.create({
+          data: inspectionReportCreateInput,
+          include: inspectionReportInclude,
+        }),
+        this.prismaService.inspectionRequest.update({
+          where: {
+            id: dto.inspectionRequestId,
+          },
+          data: {
+            status: $Enums.InspectionRequestStatus.INSPECTED,
+          },
+        }),
+        importRequestPromise,
+      ]);
+
+    return {
+      ...data,
+      inspectionRequestStatus: inspectionRequest?.status,
+      importRequestStatus: importRequest?.status,
+    };
   }
 
   async update(id: string, dto: UpdateInspectionReportDto) {
