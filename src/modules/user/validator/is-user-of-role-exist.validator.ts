@@ -19,9 +19,7 @@ export class IsUserRoleExistValidator implements ValidatorConstraintInterface {
   ): Promise<boolean> {
     const role = validationArguments.constraints[0] as RoleCode;
     if (!value) return false;
-    console.log(value, role);
     const user = await this.userService.IsUserRoleExist(value, role);
-    console.log(user);
     return !!user;
   }
   defaultMessage?(validationArguments?: ValidationArguments): string {

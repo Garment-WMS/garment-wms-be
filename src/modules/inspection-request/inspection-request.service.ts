@@ -82,12 +82,13 @@ export class InspectionRequestService {
   }
 
   async findUnique(id: string) {
-    const inspectionRequest = this.prismaService.inspectionRequest.findUnique({
-      where: {
-        id: id,
-      },
-      include: inspectionRequestInclude,
-    });
+    const inspectionRequest =
+      await this.prismaService.inspectionRequest.findUnique({
+        where: {
+          id: id,
+        },
+        include: inspectionRequestInclude,
+      });
     if (!inspectionRequest)
       throw new NotFoundException(`Inspection Request with id ${id} not found`);
     return inspectionRequest;

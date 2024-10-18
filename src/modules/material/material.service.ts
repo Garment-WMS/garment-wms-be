@@ -26,6 +26,7 @@ export class MaterialService {
     materialUom: true,
     materialVariant: {
       include: {
+        materialReceipt: true,
         inventoryStock: true,
       },
     },
@@ -37,6 +38,7 @@ export class MaterialService {
     materialUom: true,
     materialVariant: {
       include: {
+        materialReceipt: true,
         inventoryStock: true, // Make sure to include inventoryStock
       },
     },
@@ -53,16 +55,7 @@ export class MaterialService {
         take: limit,
         where: findOptions?.where,
         orderBy: findOptions?.orderBy,
-        include: {
-          materialAttribute: true,
-          materialType: true,
-          materialUom: true,
-          materialVariant: {
-            include: {
-              inventoryStock: true,
-            },
-          },
-        },
+        include: this.materialStockInclude,
       }),
       this.prismaService.material.count({
         where: findOptions?.where,

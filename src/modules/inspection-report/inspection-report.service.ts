@@ -12,6 +12,28 @@ import { UpdateInspectionReportDto } from './dto/inspection-report/update-inspec
 export class InspectionReportService {
   constructor(private readonly prismaService: PrismaService) {}
 
+  async findUniqueByRequestId(importRequestId: string) {
+    const inspectionRequest =
+      await this.prismaService.inspectionRequest.findFirst({
+        where: {
+          importRequestId: importRequestId,
+        },
+      });
+
+    if (!inspectionRequest) {
+      return null;
+    }
+
+    const result = await this.prismaService.inspectionReport.findFirst({
+      where: {
+        inspectionRequestId: inspectionRequest.id,
+      },
+      include: inspectionReportInclude,
+    });
+
+    return result;
+  }
+
   async search(
     findOptions: GeneratedFindOptions<Prisma.InspectionReportWhereInput>,
   ) {

@@ -236,7 +236,7 @@ export class PurchaseOrderService {
             isExtra: poDelivery.isExtra,
             purchaseOrder: { connect: { id: purchaseOrder.id } },
             expectedDeliverDate: poDelivery.expectedDeliverDate,
-            
+            code: await this.poDeliveryService.generateManyNextPoDeliveryCodes(i),
           };
           const poDeliveryResult = await prisma.poDelivery.create({
             data: poDeliveryCreateInput,
