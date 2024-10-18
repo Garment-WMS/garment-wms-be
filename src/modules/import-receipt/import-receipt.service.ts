@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { $Enums, PoDeliveryStatus, Prisma, PrismaClient } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
@@ -31,17 +31,16 @@ export class ImportReceiptService {
     createImportReceiptDto: CreateImportReceiptDto,
     managerId: string,
   ) {
-    const inspectionReport: any = await this.inspectionReportService.findUnique(
-      createImportReceiptDto.inspectionReportId,
+    const importRequest = await this.validateImportRequest(
+      createImportReceiptDto.importRequestId,
     );
 
-    // const validateImportRequestResult = await this.validateImportRequest(
-    //   inspectionReport.inspectionRequest.importRequestId,
-    // );
+    console.log('importRequest', importRequest);
 
-    // if (validateImportRequestResult) {
-    //   return validateImportRequestResult;
-    // }
+    const inspectionReport =
+      await this.inspectionReportService.findUniqueByRequestId(
+        importRequest.id,
+      );
 
     if (!inspectionReport) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Inspection Report not found');
@@ -59,9 +58,7 @@ export class ImportReceiptService {
       },
       warehouseStaff: {
         connect: {
-          id:
-            inspectionReport.inspectionRequest.importRequest.warehouseStaffId ||
-            'eccbe4d7-027e-4087-a8bc-128bdff3788e',
+          id: createImportReceiptDto.warehouseStaffId,
         },
       },
       code: createImportReceiptDto.code,
@@ -85,7 +82,7 @@ export class ImportReceiptService {
           );
 
           await this.poDeliveryService.updatePoDeliveryMaterialStatus(
-            inspectionReport.inspectionRequest.importRequest.poDeliveryId,
+            importRequest.poDeliveryId,
             PoDeliveryStatus.FINISHED,
             prismaInstance,
           );
@@ -113,27 +110,39 @@ export class ImportReceiptService {
     );
   }
 
-  // async validateImportRequest(importRequestId: string) {
-  //   const importRequest =
-  //     await this.importRequestService.findUnique(importRequestId);
-  //   console.log(importRequest);
-  //   if (!importRequest) {
-  //     return apiFailed(HttpStatus.NOT_FOUND, 'Import Request not found');
-  //   }
+  async validateImportRequest(importRequestId: string) {
+    const importRequest =
+      await this.importRequestService.findUnique(importRequestId);
+    if (!importRequest) {
+      throw new BadRequestException('Import Request not found');
+    }
 
-  //   if (importRequest.status !== $Enums.ImportRequestStatus.INSPECTED) {
-  //     return apiFailed(
-  //       HttpStatus.BAD_REQUEST,
-  //       'Cannot create import receipt, Import Request status is not valid',
-  //     );
-  //   }
-  //   return null;
-  // }
+    if (importRequest.status !== $Enums.ImportRequestStatus.APPROVED) {
+      throw new BadRequestException(
+        'Cannot create import receipt, Import Request status is not valid',
+      );
+    }
+    return importRequest;
+  }
 
   updateImportReceiptStatus(
     importReceiptId: string,
     status: $Enums.ReceiptStatus,
   ) {
+    if (
+      status === $Enums.ReceiptStatus.IMPORTED
+      // ||
+      // status === $Enums.ReceiptStatus.REJECTED
+    ) {
+      return this.prismaService.importReceipt.update({
+        where: { id: importReceiptId },
+        data: {
+          status,
+          finishAt: new Date(),
+        },
+      });
+    }
+
     return this.prismaService.importReceipt.update({
       where: { id: importReceiptId },
       data: {

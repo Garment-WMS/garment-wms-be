@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { $Enums, PoDeliveryStatus, Prisma, PrismaClient } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isUUID, ValidationError } from 'class-validator';
@@ -11,6 +11,32 @@ import { UpdatePoDeliveryDto } from './dto/update-po-delivery.dto';
 
 @Injectable()
 export class PoDeliveryService {
+  constructor(
+    private readonly pirsmaService: PrismaService,
+    private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
+  ) {}
+
+  async checkIsPoDeliveryStatus(poDeliveryId: string) {
+    const poDelivery = await this.findById(poDeliveryId);
+    if (!poDelivery) {
+      throw new BadRequestException('Po delivery not found');
+    }
+
+    // Check if the po delivery is already finished
+    if (poDelivery.status === PoDeliveryStatus.FINISHED) {
+      throw new BadRequestException('Po delivery already finished');
+    }
+
+    //Check if the po delivery is already cancelled
+    if (poDelivery.status === PoDeliveryStatus.CANCELLED) {
+      throw new BadRequestException('Po delivery already cancelled');
+    }
+
+    if (poDelivery.poDeliveryDetail.length === 0) {
+      throw new BadRequestException('Po delivery detail is empty');
+    }
+    return poDelivery;
+  }
   updateStatus(poDeliveryId: string, PoDeliveryStatus: PoDeliveryStatus) {
     return this.pirsmaService.poDelivery.update({
       where: {
@@ -21,10 +47,6 @@ export class PoDeliveryService {
       },
     });
   }
-  constructor(
-    private readonly pirsmaService: PrismaService,
-    private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
-  ) {}
 
   includeQuery: Prisma.PoDeliveryInclude = {
     poDeliveryDetail: {
@@ -163,10 +185,9 @@ export class PoDeliveryService {
   }
 
   async checkIsPoDeliveryValid(
-    poDeliveryId: string,
+    poDelivery,
     importRequestDetails: CreateImportRequestDetailDto[],
   ) {
-    const poDelivery = await this.findById(poDeliveryId);
     let error: ValidationError[] = [];
 
     // if (!poDelivery) {
@@ -238,19 +259,52 @@ export class PoDeliveryService {
     return null;
   }
 
-  async generateNextPoNumber() {
-    const lastPo: any = await this.pirsmaService.$queryRaw<
+  async generateNextPoDeliveryCode() {
+    const lastPo_delivery: any = await this.pirsmaService.$queryRaw<
       { poNumber: string }[]
     >`SELECT "code" FROM "po_delivery" ORDER BY CAST(SUBSTRING("code", 4) AS INT) DESC LIMIT 1`;
 
-    const poNumber = lastPo[0]?.PO_number;
+    const poDeliveryCode = lastPo_delivery[0]?.code;
     let nextCodeNumber = 1;
-    if (poNumber) {
-      const currentCodeNumber = parseInt(poNumber.replace(/^POD-?/, ''), 10);
+    if (poDeliveryCode) {
+      const currentCodeNumber = parseInt(
+        poDeliveryCode.replace(/^POD-?/, ''),
+        10,
+      );
       nextCodeNumber = currentCodeNumber + 1;
     }
 
     const nextCode = `${Constant.POD_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
+    return nextCode;
+  }
+
+  async generateManyNextPoDeliveryCodes(index: number) {
+    const lastPo_delivery: any = await this.pirsmaService.$queryRaw<
+      { poNumber: string }[]
+    >`SELECT "code" FROM "po_delivery" ORDER BY CAST(SUBSTRING("code", 4) AS INT) DESC LIMIT 1`;
+
+    const poDeliveryCode = lastPo_delivery[0]?.code;
+    let nextCodeNumber = 1 + index;
+    if (poDeliveryCode) {
+      const currentCodeNumber = parseInt(
+        poDeliveryCode.replace(/^POD-?/, ''),
+        10,
+      );
+      nextCodeNumber = currentCodeNumber + 1;
+    }
+
+    const nextCode = `${Constant.POD_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
+
+    //Check is the next code is already exist
+    const isExist = await this.pirsmaService.poDelivery.findFirst({
+      where: {
+        code: nextCode,
+      },
+    });
+
+    if (isExist) {
+      return this.generateManyNextPoDeliveryCodes(index + 1);
+    }
     return nextCode;
   }
 }

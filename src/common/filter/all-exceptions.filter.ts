@@ -41,7 +41,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       responseBody = apiFailed(
         exception.getStatus(),
         exception.message,
-        exception.getResponse(),
+        // exception.getResponse(),
       );
     } else if (
       exception instanceof Error &&
