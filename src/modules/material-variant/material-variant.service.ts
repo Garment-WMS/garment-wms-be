@@ -14,6 +14,8 @@ export class MaterialVariantService {
   constructor(private readonly prismaService: PrismaService) {}
 
   includeQuery: Prisma.MaterialVariantInclude = {
+    inventoryStock: true,
+    materialReceipt: true,
     material: {
       include: {
         materialType: true,
@@ -90,7 +92,7 @@ export class MaterialVariantService {
 
   async findByMaterialCode(materialCode: string) {
     const result = await this.prismaService.materialVariant.findUnique({
-      where: { code:materialCode },
+      where: { code: materialCode },
       include: this.includeQuery,
     });
     return result;

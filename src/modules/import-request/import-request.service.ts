@@ -168,8 +168,11 @@ export class ImportRequestService {
         },
       },
     };
+
+    const poDelivery = await this.poDeliveryService.checkIsPoDeliveryStatus(dto.poDeliveryId);
+
     const errorResponse = await this.poDeliveryService.checkIsPoDeliveryValid(
-      dto.poDeliveryId,
+      poDelivery,
       dto.importRequestDetails,
     );
     if (isNotEmpty(errorResponse)) {

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ReceiptType } from '@prisma/client';
+import { ReceiptType, RoleCode } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsDate,
@@ -10,12 +10,19 @@ import {
   IsUUID,
   MinDate,
 } from 'class-validator';
+import { IsUserRoleExist } from 'src/modules/user/validator/is-user-of-role-exist.validator';
 
 export class CreateImportReceiptDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsUUID()
-  inspectionReportId: string;
+  importRequestId: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsUUID()
+  @IsUserRoleExist(RoleCode.WAREHOUSE_STAFF)
+  warehouseStaffId: string;
 
   @ApiProperty()
   @IsNotEmpty()
