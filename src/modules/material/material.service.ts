@@ -48,8 +48,8 @@ export class MaterialService {
     const [
       materialImportReceipt,
       materialExportReceipt,
-      importReceiptCount,
-      exportReceiptCount,
+      materialImportReceiptCount,
+      materialExportReceiptCount,
     ] = await this.prismaService.$transaction([
       this.prismaService.materialReceipt.findMany({
         where: {
@@ -57,12 +57,22 @@ export class MaterialService {
             materialId: id,
           },
         },
+        include: {
+          materialVariant: true,
+        },
       }),
       this.prismaService.materialExportReceipt.findMany({
         where: {
           materialReceipt: {
             materialVariant: {
               materialId: id,
+            },
+          },
+        },
+        include: {
+          materialReceipt: {
+            include: {
+              materialVariant: true,
             },
           },
         },
@@ -90,8 +100,8 @@ export class MaterialService {
       {
         materialImportReceipt,
         materialExportReceipt,
-        importReceiptCount,
-        exportReceiptCount,
+        materialImportReceiptCount,
+        materialExportReceiptCount,
       },
       'Material Receipt found',
     );
