@@ -82,6 +82,11 @@ export class MaterialController {
     return this.materialService.findByIdWithResponse(id);
   }
 
+  @Get(':id/receipt')
+  getMaterialReceiptById(@Param('id', CustomUUIDPipe) id: string) {
+    return this.materialService.findMaterialReceiptByIdWithResponse(id);
+  }
+
   @Patch(':id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   updateMaterial(
