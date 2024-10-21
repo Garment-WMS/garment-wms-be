@@ -7,8 +7,8 @@ model ImportReceipt {
   status             ReceiptStatus     @default(IMPORTING)
   type               ReceiptType       @map("type")
   note               String?           @map("note") @db.Text
-  startAt            DateTime?         @map("start_at") @db.Timestamptz(6)
-  finishAt           DateTime?         @map("finish_at") @db.Timestamptz(6)
+  startedAt          DateTime?         @map("started_at") @db.Timestamptz(6)
+  finishedAt         DateTime?         @map("finished_at") @db.Timestamptz(6)
   createdAt          DateTime?         @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime?         @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt          DateTime?         @map("deleted_at") @db.Timestamptz(6)

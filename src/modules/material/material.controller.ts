@@ -34,6 +34,7 @@ export class MaterialController {
           'name',
           'createdAt',
           'id',
+          'OR',
           'materialTypeId',
           'materialUomId',
           'reorderLevel',

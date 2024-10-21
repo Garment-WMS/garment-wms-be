@@ -159,8 +159,8 @@ export class ImportRequestService {
       description: dto.description,
       rejectReason: dto.rejectReason,
       cancelReason: dto.cancelReason,
-      startAt: dto.startAt,
-      finishAt: dto.finishAt,
+      startedAt: dto.startAt,
+      finishedAt: dto.finishAt,
       type: dto.type,
       importRequestDetail: {
         createMany: {
@@ -218,8 +218,8 @@ export class ImportRequestService {
       description: dto.description,
       rejectReason: dto.rejectReason,
       cancelReason: dto.cancelReason,
-      startAt: dto.startAt,
-      finishAt: dto.finishAt,
+      startedAt: dto.startAt,
+      finishedAt: dto.finishAt,
       type: dto.type,
       importRequestDetail: dto.importRequestDetails
         ? {

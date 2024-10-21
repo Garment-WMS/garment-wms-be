@@ -9,4 +9,6 @@ model WarehouseStaff {
   users         User            @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("warehouse_staff")
+  InventoryReport InventoryReport[]
+  MaterialExportReceipt MaterialExportReceipt[]
 }

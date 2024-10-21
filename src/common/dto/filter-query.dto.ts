@@ -41,6 +41,14 @@ export class SingleFilterOrder<T> implements ISingleOrder<T> {
   dir!: FilterOrder;
 }
 
+export class CompoundFilter {
+  @IsArray()
+  field!: any;
+
+  @IsString()
+  value!: any;
+}
+
 export class Filter<T = any> implements IFilter<T> {
   @IsArray()
   @ValidateNested({ each: true })
@@ -53,6 +61,12 @@ export class Filter<T = any> implements IFilter<T> {
   @Type(() => SingleFilterOrder)
   @IsOptional()
   order?: Array<SingleFilterOrder<T>>;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CompoundFilter)
+  @IsOptional()
+  compoundFilter?: Array<CompoundFilter>;
 
   @Type(() => Number)
   @IsInt()

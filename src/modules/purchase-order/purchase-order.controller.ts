@@ -1,4 +1,4 @@
-import { DirectFilterPipe } from '@chax-at/prisma-filter';
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
@@ -36,18 +36,7 @@ export class PurchaseOrderController {
   @UsePipes(new ValidationPipe())
   getPurchaseOrders(
     @Query(
-      new DirectFilterPipe<any, Prisma.PurchaseOrderWhereInput>(
-        [
-          'id',
-          'poNumber',
-          'createdAt',
-          'orderDate',
-          'finishDate',
-          'supplierId',
-          'currency',
-          'status',
-          'quarterlyProductionPlan',
-        ],
+      new AllFilterPipeUnsafe<any, Prisma.PurchaseOrderWhereInput>(
         ['quarterlyProductionPlan'],
         [
           {
@@ -73,6 +62,7 @@ export class PurchaseOrderController {
     )
     filterDto: FilterDto<Prisma.PurchaseOrderWhereInput>,
   ) {
+    console.log('filterDto', filterDto);
     return this.purchaseOrderService.getPurchaseOrders(filterDto.findOptions);
   }
   @Get('status')
@@ -125,6 +115,7 @@ export class PurchaseOrderController {
       updatePurchaseOrderStatusDto,
     );
   }
+
   @Patch(':id/cancel')
   @UsePipes(new ValidationPipe())
   async cancelPurchaseOrder(

@@ -13,4 +13,5 @@ model ProductReceipt {
   productVariant        ProductVariant          @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("product_receipt")
+  ReceiptAdjustment ReceiptAdjustment[]
 }

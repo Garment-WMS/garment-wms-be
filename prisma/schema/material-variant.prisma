@@ -22,4 +22,5 @@ model MaterialVariant {
   inventoryStock              InventoryStock?
 
   @@map("material_variant")
+  InventoryReport InventoryReport[]
 }

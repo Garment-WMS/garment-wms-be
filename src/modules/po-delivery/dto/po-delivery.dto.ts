@@ -2,6 +2,9 @@ import { $Enums, PoDelivery } from '@prisma/client';
 import { PoDeliveryMaterialDto } from 'src/modules/po-delivery-material/dto/po-delivery-material.dto';
 
 export class PoDeliveryDto implements PoDelivery {
+  cancelledAt: Date;
+  cancelledReason: string;
+  cancelledBy: string;
   code: string;
   id: string;
   purchaseOrderId: string;

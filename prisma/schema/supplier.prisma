@@ -1,9 +1,9 @@
 model Supplier {
   id                 String          @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   supplierName       String          @map("supplier_name") @db.VarChar
+  representativeName String          @map("representative_name") @db.VarChar
   code               String?         @unique @map("code") @db.VarChar
   address            String          @db.VarChar
-  representativeName String          @map("representative_name") @db.VarChar
   email              String          @db.VarChar
   phoneNumber        String          @map("phone_number") @db.VarChar
   fax                String?         @db.VarChar

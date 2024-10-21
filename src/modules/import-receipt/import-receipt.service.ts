@@ -62,11 +62,11 @@ export class ImportReceiptService {
         },
       },
       code: createImportReceiptDto.code,
-      status: $Enums.ReceiptStatus.IMPORTING,
+      status: $Enums.ImportReceiptStatus.IMPORTING,
       type: 'MATERIAL',
       note: createImportReceiptDto.note,
-      startAt: createImportReceiptDto.startAt,
-      finishAt: createImportReceiptDto.finishAt,
+      startedAt: createImportReceiptDto.startAt,
+      finishedAt: createImportReceiptDto.finishAt,
     };
 
     const result = await this.prismaService.$transaction(
@@ -127,10 +127,10 @@ export class ImportReceiptService {
 
   updateImportReceiptStatus(
     importReceiptId: string,
-    status: $Enums.ReceiptStatus,
+    status: $Enums.ImportReceiptStatus,
   ) {
     if (
-      status === $Enums.ReceiptStatus.IMPORTED
+      status === $Enums.ImportReceiptStatus.IMPORTED
       // ||
       // status === $Enums.ReceiptStatus.REJECTED
     ) {
@@ -138,7 +138,7 @@ export class ImportReceiptService {
         where: { id: importReceiptId },
         data: {
           status,
-          finishAt: new Date(),
+          finishedAt: new Date(),
         },
       });
     }
@@ -157,7 +157,7 @@ export class ImportReceiptService {
       return apiFailed(HttpStatus.NOT_FOUND, 'Import Receipt not found');
     }
 
-    if (importReceipt.status !== $Enums.ReceiptStatus.IMPORTING) {
+    if (importReceipt.status !== $Enums.ImportReceiptStatus.IMPORTING) {
       return apiFailed(
         HttpStatus.BAD_REQUEST,
         'Cannot finish import receipt, Import Receipt status is not valid',
@@ -180,7 +180,7 @@ export class ImportReceiptService {
 
         const result = await this.updateImportReceiptStatus(
           importReceiptId,
-          $Enums.ReceiptStatus.IMPORTED,
+          $Enums.ImportReceiptStatus.IMPORTED,
         );
         return result;
       },

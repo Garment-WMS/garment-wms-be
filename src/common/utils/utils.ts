@@ -95,7 +95,8 @@ export function addMissingStartCharacter(
   return value;
 }
 
-export function validateDate(date: string): boolean {
+export function validateDate(date: any): boolean {
+  console.log(date);
   return isDate(date);
 }
 
