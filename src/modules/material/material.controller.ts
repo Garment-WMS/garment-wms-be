@@ -34,6 +34,7 @@ export class MaterialController {
           'name',
           'createdAt',
           'id',
+          'OR',
           'materialTypeId',
           'materialUomId',
           'reorderLevel',
@@ -80,6 +81,11 @@ export class MaterialController {
   @Get(':id')
   getMaterialById(@Param('id', CustomUUIDPipe) id: string) {
     return this.materialService.findByIdWithResponse(id);
+  }
+
+  @Get(':id/receipt')
+  getMaterialReceiptById(@Param('id', CustomUUIDPipe) id: string) {
+    return this.materialService.findMaterialReceiptByIdWithResponse(id);
   }
 
   @Patch(':id')

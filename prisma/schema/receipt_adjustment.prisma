@@ -1,0 +1,19 @@
+model ReceiptAdjustment {
+    id                      String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+    warehouseManagerId      String                @map("warehouse_manager_id") @db.Uuid
+    inventoryReportDetailId String                @map("inventory_report_detail_id") @db.Uuid
+    materialReceiptId       String?               @map("material_receipt_id") @db.Uuid
+    productReceiptId        String?               @map("product_receipt_id") @db.Uuid
+    beforeAdjustQuantity    Float                 @map("before_adjust_quantity")
+    afterAdjustQuantity     Float                 @map("after_adjust_quantity")
+    reason                  String?               @map("reason")
+    createdAt               DateTime?             @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt               DateTime?             @updatedAt @map("updated_at") @db.Timestamptz(6)
+    deletedAt               DateTime?             @map("deleted_at") @db.Timestamptz(6)
+    warehouseManager        WarehouseManager      @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    inventoryReportDetail   InventoryReportDetail @relation(fields: [inventoryReportDetailId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    materialReceipt         MaterialReceipt?      @relation(fields: [materialReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    productReceipt          ProductReceipt?       @relation(fields: [productReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    @@map("receipt_adjustment")
+}

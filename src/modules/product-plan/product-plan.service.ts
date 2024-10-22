@@ -10,29 +10,29 @@ export class ProductPlanService {
   constructor(private prismaService: PrismaService) {}
 
   async create(createProductPlanDto: CreateProductPlanDto) {
-    const productPlanInput: Prisma.AnnualProductionPlanCreateInput = {
-      year: parseInt(createProductPlanDto.year),
-      name: createProductPlanDto.name,
-      expectedStartDate: createProductPlanDto.expectedStartDate,
-      expectedEndDate: createProductPlanDto.expectedEndDate,
-      factoryDirector: {
-        create: undefined,
-        connect: { id: createProductPlanDto.factoryDirectorId },
-      },
-    };
+    // const productPlanInput: Prisma.AnnualProductionPlanCreateInput = {
+    //   year: parseInt(createProductPlanDto.year),
+    //   name: createProductPlanDto.name,
+    //   expectedStartDate: createProductPlanDto.expectedStartDate,
+    //   expectedEndDate: createProductPlanDto.expectedEndDate,
+    //   factoryDirector: {
+    //     create: undefined,
+    //     connect: { id: createProductPlanDto.factoryDirectorId },
+    //   },
+    // };
 
-    const result = await this.prismaService.annualProductionPlan.create({
-      data: productPlanInput,
-    });
+    // const result = await this.prismaService.annualProductionPlan.create({
+    //   data: productPlanInput,
+    // });
 
-    if (result) {
-      return apiSuccess(
-        HttpStatus.CREATED,
-        result,
-        'Product Plan created successfully',
-      );
-    }
-    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product Plan');
+    // if (result) {
+    //   return apiSuccess(
+    //     HttpStatus.CREATED,
+    //     result,
+    //     'Product Plan created successfully',
+    //   );
+    // }
+    // return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product Plan');
   }
 
   findAll() {

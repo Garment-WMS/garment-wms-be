@@ -1,13 +1,15 @@
 model MaterialExportRequest {
   id                   String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  manufactureOrderId   String?                     @map("manufacturer_order_id") @db.Uuid
+  productionBatchId    String?                     @map("production_batch_id") @db.Uuid
+  warehouseManagerId   String?                     @map("warehouse_manager_id") @db.Uuid
   status               MaterialExportRequestStatus @default(PENDING) @map("status")
   description          String?                     @map("description") @db.VarChar
   createdAt            DateTime?                   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime?                   @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt            DateTime?                   @map("deleted_at") @db.Timestamptz(6)
-  MaterialExportDetail MaterialExportDetail[]
-  manufactureOrder     ManufactureOrder?           @relation(fields: [manufactureOrderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialExportDetail MaterialExportDetail[]
+  productionBatch      ProductionBatch?            @relation(fields: [productionBatchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouseManager     WarehouseManager?           @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("material_export_request")
 }
@@ -15,6 +17,5 @@ model MaterialExportRequest {
 enum MaterialExportRequestStatus {
   PENDING
   APPROVED
-  EXPORTED
   CANCELLED
 }

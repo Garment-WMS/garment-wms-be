@@ -16,6 +16,17 @@ export class PoDeliveryService {
     private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
   ) {}
 
+  async IsImportingOrFinishedPoDeliveryExist(PoId: string) {
+    return !!(await this.pirsmaService.poDelivery.findMany({
+      where: {
+        purchaseOrderId: PoId,
+        status: {
+          in: [PoDeliveryStatus.PENDING, PoDeliveryStatus.FINISHED],
+        },
+      },
+    }));
+  }
+
   async checkIsPoDeliveryStatus(poDeliveryId: string) {
     const poDelivery = await this.findById(poDeliveryId);
     if (!poDelivery) {
@@ -63,6 +74,7 @@ export class PoDeliveryService {
         },
       },
     },
+    importRequest: true,
   };
 
   async createPoDelivery(CreatePoDelivery: Prisma.PoDeliveryCreateInput) {
@@ -92,9 +104,19 @@ export class PoDeliveryService {
     return null;
   }
 
-  async findPoDelivery(query: Prisma.PoDeliveryWhereInput) {
+  findPoDelivery(query: Prisma.PoDeliveryWhereInput) {
     return this.pirsmaService.poDelivery.findFirst({
       where: { ...query },
+      include: this.includeQuery,
+    });
+  }
+
+  async findPoDeliveryByPoId(poId: string) {
+    return this.pirsmaService.poDelivery.findFirst({
+      where: {
+        purchaseOrderId: poId,
+      },
+      include: this.includeQuery,
     });
   }
 
@@ -281,8 +303,7 @@ export class PoDeliveryService {
   async generateManyNextPoDeliveryCodes(index: number) {
     const lastPo_delivery: any = await this.pirsmaService.$queryRaw<
       { poNumber: string }[]
-    >`SELECT "code" FROM "po_delivery" ORDER BY CAST(SUBSTRING("code", 4) AS INT) DESC LIMIT 1`;
-
+    >`SELECT "code" FROM "po_delivery" ORDER BY CAST(SUBSTRING("code", 5) AS INT) DESC LIMIT 1`;
     const poDeliveryCode = lastPo_delivery[0]?.code;
     let nextCodeNumber = 1 + index;
     if (poDeliveryCode) {
@@ -294,14 +315,12 @@ export class PoDeliveryService {
     }
 
     const nextCode = `${Constant.POD_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
-
     //Check is the next code is already exist
     const isExist = await this.pirsmaService.poDelivery.findFirst({
       where: {
         code: nextCode,
       },
     });
-
     if (isExist) {
       return this.generateManyNextPoDeliveryCodes(index + 1);
     }

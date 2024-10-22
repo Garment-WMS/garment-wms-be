@@ -14,6 +14,7 @@ export const SUPPLIER_HEADER = [
 export const ITEM_HEADER = [
   'Material Code',
   'Material Name',
+  'Expired Date',
   'Qty',
   'Price',
   'Total',

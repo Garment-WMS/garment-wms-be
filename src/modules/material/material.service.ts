@@ -44,6 +44,69 @@ export class MaterialService {
     },
   };
 
+  async findMaterialReceiptByIdWithResponse(id: string) {
+    const [
+      materialImportReceipt,
+      materialExportReceipt,
+      materialImportReceiptCount,
+      materialExportReceiptCount,
+    ] = await this.prismaService.$transaction([
+      this.prismaService.materialReceipt.findMany({
+        where: {
+          materialVariant: {
+            materialId: id,
+          },
+        },
+        include: {
+          materialVariant: true,
+        },
+      }),
+      this.prismaService.materialExportReceipt.findMany({
+        where: {
+          materialReceipt: {
+            materialVariant: {
+              materialId: id,
+            },
+          },
+        },
+        include: {
+          materialReceipt: {
+            include: {
+              materialVariant: true,
+            },
+          },
+        },
+      }),
+      this.prismaService.materialReceipt.count({
+        where: {
+          materialVariant: {
+            materialId: id,
+          },
+        },
+      }),
+      this.prismaService.materialExportReceipt.count({
+        where: {
+          materialReceipt: {
+            materialVariant: {
+              materialId: id,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        materialImportReceipt,
+        materialExportReceipt,
+        materialImportReceiptCount,
+        materialExportReceiptCount,
+      },
+      'Material Receipt found',
+    );
+  }
+
   async search(
     findOptions: GeneratedFindOptions<Prisma.MaterialScalarWhereWithAggregatesInput>,
   ) {

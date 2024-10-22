@@ -1,9 +1,10 @@
-import { Workbook, Worksheet } from '@nbelyh/exceljs';
+import { Cell, Workbook, Worksheet } from '@nbelyh/exceljs';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import {
   isBoolean,
   isEmpty,
   isInt,
+  isNotEmpty,
   isNumber,
   isPhoneNumber,
   max,
@@ -41,6 +42,36 @@ import { PoDeliveryMaterialDto } from '../po-delivery-material/dto/po-delivery-m
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
 import { CreatePurchaseOrderDto } from '../purchase-order/dto/create-purchase-order.dto';
 
+interface itemType {
+  materialVariantId: {
+    cell: Cell;
+    value: any;
+  };
+  code: {
+    cell: Cell;
+    value: any;
+  };
+  quantityByPack: {
+    cell: Cell;
+    value: any;
+  };
+  totalAmount: {
+    cell: Cell;
+    value: any;
+  };
+  expiredDate: {
+    cell: Cell;
+    value: any;
+  };
+  unitPrice: {
+    cell: Cell;
+    value: any;
+  };
+}
+interface itemElement {
+  cell: Cell;
+  value: any;
+}
 @Injectable()
 export class ExcelService {
   constructor(
@@ -50,6 +81,7 @@ export class ExcelService {
     private readonly materialVariantService: MaterialVariantService,
   ) {}
 
+  //TODO : Validate item in table general which item in each table
   async readExcel(file: Express.Multer.File) {
     if (!file) {
       return apiFailed(HttpStatus.BAD_REQUEST, 'No file uploaded');
@@ -97,7 +129,7 @@ export class ExcelService {
 
     const puchaseOrder: Partial<CreatePurchaseOrderDto> = {};
     const deliveryBatch: Partial<PoDeliveryDto>[] = [];
-
+    const itemGeneral: itemType[] = [];
     await workbook.xlsx.load(file.buffer);
     const worksheet = workbook.getWorksheet(PO_SHEET_NAME);
     if (!worksheet) {
@@ -109,10 +141,26 @@ export class ExcelService {
       supplierError,
       listItemError,
       puchaseOrder,
+      itemGeneral,
     );
-
     if (errorResponse) {
       return errorResponse;
+    }
+
+    if (supplierError.size > 0 || listItemError.size > 0) {
+      const timestamp = Date.now();
+      const fileName = `${timestamp}-${file.originalname}`;
+      const bufferResult = await workbook.xlsx.writeBuffer();
+      const nodeBuffer = Buffer.from(bufferResult);
+      const downloadUrl = await this.firebaseService.uploadBufferToStorage(
+        nodeBuffer,
+        fileName,
+      );
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'There is error Purchase Order sheet. Please fix before upload again !!!',
+        downloadUrl,
+      );
     }
 
     const errorResponseDeliveryBatch = await this.validateDeliveryBatchSheet(
@@ -121,16 +169,13 @@ export class ExcelService {
       deliveryBatchItemError,
       deliveryBatch,
       puchaseOrder,
+      itemGeneral,
     );
     if (errorResponseDeliveryBatch) {
       return errorResponseDeliveryBatch;
     }
-    if (
-      deliveryBatchError.size > 0 ||
-      deliveryBatchItemError.size > 0 ||
-      supplierError.size > 0 ||
-      listItemError.size > 0
-    ) {
+    console.log('deliveryBatchError', deliveryBatchItemError);
+    if (deliveryBatchError.size > 0 || deliveryBatchItemError.size > 0) {
       const timestamp = Date.now();
       const fileName = `${timestamp}-${file.originalname}`;
       const bufferResult = await workbook.xlsx.writeBuffer();
@@ -160,6 +205,7 @@ export class ExcelService {
     >,
     deliveryBatches: Partial<PoDeliveryDto>[],
     puchaseOrder: Partial<CreatePurchaseOrderDto>,
+    itemGeneral,
   ) {
     const deliveryBatchSheets: Worksheet[] = [];
 
@@ -183,6 +229,7 @@ export class ExcelService {
           deliveryBatchItemError,
           deliveryBatches,
           puchaseOrder,
+          itemGeneral,
         );
         if (errorResponse) {
           return errorResponse;
@@ -206,6 +253,7 @@ export class ExcelService {
     >,
     deliveryBatches: Partial<PoDeliveryDto>[],
     puchaseOrder: Partial<CreatePurchaseOrderDto>,
+    itemGeneral: itemType[],
   ) {
     let deliveryBatchErrorSheet = new Map<
       string,
@@ -283,24 +331,42 @@ export class ExcelService {
     }
 
     //
-    let deliveryBatchItems: Partial<PoDeliveryMaterialDto>[] = [];
+    let deliveryBatchItems: itemType[] = [];
     // Check delivery batch item validation
-    const errorItem = await this.validateItemTable2(
+    const errorItem = await this.validateItemTable(
       worksheet,
       deliveryBatchItemErrorSheet,
       batchItemTable,
       deliveryBatchItems,
     );
-    console.log('errorItem', errorItem);
     if (errorItem) {
       return errorItem;
     }
 
-    deliveryBatchInfo.poDeliveryDetail = deliveryBatchItems;
+    this.validateItemTableBatch(
+      deliveryBatchItems,
+      itemGeneral,
+      deliveryBatchItemErrorSheet,
+    );
+
+    const deliveryBatchItemsDto: Partial<PoDeliveryMaterialDto>[] = [];
+
+    if (deliveryBatchItems.length > 0) {
+      deliveryBatchItems.forEach((el) => {
+        const deliveryBatchItemDetail: Partial<PoDeliveryMaterialDto> = {
+          expiredDate: el.expiredDate.value,
+          materialVariantId: el.materialVariantId.value,
+          totalAmount: el.totalAmount.value,
+          quantityByPack: el.quantityByPack.value,
+        };
+        deliveryBatchItemsDto.push(deliveryBatchItemDetail);
+      });
+    }
+
+    deliveryBatchInfo.poDeliveryDetail = deliveryBatchItemsDto;
     if (deliveryBatchItemErrorSheet.size > 0) {
       deliveryBatchItemErrorSheet.forEach((value, key) => {
         const cell = worksheet.getCell(key);
-
         // Set the cell value to the error message
         cell.value = { richText: [] };
         cell.value.richText = [
@@ -1249,9 +1315,8 @@ export class ExcelService {
       }
     >,
     purchaseOrder: Partial<CreatePurchaseOrderDto>,
+    itemList: itemType[],
   ) {
-    const itemList = [];
-
     //Check if all the required tables are present
     const POInfoTable = worksheet.getTable(PO_INFO_TABLE);
     const POItemTable = worksheet.getTable(ITEM_TABLE_NAME);
@@ -1307,13 +1372,16 @@ export class ExcelService {
     if (!itemTable) {
       return apiFailed(HttpStatus.UNSUPPORTED_MEDIA_TYPE, 'Invalid format');
     } else {
-      const errorItem = await this.validateItemTable2(
+      const errorItem = await this.validateItemTable(
         worksheet,
         listItemError,
         itemTable,
         itemList,
       );
     }
+
+    console.log(itemList);
+
     if (listItemError.size > 0) {
       listItemError.forEach((value, key) => {
         const cell = worksheet.getCell(key);
@@ -1334,7 +1402,7 @@ export class ExcelService {
     }
   }
 
-  async validateItemTable2(
+  async validateItemTable(
     worksheet: Worksheet,
     listItemError: Map<
       string,
@@ -1345,10 +1413,9 @@ export class ExcelService {
       }
     >,
     itemTable: any,
-    itemListResult: any[],
+    itemListResult: itemType[],
   ) {
     const header = itemTable.table.columns.map((column: any) => column.name);
-    console.log('header', header);
     //Check if header is valid
     const isHeaderValid = compareArray(header, ITEM_HEADER);
     if (!isHeaderValid) {
@@ -1369,11 +1436,11 @@ export class ExcelService {
       const itemCell = {
         itemIdCell: row.getCell(1),
         descriptionCell: row.getCell(2),
-        quantityCell: row.getCell(3),
-        priceCell: row.getCell(4),
-        totalCell: row.getCell(5),
+        expiredDate: row.getCell(3),
+        quantityCell: row.getCell(4),
+        priceCell: row.getCell(5),
+        totalCell: row.getCell(6),
       };
-      console.log('itemCell', itemCell.itemIdCell.value);
       if (
         isEmpty(itemCell.itemIdCell.value) &&
         isEmpty(itemCell.descriptionCell.value) &&
@@ -1551,16 +1618,146 @@ export class ExcelService {
         } else {
           errorFlag = true;
         }
-        console.log(materialid);
+
+        if (isNotEmpty(itemCell.expiredDate.value)) {
+          console.log(itemCell.expiredDate.value);
+          if (!validateDate(itemCell.expiredDate.value)) {
+            console.log('ASda');
+            const text = [
+              { text: `${itemCell.expiredDate.value}` },
+              {
+                text: `[Expired date must be correct format]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              itemCell.expiredDate.address,
+              'Expired Date',
+              itemCell.expiredDate.value,
+              text,
+            );
+            errorFlag = true;
+            isError = true;
+          }
+        }
+
         if (!isError) {
           itemListResult.push({
-            materialVariantId: materialid as string,
-            quantityByPack: itemCell.quantityCell.value as number,
-            totalAmount: this.getTotalCellValue(itemCell.totalCell),
+            materialVariantId: {
+              cell: null,
+              value: materialid as string,
+            },
+            code: {
+              cell: itemCell.itemIdCell,
+              value: itemCell.itemIdCell.value,
+            },
+            quantityByPack: {
+              cell: itemCell.quantityCell,
+              value: itemCell.quantityCell.value as number,
+            },
+            totalAmount: {
+              cell: itemCell.totalCell,
+              value: this.getTotalCellValue(itemCell.totalCell),
+            },
+            expiredDate: {
+              cell: itemCell.expiredDate,
+              value: itemCell.expiredDate.value || null,
+            },
+            unitPrice: {
+              cell: itemCell.priceCell,
+              value: itemCell.priceCell.value as number,
+            },
           });
         }
       }
     }
+  }
+
+  //This use to validate item in general table which item in each delivery batch
+  validateItemTableBatch(
+    itemInDeliveryBatch: itemType[],
+    itemInGeneralTable: itemType[],
+    listItemError,
+  ) {
+    itemInDeliveryBatch.forEach((item) => {
+      const generalItem = itemInGeneralTable.find(
+        (generalItem) => generalItem.code.value === item.code.value,
+      );
+
+      if (generalItem) {
+        if (generalItem.quantityByPack.value < item.quantityByPack.value) {
+          const text = [
+            { text: `${item.quantityByPack.value}` },
+            {
+              text: `[Quantity must be less than or equal to general quantity]`,
+              font: { color: { argb: 'FF0000' } },
+            },
+          ];
+          this.addError(
+            listItemError,
+            item.quantityByPack.cell.address,
+            'Quantity',
+            item.quantityByPack.value,
+            text,
+          );
+        }
+
+        if (generalItem.expiredDate.value && item.expiredDate.value) {
+          if (
+            new Date(generalItem.expiredDate.value).getTime() !==
+            new Date(item.expiredDate.value).getTime()
+          ) {
+            const text = [
+              { text: `${item.expiredDate.value}` },
+              {
+                text: `[Expired Date must be equal to general expired date]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              item.expiredDate.cell.address,
+              'Expired Date',
+              item.expiredDate.value,
+              text,
+            );
+          }
+        }
+
+        if (generalItem.unitPrice.value !== item.unitPrice.value) {
+          const text = [
+            { text: `${item.unitPrice.value}` },
+            {
+              text: `[Unit Price must be equal to general unit price]`,
+              font: { color: { argb: 'FF0000' } },
+            },
+          ];
+          this.addError(
+            listItemError,
+            item.unitPrice.cell.address,
+            'Unit Price',
+            item.unitPrice.value,
+            text,
+          );
+        }
+      } else {
+        const text = [
+          { text: `${item.code.value}` },
+          {
+            text: `[Item not found in general table]`,
+            font: { color: { argb: 'FF0000' } },
+          },
+        ];
+        this.addError(
+          listItemError,
+          item.code.cell.address,
+          'Material',
+          item.code.value,
+          text,
+        );
+      }
+    });
   }
 
   getTotalCellValue = (totalCellValue: any): number => {

@@ -3,13 +3,16 @@ model PoDelivery {
   purchaseOrderId     String             @map("purchase_order_id") @db.Uuid
   expectedDeliverDate DateTime?          @map("expected_deliver_date") @db.Date
   deliverDate         DateTime?          @map("deliver_date") @db.Date
-  code                String?            @map("code") @db.VarChar(255)
+  code                String             @unique @map("code") @db.VarChar(255)
   status              PoDeliveryStatus   @default(PENDING) @map("status")
   isExtra             Boolean            @map("is_extra")
+  cancelledAt         DateTime?          @map("cancelled_at") @db.Timestamptz(6)
+  cancelledReason     String?            @map("cancelled_reason") @db.VarChar
+  cancelledBy         String?            @map("cancelled_by") @db.Uuid
   createdAt           DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime?          @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt           DateTime?          @map("deleted_at") @db.Timestamptz(6)
-  ImportRequest       ImportRequest[]
+  importRequest       ImportRequest[]
   purchaseOrder       PurchaseOrder      @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   poDeliveryDetail    PoDeliveryDetail[]
 
