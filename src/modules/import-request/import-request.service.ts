@@ -162,6 +162,7 @@ export class ImportRequestService {
       startedAt: dto.startAt,
       finishedAt: dto.finishAt,
       type: dto.type,
+      code: undefined,
       importRequestDetail: {
         createMany: {
           data: dto.importRequestDetails,
