@@ -162,6 +162,7 @@ export class ImportRequestService {
       startedAt: dto.startAt,
       finishedAt: dto.finishAt,
       type: dto.type,
+      code: undefined,
       importRequestDetail: {
         createMany: {
           data: dto.importRequestDetails,
@@ -169,7 +170,9 @@ export class ImportRequestService {
       },
     };
 
-    const poDelivery = await this.poDeliveryService.checkIsPoDeliveryStatus(dto.poDeliveryId);
+    const poDelivery = await this.poDeliveryService.checkIsPoDeliveryStatus(
+      dto.poDeliveryId,
+    );
 
     const errorResponse = await this.poDeliveryService.checkIsPoDeliveryValid(
       poDelivery,
@@ -349,14 +352,72 @@ export class ImportRequestService {
     }
   }
 
-  // IMPORTING
-  async warehouseStaffImport() {}
+  async getImportRequestOfInspectionRequest(inspectionRequestId: string) {
+    const importRequest = await this.prismaService.importRequest.findFirst({
+      where: {
+        inspectionRequest: {
+          some: {
+            id: inspectionRequestId,
+            deletedAt: null,
+          },
+        },
+      },
+      select: {
+        importRequestDetail: {
+          select: {
+            materialVariantId: true,
+            productVariantId: true,
+          },
+        },
+      },
+    });
 
-  // IMPORTED
-  async warehouseStaffFinishImport() {}
+    return importRequest;
+  }
 
-  // CANCELED
+  async isInspectReportMaterialVariantInImportRequest(
+    inspectionRequestId: string,
+    materialVariantIds: string[],
+  ) {
+    const importRequest =
+      await this.getImportRequestOfInspectionRequest(inspectionRequestId);
+
+    if (!importRequest) {
+      throw new BadRequestException(
+        'There is no import request for this inspection request',
+      );
+    }
+
+    const materialVariantsInDb = new Set(
+      importRequest.importRequestDetail.map(
+        (detail) => detail.materialVariantId,
+      ),
+    );
+    return materialVariantIds.every((id) => materialVariantsInDb.has(id));
+  }
+
+  async isInspectReportProductVariantInImportRequest(
+    importRequestId: string,
+    productVariantIds: string[],
+  ) {
+    const importRequest =
+      await this.getImportRequestOfInspectionRequest(importRequestId);
+
+    if (!importRequest) {
+      throw new BadRequestException(
+        'There is no import request for this inspection request',
+      );
+    }
+
+    const productVariantsInDb = new Set(
+      importRequest.importRequestDetail.map(
+        (detail) => detail.productVariantId,
+      ),
+    );
+    return productVariantIds.every((id) => productVariantsInDb.has(id));
+  }
 }
+
 export const importRequestInclude: Prisma.ImportRequestInclude = {
   importRequestDetail: {
     include: {

@@ -5,6 +5,7 @@ model ImportRequest {
   purchasingStaffId   String?               @map("purchasing_staff_id") @db.Uuid
   warehouseManagerId  String?               @map("warehouse_manager_id") @db.Uuid
   status              ImportRequestStatus   @default(ARRIVED)
+  code                String                @map("code") @db.VarChar
   type                ImportRequestType     @map("import_request_type")
   startedAt           DateTime?             @map("started_at") @db.Timestamptz(6)
   finishedAt          DateTime?             @map("finished_at") @db.Timestamptz(6)
