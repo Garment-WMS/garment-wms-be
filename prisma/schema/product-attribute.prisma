@@ -1,13 +1,13 @@
 model ProductAttribute {
-  id        String         @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  productId String         @map("product_id") @db.Uuid
-  name      String         @map("name") @db.VarChar
-  value     String         @map("value") @db.VarChar
-  type      AttributeType? @default(STRING) @map("type")
-  createdAt DateTime?      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime?      @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt DateTime?      @map("deleted_at") @db.Timestamptz(6)
-  product   Product        @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  productVariantId String         @map("product_variant_id") @db.Uuid
+  name             String         @map("name") @db.VarChar
+  value            String         @map("value") @db.VarChar
+  type             AttributeType? @default(STRING) @map("type")
+  createdAt        DateTime?      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime?      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt        DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  product          ProductVariant @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("product_attribute")
 }

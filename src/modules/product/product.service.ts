@@ -1,93 +1,56 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
-import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
-import { ImageService } from '../image/image.service';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { CreateProductTypeDto } from './dto/create-product-type.dto';
+import { UpdateProductTypeDto } from './dto/update-product-type.dto';
 
 @Injectable()
 export class ProductService {
-  constructor(
-    private prismaService: PrismaService,
-    private readonly imageService: ImageService,
-  ) {}
-
-  includeQuery: Prisma.ProductInclude = {
-    productType: true,
-    productUom: true,
-  };
-
-  async addImage(file: Express.Multer.File, id: string) {
-    const product = await this.findById(id);
-    let oldImageUrl = '';
-    if (!product) {
-      return apiFailed(HttpStatus.NOT_FOUND, 'Product not found');
-    }
-
-    if (product.image) {
-      oldImageUrl = product.image;
-    }
-
-    const imageUrl = await this.imageService.addImageToFirebase(
-      file,
-      id,
-      PathConstants.PRODUCT_PATH,
-    );
-    let result;
-    if (imageUrl) {
-      const updateProductDto: UpdateProductDto = {
-        image: imageUrl,
-      };
-      result = await this.update(id, updateProductDto);
-    }
-
-    //To ignore this error
-    try {
-      await this.imageService.deleteImageUrl(oldImageUrl);
-    } catch (e) {}
-
-    if (result) {
-      return apiSuccess(HttpStatus.OK, result, 'Image uploaded successfully');
-    }
-
-    return apiFailed(HttpStatus.BAD_REQUEST, 'Image not uploaded');
-  }
-
-  async create(createProductDto: CreateProductDto) {
+  constructor(private prismaService: PrismaService) {}
+  async create(createProductTypeDto: CreateProductTypeDto) {
     const result = await this.prismaService.product.create({
-      data: createProductDto,
+      data: createProductTypeDto,
     });
+
     if (result) {
       return apiSuccess(
         HttpStatus.CREATED,
         result,
-        'Product created successfully',
+        'Product Type created successfully',
       );
     }
-    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product');
+    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product Type');
   }
 
   async findAll() {
-    const result = await this.prismaService.product.findMany({
-      include: this.includeQuery,
-    });
+    const result = await this.prismaService.product.findMany();
     return result;
   }
 
-  async findByIdWithResponse(id: string) {
-    const result = await this.findById(id);
-
+  //TODO : Add filterOptions
+  async findAllWithResponse() {
+    const result = await this.findAll();
     if (result) {
       return apiSuccess(
         HttpStatus.OK,
         result,
-        'Product retrieved successfully',
+        'Product Type retrieved successfully',
       );
     }
-    return apiFailed(HttpStatus.NOT_FOUND, 'Product not found');
+    return apiFailed(HttpStatus.NOT_FOUND, 'Product Type not found');
+  }
+
+  async findByIdWithResponse(id: string) {
+    const result = await this.findById(id);
+    if (result) {
+      return apiSuccess(
+        HttpStatus.OK,
+        result,
+        'Product Type retrieved successfully',
+      );
+    }
+    return apiFailed(HttpStatus.NOT_FOUND, 'Product Type not found');
   }
 
   async findById(id: string) {
@@ -102,31 +65,11 @@ export class ProductService {
     return result;
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
-    const result = await this.prismaService.product.update({
-      where: {
-        id: id,
-      },
-      data: updateProductDto,
-    });
-    if (result) {
-      return apiSuccess(HttpStatus.OK, result, 'Product updated successfully');
-    }
-    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to update Product');
+  update(id: number, updateProductTypeDto: UpdateProductTypeDto) {
+    return `This action updates a #${id} product`;
   }
 
-  async remove(id: string) {
-    const result = await this.prismaService.product.update({
-      where: {
-        id: id,
-      },
-      data: {
-        deletedAt: new Date(),
-      },
-    });
-    if (result) {
-      return apiSuccess(HttpStatus.OK, result, 'Product deleted successfully');
-    }
-    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to delete Product');
+  remove(id: number) {
+    return `This action removes a #${id} product`;
   }
 }

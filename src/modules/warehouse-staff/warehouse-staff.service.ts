@@ -65,7 +65,7 @@ export class WarehouseStaffService {
 }
 
 export const WarehouseStaffInclude: Prisma.WarehouseStaffInclude = {
-  users: true,
+  account: true,
   _count: {
     select: {
       importRequest: true,

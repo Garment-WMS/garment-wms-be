@@ -1,15 +1,15 @@
 model MaterialAttribute {
-  id         String         @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  materialId String         @map("material_id") @db.Uuid
-  name       String         @map("name") @db.VarChar
-  value      String         @map("value") @db.VarChar
-  type       AttributeType? @default(STRING) @map("type")
-  createdAt  DateTime?      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime?      @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt  DateTime?      @map("deleted_at") @db.Timestamptz(6)
-  material   Material       @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialVariantId String          @map("material_variant_id") @db.Uuid
+  name              String          @map("name") @db.VarChar
+  value             String          @map("value") @db.VarChar
+  type              AttributeType?  @default(STRING) @map("type")
+  createdAt         DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime?       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  materialVariant   MaterialVariant @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@unique([materialId, name])
+  @@unique([materialVariantId, name])
   @@map("material_attribute")
 }
 

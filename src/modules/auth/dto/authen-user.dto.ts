@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RoleCode, User } from '@prisma/client';
+import { RoleCode, Account } from '@prisma/client';
 import { IsEnum, IsOptional, IsUUID } from 'class-validator';
 export class AuthenUser {
   @ApiProperty()
@@ -7,7 +7,7 @@ export class AuthenUser {
   userId: string;
 
   @ApiProperty()
-  user: User;
+  user: Account;
 
   @ApiProperty()
   @IsEnum(RoleCode)

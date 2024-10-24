@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
-import { IsMaterialExist } from 'src/modules/material/validation/is-material-exist.validation';
+import { IsMaterialExist } from 'src/modules/material-variant/validation/is-material-exist.validation';
 
 export class CreateMaterialAttributeDto {
   @IsNotEmpty()
   @IsUUID()
   @IsMaterialExist()
   @ApiProperty()
-  materialId: string;
+  materialVariantId: string;
 
   @IsNotEmpty()
   @IsString()

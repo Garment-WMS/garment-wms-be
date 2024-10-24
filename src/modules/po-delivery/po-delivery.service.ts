@@ -62,12 +62,15 @@ export class PoDeliveryService {
   includeQuery: Prisma.PoDeliveryInclude = {
     poDeliveryDetail: {
       include: {
-        materialVariant: {
+        materialPackage: {
           include: {
-            material: {
+            materialVariant: {
               include: {
-                materialUom: true,
-                materialType: true,
+                material: {
+                  include: {
+                    materialUom: true,
+                  },
+                },
               },
             },
           },

@@ -65,7 +65,7 @@ export class InspectionDepartmentService {
 }
 
 export const inspectionDepartmentInclude: Prisma.InspectionDepartmentInclude = {
-  users: true,
+  account: true,
   _count: {
     select: {
       inspectionRequest: {

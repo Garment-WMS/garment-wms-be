@@ -7,8 +7,8 @@ import {
   Min,
   ValidateIf,
 } from 'class-validator';
-import { IsMaterialVariantExist } from 'src/modules/material-variant/validator/is-material-variant-exist.validator';
-import { IsProductVariantExist } from 'src/modules/product-variant/validator/is-product-variant-exist.validator';
+import { IsMaterialVariantExist } from 'src/modules/material-package/validator/is-material-variant-exist.validator';
+import { IsProductVariantExist } from 'src/modules/product-size/validator/is-product-variant-exist.validator';
 
 export class CreateImportRequestDetailDto {
   @ApiProperty({ required: false })

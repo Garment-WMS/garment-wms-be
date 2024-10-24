@@ -127,7 +127,7 @@ export class AuthService {
       case RoleCode.WAREHOUSE_STAFF: {
         checkRoleSchema = await this.prisma.warehouseStaff.findFirst({
           where: {
-            userId: userId,
+            accountId: userId,
           },
         });
         break;
@@ -135,7 +135,7 @@ export class AuthService {
       case RoleCode.FACTORY_DIRECTOR: {
         checkRoleSchema = await this.prisma.factoryDirector.findFirst({
           where: {
-            userId: userId,
+            accountId: userId,
           },
         });
         break;
@@ -143,7 +143,7 @@ export class AuthService {
       case RoleCode.WAREHOUSE_MANAGER: {
         checkRoleSchema = await this.prisma.warehouseManager.findFirst({
           where: {
-            userId: userId,
+            accountId: userId,
           },
         });
         break;
@@ -151,7 +151,7 @@ export class AuthService {
       case RoleCode.INSPECTION_DEPARTMENT: {
         checkRoleSchema = await this.prisma.inspectionDepartment.findFirst({
           where: {
-            userId: userId,
+            accountId: userId,
           },
         });
         break;
@@ -159,7 +159,7 @@ export class AuthService {
       case RoleCode.PRODUCTION_DEPARTMENT: {
         checkRoleSchema = await this.prisma.productionDepartment.findFirst({
           where: {
-            userId: userId,
+            accountId: userId,
           },
         });
         break;
@@ -167,7 +167,7 @@ export class AuthService {
       case RoleCode.PURCHASING_STAFF: {
         checkRoleSchema = await this.prisma.purchasingStaff.findFirst({
           where: {
-            userId: userId,
+            accountId: userId,
           },
         });
         break;
@@ -185,7 +185,7 @@ export class AuthService {
         user.password = await this.hashPassword(user.password);
 
         //Create User type
-        const userInput: Prisma.UserCreateInput = {
+        const userInput: Prisma.AccountCreateInput = {
           ...user,
           id: undefined,
           isDeleted: false,
@@ -198,7 +198,7 @@ export class AuthService {
           updatedAt: undefined,
           deletedAt: undefined,
         };
-        const userResult = await prismaTransaction.user.create({
+        const userResult = await prismaTransaction.account.create({
           data: {
             ...userInput,
           },

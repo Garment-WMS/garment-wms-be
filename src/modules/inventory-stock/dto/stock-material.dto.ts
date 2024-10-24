@@ -1,17 +1,21 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from '@prisma/client';
 
-export interface MaterialStock extends Prisma.MaterialGetPayload<{
+export interface MaterialStock
+  extends Prisma.MaterialVariantGetPayload<{
     include: {
       materialAttribute: true;
-      materialType: true;
-      materialUom: true;
-      materialVariant: {
+      material: {
+        include: {
+          materialUom: true;
+        };
+      };
+      materialPackage: {
         include: {
           inventoryStock: true;
         };
       };
     };
   }> {
-    onHand?: number; // Adding custom field
-    numberOfMaterialVariant?: number; // Adding custom field
-  }
+  onHand?: number; // Adding custom field
+  numberOfMaterialVariant?: number; // Adding custom field
+}

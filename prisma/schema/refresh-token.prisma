@@ -5,7 +5,7 @@ model RefreshToken {
   updatedAt    DateTime? @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
   refreshToken String    @id @unique @map("refresh_token")
-  userId       String    @map("user_id") @db.Uuid
+  accountId    String    @map("account_id") @db.Uuid
 
   @@map("refresh_tokens")
 }

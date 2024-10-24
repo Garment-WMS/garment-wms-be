@@ -3,38 +3,31 @@ import {
   Controller,
   Delete,
   Get,
-  HttpStatus,
   Param,
   Patch,
   Post,
-  UploadedFile,
-  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags } from '@nestjs/swagger';
-import { apiSuccess } from 'src/common/dto/api-response';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { CreateProductTypeDto } from './dto/create-product-type.dto';
+import { UpdateProductTypeDto } from './dto/update-product-type.dto';
 import { ProductService } from './product.service';
 
-@ApiTags('Product')
 @Controller('product')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Post()
-  @UsePipes(new ValidationPipe({ whitelist: true }))
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productService.create(createProductDto);
+  @UsePipes(new ValidationPipe({ stopAtFirstError: true }))
+  create(@Body() createProductTypeDto: CreateProductTypeDto) {
+    console.log(createProductTypeDto);
+    return this.productService.create(createProductTypeDto);
   }
 
   @Get()
-  async findAll() {
-    const result = await this.productService.findAll();
-    return apiSuccess(HttpStatus.OK, result, 'Get all products successfully');
+  findAll() {
+    return this.productService.findAll();
   }
 
   @Get(':id')
@@ -42,26 +35,16 @@ export class ProductController {
     return this.productService.findByIdWithResponse(id);
   }
 
-  @Post(':id/image')
-  @UseInterceptors(FileInterceptor('file'))
-  uploadAvatar(
-    @UploadedFile() file: Express.Multer.File,
-    @Param('id', new CustomUUIDPipe()) id: string,
-  ) {
-    return this.productService.addImage(file, id);
-  }
-
   @Patch(':id')
-  @UsePipes(new ValidationPipe({ whitelist: true }))
   update(
-    @Param('id', CustomUUIDPipe) id: string,
-    @Body() updateProductDto: UpdateProductDto,
+    @Param('id') id: string,
+    @Body() updateProductTypeDto: UpdateProductTypeDto,
   ) {
-    return this.productService.update(id, updateProductDto);
+    return this.productService.update(+id, updateProductTypeDto);
   }
 
   @Delete(':id')
-  remove(@Param('id', CustomUUIDPipe) id: string) {
-    return this.productService.remove(id);
+  remove(@Param('id') id: string) {
+    return this.productService.remove(+id);
   }
 }

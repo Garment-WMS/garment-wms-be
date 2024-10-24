@@ -8,10 +8,8 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ExcelService } from '../excel/excel.service';
-import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CancelledPurchaseOrderDto } from './dto/cancelled-purchase-order.dto';
-import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { PurchaseOrderDto } from './dto/purchase-order.dto';
 import { UpdatePurchaseOrderStatusDto } from './dto/update-purchase-order-status.dto';
 import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
@@ -30,12 +28,15 @@ export class PurchaseOrderService {
       include: {
         poDeliveryDetail: {
           include: {
-            materialVariant: {
+            materialPackage: {
               include: {
-                material: {
+                materialVariant: {
                   include: {
-                    materialUom: true,
-                    materialType: true,
+                    material: {
+                      include: {
+                        materialUom: true,
+                      },
+                    },
                   },
                 },
               },
@@ -221,7 +222,7 @@ export class PurchaseOrderService {
     let purchaseOrder = null;
     if (excelData instanceof ApiResponse) {
       return excelData;
-    } 
+    }
     // else {
     //   let subTotalAmount = 0;
     //   excelData.poDelivery.forEach((poDelivery) => {

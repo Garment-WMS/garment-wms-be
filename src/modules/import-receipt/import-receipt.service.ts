@@ -169,7 +169,7 @@ export class ImportReceiptService {
         if (importReceipt.materialReceipt) {
           importReceipt.materialReceipt.forEach(async (detail) => {
             await this.inventoryStockService.updateMaterialStock(
-              detail.materialVariantId,
+              detail.materialPackageId,
               detail.quantityByPack,
               prismaInstance,
             );

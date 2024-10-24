@@ -20,7 +20,7 @@ export class WarehouseStaffController {
   async search(
     @Query(
       new DirectFilterPipe<any, Prisma.WarehouseStaffWhereInput>(
-        ['id', 'userId', 'createdAt', 'updatedAt'],
+        ['id', 'account', 'createdAt', 'updatedAt'],
         ['importRequest.id', 'importReceipt.id'],
         [{ id: 'asc', createdAt: 'desc', updatedAt: 'desc' }],
       ),

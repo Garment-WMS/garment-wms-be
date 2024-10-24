@@ -91,13 +91,13 @@ export class InspectionReportService {
             },
           }
         : undefined,
-      inspectionDepartment: dto.inspectionDepartmentId
-        ? {
-            connect: {
-              id: dto.inspectionDepartmentId,
-            },
-          }
-        : undefined,
+      // inspectionDepartment: dto.inspectionDepartmentId
+      //   ? {
+      //       connect: {
+      //         id: dto.inspectionDepartmentId,
+      //       },
+      //     }
+      //   : undefined,
       inspectionReportDetail: {
         createMany: {
           data: dto.inspectionReportDetail,
@@ -156,13 +156,13 @@ export class InspectionReportService {
 
     const inspectionReportUpdateInput: Prisma.InspectionReportUpdateInput = {
       code: dto.code,
-      inspectionDepartment: dto.inspectionDepartmentId
-        ? {
-            connect: {
-              id: dto.inspectionDepartmentId,
-            },
-          }
-        : undefined,
+      // inspectionDepartment: dto.inspectionDepartmentId
+      //   ? {
+      //       connect: {
+      //         id: dto.inspectionDepartmentId,
+      //       },
+      //     }
+      //   : undefined,
       inspectionRequest: {
         connect: {
           id: dto.inspectionRequestId,
@@ -220,21 +220,33 @@ export const inspectionReportInclude: Prisma.InspectionReportInclude = {
       purchasingStaff: true,
     },
   },
-  inspectionDepartment: {
-    include: {
-      users: true,
-    },
-  },
+  
   inspectionReportDetail: {
     include: {
-      materialVariant: {
+      materialPackage: {
         include: {
-          material: true,
+          materialVariant: {
+            include: {
+              material: {
+                include: {
+                  materialUom: true,
+                },
+              },
+            },
+          },
         },
       },
-      productVariant: {
+      productSize: {
         include: {
-          product: true,
+          productVariant: {
+            include: {
+              product: {
+                include: {
+                  productUom: true,
+                },
+              },
+            },
+          },
         },
       },
     },

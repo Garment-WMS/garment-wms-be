@@ -2,21 +2,25 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
-import { MaterialService } from '../material/material.service';
 import { CreateMaterialReceiptDto } from './dto/create-material-receipt.dto';
 import { UpdateMaterialReceiptDto } from './dto/update-material-receipt.dto';
 
 @Injectable()
 export class MaterialReceiptService {
-  constructor(
-    private readonly prismaService: PrismaService,
-    private readonly materialService: MaterialService,
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   includeQuery: Prisma.MaterialReceiptInclude = {
-    materialVariant: {
+    materialPackage: {
       include: {
-        material: true,
+        materialVariant: {
+          include: {
+            material: {
+              include: {
+                materialUom: true,
+              },
+            },
+          },
+        },
       },
     },
   };
@@ -29,8 +33,8 @@ export class MaterialReceiptService {
     id: string,
     inspectionReportDetail: {
       id: string;
-      materialVariantId: string | null;
-      productVariantId: string | null;
+      materialPackageId: string | null;
+      productSizeId: string | null;
       createdAt: Date | null;
       updatedAt: Date | null;
       deletedAt: Date | null;
@@ -45,7 +49,9 @@ export class MaterialReceiptService {
       inspectionReportDetail.map((detail) => {
         return {
           importReceiptId: id,
-          materialVariantId: detail.materialVariantId,
+          materialPackageId: detail.materialPackageId,
+          SKU: '',
+          remainQuantityByPack: detail.quantityByPack,
           quantityByPack: detail.approvedQuantityByPack,
         };
       });
