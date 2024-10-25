@@ -308,14 +308,16 @@ export class PoDeliveryService {
       { poNumber: string }[]
     >`SELECT "code" FROM "po_delivery" ORDER BY CAST(SUBSTRING("code", 5) AS INT) DESC LIMIT 1`;
     const poDeliveryCode = lastPo_delivery[0]?.code;
+    console.log('poDeliveryCode', poDeliveryCode);
     let nextCodeNumber = 1 + index;
     if (poDeliveryCode) {
       const currentCodeNumber = parseInt(
         poDeliveryCode.replace(/^POD-?/, ''),
         10,
       );
-      nextCodeNumber = currentCodeNumber + 1;
+      nextCodeNumber = currentCodeNumber + index;
     }
+
 
     const nextCode = `${Constant.POD_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
     //Check is the next code is already exist
@@ -325,6 +327,7 @@ export class PoDeliveryService {
       },
     });
     if (isExist) {
+      console.log('nextCode', nextCode);
       return this.generateManyNextPoDeliveryCodes(index + 1);
     }
     return nextCode;

@@ -183,10 +183,10 @@ export class AuthService {
       async (prismaTransaction) => {
         //Hash user's password
         user.password = await this.hashPassword(user.password);
-
+        const { role, ...ress } = user;
         //Create User type
         const userInput: Prisma.AccountCreateInput = {
-          ...user,
+          ...ress,
           id: undefined,
           isDeleted: false,
           isVerified: false,
@@ -264,7 +264,7 @@ export class AuthService {
     try {
       const schema: any = {
         id: undefined,
-        userId: userId,
+        accountId: userId,
         createdAt: undefined,
         updatedAt: undefined,
         deletedAt: undefined,
