@@ -1,5 +1,6 @@
 model InspectionRequest {
   id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  code                   String                  @map("code")
   purchasingStaffId      String?                 @map("purchasing_staff_id") @db.Uuid
   productionDeparmentId  String?                 @map("production_deparment_id") @db.Uuid
   inspectionDepartmentId String                  @map("inspection_department_id") @db.Uuid

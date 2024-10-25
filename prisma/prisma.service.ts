@@ -120,39 +120,45 @@ export class PrismaService
   };
 
   modelsWithCode = [
-    'AnnualProductionPlan',
+    'ImportRequest',
     'ImportReceipt',
+    'InspectionRequest',
     'InspectionReport',
-    'ManufacturingOrder',
     'MaterialInspectionCriteria',
-    'MaterialType',
     'MaterialVariant',
     'Material',
+    'MaterialPackage',
     'ProductInspectionCriteria',
-    'ProductType',
+    'ProductSize',
     'ProductVariant',
     'Product',
-    'QuarterlyProductionPlan',
+    'ProductBatch',
+    'ProductionPlan',
     'Supplier',
   ];
 
+  getPrefix(modelName: string, delimiter: string): string {
+    return modelName
+      .match(/[A-Z][a-z]*|[A-Z]+(?![a-z])/g)
+      .map((part) => part.slice(0, 3).toUpperCase())
+      .join(delimiter);
+  }
+
   generateCodeMiddleware: Prisma.Middleware = async (params, next) => {
+    const delimiter: string = '-';
     if (
       (params.action === 'create' || params.action === 'createMany') &&
       this.modelsWithCode.includes(params.model)
     ) {
       const modelName = params.model;
-      const prefix = modelName
-        .split(/(?=[A-Z])/)
-        .map((word) => word.charAt(0).toUpperCase())
-        .join('');
+      const prefix = this.getPrefix(modelName, delimiter);
 
       if (params.action === 'create') {
         if (params.args.data && params.args.data.code === undefined) {
           // Count the existing records in the table
           const count = await this[modelName].count();
           const nextNumber = (count + 1).toString().padStart(6, '0');
-          const code = `${prefix}${nextNumber}`;
+          const code = `${prefix}${delimiter}${nextNumber}`;
           params.args.data.code = code;
         }
       } else if (params.action === 'createMany') {
