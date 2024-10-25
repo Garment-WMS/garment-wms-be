@@ -7,7 +7,7 @@ model ImportRequest {
   productionDepartmentId String?               @map("production_department_id") @db.Uuid
   productionBatchId      String?               @map("production_batch_id") @db.Uuid
   status                 ImportRequestStatus   @default(ARRIVED)
-  code                   String                @map("code") @db.VarChar
+  code                   String                @unique @map("code") @db.VarChar
   type                   ImportRequestType     @map("import_request_type")
   startedAt              DateTime?             @map("started_at") @db.Timestamptz(6)
   finishedAt             DateTime?             @map("finished_at") @db.Timestamptz(6)

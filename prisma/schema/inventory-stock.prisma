@@ -9,5 +9,5 @@ model InventoryStock {
     materialPackage   MaterialPackage? @relation(fields: [materialPackageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
     productSize       ProductSize?     @relation(fields: [productSizeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-    @@map("inventory_stock")
+  @@map("inventory_stock")
 }

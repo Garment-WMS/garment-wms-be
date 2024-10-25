@@ -21,5 +21,5 @@ model MaterialPackage {
   inventoryStock         InventoryStock?
   InventoryReport        InventoryReport[]
 
-  @@map("material_variant")
+  @@map("material_package")
 }

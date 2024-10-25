@@ -14,5 +14,5 @@ model MaterialVariant {
   productFormulaMaterial     ProductFormulaMaterial[]
   materialPackage            MaterialPackage[]
 
-  @@map("material")
+  @@map("material_variant")
 }

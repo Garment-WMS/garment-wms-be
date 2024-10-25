@@ -10,5 +10,5 @@ model Material {
   materialUom            MaterialUom?             @relation(fields: [materialUomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   ProductFormulaMaterial ProductFormulaMaterial[]
 
-  @@map("material_type")
+  @@map("material")
 }
