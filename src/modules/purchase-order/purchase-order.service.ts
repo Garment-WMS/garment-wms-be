@@ -155,21 +155,13 @@ export class PurchaseOrderService {
     const { skip, take, ...rest } = filterOption;
     const page = filterOption?.skip || Constant.DEFAULT_OFFSET;
     const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
+    console.log('filterOption', filterOption.where);
     const [result, total] = await this.prismaService.$transaction([
       this.prismaService.purchaseOrder.findMany({
-        // skip: page,
-        // take: limit,
-        // ...rest,
+        skip: page,
+        take: limit,
         where: {
-          OR: [
-            {
-              otherAmount: 100,
-            },
-            {
-              poNumber: 'PO-000001',
-            },
-          ],
-          // ...rest?.where,
+          ...rest?.where,
         },
         orderBy: filterOption?.orderBy,
         include: this.queryInclude,
