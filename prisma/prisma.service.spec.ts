@@ -1,4 +1,5 @@
-import { addDeletedAtNull } from './prisma.service';
+import { Logger } from '@nestjs/common';
+import { addDeletedAtNull, PrismaService } from './prisma.service';
 
 describe('addDeletedAtNull', () => {
   it('should add deletedAt: null to top-level where clause', () => {
@@ -48,5 +49,51 @@ describe('addDeletedAtNull', () => {
     expect(params.where.deletedAt).toBeNull();
     expect(params.where.nested.where.deletedAt).toBeNull();
     expect(params.where.nested.where.deepNested.where.deletedAt).toBeNull();
+  });
+});
+
+//test getPrefix
+describe('getPrefix', () => {
+  it('should return the first 3 characters of the model name in uppercase', () => {
+    const service = new PrismaService();
+    const modelsWithCode = [
+      'ImportRequest',
+      'ImportReceipt',
+      'InspectionRequest',
+      'InspectionReport',
+      'MaterialInspectionCriteria',
+      'MaterialVariant',
+      'Material',
+      'MaterialPackage',
+      'ProductInspectionCriteria',
+      'ProductSize',
+      'ProductVariant',
+      'Product',
+      'ProductBatch',
+      'ProductionPlan',
+      'Supplier',
+    ];
+    const delimiter = '-';
+    const expectedPrefixes = [
+      'IMP-REQ',
+      'IMP-REC',
+      'INS-REQ',
+      'INS-REP',
+      'MAT-INS-CRI',
+      'MAT-VAR',
+      'MAT',
+      'MAT-PAC',
+      'PRO-INS-CRI',
+      'PRO-SIZ',
+      'PRO-VAR',
+      'PRO',
+      'PRO-BAT',
+      'PRO-PLA',
+      'SUP',
+    ];
+    modelsWithCode.forEach((model, index) => {
+      Logger.log(model);
+      expect(service.getPrefix(model, delimiter)).toBe(expectedPrefixes[index]);
+    });
   });
 });
