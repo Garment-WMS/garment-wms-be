@@ -38,7 +38,7 @@ export class RefreshTokenService {
 
     if (refreshTokenResult) {
       const refreshToken: Prisma.RefreshTokenCreateInput = {
-        userId: user.id,
+        accountId: user.id,
         refreshToken: refreshTokenResult,
         expiredAt: expiredAtTake,
       };
@@ -56,7 +56,7 @@ export class RefreshTokenService {
     try {
       const refreshTokenResult = await this.prisma.refreshToken.findFirst({
         where: {
-          userId: userIdInput,
+          accountId: userIdInput,
           refreshToken: refreshTokenInput,
           status: true,
           expiredAt: {

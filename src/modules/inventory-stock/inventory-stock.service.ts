@@ -2,8 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
-import { MaterialService } from '../material/material.service';
-import { ProductService } from '../product/product.service';
+import { MaterialVariantService } from '../material-variant/material-variant.service';
 import { CreateInventoryStockDto } from './dto/create-inventory-stock.dto';
 import { MaterialStock } from './dto/stock-material.dto';
 import { UpdateInventoryStockDto } from './dto/update-inventory-stock.dto';
@@ -12,8 +11,7 @@ import { UpdateInventoryStockDto } from './dto/update-inventory-stock.dto';
 export class InventoryStockService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly materialService: MaterialService,
-    private readonly productService: ProductService,
+    private readonly materialVariantService: MaterialVariantService,
   ) {}
 
   create(createInventoryStockDto: CreateInventoryStockDto) {
@@ -21,23 +19,11 @@ export class InventoryStockService {
   }
 
   async findAll() {
-    const inventoryStocks = await this.materialService.findMaterialStock();
-    // const inventoryStocks = await this.prismaService.material.findMany({
-    //   include: {
-    //     materialAttribute: true,
-    //     materialType: true,
-    //     materialUom: true,
-    //     materialVariant: {
-    //       include: {
-    //         inventoryStock: true,
-    //       },
-    //     },
-    //   },
-    // });
-
+    const inventoryStocks =
+      await this.materialVariantService.findMaterialStock();
     inventoryStocks.forEach((material: MaterialStock) => {
-      material.numberOfMaterialVariant = material.materialVariant.length;
-      material.onHand = material?.materialVariant?.reduce(
+      material.numberOfMaterialVariant = material.materialPackage.length;
+      material.onHand = material?.materialPackage?.reduce(
         (totalAcc, materialVariantEl) => {
           let variantTotal = 0;
           //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
@@ -58,19 +44,19 @@ export class InventoryStockService {
   }
 
   updateMaterialStock(
-    materialVariantId: string,
+    materialPackageId: string,
     quantity: number,
     prismaInstance: PrismaClient = this.prismaService,
   ) {
     return prismaInstance.inventoryStock.upsert({
       where: {
-        materialVariantId: materialVariantId,
+        materialPackageId: materialPackageId,
       },
       update: {
         quantityByPack: { increment: quantity },
       },
       create: {
-        materialVariantId,
+        materialPackageId,
         quantityByPack: quantity,
       },
     });

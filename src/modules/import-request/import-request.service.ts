@@ -365,8 +365,8 @@ export class ImportRequestService {
       select: {
         importRequestDetail: {
           select: {
-            materialVariantId: true,
-            productVariantId: true,
+            materialPackageId: true,
+            productSizeId: true,
           },
         },
       },
@@ -377,7 +377,7 @@ export class ImportRequestService {
 
   async isInspectReportMaterialVariantInImportRequest(
     inspectionRequestId: string,
-    materialVariantIds: string[],
+    materialPackageIds: string[],
   ) {
     const importRequest =
       await this.getImportRequestOfInspectionRequest(inspectionRequestId);
@@ -390,10 +390,10 @@ export class ImportRequestService {
 
     const materialVariantsInDb = new Set(
       importRequest.importRequestDetail.map(
-        (detail) => detail.materialVariantId,
+        (detail) => detail.materialPackageId,
       ),
     );
-    return materialVariantIds.every((id) => materialVariantsInDb.has(id));
+    return materialPackageIds.every((id) => materialVariantsInDb.has(id));
   }
 
   async isInspectReportProductVariantInImportRequest(
@@ -410,9 +410,7 @@ export class ImportRequestService {
     }
 
     const productVariantsInDb = new Set(
-      importRequest.importRequestDetail.map(
-        (detail) => detail.productVariantId,
-      ),
+      importRequest.importRequestDetail.map((detail) => detail.productSizeId),
     );
     return productVariantIds.every((id) => productVariantsInDb.has(id));
   }
@@ -421,11 +419,15 @@ export class ImportRequestService {
 export const importRequestInclude: Prisma.ImportRequestInclude = {
   importRequestDetail: {
     include: {
-      materialVariant: {
+      materialPackage: {
         include: {
-          material: {
+          materialVariant: {
             include: {
-              materialType: true,
+              material: {
+                include: {
+                  materialUom: true,
+                },
+              },
               materialAttribute: true,
               materialInspectionCriteria: true,
             },
@@ -436,17 +438,17 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
   },
   warehouseManager: {
     include: {
-      users: true,
+      account: true,
     },
   },
   purchasingStaff: {
     include: {
-      users: true,
+      account: true,
     },
   },
   warehouseStaff: {
     include: {
-      users: true,
+      account: true,
     },
   },
   poDelivery: {
@@ -455,7 +457,7 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
         include: {
           purchasingStaff: {
             include: {
-              users: true,
+              account: true,
             },
           },
           supplier: true,

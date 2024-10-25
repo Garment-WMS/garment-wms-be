@@ -1,6 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable } from '@nestjs/common';
-import { Prisma, RoleCode, User } from '@prisma/client';
+import { Prisma, RoleCode, Account } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { PathConstants } from 'src/common/constant/path.constant';
@@ -10,18 +10,18 @@ import { ImageService } from '../image/image.service';
 
 @Injectable()
 export class UserService {
-  async search(findOptions: GeneratedFindOptions<Prisma.UserWhereInput>) {
+  async search(findOptions: GeneratedFindOptions<Prisma.AccountWhereInput>) {
     const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
     const [data, total] = await this.prisma.$transaction([
-      this.prisma.user.findMany({
+      this.prisma.account.findMany({
         skip: offset,
         take: limit,
         where: findOptions?.where,
         orderBy: findOptions?.orderBy,
         include: userInclude,
       }),
-      this.prisma.user.count(
+      this.prisma.account.count(
         findOptions?.where
           ? {
               where: findOptions.where,
@@ -86,8 +86,8 @@ export class UserService {
     private readonly imageService: ImageService,
   ) {}
 
-  async findOne(query: Prisma.UserWhereInput): Promise<User | undefined> {
-    return await this.prisma.user.findFirst({
+  async findOne(query: Prisma.AccountWhereInput): Promise<Account | undefined> {
+    return await this.prisma.account.findFirst({
       where: query,
       include: {
         factoryDirector: true,
@@ -103,7 +103,7 @@ export class UserService {
   async addAvatar(file: Express.Multer.File, userInput: AuthenUser) {
     try {
       //Get the user
-      const user: User = await this.findOneByUserId(userInput.userId);
+      const user: Account = await this.findOneByUserId(userInput.userId);
       const imageUrl = await this.imageService.addImageToFirebase(
         file,
         user.id,
@@ -128,7 +128,7 @@ export class UserService {
       }
 
       //Update avatar url
-      const newUser = await this.prisma.user.update({
+      const newUser = await this.prisma.account.update({
         where: {
           id: user.id,
         },
@@ -145,7 +145,7 @@ export class UserService {
 
   async findOneByUserId(userId: string) {
     console.log(userId);
-    return await this.prisma.user.findUniqueOrThrow({
+    return await this.prisma.account.findUniqueOrThrow({
       where: {
         id: userId,
       },
@@ -161,7 +161,7 @@ export class UserService {
   }
 
   findOneByUserName(usernameInput: string) {
-    return this.prisma.user.findFirstOrThrow({
+    return this.prisma.account.findFirstOrThrow({
       where: {
         username: usernameInput,
       },
@@ -172,7 +172,7 @@ export class UserService {
   }
 
   async validateUser(username: string, password: string) {
-    return await this.prisma.user.findFirst({
+    return await this.prisma.account.findFirst({
       where: {
         AND: [
           {
@@ -185,7 +185,7 @@ export class UserService {
   }
 
   async findOneByEmail(email: string) {
-    return await this.prisma.user.findFirst({
+    return await this.prisma.account.findFirst({
       where: {
         email: email,
       },
@@ -196,7 +196,7 @@ export class UserService {
   }
 
   async updatePassword(id: string, newPassword: string) {
-    return await this.prisma.user.update({
+    return await this.prisma.account.update({
       where: {
         id: id,
       },
@@ -207,7 +207,7 @@ export class UserService {
   }
 }
 
-export const userInclude: Prisma.UserInclude = {
+export const userInclude: Prisma.AccountInclude = {
   factoryDirector: true,
   warehouseStaff: true,
   inspectionDepartment: true,

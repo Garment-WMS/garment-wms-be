@@ -11,7 +11,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { NestedCreateProductFormulaMaterialDto } from 'src/modules/product-formula-material/dto/nested-product-formula-material.dto';
-import { IsProductVariantExist } from 'src/modules/product-variant/validator/is-product-variant-exist.validator';
+import { IsProductVariantExist } from 'src/modules/product-size/validator/is-product-variant-exist.validator';
 
 export class CreateProductFormulaDto {
   @ApiProperty()

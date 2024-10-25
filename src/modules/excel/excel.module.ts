@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from 'prisma/prisma.module';
 import { FirebaseModule } from '../firebase/firebase.module';
+import { MaterialPackageModule } from '../material-package/material-package.module';
 import { MaterialVariantModule } from '../material-variant/material-variant.module';
-import { MaterialModule } from '../material/material.module';
 import { ExcelController } from './excel.controller';
 import { ExcelService } from './excel.service';
 
@@ -11,8 +11,8 @@ import { ExcelService } from './excel.service';
   imports: [
     PrismaModule,
     FirebaseModule,
-    MaterialModule,
     MaterialVariantModule,
+    MaterialPackageModule,
   ],
   providers: [ExcelService],
   exports: [ExcelService],

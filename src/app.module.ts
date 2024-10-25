@@ -12,7 +12,7 @@ import { RefreshTokenModule } from './modules/refresh-token/refresh-token.module
 
 import { PrismaModule } from 'prisma/prisma.module';
 import { ExcelModule } from './modules/excel/excel.module';
-import { MaterialModule } from './modules/material/material.module';
+import { MaterialVariantModule } from './modules/material-variant/material-variant.module';
 
 import { ImportReceiptModule } from './modules/import-receipt/import-receipt.module';
 import { ImportRequestModule } from './modules/import-request/import-request.module';
@@ -22,20 +22,20 @@ import { InspectionRequestModule } from './modules/inspection-request/inspection
 import { InventoryReportModule } from './modules/inventory-report/inventory-report.module';
 import { InventoryStockModule } from './modules/inventory-stock/inventory-stock.module';
 import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
+import { MaterialPackageModule } from './modules/material-package/material-package.module';
 import { MaterialReceiptModule } from './modules/material-receipt/material-receipt.module';
-import { MaterialTypeModule } from './modules/material-type/material-type.module';
 import { MaterialUnitModule } from './modules/material-unit/material-unit.module';
-import { MaterialVariantModule } from './modules/material-variant/material-variant.module';
+import { MaterialModule } from './modules/material/material.module';
 import { PoDeliveryMaterialModule } from './modules/po-delivery-material/po-delivery-material.module';
 import { PoDeliveryModule } from './modules/po-delivery/po-delivery.module';
 import { PoPoDeliveryBridgeModule } from './modules/po-po-delivery-bridge/po-po-delivery-bridge.module';
 import { ProductFormulaMaterialModule } from './modules/product-formula-material/product-formula-material.module';
 import { ProductFormulaModule } from './modules/product-formula/product-formula.module';
 import { ProductPlanModule } from './modules/product-plan/product-plan.module';
-import { ProductTypeModule } from './modules/product-type/product-type.module';
+import { ProductVariantModule } from './modules/product-size/product-size.module';
 import { ProductUomModule } from './modules/product-uom/product-uom.module';
-import { ProductVariantModule } from './modules/product-variant/product-variant.module';
-import { ProductModule } from './modules/product/product.module';
+import { ProductModule } from './modules/product-variant/product-variant.module';
+import { ProductTypeModule } from './modules/product/product.module';
 import { PurchaseOrderModule } from './modules/purchase-order/purchase-order.module';
 import { QuarterlyProductDetailModule } from './modules/quarterly-product-detail/quarterly-product-detail.module';
 import { QuarterlyProductPlanModule } from './modules/quarterly-product-plan/quarterly-product-plan.module';
@@ -60,13 +60,13 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
     PoDeliveryModule,
     PoDeliveryMaterialModule,
     MaterialModule,
-    MaterialTypeModule,
     // PackagingUnitModule,
     UomModule,
     MaterialUnitModule,
     MaterialAttributeModule,
     ImportRequestModule,
     MaterialVariantModule,
+    MaterialPackageModule,
     PoPoDeliveryBridgeModule,
     ProductPlanModule,
     QuarterlyProductPlanModule,

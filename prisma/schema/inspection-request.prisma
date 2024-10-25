@@ -1,17 +1,20 @@
 model InspectionRequest {
   id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  purchasingStaffId      String                  @map("purchasing_staff_id") @db.Uuid
+  code                   String                  @map("code")
+  purchasingStaffId      String?                 @map("purchasing_staff_id") @db.Uuid
+  productionDeparmentId  String?                 @map("production_deparment_id") @db.Uuid
   inspectionDepartmentId String                  @map("inspection_department_id") @db.Uuid
-  importRequestId        String?                 @map("import_request_id") @db.Uuid
-  note                   String?                 @map("note")
   status                 InspectionRequestStatus @default(INSPECTING) @map("status")
   createdAt              DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime?               @map("deleted_at") @db.Timestamptz(6)
-  inspectionDepartment   InspectionDepartment    @relation(fields: [inspectionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  purchasingStaff        PurchasingStaff         @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  importRequestId        String?                 @map("import_request_id") @db.Uuid
+  note                   String?                 @map("note")
+  inspectionReport       InspectionReport?
   importRequest          ImportRequest?          @relation(fields: [importRequestId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  inspectionReport       InspectionReport[]
+  inspectionDepartment   InspectionDepartment    @relation(fields: [inspectionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  purchasingStaff        PurchasingStaff?        @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productionDeparment    ProductionDepartment?   @relation(fields: [productionDeparmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("inspection_request")
 }

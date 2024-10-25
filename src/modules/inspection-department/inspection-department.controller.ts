@@ -22,7 +22,7 @@ export class InspectionDepartmentController {
   async search(
     @Query(
       new DirectFilterPipe<any, Prisma.InspectionDepartmentWhereInput>(
-        ['id', 'userId', 'createdAt', 'updatedAt'],
+        ['id', 'accountId', 'createdAt', 'updatedAt'],
         ['inspectionRequest.id', 'inspectionReport.id'],
         [{ id: 'asc', createdAt: 'desc', updatedAt: 'desc' }],
       ),

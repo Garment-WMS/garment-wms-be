@@ -7,15 +7,18 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
-import { CreateMaterialVariantDto } from './dto/create-material-variant.dto';
-import { UpdateMaterialVariantDto } from './dto/update-material-variant.dto';
+import { CreateMaterialDto } from './dto/create-material.dto';
+import { UpdateMaterialDto } from './dto/update-material.dto';
 import { MaterialVariantService } from './material-variant.service';
 
 @Controller('material-variant')
@@ -25,43 +28,72 @@ export class MaterialVariantController {
     private readonly materialVariantService: MaterialVariantService,
   ) {}
 
-  @Post()
-  @UsePipes(new ValidationPipe({ whitelist: true }))
-  create(@Body() createMaterialVariantDto: CreateMaterialVariantDto) {
-    return this.materialVariantService.create(createMaterialVariantDto);
-  }
-
   @Get()
-  getAllMaterialVariant(
+  search(
     @Query(
-      new DirectFilterPipe<any, Prisma.MaterialVariantWhereInput>(
-        ['id', 'materialId', 'createdAt', 'updatedAt', 'name', 'code'],
+      new DirectFilterPipe<any, Prisma.MaterialVariantScalarWhereInput>(
         [
-          'material.name',
-          'material.code',
-          'material.materialType.name',
-          'material.materialType.code',
-          'material.materialType.id',
+          'name',
+          'createdAt',
+          'id',
+          'OR',
+          'materialId',
+          'reorderLevel',
+          'updatedAt',
+          'code',
+        ],
+        ['materialType.name', 'materialType.code', 'materialUom.name'],
+        [
+          { createdAt: 'desc' },
+          { id: 'asc' },
+          { name: 'asc' },
+          { materialId: 'asc' },
+          { reorderLevel: 'asc' },
+          { updatedAt: 'asc' },
         ],
       ),
     )
     filterOptions: FilterDto<Prisma.MaterialVariantWhereInput>,
   ) {
-    return this.materialVariantService.findAll(filterOptions.findOptions);
+    return this.materialVariantService.search(filterOptions.findOptions);
+  }
+
+  @Post()
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  create(@Body() createMaterialDto: CreateMaterialDto) {
+    return this.materialVariantService.create(createMaterialDto);
+  }
+
+  @Get()
+  getAllMaterial() {
+    return this.materialVariantService.findAll();
+  }
+
+  @Post(':id/image')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.materialVariantService.addImage(file, id);
   }
 
   @Get(':id')
-  getMaterialVariantById(@Param('id', CustomUUIDPipe) id: string) {
+  getMaterialById(@Param('id', CustomUUIDPipe) id: string) {
     return this.materialVariantService.findByIdWithResponse(id);
   }
 
-  @Patch('/:id')
+  @Get(':id/receipt')
+  getMaterialReceiptById(@Param('id', CustomUUIDPipe) id: string) {
+    return this.materialVariantService.findMaterialReceiptByIdWithResponse(id);
+  }
+
+  @Patch(':id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  update(
-    @Param('id', CustomUUIDPipe) id: string,
-    @Body()
-    updateMaterialVariantDto: UpdateMaterialVariantDto,
+  updateMaterial(
+    @Param('id', new CustomUUIDPipe()) id: string,
+    @Body() updateMaterialDto: UpdateMaterialDto,
   ) {
-    return this.materialVariantService.update(id, updateMaterialVariantDto);
+    return this.materialVariantService.update(id, updateMaterialDto);
   }
 }

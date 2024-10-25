@@ -36,8 +36,7 @@ import {
   validateDate,
 } from 'src/common/utils/utils';
 import { FirebaseService } from '../firebase/firebase.service';
-import { MaterialVariantService } from '../material-variant/material-variant.service';
-import { MaterialService } from '../material/material.service';
+import { MaterialPackageService } from '../material-package/material-package.service';
 import { PoDeliveryMaterialDto } from '../po-delivery-material/dto/po-delivery-material.dto';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
 import { CreatePurchaseOrderDto } from '../purchase-order/dto/create-purchase-order.dto';
@@ -77,8 +76,7 @@ export class ExcelService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly firebaseService: FirebaseService,
-    private readonly materialService: MaterialService,
-    private readonly materialVariantService: MaterialVariantService,
+    private readonly materialPackageService: MaterialPackageService,
   ) {}
 
   //TODO : Validate item in table general which item in each table
@@ -1456,7 +1454,7 @@ export class ExcelService {
             listItemError,
           )
         ) {
-          material = await this.materialVariantService.findByMaterialCode(
+          material = await this.materialPackageService.findByMaterialCode(
             this.extractValueFromCellValue(itemCell.itemIdCell.value),
           );
           materialid = material?.id;

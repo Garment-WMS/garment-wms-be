@@ -30,12 +30,15 @@ export class PurchaseOrderService {
       include: {
         poDeliveryDetail: {
           include: {
-            materialVariant: {
+            materialPackage: {
               include: {
-                material: {
+                materialVariant: {
                   include: {
-                    materialUom: true,
-                    materialType: true,
+                    material: {
+                      include: {
+                        materialUom: true,
+                      },
+                    },
                   },
                 },
               },
@@ -221,79 +224,77 @@ export class PurchaseOrderService {
     let purchaseOrder = null;
     if (excelData instanceof ApiResponse) {
       return excelData;
-    } 
-    // else {
-    //   let subTotalAmount = 0;
-    //   excelData.poDelivery.forEach((poDelivery) => {
-    //     poDelivery.poDeliveryDetail.forEach((material) => {
-    //       subTotalAmount += material.totalAmount;
-    //     });
-    //   });
-    //   const PoNumber = await this.generateNextPoNumber();
-    //   const createPurchaseOrderData =
-    //     excelData as Partial<CreatePurchaseOrderDto>;
-    //   const createPurchaseOrder: Prisma.PurchaseOrderCreateInput = {
-    //     subTotalAmount: subTotalAmount,
-    //     taxAmount: createPurchaseOrderData.taxAmount,
-    //     expectedFinishDate: createPurchaseOrderData.expectedFinishDate,
-    //     orderDate: createPurchaseOrderData.orderDate,
-    //     status: PurchaseOrderStatus.IN_PROGRESS,
-    //     supplier: {
-    //       connect: { id: createPurchaseOrderData.Supplier.id },
-    //     },
-    //     currency: 'VND',
-    //     purchasingStaff: {
-    //       connect: { id: purchasingStaffId },
-    //     },
-    //     finishDate: undefined,
-    //     shippingAmount: createPurchaseOrderData.shippingAmount,
-    //     otherAmount: createPurchaseOrderData.otherAmount,
-    //     poNumber: PoNumber,
-    //   };
+    } else {
+      let subTotalAmount = 0;
+      excelData.poDelivery.forEach((poDelivery) => {
+        poDelivery.poDeliveryDetail.forEach((material) => {
+          subTotalAmount += material.totalAmount;
+        });
+      });
+      const PoNumber = await this.generateNextPoNumber();
+      const createPurchaseOrderData =
+        excelData as Partial<CreatePurchaseOrderDto>;
+      const createPurchaseOrder: Prisma.PurchaseOrderCreateInput = {
+        subTotalAmount: subTotalAmount,
+        taxAmount: createPurchaseOrderData.taxAmount,
+        expectedFinishDate: createPurchaseOrderData.expectedFinishDate,
+        orderDate: createPurchaseOrderData.orderDate,
+        status: PurchaseOrderStatus.IN_PROGRESS,
+        supplier: {
+          connect: { id: createPurchaseOrderData.Supplier.id },
+        },
+        currency: 'VND',
+        purchasingStaff: {
+          connect: { id: purchasingStaffId },
+        },
+        finishDate: undefined,
+        shippingAmount: createPurchaseOrderData.shippingAmount,
+        otherAmount: createPurchaseOrderData.otherAmount,
+        poNumber: PoNumber,
+      };
 
-    //   purchaseOrder = await this.prismaService.$transaction(async (prisma) => {
-    //     const purchaseOrder = await prisma.purchaseOrder.create({
-    //       data: createPurchaseOrder,
-    //     });
-    //     console.log('asdasdasd');
-    //     for (let i = 0; i < excelData.poDelivery.length; i++) {
-    //       const poDelivery: Partial<PoDeliveryDto> = excelData.poDelivery[i];
-    //       const poDeliveryCreateInput: Prisma.PoDeliveryCreateInput = {
-    //         isExtra: poDelivery.isExtra,
-    //         purchaseOrder: { connect: { id: purchaseOrder.id } },
-    //         expectedDeliverDate: poDelivery.expectedDeliverDate,
-    //         code: await this.poDeliveryService.generateManyNextPoDeliveryCodes(
-    //           i,
-    //         ),
-    //       };
-    //       const poDeliveryResult = await prisma.poDelivery.create({
-    //         data: poDeliveryCreateInput,
-    //       });
-    //       const poDeliveryDetails = poDelivery.poDeliveryDetail.map(
-    //         (material) => {
-    //           return {
-    //             materialVariantId: material.materialVariantId,
-    //             quantityByPack: material.quantityByPack,
-    //             totalAmount: material.totalAmount,
-    //             poDeliveryId: poDeliveryResult.id,
-    //           };
-    //         },
-    //       );
-    //       await prisma.poDeliveryDetail.createMany({
-    //         data: poDeliveryDetails,
-    //       });
-    //     }
-    //     return purchaseOrder;
-    //   });
-    // }
-    // const result = await this.findById(purchaseOrder?.id);
-    // if (result) {
-    //   return apiSuccess(
-    //     HttpStatus.CREATED,
-    //     result,
-    //     'Purchase Order created successfully',
-    //   );
-    // }
+      purchaseOrder = await this.prismaService.$transaction(async (prisma) => {
+        const purchaseOrder = await prisma.purchaseOrder.create({
+          data: createPurchaseOrder,
+        });
+        for (let i = 0; i < excelData.poDelivery.length; i++) {
+          const poDelivery: Partial<PoDeliveryDto> = excelData.poDelivery[i];
+          let codeNumber =
+            await this.poDeliveryService.generateManyNextPoDeliveryCodes(i + 1);
+          const poDeliveryCreateInput: Prisma.PoDeliveryCreateInput = {
+            isExtra: poDelivery.isExtra,
+            purchaseOrder: { connect: { id: purchaseOrder.id } },
+            expectedDeliverDate: poDelivery.expectedDeliverDate,
+            code: codeNumber,
+          };
+          const poDeliveryResult = await prisma.poDelivery.create({
+            data: poDeliveryCreateInput,
+          });
+          const poDeliveryDetails = poDelivery.poDeliveryDetail.map(
+            (material) => {
+              return {
+                materialPackageId: material.materialVariantId,
+                quantityByPack: material.quantityByPack,
+                totalAmount: material.totalAmount,
+                poDeliveryId: poDeliveryResult.id,
+              };
+            },
+          );
+          await prisma.poDeliveryDetail.createMany({
+            data: poDeliveryDetails,
+          });
+        }
+        return purchaseOrder;
+      });
+    }
+    const result = await this.findById(purchaseOrder?.id);
+    if (result) {
+      return apiSuccess(
+        HttpStatus.CREATED,
+        result,
+        'Purchase Order created successfully',
+      );
+    }
     return apiSuccess(
       HttpStatus.BAD_REQUEST,
       null,

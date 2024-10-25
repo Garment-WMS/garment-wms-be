@@ -168,12 +168,12 @@ export const inspectionRequestInclude: Prisma.InspectionRequestInclude = {
   },
   inspectionDepartment: {
     include: {
-      users: true,
+      account: true,
     },
   },
   purchasingStaff: {
     include: {
-      users: true,
+      account: true,
     },
   },
   inspectionReport: {

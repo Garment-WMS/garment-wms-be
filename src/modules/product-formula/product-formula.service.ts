@@ -18,10 +18,13 @@ export class ProductFormulaService {
   queryInclude: Prisma.ProductFormulaInclude = {
     productFormulaMaterial: {
       include: {
-        material: {
+        materialVariant: {
           include: {
-            materialType: true,
-            materialUom: true,
+            material: {
+              include: {
+                materialUom: true,
+              },
+            },
           },
         },
       },

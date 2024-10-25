@@ -1,26 +1,25 @@
 model ProductionBatch {
   id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   productionPlanDetailId String?                 @map("production_plan_detail_id") @db.Uuid
-  productVariantId       String                  @map("product_variant_id") @db.Uuid
   code                   String                  @unique @map("code") @db.VarChar
   name                   String                  @map("name") @db.VarChar
   description            String?                 @map("description") @db.VarChar
-  quantity               Float                   @map("quantity")
+  quantityToProduce      Float                   @map("quantity_to_produce")
   canceledAt             DateTime?               @map("canceled_at") @db.Timestamptz(6)
   canceledBy             String?                 @map("canceled_by") @db.Uuid
   canceledReason         String?                 @map("canceled_reason") @db.VarChar
   status                 ManufactureOrderStatus  @default(EXECUTING) @map("status")
   startDate              DateTime?               @map("start_date") @db.Time(6)
   finishedDate           DateTime?               @map("finished_date") @db.Time(6)
-  createdAt              DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
   expectedFinishDate     DateTime?               @map("expected_finish_date") @db.Time(6)
+  createdAt              DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime?               @map("deleted_at") @db.Timestamptz(6)
-  productVariant         ProductVariant          @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialExportRequest  MaterialExportRequest[]
   productionPlanDetail   ProductionPlanDetail?   @relation(fields: [productionPlanDetailId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("production_batch")
+  ImportRequest ImportRequest[]
 }
 
 enum ManufactureOrderStatus {

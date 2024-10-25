@@ -3,43 +3,61 @@ import {
   Controller,
   Delete,
   Get,
+  HttpStatus,
   Param,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags } from '@nestjs/swagger';
+import { apiSuccess } from 'src/common/dto/api-response';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
-import { CreateProductVariantDto } from './dto/create-product-variant.dto';
-import { UpdateProductVariantDto } from './dto/update-product-variant.dto';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductVariantService } from './product-variant.service';
 
-@Controller('product-variant')
+@ApiTags('Product')
+@Controller('product')
 export class ProductVariantController {
   constructor(private readonly productVariantService: ProductVariantService) {}
 
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  create(@Body() createProductVariantDto: CreateProductVariantDto) {
-    return this.productVariantService.create(createProductVariantDto);
+  create(@Body() createProductDto: CreateProductDto) {
+    return this.productVariantService.create(createProductDto);
   }
 
   @Get()
-  findAll() {
-    return this.productVariantService.findAll();
+  async findAll() {
+    const result = await this.productVariantService.findAll();
+    return apiSuccess(HttpStatus.OK, result, 'Get all products successfully');
   }
 
   @Get(':id')
   findOne(@Param('id', CustomUUIDPipe) id: string) {
-    return this.productVariantService.findOne(id);
+    return this.productVariantService.findByIdWithResponse(id);
+  }
+
+  @Post(':id/image')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.productVariantService.addImage(file, id);
   }
 
   @Patch(':id')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   update(
     @Param('id', CustomUUIDPipe) id: string,
-    @Body() updateProductVariantDto: UpdateProductVariantDto,
+    @Body() updateProductDto: UpdateProductDto,
   ) {
-    return this.productVariantService.update(id, updateProductVariantDto);
+    return this.productVariantService.update(id, updateProductDto);
   }
 
   @Delete(':id')

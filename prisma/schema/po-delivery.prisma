@@ -22,8 +22,8 @@ model PoDelivery {
 enum PoDeliveryStatus {
   PENDING
   FINISHED
-  IMPORTING
   CANCELLED
+  IMPORTING
 
   @@map("po_delivery_status")
 }
