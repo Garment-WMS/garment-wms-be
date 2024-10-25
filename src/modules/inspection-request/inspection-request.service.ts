@@ -58,6 +58,7 @@ export class InspectionRequestService {
       },
       status: createInspectionRequestDto.status,
       note: createInspectionRequestDto.note,
+      code: undefined,
     };
     const [inspectionRequest, importRequest] =
       await this.prismaService.$transaction([
