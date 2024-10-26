@@ -13,8 +13,8 @@ export class CreateMaterialTypeDto implements Prisma.MaterialCreateInput {
   @ApiProperty({ description: 'Material Type UOM ID', example: 'F0001' })
   materialUomId: string;
 
-  @IsNotEmpty()
-  @IsString()
-  @ApiProperty({ description: 'Material Type Code', example: 'F0001' })
-  code: string;
+  // @IsNotEmpty()
+  // @IsString()
+  // @ApiProperty({ description: 'Material Type Code', example: 'F0001' })
+  // code: string;
 }
