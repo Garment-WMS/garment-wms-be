@@ -310,7 +310,6 @@ export class MaterialVariantService {
         where: { id },
         include: this.materialStockInclude,
       });
-    console.log(result);
     if (!result) {
       return null;
     }
