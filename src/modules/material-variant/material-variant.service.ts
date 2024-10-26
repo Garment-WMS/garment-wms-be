@@ -310,20 +310,31 @@ export class MaterialVariantService {
         where: { id },
         include: this.materialStockInclude,
       });
+    console.log(result);
+    if (!result) {
+      return null;
+    }
 
-    result.numberOfMaterialPackage = result.materialPackage.length;
+    if (result.materialPackage) {
+      result.numberOfMaterialPackage = result.materialPackage.length
+        ? result.materialPackage.length
+        : 0;
 
-    result.onHand = result?.materialPackage?.reduce(
-      (totalAcc, materialVariantEl) => {
-        let variantTotal = 0;
-        //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
-        if (materialVariantEl.inventoryStock) {
-          variantTotal = materialVariantEl.inventoryStock.quantityByPack;
-        }
-        return totalAcc + variantTotal;
-      },
-      0,
-    );
+      result.onHand = result?.materialPackage?.reduce(
+        (totalAcc, materialVariantEl) => {
+          let variantTotal = 0;
+          //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+          if (materialVariantEl.inventoryStock) {
+            variantTotal = materialVariantEl.inventoryStock.quantityByPack;
+          }
+          return totalAcc + variantTotal;
+        },
+        0,
+      );
+    } else {
+      result.numberOfMaterialPackage = 0;
+      result.onHand = 0;
+    }
 
     return result;
   }
