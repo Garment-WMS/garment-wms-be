@@ -30,4 +30,10 @@ export class PoDeliveryController {
   ) {
     return this.poDeliveryService.updatePoDelivery(id, updatePoDeliveryDto);
   }
+
+  @Get('/po/:Poid')
+  getPoDeliveryByPoId(@Param('Poid', CustomUUIDPipe) Poid: string) {
+    return this.poDeliveryService.getPoDeliveryByPoId(Poid);
+  }
+
 }
