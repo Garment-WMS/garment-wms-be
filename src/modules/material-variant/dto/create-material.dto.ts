@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsInt,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsUUID,
   MaxLength,
@@ -25,7 +26,7 @@ export class CreateMaterialDto {
   name: string;
 
   @ApiProperty({})
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   @MinLength(3)
   @MaxLength(10)

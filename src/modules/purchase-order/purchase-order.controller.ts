@@ -62,7 +62,6 @@ export class PurchaseOrderController {
     )
     filterDto: FilterDto<Prisma.PurchaseOrderWhereInput>,
   ) {
-    console.log('filterDto', filterDto);
     return this.purchaseOrderService.getPurchaseOrders(filterDto.findOptions);
   }
   @Get('status')

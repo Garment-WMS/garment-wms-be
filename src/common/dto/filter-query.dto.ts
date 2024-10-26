@@ -62,11 +62,11 @@ export class Filter<T = any> implements IFilter<T> {
   @IsOptional()
   order?: Array<SingleFilterOrder<T>>;
 
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CompoundFilter)
-  @IsOptional()
-  compoundFilter?: Array<CompoundFilter>;
+  // @IsArray()
+  // @ValidateNested({ each: true })
+  // @Type(() => CompoundFilter)
+  // @IsOptional()
+  // compoundFilter?: Array<CompoundFilter>;
 
   @Type(() => Number)
   @IsInt()

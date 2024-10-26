@@ -3,6 +3,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
   IsUUID,
   Min,
@@ -23,7 +24,7 @@ export class CreateMaterialVariantDto {
   name: string;
 
   @ApiProperty({})
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   code: string;
 

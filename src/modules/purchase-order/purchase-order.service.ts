@@ -157,19 +157,10 @@ export class PurchaseOrderService {
     const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
     const [result, total] = await this.prismaService.$transaction([
       this.prismaService.purchaseOrder.findMany({
-        // skip: page,
-        // take: limit,
-        // ...rest,
+        skip: page,
+        take: limit,
         where: {
-          OR: [
-            {
-              otherAmount: 100,
-            },
-            {
-              poNumber: 'PO-000001',
-            },
-          ],
-          // ...rest?.where,
+          ...rest?.where,
         },
         orderBy: filterOption?.orderBy,
         include: this.queryInclude,
@@ -275,6 +266,7 @@ export class PurchaseOrderService {
               return {
                 materialPackageId: material.materialVariantId,
                 quantityByPack: material.quantityByPack,
+                expiredDate: material.expiredDate,
                 totalAmount: material.totalAmount,
                 poDeliveryId: poDeliveryResult.id,
               };
