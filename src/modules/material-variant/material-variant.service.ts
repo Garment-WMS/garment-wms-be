@@ -222,10 +222,11 @@ export class MaterialVariantService {
   }
 
   async create(createMaterialDto: CreateMaterialDto) {
-    const { materialId, ...rest } = createMaterialDto;
+    const { materialId, code, ...rest } = createMaterialDto;
 
     const materialInput: Prisma.MaterialVariantCreateInput = {
       ...rest,
+      code: code ? code.toUpperCase() : undefined,
       material: {
         connect: {
           id: materialId,

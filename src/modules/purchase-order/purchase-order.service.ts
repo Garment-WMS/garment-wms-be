@@ -155,7 +155,6 @@ export class PurchaseOrderService {
     const { skip, take, ...rest } = filterOption;
     const page = filterOption?.skip || Constant.DEFAULT_OFFSET;
     const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
-    console.log('filterOption', filterOption.where);
     const [result, total] = await this.prismaService.$transaction([
       this.prismaService.purchaseOrder.findMany({
         skip: page,
@@ -267,6 +266,7 @@ export class PurchaseOrderService {
               return {
                 materialPackageId: material.materialVariantId,
                 quantityByPack: material.quantityByPack,
+                expiredDate: material.expiredDate,
                 totalAmount: material.totalAmount,
                 poDeliveryId: poDeliveryResult.id,
               };

@@ -1618,9 +1618,7 @@ export class ExcelService {
         }
 
         if (isNotEmpty(itemCell.expiredDate.value)) {
-          console.log(itemCell.expiredDate.value);
           if (!validateDate(itemCell.expiredDate.value)) {
-            console.log('ASda');
             const text = [
               { text: `${itemCell.expiredDate.value}` },
               {
