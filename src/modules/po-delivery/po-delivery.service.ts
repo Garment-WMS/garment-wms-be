@@ -16,6 +16,17 @@ export class PoDeliveryService {
     private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
   ) {}
 
+  async getPoDeliveryByPoId(Poid: string) {
+    const result = await this.findPoDelivery({
+      purchaseOrderId: Poid,
+    });
+
+    if (result) {
+      return apiSuccess(HttpStatus.OK, result, 'Get po delivery successfully');
+    }
+    return apiSuccess(HttpStatus.NOT_FOUND, null, 'Po delivery not found');
+  }
+
   async IsImportingOrFinishedPoDeliveryExist(PoId: string) {
     return !!(await this.pirsmaService.poDelivery.findMany({
       where: {
@@ -108,7 +119,7 @@ export class PoDeliveryService {
   }
 
   findPoDelivery(query: Prisma.PoDeliveryWhereInput) {
-    return this.pirsmaService.poDelivery.findFirst({
+    return this.pirsmaService.poDelivery.findMany({
       where: { ...query },
       include: this.includeQuery,
     });
@@ -317,7 +328,6 @@ export class PoDeliveryService {
       );
       nextCodeNumber = currentCodeNumber + index;
     }
-
 
     const nextCode = `${Constant.POD_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
     //Check is the next code is already exist
