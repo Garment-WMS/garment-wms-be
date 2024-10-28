@@ -1,28 +1,18 @@
-import { $Enums } from '.prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsDateString,
-  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUUID,
   MinDate,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
-import { IsValidYear } from 'src/common/decorator/is-valid-year.decorator';
+import { CreateProductPlanDetailDto } from 'src/modules/product-plan-detail/dto/create-product-plan-detail.dto';
 
 export class CreateProductPlanDto {
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsUUID()
-  factoryDirectorId: string;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsValidYear()
-  year: string;
-
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
@@ -30,15 +20,9 @@ export class CreateProductPlanDto {
   name: string;
 
   @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(3)
-  code: string;
-
-  @ApiProperty({ required: false })
-  @IsEnum($Enums.ProductionStatus)
   @IsOptional()
-  status?: $Enums.ProductionStatus;
+  @IsString()
+  note: string;
 
   @ApiProperty({ required: false })
   @IsNotEmpty()
@@ -51,4 +35,36 @@ export class CreateProductPlanDto {
   @IsDateString()
   @MinDate(new Date(), { message: 'expectedEndDate must not be in the past' })
   expectedEndDate: Date;
+
+  @ApiProperty()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateProductPlanDetailDto)
+  @IsOptional()
+  productionPlanDetails: CreateProductPlanDetailDto[];
+
+  // Default constructor
+  constructor();
+  // Parameterized constructor
+  constructor(
+    name?: string,
+    note?: string,
+    expectedStartDate?: Date,
+    expectedEndDate?: Date,
+    productionPlanDetails?: CreateProductPlanDetailDto[],
+  );
+  // Implementation of the constructor
+  constructor(
+    name: string = null,
+    note: string = null,
+    expectedStartDate: Date = null,
+    expectedEndDate: Date = null,
+    productionPlanDetails: CreateProductPlanDetailDto[] = [],
+  ) {
+    this.name = name;
+    this.note = note;
+    this.expectedStartDate = expectedStartDate;
+    this.expectedEndDate = expectedEndDate;
+    this.productionPlanDetails = productionPlanDetails;
+  }
 }

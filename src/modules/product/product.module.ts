@@ -9,4 +9,4 @@ import { IsProductTypeExistValidator } from './validator/is-product-type-exist.v
   imports: [PrismaModule],
   providers: [ProductService, IsProductTypeExistValidator],
 })
-export class ProductTypeModule {}
+export class ProductModule {}

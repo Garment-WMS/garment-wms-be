@@ -31,11 +31,11 @@ import { PoDeliveryModule } from './modules/po-delivery/po-delivery.module';
 import { PoPoDeliveryBridgeModule } from './modules/po-po-delivery-bridge/po-po-delivery-bridge.module';
 import { ProductFormulaMaterialModule } from './modules/product-formula-material/product-formula-material.module';
 import { ProductFormulaModule } from './modules/product-formula/product-formula.module';
+import { ProductPlanDetailModule } from './modules/product-plan-detail/product-plan-detail.module';
 import { ProductPlanModule } from './modules/product-plan/product-plan.module';
-import { ProductVariantModule } from './modules/product-size/product-size.module';
+import { ProductSizeModule } from './modules/product-size/product-size.module';
 import { ProductUomModule } from './modules/product-uom/product-uom.module';
-import { ProductModule } from './modules/product-variant/product-variant.module';
-import { ProductTypeModule } from './modules/product/product.module';
+import { ProductVariantModule } from './modules/product-variant/product-variant.module';
 import { PurchaseOrderModule } from './modules/purchase-order/purchase-order.module';
 import { QuarterlyProductDetailModule } from './modules/quarterly-product-detail/quarterly-product-detail.module';
 import { QuarterlyProductPlanModule } from './modules/quarterly-product-plan/quarterly-product-plan.module';
@@ -43,6 +43,7 @@ import { SupplierModule } from './modules/supplier/supplier.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
+import { ProductModule } from './modules/product/product.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
     PoDeliveryModule,
     PoDeliveryMaterialModule,
     MaterialModule,
+    ProductSizeModule,
     // PackagingUnitModule,
     UomModule,
     MaterialUnitModule,
@@ -73,7 +75,6 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
     QuarterlyProductDetailModule,
     ProductModule,
     ProductFormulaModule,
-    ProductTypeModule,
     ProductUomModule,
     ProductVariantModule,
     ProductFormulaMaterialModule,
@@ -85,6 +86,7 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
     InventoryStockModule,
     InspectionDepartmentModule,
     WarehouseStaffModule,
+    ProductPlanDetailModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

@@ -62,11 +62,15 @@ export const compareArray = (arr1: any[], arr2: any[]): boolean => {
 
   const frequencyMap = new Map();
 
-  for (const item of arr1) {
+  const normalize = (item: any) => (typeof item === 'string' ? item.toLowerCase() : item);
+
+  for (let item of arr1) {
+    item = normalize(item);
     frequencyMap.set(item, (frequencyMap.get(item) || 0) + 1);
   }
 
-  for (const item of arr2) {
+  for (let item of arr2) {
+    item = normalize(item);
     if (!frequencyMap.has(item)) {
       return false;
     }

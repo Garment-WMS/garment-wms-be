@@ -44,7 +44,11 @@ export class MaterialReceiptService {
       quantityByPack: number | null;
     }[],
     prismaInstance: PrismaClient = this.prismaService,
+    materialReceipts: CreateMaterialReceiptDto[],
   ) {
+
+    
+
     const materialReceiptsInput: Prisma.MaterialReceiptCreateManyInput[] =
       inspectionReportDetail.map((detail) => {
         return {

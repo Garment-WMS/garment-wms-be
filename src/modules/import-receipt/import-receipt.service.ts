@@ -34,9 +34,6 @@ export class ImportReceiptService {
     const importRequest = await this.validateImportRequest(
       createImportReceiptDto.importRequestId,
     );
-
-    console.log('importRequest', importRequest);
-
     const inspectionReport =
       await this.inspectionReportService.findUniqueByRequestId(
         importRequest.id,
@@ -69,6 +66,11 @@ export class ImportReceiptService {
       finishedAt: createImportReceiptDto.finishAt,
     };
 
+    this.validateMaterialReceipt(
+      inspectionReport.inspectionReportDetail,
+      createImportReceiptDto.materialReceipts,
+    );
+
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaClient) => {
         const importReceipt = await prismaInstance.importReceipt.create({
@@ -79,6 +81,7 @@ export class ImportReceiptService {
             importReceipt.id,
             inspectionReport.inspectionReportDetail,
             prismaInstance,
+            createImportReceiptDto.materialReceipts,
           );
 
           await this.poDeliveryService.updatePoDeliveryMaterialStatus(
@@ -240,4 +243,6 @@ export class ImportReceiptService {
   remove(id: number) {
     return `This action removes a #${id} importReceipt`;
   }
+
+  validateMaterialReceipt(inspectionReportDetail: any, materialReceipts: any) {}
 }
