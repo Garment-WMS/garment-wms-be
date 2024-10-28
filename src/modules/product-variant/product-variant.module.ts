@@ -11,4 +11,4 @@ import { IsProductExistValidator } from './validator/is-product-exist.validator'
   providers: [ProductVariantService, IsProductExistValidator],
   exports: [ProductVariantService],
 })
-export class ProductModule {}
+export class ProductVariantModule {}

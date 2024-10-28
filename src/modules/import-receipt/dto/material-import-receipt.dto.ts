@@ -4,7 +4,7 @@ import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 export class MaterialImportReceiptDto {
   @IsNotEmpty()
   @IsUUID()
-  id: string;
+  inspectionReportDetailId: string;
 
   @IsNotEmpty()
   @IsString()

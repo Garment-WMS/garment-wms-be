@@ -3,12 +3,16 @@ import { Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { ProductVariantService } from '../product-variant/product-variant.service';
 import { CreateProductVariantDto } from './dto/create-product-variant.dto';
 import { UpdateProductVariantDto } from './dto/update-product-variant.dto';
 
 @Injectable()
 export class ProductSizeService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private productVariantService: ProductVariantService,
+  ) {}
 
   includeQuery: Prisma.ProductSizeInclude = {
     productVariant: {
@@ -22,7 +26,26 @@ export class ProductSizeService {
     },
   };
 
+  async findQuery(query: any) {
+    const result = await this.prismaService.productSize.findFirst({
+      where: query,
+      include: this.includeQuery,
+    });
+    return result;
+  }
+
   async create(createProductVariantDto: CreateProductVariantDto) {
+    if (!createProductVariantDto.name) {
+      const productVariant = await this.productVariantService.findById(
+        createProductVariantDto.productVariantId,
+      );
+
+      if (!productVariant) {
+        return apiFailed(HttpStatus.BAD_REQUEST, 'Product Variant not found');
+      }
+      createProductVariantDto.name = `${productVariant.name} - ${createProductVariantDto.size.toUpperCase().trim()}`;
+    }
+
     const result = await this.prismaService.productSize.create({
       data: createProductVariantDto,
     });

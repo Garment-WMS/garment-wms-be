@@ -53,3 +53,16 @@ export const TOTAL_PURCHASE_ORDER_HEADER = [
   'OTHER',
   'TOTAL',
 ];
+export const PRODUCTION_PLAN_SHEET_NAME = 'ProductionPlan';
+export const PRODUCTION_PLAN_INFO = 'productionPlanInfo';
+export const PRODUCTION_PLAN_INFO_HEADER = [
+  'Expected Start Date',
+  'Expected End Date',
+];
+export const PRODUCTION_PLAN_DETAIL_TABLE = 'productionPlanDetail';
+export const PRODUCTION_PLAN_DETAIL_HEADER = [
+  'Product Code',
+  'Quantity To Produce',
+  'Note',
+];
+export const PRODUCTION_PLAN_NOTE_TABLE = 'productionPlanNote';

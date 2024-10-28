@@ -1,38 +1,76 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { ApiResponse } from 'src/common/dto/response.dto';
+import { ExcelService } from '../excel/excel.service';
+import { ProductPlanDetailService } from '../product-plan-detail/product-plan-detail.service';
 import { CreateProductPlanDto } from './dto/create-product-plan.dto';
 import { UpdateProductPlanDto } from './dto/update-product-plan.dto';
 
 @Injectable()
 export class ProductPlanService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private readonly excelService: ExcelService,
+    private readonly productPlanDetailService: ProductPlanDetailService,
+  ) {}
 
-  async create(createProductPlanDto: CreateProductPlanDto) {
-    // const productPlanInput: Prisma.AnnualProductionPlanCreateInput = {
-    //   year: parseInt(createProductPlanDto.year),
-    //   name: createProductPlanDto.name,
-    //   expectedStartDate: createProductPlanDto.expectedStartDate,
-    //   expectedEndDate: createProductPlanDto.expectedEndDate,
-    //   factoryDirector: {
-    //     create: undefined,
-    //     connect: { id: createProductPlanDto.factoryDirectorId },
-    //   },
-    // };
+  async createProductPlanWithExcelFile(
+    file: Express.Multer.File,
+    factoryDirectorId: string,
+  ) {
+    const excelData = await this.excelService.readProductionPlanExcel(file);
+    if (excelData instanceof ApiResponse) {
+      return excelData;
+    }
 
-    // const result = await this.prismaService.annualProductionPlan.create({
-    //   data: productPlanInput,
-    // });
+    const createProductPlanData = excelData as CreateProductPlanDto;
+    const productPlanInput: Prisma.ProductionPlanCreateInput = {
+      factoryDirector: {
+        connect: { id: factoryDirectorId },
+      },
+      name: createProductPlanData.name,
+      note: createProductPlanData.note,
+      expectedStartDate: createProductPlanData.expectedStartDate,
+      expectedEndDate: createProductPlanData.expectedEndDate,
+      code: undefined,
+    };
+    const result = await this.prismaService.$transaction(
+      async (prismaInstance: PrismaClient) => {
+        const productionPlanResult: any =
+          await prismaInstance.productionPlan.create({
+            data: productPlanInput,
+          });
 
-    // if (result) {
-    //   return apiSuccess(
-    //     HttpStatus.CREATED,
-    //     result,
-    //     'Product Plan created successfully',
-    //   );
-    // }
-    // return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product Plan');
+        const productPlanItems =
+          createProductPlanData.productionPlanDetails.map((item) => {
+            const { code, ...rest } = item; // Remove the 'code' field
+            return {
+              ...rest,
+              productionPlanId: productionPlanResult.id,
+            };
+          });
+        const productionPlanDetail =
+          await this.productPlanDetailService.createMany(
+            productPlanItems,
+            prismaInstance,
+          );
+
+        productionPlanResult.productionPlanDetails = productionPlanDetail;
+
+        return productionPlanResult;
+      },
+    );
+
+    if (result) {
+      return apiSuccess(
+        HttpStatus.CREATED,
+        result,
+        'Product Plan created successfully',
+      );
+    }
+    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product Plan');
   }
 
   findAll() {

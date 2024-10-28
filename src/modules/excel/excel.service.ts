@@ -1,5 +1,6 @@
 import { Cell, Workbook, Worksheet } from '@nbelyh/exceljs';
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { ProductSize } from '@prisma/client';
 import {
   isBoolean,
   isEmpty,
@@ -22,6 +23,11 @@ import {
   PO_INFO_HEADER,
   PO_INFO_TABLE,
   PO_SHEET_NAME,
+  PRODUCTION_PLAN_DETAIL_HEADER,
+  PRODUCTION_PLAN_DETAIL_TABLE,
+  PRODUCTION_PLAN_INFO,
+  PRODUCTION_PLAN_NOTE_TABLE,
+  PRODUCTION_PLAN_SHEET_NAME,
   SHIP_TO,
   SHIP_TO_HEADER,
   SUPPLIER_HEADER,
@@ -39,6 +45,9 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { MaterialPackageService } from '../material-package/material-package.service';
 import { PoDeliveryMaterialDto } from '../po-delivery-material/dto/po-delivery-material.dto';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
+import { CreateProductPlanDetailDto } from '../product-plan-detail/dto/create-product-plan-detail.dto';
+import { CreateProductPlanDto } from '../product-plan/dto/create-product-plan.dto';
+import { ProductSizeService } from '../product-size/product-size.service';
 import { CreatePurchaseOrderDto } from '../purchase-order/dto/create-purchase-order.dto';
 
 interface itemType {
@@ -77,6 +86,7 @@ export class ExcelService {
     private readonly prismaService: PrismaService,
     private readonly firebaseService: FirebaseService,
     private readonly materialPackageService: MaterialPackageService,
+    private readonly productSizeService: ProductSizeService,
   ) {}
 
   //TODO : Validate item in table general which item in each table
@@ -1812,6 +1822,438 @@ export class ExcelService {
       cell.value = value.trim();
     }
     return cell?.value || cell;
+  }
+
+  //Production plan
+  async readProductionPlanExcel(file: Express.Multer.File) {
+    if (!file) {
+      return apiFailed(HttpStatus.BAD_REQUEST, 'No file uploaded');
+    }
+    if (
+      file.mimetype !==
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ) {
+      return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid file format');
+    }
+
+    const workbook = new Workbook();
+    await workbook.xlsx.load(file.buffer);
+    const worksheet = workbook.getWorksheet(PRODUCTION_PLAN_SHEET_NAME);
+    if (!worksheet) {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Invalid file format, worksheet not found',
+      );
+    }
+    let productionPlan: CreateProductPlanDto = new CreateProductPlanDto();
+    let productionPlanError: Map<
+      string,
+      {
+        fieldName: string;
+        value: string;
+        text?: any;
+      }
+    > = new Map();
+    let errorResponse;
+
+    await this.validateProductionPlanSheet(
+      worksheet,
+      productionPlan,
+      productionPlanError,
+      errorResponse,
+    );
+
+    if (errorResponse) {
+      return errorResponse;
+    }
+
+    if (productionPlanError.size > 0) {
+      productionPlanError.forEach((value, key) => {
+        const cell = worksheet.getCell(key);
+
+        // Set the cell value to the error message
+        cell.value = { richText: [] };
+        cell.value.richText = [
+          //Use to add - between text
+          ...value?.text.reduce((acc, curr, index) => {
+            if (index > 0) {
+              acc.push({ text: ' - ', font: { color: { argb: 'FF0000' } } });
+            }
+            acc.push(curr);
+            return acc;
+          }, []),
+        ];
+      });
+      const timestamp = Date.now();
+      const fileName = `${timestamp}-${file.originalname}`;
+      const bufferResult = await workbook.xlsx.writeBuffer();
+      const nodeBuffer = Buffer.from(bufferResult);
+      const downloadUrl = await this.firebaseService.uploadBufferToStorage(
+        nodeBuffer,
+        fileName,
+      );
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'There is error in the file',
+        downloadUrl,
+      );
+    }
+
+    return productionPlan;
+  }
+
+  async validateProductionPlanSheet(
+    worksheet: Worksheet,
+    productionPlan: CreateProductPlanDto,
+    productionPlanError: Map<
+      string,
+      {
+        fieldName: string;
+        value: string;
+        text?: any;
+      }
+    > = new Map(),
+    errorResponse,
+  ) {
+    const productionPlanInfo = worksheet.getTable(PRODUCTION_PLAN_INFO);
+
+    if (!productionPlanInfo) {
+      errorResponse = apiFailed(
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        'Invalid format, production plan info table not found',
+      );
+      return;
+    }
+
+    const productionPlanDetail = worksheet.getTable(
+      PRODUCTION_PLAN_DETAIL_TABLE,
+    );
+
+    if (!productionPlanDetail) {
+      errorResponse = apiFailed(
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        'Invalid format, production plan detail table not found',
+      );
+      return;
+    }
+
+    const productionPlanNote = worksheet.getTable(PRODUCTION_PLAN_NOTE_TABLE);
+
+    if (!productionPlanNote) {
+      errorResponse = apiFailed(
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        'Invalid format, production plan note table not found',
+      );
+      return;
+    }
+
+    const productionPlanInfoValue = this.extractVerticalTable(
+      productionPlanInfo,
+      worksheet,
+    );
+
+    const productionPlanNoteValue = this.extractVerticalTable(
+      productionPlanNote,
+      worksheet,
+    );
+
+    await this.validateProductionPlanInfoTable(
+      worksheet,
+      productionPlanError,
+      productionPlanInfoValue,
+      productionPlan,
+    );
+
+    await this.validateProductionPlanDetailTable(
+      worksheet,
+      productionPlanError,
+      productionPlanDetail,
+      productionPlan.productionPlanDetails,
+    );
+  }
+
+  async validateProductionPlanInfoTable(
+    worksheet: Worksheet,
+    listItemError: Map<
+      string,
+      {
+        fieldName: string;
+        value: string;
+        text?: any;
+      }
+    >,
+    itemTable: any,
+    productionPlan: CreateProductPlanDto,
+  ) {
+    for (let i = 0; i < itemTable.length; i++) {
+      let errorSet = false;
+      if (typeof itemTable[i][1] === 'object') {
+        itemTable[i][1].value = this.getCellValue(itemTable[i][1]);
+      }
+      let value = itemTable[i][1].value;
+
+      if (typeof value === 'string' && value !== null) {
+        itemTable[i][1].value = value.trim();
+      }
+      switch (itemTable[i][0].value.split(':')[0].trim()) {
+        case 'Name': {
+          if (
+            this.validateRequired(
+              value,
+              itemTable[i][0].value.split(':')[0].trim(),
+              itemTable[i][1].address,
+              listItemError,
+            )
+          ) {
+            productionPlan.name = value;
+          }
+          break;
+        }
+
+        case 'From': {
+          errorSet = false;
+          if (
+            this.validateRequired(
+              value,
+              itemTable[i][0].value.split(':')[0].trim(),
+              itemTable[i][1].address,
+              listItemError,
+              `${DATE_FORMAT}`,
+            )
+          ) {
+            if (!validateDate(value)) {
+              const text = [
+                { text: `${value}` },
+                {
+                  text: `[Invalid date format, must be ${DATE_FORMAT}]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                listItemError,
+                itemTable[i][1].address,
+                'Start Date',
+                value,
+                text,
+              );
+            }
+            if (new Date(value) < new Date() && !errorSet) {
+              const text = [
+                { text: `${value.toISOString().split('T')[0]}` },
+                {
+                  text: `[Start Date must be after current date]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                listItemError,
+                itemTable[i][1].address,
+                'Start Date',
+                value,
+                text,
+              );
+            }
+            if (!errorSet) {
+              productionPlan.expectedStartDate = value;
+            }
+          }
+        }
+
+        case 'To': {
+          errorSet = false;
+          if (
+            this.validateRequired(
+              value,
+              itemTable[i][0].value.split(':')[0].trim(),
+              itemTable[i][1].address,
+              listItemError,
+              `${DATE_FORMAT}`,
+            )
+          ) {
+            if (!validateDate(value)) {
+              const text = [
+                { text: `${value}` },
+                {
+                  text: `[Invalid date format, must be ${DATE_FORMAT}]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                listItemError,
+                itemTable[i][1].address,
+                'End Date',
+                value,
+                text,
+              );
+              errorSet = true;
+            }
+            if (new Date(value) < new Date() && !errorSet) {
+              const text = [
+                { text: `${value.toISOString().split('T')[0]}` },
+                {
+                  text: `[End Date must be after current date]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                listItemError,
+                itemTable[i][1].address,
+                'End Date',
+                value,
+                text,
+              );
+              errorSet = true;
+            }
+
+            if (!errorSet) {
+              productionPlan.expectedEndDate = value;
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  async validateProductionPlanDetailTable(
+    worksheet: Worksheet,
+    listItemError: Map<
+      string,
+      {
+        fieldName: string;
+        value: string;
+        text?: any;
+      }
+    >,
+    itemTable: any,
+    itemListResult: CreateProductPlanDetailDto[],
+  ) {
+    const header = itemTable.table.columns.map((column: any) => column.name);
+
+    //Check if header is valid
+    const isHeaderValid = compareArray(header, PRODUCTION_PLAN_DETAIL_HEADER);
+    if (!isHeaderValid) {
+      return apiFailed(
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        'Invalid format, production plan detail header is not valid',
+      );
+    }
+
+    const [startCell, endCell] = itemTable.table.tableRef.split(':');
+    const startRow = parseInt(startCell.replace(/\D/g, ''), 10);
+    const endRow = parseInt(endCell.replace(/\D/g, ''), 10);
+    //Check item validation
+    for (let i = startRow + 1; i <= endRow; i++) {
+      let productCode;
+      let product: ProductSize;
+      let isError = false;
+      let errorFlag = false;
+      const row = worksheet.getRow(i);
+      const itemCell = {
+        productCodeCell: row.getCell(1),
+        quantityToProduceCell: row.getCell(2),
+        note: row.getCell(3),
+      };
+
+      if (
+        isEmpty(itemCell.productCodeCell.value) &&
+        isEmpty(itemCell.quantityToProduceCell.value) &&
+        isEmpty(itemCell.note.value)
+      ) {
+        continue;
+      } else {
+        if (
+          this.validateRequired(
+            itemCell.productCodeCell.value as string,
+            'Product Code',
+            itemCell.productCodeCell.address,
+            listItemError,
+          )
+        ) {
+          product = await this.productSizeService.findQuery({
+            code: this.extractValueFromCellValue(itemCell.productCodeCell),
+          });
+          productCode = product?.code;
+          if (isEmpty(product)) {
+            const text = [
+              { text: `${itemCell.productCodeCell.value}` },
+              {
+                text: `[Product not found]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              itemCell.productCodeCell.address,
+              'Product',
+              itemCell.productCodeCell.value,
+              text,
+            );
+            errorFlag = true;
+            isError = true;
+          }
+        }
+        if (
+          this.validateRequired(
+            itemCell.quantityToProduceCell.value as string,
+            'Quantity To Produce',
+            itemCell.quantityToProduceCell.address,
+            listItemError,
+          )
+        ) {
+          if (!isInt(itemCell.quantityToProduceCell.value) && !errorFlag) {
+            const text = [
+              { text: `${itemCell.quantityToProduceCell.value}` },
+              {
+                text: `[Quantity must be a number]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              itemCell.quantityToProduceCell.address,
+              'Quantity To Produce',
+              itemCell.quantityToProduceCell.value,
+              text,
+            );
+            isError = true;
+            errorFlag = true;
+          }
+          if (!min(itemCell.quantityToProduceCell.value, 0) && !errorFlag) {
+            const text = [
+              { text: `${itemCell.quantityToProduceCell.value}` },
+              {
+                text: `[Quantity must be greater than 0]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              itemCell.quantityToProduceCell.address,
+              'Quantity To Produce',
+              itemCell.quantityToProduceCell.value,
+              text,
+            );
+            isError = true;
+            errorFlag = false;
+          }
+        } else {
+          isError = true;
+          errorFlag = true;
+        }
+
+        if (!isError) {
+          itemListResult.push({
+            productSizeId: product?.id,
+            code: productCode,
+            quantityToProduce: itemCell.quantityToProduceCell.value as number,
+            note: itemCell.note.value
+              ? (itemCell.note.value as string)
+              : undefined,
+          });
+        }
+      }
+    }
   }
 }
 
