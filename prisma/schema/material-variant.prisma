@@ -15,4 +15,5 @@ model MaterialVariant {
   materialPackage            MaterialPackage[]
 
   @@map("material_variant")
+  InventoryReport InventoryReport[]
 }

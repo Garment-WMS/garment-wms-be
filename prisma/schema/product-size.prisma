@@ -18,7 +18,6 @@ model ProductSize {
     productReceipt         ProductReceipt[]
     productionPlanDetail   ProductionPlanDetail[]
     inventoryStock         InventoryStock?
-    inventoryReport        InventoryReport[]
 
     @@map("product_size")
 }

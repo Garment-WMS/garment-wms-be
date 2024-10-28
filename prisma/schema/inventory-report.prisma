@@ -1,7 +1,7 @@
 model InventoryReport {
   id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  productSizeId         String?                 @map("product_size_id") @db.Uuid
-  materialPackageId     String?                 @map("material_package_id") @db.Uuid
+  productVariantId      String?                 @map("product_variant_id") @db.Uuid
+  materialVariantId     String?                 @map("material_variant_id") @db.Uuid
   warehouseManagerId    String                  @map("warehouse_manager_id") @db.Uuid
   warehouseStaffId      String                  @map("warehouse_staff_id") @db.Uuid
   inventoryReportType   InventoryReportTypeEnum @default(MATERIAL) @map("inventory_report_type")
@@ -12,10 +12,12 @@ model InventoryReport {
   updatedAt             DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt             DateTime?               @map("deleted_at") @db.Timestamptz(6)
   inventoryReportDetail InventoryReportDetail[]
-  materialPackage       MaterialPackage?        @relation(fields: [materialPackageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productSize           ProductSize?            @relation(fields: [productSizeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialVariant       MaterialVariant?        @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productVariant        ProductVariant?         @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warehouseManager      WarehouseManager        @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warehouseStaff        WarehouseStaff          @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialPackageId     String?                 @db.Uuid
+  productSizeId         String?                 @db.Uuid
 
   @@map("inventory_report")
 }

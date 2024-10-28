@@ -19,7 +19,6 @@ model MaterialPackage {
   materialExportDetail   MaterialExportDetail[]
   materialReceipt        MaterialReceipt[]
   inventoryStock         InventoryStock?
-  InventoryReport        InventoryReport[]
 
   @@map("material_package")
 }
