@@ -7,6 +7,7 @@ import { ExcelService } from '../excel/excel.service';
 import { ProductPlanDetailService } from '../product-plan-detail/product-plan-detail.service';
 import { CreateProductPlanDto } from './dto/create-product-plan.dto';
 import { UpdateProductPlanDto } from './dto/update-product-plan.dto';
+import { isUUID, IsUUID } from 'class-validator';
 
 @Injectable()
 export class ProductPlanService {
@@ -15,6 +16,26 @@ export class ProductPlanService {
     private readonly excelService: ExcelService,
     private readonly productPlanDetailService: ProductPlanDetailService,
   ) {}
+
+  includeQuery: Prisma.ProductionPlanInclude = {
+    productionPlanDetail: {
+      include:{
+        productSize: {
+          include: {
+            productVariant: {
+              include: {
+                product: {
+                  include: {
+                    productUom: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      }
+    },
+  };
 
   async createProductPlanWithExcelFile(
     file: Express.Multer.File,
@@ -73,12 +94,33 @@ export class ProductPlanService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product Plan');
   }
 
-  findAll() {
-    return `This action returns all productPlan`;
+  async findAll() {
+    const productPlans = await this.prismaService.productionPlan.findMany({
+      include: this.includeQuery,
+    });
+
+    return apiSuccess(
+      HttpStatus.OK,
+      productPlans,
+      'Get all product plan successfully',
+    );
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} productPlan`;
+  async findOne(id: string) {
+    if (!isUUID(id)) {
+      throw new Error('Invalid UUID');
+    }
+
+    const productPlan = await this.prismaService.productionPlan.findUnique({
+      where: { id },
+      include: this.includeQuery,
+    });
+
+    return apiSuccess(
+      HttpStatus.OK,
+      productPlan,
+      'Get product plan successfully',
+    );
   }
 
   update(id: number, updateProductPlanDto: UpdateProductPlanDto) {

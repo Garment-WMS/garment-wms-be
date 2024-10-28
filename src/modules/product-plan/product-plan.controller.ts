@@ -15,6 +15,7 @@ import { RoleCode } from '@prisma/client';
 import { GetUser } from 'src/common/decorator/get_user.decorator';
 import { Roles } from 'src/common/decorator/roles.decorator';
 import { RolesGuard } from 'src/common/guard/roles.guard';
+import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { UpdateProductPlanDto } from './dto/update-product-plan.dto';
@@ -42,8 +43,8 @@ export class ProductPlanController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.productPlanService.findOne(+id);
+  findOne(@Param('id', CustomUUIDPipe) id: string) {
+    return this.productPlanService.findOne(id);
   }
 
   @Patch(':id')
