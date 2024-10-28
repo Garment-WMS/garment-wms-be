@@ -14,4 +14,4 @@ RUN npm run build
 
 EXPOSE 8000
 
-CMD ["npx", "nest", "start"]
+CMD ["npm", "run", "start:prod"]
