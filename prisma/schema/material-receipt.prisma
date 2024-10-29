@@ -7,6 +7,7 @@ model MaterialReceipt {
   importDate            DateTime?               @map("import_date") @db.Timestamptz(6)
   quantityByPack        Float                   @map("quantity_by_pack")
   remainQuantityByPack  Float                   @map("remain_quantity_by_pack")
+  status                MaterialReceiptStatus   @default(IMPORTING) @map("status")
   createdAt             DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt             DateTime?               @map("deleted_at") @db.Timestamptz(6)
@@ -17,4 +18,12 @@ model MaterialReceipt {
   ReceiptAdjustment     ReceiptAdjustment[]
 
   @@map("material_receipt")
+}
+
+enum MaterialReceiptStatus {
+  IMPORTING
+  AVAILABLE
+  PARTIAL_USED
+  USED
+  DISPOSED
 }
