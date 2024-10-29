@@ -2,40 +2,38 @@ import { Injectable } from '@nestjs/common';
 import {
   registerDecorator,
   ValidationArguments,
-  ValidationOptions,
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import { ProductSizeService } from '../product-size.service';
+import { ImportRequestService } from '../import-request.service';
 
 @Injectable()
 @ValidatorConstraint({ async: true })
-export class IsProductVariantExistValidator
+export class IsPoDeliveryDoesNotHaveActiveImportRequestValidator
   implements ValidatorConstraintInterface
 {
-  constructor(private readonly productSizeService: ProductSizeService) {}
+  constructor(private readonly importRequestService: ImportRequestService) {}
   async validate(
-    value: string,
+    value: any,
     validationArguments?: ValidationArguments,
   ): Promise<boolean> {
-    if (!value) return false;
-
-    const productVariant = await this.productSizeService.findById(value);
-    return !!productVariant;
+    const activeImportRequest =
+      await this.importRequestService.getActiveImportReqOfPoDelivery(value);
+    return !activeImportRequest;
   }
   defaultMessage?(validationArguments?: ValidationArguments): string {
-    return "Product Variant doesn't exist";
+    return 'PO delivery already have active import request';
   }
 }
 
-export function IsProductVariantExist(validationOptions?: ValidationOptions) {
+export function IsPoDeliveryDoesNotHaveActiveImportRequest() {
   return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
-      options: validationOptions,
+      options: {},
       constraints: [],
-      validator: IsProductVariantExistValidator,
+      validator: IsPoDeliveryDoesNotHaveActiveImportRequestValidator,
       async: true,
     });
   };

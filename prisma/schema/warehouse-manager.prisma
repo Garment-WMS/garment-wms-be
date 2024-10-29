@@ -10,6 +10,7 @@ model WarehouseManager {
   InventoryReport       InventoryReport[]
   ReceiptAdjustment     ReceiptAdjustment[]
   MaterialExportRequest MaterialExportRequest[]
+  InspectionRequest     InspectionRequest[]
 
   @@map("warehouse_manager")
 }

@@ -4,7 +4,6 @@ import { UpdateImportRequestDto } from './update-import-request.dto';
 
 export enum PurchasingStaffAction {
   CANCELED = 'CANCELED',
-  PENDING = 'PENDING',
 }
 
 export class PurchasingStaffProcessDto extends PickType(

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JsonWebTokenError } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
-import { CustomAuthException } from 'src/common/filter/custom-http.exception';
+import { CustomAuthException } from 'src/common/filter/custom-auth-http.exception';
 
 @Injectable()
 export class RefreshJwtAuthGuard extends AuthGuard('jwt-refresh') {

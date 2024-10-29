@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import {
   registerDecorator,
   ValidationArguments,
@@ -13,19 +14,18 @@ export class UniqueInArrayConstraint implements ValidatorConstraintInterface {
     if (!value || !Array.isArray(value) || value.length === 0) {
       return true;
     }
-    properties.forEach((property) => {
-      // const nonNullArray = value.filter((item) => {
-      //   if (item[property] !== null && item[property] !== undefined) {
-      //     Logger.debug(`item[property]: ${item[property]}`);
-      //     return false;
-      //   }
-      // });
-
-      const uniqueValues = new Set(value.map((item) => item[property]));
-      if (uniqueValues.size !== value.length) {
-        return false;
+    for (const property of properties) {
+      const uniqueValues = new Set();
+      for (const item of value) {
+        if (uniqueValues.has(item[property])) {
+          Logger.debug(`Duplicate value found: ${item[property]}`);
+          return false;
+        }
+        if (item[property] !== null && item[property] !== undefined) {
+          uniqueValues.add(item[property]);
+        }
       }
-    });
+    }
     return true;
   }
 

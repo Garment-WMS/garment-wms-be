@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ValidationError } from 'class-validator';
 import express from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { CustomAuthException } from 'src/common/filter/custom-http.exception';
+import { CustomAuthException } from 'src/common/filter/custom-auth-http.exception';
 import { BlacklistTokenService } from 'src/modules/blacklist-token/blacklist-token.service';
 import { AuthenUser } from '../dto/authen-user.dto';
 

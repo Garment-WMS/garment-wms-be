@@ -4,7 +4,7 @@ import { RoleCode } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { AuthenUser } from 'src/modules/auth/dto/authen-user.dto';
 import { ROLES_KEY } from '../decorator/roles.decorator';
-import { CustomAuthException } from '../filter/custom-http.exception';
+import { CustomAuthException } from '../filter/custom-auth-http.exception';
 
 @Injectable()
 export class RolesGuard implements CanActivate {

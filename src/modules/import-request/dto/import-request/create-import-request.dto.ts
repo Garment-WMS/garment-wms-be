@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { $Enums, RoleCode } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
   IsArray,
   IsDateString,
   IsEnum,
@@ -14,6 +15,7 @@ import {
 import { UniqueInArray } from 'src/common/decorator/validator/unique-property.decorator';
 import { IsPoDeliveryExist } from 'src/modules/po-delivery/validator/is-po-delivery-exist.validator';
 import { IsUserRoleExist } from 'src/modules/user/validator/is-user-of-role-exist.validator';
+import { IsImportRequestDetailMatchType } from '../../validator/is-import-request-detail-match-type';
 import { CreateImportRequestDetailDto } from '../import-request-detail/create-import-request-detail.dto';
 
 export class CreateImportRequestDto {
@@ -38,6 +40,7 @@ export class CreateImportRequestDto {
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsUUID()
   @IsPoDeliveryExist()
+  // @IsPoDeliveryDoesNotHaveActiveImportRequest()
   poDeliveryId: string;
 
   //tips: @IsEnum(type) and @ApiProperty(type) cause dependency cycle
@@ -76,7 +79,9 @@ export class CreateImportRequestDto {
   @ApiProperty({ required: true, type: [CreateImportRequestDetailDto] })
   @ValidateNested({ each: true })
   @IsArray()
-  @UniqueInArray(['materialVariantId', 'productIdVariantId'])
+  @ArrayNotEmpty()
+  @IsImportRequestDetailMatchType()
+  @UniqueInArray(['materialPackageId', 'productIdSizeId'])
   @Type(() => CreateImportRequestDetailDto)
   importRequestDetails: CreateImportRequestDetailDto[];
 

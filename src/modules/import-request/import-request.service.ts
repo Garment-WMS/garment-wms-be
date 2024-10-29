@@ -10,7 +10,9 @@ import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isNotEmpty } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
+import { apiFailed } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
+import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { nonExistUUID } from 'src/common/utils/utils';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
@@ -64,34 +66,42 @@ export class ImportRequestService {
   }
 
   async getStatistic() {
-    const [total, pending, approved, rejected, importing] =
-      await this.prismaService.$transaction([
-        this.prismaService.importRequest.count(),
-        this.prismaService.importRequest.count({
-          where: {
-            status: $Enums.ImportRequestStatus.PENDING,
-          },
-        }),
-        this.prismaService.importRequest.count({
-          where: {
-            status: $Enums.ImportRequestStatus.APPROVED,
-          },
-        }),
-        this.prismaService.importRequest.count({
-          where: {
-            status: $Enums.ImportRequestStatus.REJECTED,
-          },
-        }),
-        this.prismaService.importRequest.count({
-          where: {
-            status: $Enums.ImportRequestStatus.CANCELED,
-          },
-        }),
-      ]);
+    const [
+      total,
+      arrived,
+      cancelled,
+      inspecting,
+      inspected,
+      approved,
+      rejected,
+    ] = await this.prismaService.$transaction([
+      this.prismaService.importRequest.count(),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.ARRIVED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.CANCELED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.INSPECTING },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.INSPECTED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.APPROVED },
+      }),
+      this.prismaService.importRequest.count({
+        where: { status: $Enums.ImportRequestStatus.REJECTED },
+      }),
+    ]);
 
     return {
       total,
-      pending,
+      arrived,
+      cancelled,
+      inspecting,
+      inspected,
       approved,
       rejected,
     };
@@ -141,7 +151,34 @@ export class ImportRequestService {
     return importRequest;
   }
 
+  async getActiveImportReqOfPoDelivery(poDeliveryId: string) {
+    return this.prismaService.importRequest.findFirst({
+      where: {
+        poDeliveryId,
+        status: {
+          notIn: [
+            $Enums.ImportRequestStatus.CANCELED,
+            $Enums.ImportRequestStatus.REJECTED,
+          ],
+        },
+      },
+    });
+  }
+
   async create(dto: CreateImportRequestDto) {
+    const activeImportReq = await this.getActiveImportReqOfPoDelivery(
+      dto.poDeliveryId,
+    );
+    if (activeImportReq)
+      throw new CustomHttpException(
+        HttpStatus.BAD_REQUEST,
+        apiFailed(
+          HttpStatus.BAD_REQUEST,
+          'Po delivery has active import request',
+          { activeImportRequest: activeImportReq },
+        ),
+      );
+
     const createImportRequestInput: Prisma.ImportRequestCreateInput = {
       warehouseManager: dto.warehouseManagerId
         ? { connect: { id: dto.warehouseManagerId } }
@@ -262,8 +299,7 @@ export class ImportRequestService {
     };
   }
 
-  // INSPECTING
-  async purchasingStaffRequestInspection(
+  async purchasingStaffCancelImportReq(
     id: string,
     purchasingStaffProcessDto: PurchasingStaffProcessDto,
   ) {
@@ -276,8 +312,6 @@ export class ImportRequestService {
     ) {
       const allowCancel: $Enums.ImportRequestStatus[] = [
         $Enums.ImportRequestStatus.ARRIVED,
-        $Enums.ImportRequestStatus.INSPECTED,
-        $Enums.ImportRequestStatus.PENDING,
       ];
       if (!allowCancel.includes(importRequest.status)) {
         throw new BadRequestException(
@@ -293,28 +327,10 @@ export class ImportRequestService {
           cancelReason: purchasingStaffProcessDto.cancelReason,
         },
       });
-    } else if (
-      purchasingStaffProcessDto.action == $Enums.ImportRequestStatus.PENDING
-    ) {
-      const allowPending: $Enums.ImportRequestStatus[] = [
-        $Enums.ImportRequestStatus.INSPECTED,
-      ];
-      if (!allowPending.includes(importRequest.status)) {
-        throw new BadRequestException(
-          `Purchasing staff only can pending import request with status ${allowPending.join(
-            ', ',
-          )}`,
-        );
-      }
-      return await this.prismaService.importRequest.update({
-        where: { id: id },
-        data: {
-          status: $Enums.ImportRequestStatus.PENDING,
-          description: purchasingStaffProcessDto.description,
-        },
-      });
     } else {
-      throw new BadRequestException('Action not allowed');
+      throw new BadRequestException(
+        `Allowed action is ${$Enums.ImportRequestStatus.CANCELED}`,
+      );
     }
   }
 
@@ -326,9 +342,14 @@ export class ImportRequestService {
       select: { status: true },
     });
 
-    if (importRequest.status !== $Enums.ImportRequestStatus.PENDING) {
+    const allowApproveAndReject: $Enums.ImportRequestStatus[] = [
+      $Enums.ImportRequestStatus.ARRIVED,
+      $Enums.ImportRequestStatus.INSPECTED,
+    ];
+
+    if (importRequest.status !== $Enums.ImportRequestStatus.ARRIVED) {
       throw new BadRequestException(
-        `Manager only can process ${$Enums.ImportRequestStatus.PENDING} import request`,
+        `Manager only can approve/reject ${allowApproveAndReject.join(', ')} import request`,
       );
     }
 

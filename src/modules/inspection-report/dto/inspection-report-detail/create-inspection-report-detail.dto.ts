@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 import { IsInt, IsOptional, IsUUID, ValidateIf } from 'class-validator';
-import { IsMaterialVariantExist } from 'src/modules/material-package/validator/is-material-variant-exist.validator';
-import { IsProductVariantExist } from 'src/modules/product-size/validator/is-product-variant-exist.validator';
+import { IsMaterialPackageExist } from 'src/modules/material-package/validator/is-material-package-exist.validator';
+import { IsProductSizeExist } from 'src/modules/product-size/validator/is-product-size-exist.validator';
 import { IsInspectionReportNotExist } from '../../validator/is-inspection-report-not-exist.validator';
 
 export class CreateInspectionReportDetailDto
@@ -32,7 +32,7 @@ export class CreateInspectionReportDetailDto
     (o: CreateInspectionReportDetailDto, v) => o.productVariantId === undefined,
   )
   @IsUUID()
-  @IsMaterialVariantExist()
+  @IsMaterialPackageExist()
   materialVariantId: string;
 
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
@@ -42,6 +42,6 @@ export class CreateInspectionReportDetailDto
       o.materialVariantId === undefined,
   )
   @IsUUID()
-  @IsProductVariantExist()
+  @IsProductSizeExist()
   productVariantId: string;
 }
