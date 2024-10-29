@@ -39,6 +39,25 @@ export class InspectionRequestService {
     return dataResponse;
   }
 
+  async getStatistics() {
+    const [total, inspecting, inspected] =
+      await this.prismaService.$transaction([
+        this.prismaService.inspectionRequest.count(),
+        this.prismaService.inspectionRequest.count({
+          where: {
+            status: $Enums.InspectionRequestStatus.INSPECTING,
+          },
+        }),
+        this.prismaService.inspectionRequest.count({
+          where: {
+            status: $Enums.InspectionRequestStatus.INSPECTED,
+          },
+        }),
+      ]);
+
+    return { total, inspecting, inspected };
+  }
+
   async create(createInspectionRequestDto: CreateInspectionRequestDto) {
     const inspectionRequestCreateInput: Prisma.InspectionRequestCreateInput = {
       importRequest: {
@@ -54,6 +73,11 @@ export class InspectionRequestService {
       purchasingStaff: {
         connect: {
           id: createInspectionRequestDto.purchasingStaffId,
+        },
+      },
+      warehouseManager: {
+        connect: {
+          id: createInspectionRequestDto.warehouseManagerId,
         },
       },
       status: createInspectionRequestDto.status,

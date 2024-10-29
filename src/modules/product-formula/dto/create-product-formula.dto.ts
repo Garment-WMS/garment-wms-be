@@ -11,13 +11,13 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { NestedCreateProductFormulaMaterialDto } from 'src/modules/product-formula-material/dto/nested-product-formula-material.dto';
-import { IsProductVariantExist } from 'src/modules/product-size/validator/is-product-variant-exist.validator';
+import { IsProductSizeExist } from 'src/modules/product-size/validator/is-product-size-exist.validator';
 
 export class CreateProductFormulaDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsUUID()
-  @IsProductVariantExist()
+  @IsProductSizeExist()
   productVariantId: string;
 
   @ApiProperty()

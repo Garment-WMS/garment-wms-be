@@ -221,7 +221,7 @@ export class PoDeliveryService {
   }
 
   async checkIsPoDeliveryValid(
-    poDelivery,
+    poDelivery: any,
     importRequestDetails: CreateImportRequestDetailDto[],
   ) {
     let error: ValidationError[] = [];
@@ -247,28 +247,28 @@ export class PoDeliveryService {
     importRequestDetails.forEach((importRequestDetail) => {
       const isExist = poDelivery.poDeliveryDetail.some((poDeliveryDetail) => {
         return (
-          poDeliveryDetail.materialVariantId ===
-          importRequestDetail.materialVariantId
+          poDeliveryDetail.materialPackageId ===
+          importRequestDetail.materialPackageId
         );
       });
 
       if (!isExist) {
         error.push({
-          property: 'materialVariantId',
+          property: 'materialPackageId',
           children: [],
           target: importRequestDetail,
           constraints: {
-            isExist: 'Material variant not found in po delivery',
+            isExist: 'Material package not found in po delivery',
           },
-          value: importRequestDetail.materialVariantId,
+          value: importRequestDetail.materialPackageId,
           contexts: {},
         });
       } else {
         const isValidQuantity = poDelivery.poDeliveryDetail.some(
           (poDeliveryDetail) => {
             return (
-              poDeliveryDetail.materialVariantId ===
-                importRequestDetail.materialVariantId &&
+              poDeliveryDetail.materialPackageId ===
+                importRequestDetail.materialPackageId &&
               poDeliveryDetail.quantityByPack >=
                 importRequestDetail.quantityByPack
             );

@@ -6,37 +6,36 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import { MaterialPackageService } from '../material-package.service';
+import { ProductSizeService } from '../product-size.service';
 
 @Injectable()
 @ValidatorConstraint({ async: true })
-export class IsMaterialVariantExistValidator
+export class IsProductSizeExistValidator
   implements ValidatorConstraintInterface
 {
-  constructor(
-    private readonly materialPackageService: MaterialPackageService,
-  ) {}
+  constructor(private readonly productSizeService: ProductSizeService) {}
   async validate(
     value: string,
     validationArguments?: ValidationArguments,
   ): Promise<boolean> {
     if (!value) return false;
-    const materialVariant = await this.materialPackageService.findById(value);
-    return !!materialVariant;
+
+    const productSize = await this.productSizeService.findById(value);
+    return !!productSize;
   }
   defaultMessage?(validationArguments?: ValidationArguments): string {
-    return "Material variant doesn't exist";
+    return "Product size doesn't exist";
   }
 }
 
-export function IsMaterialVariantExist(validationOptions?: ValidationOptions) {
+export function IsProductSizeExist(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: IsMaterialVariantExistValidator,
+      validator: IsProductSizeExistValidator,
       async: true,
     });
   };

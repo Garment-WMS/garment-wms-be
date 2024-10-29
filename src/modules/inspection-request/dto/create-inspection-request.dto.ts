@@ -7,20 +7,29 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  ValidateIf,
 } from 'class-validator';
+import { IsImportReqStatusCanCreateInspectionReq } from 'src/modules/import-request/validator/is-import-req-can-create-inspetion-req';
 
 export class CreateInspectionRequestDto {
   @ApiProperty({ required: true })
   @IsUUID()
+  @IsImportReqStatusCanCreateInspectionReq()
   importRequestId: string;
 
   @ApiProperty({ required: true })
   @IsUUID()
   inspectionDepartmentId: string;
 
-  @ApiProperty({ required: true })
+  @ApiProperty({ required: false })
+  @ValidateIf((o) => o.warehouseManagerId === undefined)
   @IsUUID()
   purchasingStaffId: string;
+
+  @ApiProperty({ required: false })
+  @ValidateIf((o) => o.purchasingStaffId === undefined)
+  @IsUUID()
+  warehouseManagerId: string;
 
   @ApiProperty()
   @IsOptional()

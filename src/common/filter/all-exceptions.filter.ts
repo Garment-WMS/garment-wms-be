@@ -12,6 +12,7 @@ import { ValidationError } from 'class-validator';
 import iterate from 'iterare';
 import { apiFailed } from '../dto/api-response';
 import { ApiResponse } from '../dto/response.dto';
+import { CustomHttpException } from './custom-http.exception';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -36,13 +37,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const ctx = host.switchToHttp();
 
-    let responseBody: ApiResponse;
-    if (exception instanceof HttpException) {
-      responseBody = apiFailed(
-        exception.getStatus(),
-        exception.message,
-        // exception.getResponse(),
-      );
+    let responseBody: ApiResponse | any;
+    if (exception instanceof CustomHttpException) {
+      responseBody = exception.getResponse();
+    } else if (exception instanceof HttpException) {
+      responseBody = apiFailed(exception.getStatus(), exception.message);
     } else if (
       exception instanceof Error &&
       exception.message.includes('is not filterable')

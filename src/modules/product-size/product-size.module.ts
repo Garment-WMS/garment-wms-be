@@ -3,12 +3,12 @@ import { PrismaModule } from 'prisma/prisma.module';
 import { ProductVariantModule } from '../product-variant/product-variant.module';
 import { ProductSizeController } from './product-size.controller';
 import { ProductSizeService } from './product-size.service';
-import { IsProductVariantExistValidator } from './validator/is-product-variant-exist.validator';
+import { IsProductSizeExistValidator } from './validator/is-product-size-exist.validator';
 
 @Module({
   controllers: [ProductSizeController],
   imports: [PrismaModule, ProductVariantModule],
-  providers: [ProductSizeService, IsProductVariantExistValidator],
+  providers: [ProductSizeService, IsProductSizeExistValidator],
   exports: [ProductSizeService],
 })
 export class ProductSizeModule {}
