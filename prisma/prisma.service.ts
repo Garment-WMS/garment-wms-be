@@ -124,6 +124,8 @@ export class PrismaService
     'ImportReceipt',
     'InspectionRequest',
     'InspectionReport',
+    'InventoryReport',
+    // 'InventoryReportDetail',
     'MaterialInspectionCriteria',
     'MaterialVariant',
     'Material',

@@ -225,25 +225,6 @@ export class PoDeliveryService {
     importRequestDetails: CreateImportRequestDetailDto[],
   ) {
     let error: ValidationError[] = [];
-
-    // if (!poDelivery) {
-    //   return apiFailed(HttpStatus.NOT_FOUND, 'Po delivery not found');
-    // }
-
-    //Check if the po delivery is already finished
-    // if (poDelivery.status === PoDeliveryStatus.FINISHED) {
-    //   return apiFailed(HttpStatus.BAD_REQUEST, 'Po delivery already finished');
-    // }
-
-    // //Check if the po delivery is already cancelled
-    // if (poDelivery.status === PoDeliveryStatus.CANCELLED) {
-    //   return apiFailed(HttpStatus.BAD_REQUEST, 'Po delivery already cancelled');
-    // }
-
-    // if (poDelivery.poDeliveryDetail.length === 0) {
-    //   return apiFailed(HttpStatus.BAD_REQUEST, 'Po delivery detail is empty');
-    // }
-
     importRequestDetails.forEach((importRequestDetail) => {
       const isExist = poDelivery.poDeliveryDetail.some((poDeliveryDetail) => {
         return (

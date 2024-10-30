@@ -1,7 +1,8 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { MaterialReceiptStatus, Prisma, PrismaClient } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
+import { v4 as uuidv4 } from 'uuid';
 import { CreateMaterialReceiptDto } from './dto/create-material-receipt.dto';
 import { UpdateMaterialReceiptDto } from './dto/update-material-receipt.dto';
 
@@ -29,6 +30,21 @@ export class MaterialReceiptService {
     throw new Error('Method not implemented.');
   }
 
+  updateMaterialReceiptStatus(
+    id: string,
+    status: MaterialReceiptStatus,
+    prismaInstance: PrismaClient = this.prismaService,
+  ) {
+    return prismaInstance.materialReceipt.update({
+      where: {
+        id,
+      },
+      data: {
+        status,
+      },
+    });
+  }
+
   async createMaterialReceipts(
     id: string,
     inspectionReportDetail: {
@@ -44,17 +60,14 @@ export class MaterialReceiptService {
       quantityByPack: number | null;
     }[],
     prismaInstance: PrismaClient = this.prismaService,
-    materialReceipts: CreateMaterialReceiptDto[],
+    // materialReceipts: CreateMaterialReceiptDto[],
   ) {
-
-    
-
     const materialReceiptsInput: Prisma.MaterialReceiptCreateManyInput[] =
       inspectionReportDetail.map((detail) => {
         return {
           importReceiptId: id,
+          SKU: uuidv4(),
           materialPackageId: detail.materialPackageId,
-          SKU: '',
           remainQuantityByPack: detail.quantityByPack,
           quantityByPack: detail.approvedQuantityByPack,
         };

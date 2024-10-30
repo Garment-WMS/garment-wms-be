@@ -19,6 +19,7 @@ import { ImportRequestModule } from './modules/import-request/import-request.mod
 import { InspectionDepartmentModule } from './modules/inspection-department/inspection-department.module';
 import { InspectionReportModule } from './modules/inspection-report/inspection-report.module';
 import { InspectionRequestModule } from './modules/inspection-request/inspection-request.module';
+import { InventoryReportDetailModule } from './modules/inventory-report-detail/inventory-report-detail.module';
 import { InventoryReportModule } from './modules/inventory-report/inventory-report.module';
 import { InventoryStockModule } from './modules/inventory-stock/inventory-stock.module';
 import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
@@ -86,6 +87,7 @@ import { ProductModule } from './modules/product/product.module';
     InventoryStockModule,
     InspectionDepartmentModule,
     WarehouseStaffModule,
+    InventoryReportDetailModule,
     ProductPlanDetailModule,
   ],
   controllers: [AppController],

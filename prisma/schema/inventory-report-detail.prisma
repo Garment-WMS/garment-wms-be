@@ -1,17 +1,17 @@
 model InventoryReportDetail {
-  id                String           @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  inventoryReportId String           @map("inventory_report_id") @db.Uuid
-  materialReceiptId String?          @map("material_receipt_id") @db.Uuid
-  productReceiptId  String?          @map("product_receipt_id") @db.Uuid
-  storageQuantity   Float            @map("storage_quantity")
-  recordedQuantity  Float            @map("recorded_quantity")
-  createdAt         DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime?        @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt         DateTime?        @map("deleted_at") @db.Timestamptz(6)
-  inventoryReport   InventoryReport  @relation(fields: [inventoryReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  materialReceipt   MaterialReceipt? @relation(fields: [materialReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productReceipt    ProductReceipt?  @relation(fields: [productReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  inventoryReportId String              @map("inventory_report_id") @db.Uuid
+  materialReceiptId String?             @map("material_receipt_id") @db.Uuid
+  productReceiptId  String?             @map("product_receipt_id") @db.Uuid
+  storageQuantity   Float               @map("storage_quantity")
+  recordedQuantity  Float               @map("recorded_quantity")
+  createdAt         DateTime?           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime?           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?           @map("deleted_at") @db.Timestamptz(6)
+  inventoryReport   InventoryReport     @relation(fields: [inventoryReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialReceipt   MaterialReceipt?    @relation(fields: [materialReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productReceipt    ProductReceipt?     @relation(fields: [productReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ReceiptAdjustment ReceiptAdjustment[]
 
   @@map("inventory_report_detail")
-  ReceiptAdjustment ReceiptAdjustment[]
 }

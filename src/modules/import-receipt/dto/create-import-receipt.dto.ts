@@ -27,12 +27,12 @@ export class CreateImportReceiptDto {
   @IsUserRoleExist(RoleCode.WAREHOUSE_STAFF)
   warehouseStaffId: string;
 
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => MaterialImportReceiptDto)
-  materialReceipts: MaterialImportReceiptDto[];
+  // @ApiProperty()
+  // @IsNotEmpty()
+  // @IsArray()
+  // @ValidateNested({ each: true })
+  // @Type(() => MaterialImportReceiptDto)
+  // materialReceipts: MaterialImportReceiptDto[];
 
   @ApiProperty()
   @IsNotEmpty()
@@ -45,7 +45,7 @@ export class CreateImportReceiptDto {
   note: string;
 
   @ApiProperty()
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   code: string;
 
