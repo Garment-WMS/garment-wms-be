@@ -1,6 +1,7 @@
 model MaterialPackage {
   id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   materialVariantId      String                   @map("material_variant_id") @db.Uuid
+  SKU                    String                   @map("sku") @db.VarChar @default("")
   name                   String                   @map("name") @db.VarChar
   code                   String                   @unique @map("code") @db.VarChar
   packUnit               String                   @map("pack_unit") @db.VarChar

@@ -2,7 +2,6 @@ model MaterialReceipt {
   id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   materialPackageId     String                  @map("material_package_id") @db.Uuid
   importReceiptId       String                  @map("import_receipt_id") @db.Uuid
-  SKU                   String                  @unique @map("sku") @db.VarChar
   expireDate            DateTime?               @map("expire_date") @db.Timestamptz(6)
   importDate            DateTime?               @map("import_date") @db.Timestamptz(6)
   quantityByPack        Float                   @map("quantity_by_pack")
