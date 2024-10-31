@@ -16,19 +16,21 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
+import { HttpCacheInterceptor } from 'src/common/interceptor/cache.interceptor';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { MaterialVariantService } from './material-variant.service';
 
 @Controller('material-variant')
+@UseInterceptors(HttpCacheInterceptor)
 @ApiTags('Material Variant')
 export class MaterialVariantController {
   constructor(
     private readonly materialVariantService: MaterialVariantService,
   ) {}
 
-  @Get()
+  @Get('search')
   search(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.MaterialVariantScalarWhereInput>(
@@ -43,7 +45,7 @@ export class MaterialVariantController {
         ],
       ),
     )
-    filterOptions: FilterDto<Prisma.MaterialVariantWhereInput>,
+    filterOptions: FilterDto<Prisma.MaterialVariantScalarWhereInput>,
   ) {
     return this.materialVariantService.search(filterOptions.findOptions);
   }
@@ -54,7 +56,7 @@ export class MaterialVariantController {
     return this.materialVariantService.create(createMaterialDto);
   }
 
-  @Get()
+  @Get('all')
   getAllMaterial() {
     return this.materialVariantService.findAll();
   }
@@ -69,12 +71,12 @@ export class MaterialVariantController {
   }
 
   @Get(':id')
-  getMaterialById(@Param('id', CustomUUIDPipe) id: string) {
+  getMaterialById(@Param('id', new CustomUUIDPipe()) id: string) {
     return this.materialVariantService.findByIdWithResponse(id);
   }
 
   @Get(':id/receipt')
-  getMaterialReceiptById(@Param('id', CustomUUIDPipe) id: string) {
+  getMaterialReceiptById(@Param('id', new CustomUUIDPipe()) id: string) {
     return this.materialVariantService.findMaterialReceiptByIdWithResponse(id);
   }
 
