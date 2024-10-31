@@ -14,6 +14,9 @@ import { PrismaModule } from 'prisma/prisma.module';
 import { ExcelModule } from './modules/excel/excel.module';
 import { MaterialVariantModule } from './modules/material-variant/material-variant.module';
 
+import { CacheModule } from '@nestjs/cache-manager';
+import { ConfigModule } from '@nestjs/config';
+import * as redisStore from 'cache-manager-redis-store';
 import { ImportReceiptModule } from './modules/import-receipt/import-receipt.module';
 import { ImportRequestModule } from './modules/import-request/import-request.module';
 import { InspectionDepartmentModule } from './modules/inspection-department/inspection-department.module';
@@ -36,6 +39,7 @@ import { ProductPlanModule } from './modules/product-plan/product-plan.module';
 import { ProductSizeModule } from './modules/product-size/product-size.module';
 import { ProductUomModule } from './modules/product-uom/product-uom.module';
 import { ProductVariantModule } from './modules/product-variant/product-variant.module';
+import { ProductModule } from './modules/product/product.module';
 import { PurchaseOrderModule } from './modules/purchase-order/purchase-order.module';
 import { QuarterlyProductDetailModule } from './modules/quarterly-product-detail/quarterly-product-detail.module';
 import { QuarterlyProductPlanModule } from './modules/quarterly-product-plan/quarterly-product-plan.module';
@@ -43,7 +47,6 @@ import { SupplierModule } from './modules/supplier/supplier.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
-import { ProductModule } from './modules/product/product.module';
 
 @Module({
   imports: [
@@ -87,6 +90,15 @@ import { ProductModule } from './modules/product/product.module';
     InspectionDepartmentModule,
     WarehouseStaffModule,
     ProductPlanDetailModule,
+    ConfigModule.forRoot({ isGlobal: true }),
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 5,
+      store: redisStore,
+      host: process.env.REDIS_HOST,
+      password: process.env.REDIS_PASSWORD,
+      port: process.env.REDIS_PORT,
+    }),
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],
