@@ -11,4 +11,5 @@ model WarehouseStaff {
   MaterialExportReceipt MaterialExportReceipt[]
 
   @@map("warehouse_staff")
+  InventoryReportPlanDetail InventoryReportPlanDetail[]
 }

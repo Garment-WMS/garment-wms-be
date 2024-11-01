@@ -1,0 +1,25 @@
+model InventoryReportPlan {
+    id                 String                    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+    warehouseManagerId String                    @map("warehouse_manager_id") @db.Uuid
+    code               String                    @unique @map("code") @db.VarChar()
+    status             InventoryReportPlanStatus @default(PENDING) @map("status")
+    note               String?                   @map("note") @db.VarChar()
+    from               DateTime                  @map("from") @db.Timestamptz(6)
+    to                 DateTime                  @map("to") @db.Timestamptz(6)
+    createdAt          DateTime                  @default(now())
+    updatedAt          DateTime                  @updatedAt
+    deletedAt          DateTime?                 @map("deleted_at") @db.Timestamptz(6)
+    warehouseManager   WarehouseManager          @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    @@map("inventory_report_plan")
+    InventoryReportPlanDetail InventoryReportPlanDetail[]
+}
+
+enum InventoryReportPlanStatus {
+    PENDING
+    IN_PROGRESS
+    DONE
+    CANCELLED
+
+    @@map("inventory_report_plan_status")
+}
