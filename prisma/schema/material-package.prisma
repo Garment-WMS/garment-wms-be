@@ -22,4 +22,5 @@ model MaterialPackage {
   inventoryStock         InventoryStock?
 
   @@map("material_package")
+  InventoryReportPlanDetail InventoryReportPlanDetail[]
 }

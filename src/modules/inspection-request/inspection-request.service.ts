@@ -70,16 +70,20 @@ export class InspectionRequestService {
           id: createInspectionRequestDto.inspectionDepartmentId,
         },
       },
-      purchasingStaff: {
-        connect: {
-          id: createInspectionRequestDto.purchasingStaffId,
-        },
-      },
-      warehouseManager: {
-        connect: {
-          id: createInspectionRequestDto.warehouseManagerId,
-        },
-      },
+      purchasingStaff: createInspectionRequestDto.purchasingStaffId
+        ? {
+            connect: {
+              id: createInspectionRequestDto.purchasingStaffId,
+            },
+          }
+        : undefined,
+      warehouseManager: createInspectionRequestDto.warehouseManagerId
+        ? {
+            connect: {
+              id: createInspectionRequestDto.warehouseManagerId,
+            },
+          }
+        : undefined,
       status: createInspectionRequestDto.status,
       note: createInspectionRequestDto.note,
       code: undefined,

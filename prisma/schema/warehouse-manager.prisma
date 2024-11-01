@@ -13,4 +13,5 @@ model WarehouseManager {
   InspectionRequest     InspectionRequest[]
 
   @@map("warehouse_manager")
+  InventoryReportPlan InventoryReportPlan[]
 }
