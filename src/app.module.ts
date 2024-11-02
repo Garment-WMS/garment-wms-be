@@ -22,6 +22,7 @@ import { InspectionRequestModule } from './modules/inspection-request/inspection
 import { InventoryReportModule } from './modules/inventory-report/inventory-report.module';
 import { InventoryStockModule } from './modules/inventory-stock/inventory-stock.module';
 import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
+import { MaterialExportRequestModule } from './modules/material-export-request/material-export-request.module';
 import { MaterialPackageModule } from './modules/material-package/material-package.module';
 import { MaterialReceiptModule } from './modules/material-receipt/material-receipt.module';
 import { MaterialUnitModule } from './modules/material-unit/material-unit.module';
@@ -36,6 +37,7 @@ import { ProductPlanModule } from './modules/product-plan/product-plan.module';
 import { ProductSizeModule } from './modules/product-size/product-size.module';
 import { ProductUomModule } from './modules/product-uom/product-uom.module';
 import { ProductVariantModule } from './modules/product-variant/product-variant.module';
+import { ProductModule } from './modules/product/product.module';
 import { PurchaseOrderModule } from './modules/purchase-order/purchase-order.module';
 import { QuarterlyProductDetailModule } from './modules/quarterly-product-detail/quarterly-product-detail.module';
 import { QuarterlyProductPlanModule } from './modules/quarterly-product-plan/quarterly-product-plan.module';
@@ -43,7 +45,6 @@ import { SupplierModule } from './modules/supplier/supplier.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
-import { ProductModule } from './modules/product/product.module';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { ProductModule } from './modules/product/product.module';
     InspectionDepartmentModule,
     WarehouseStaffModule,
     ProductPlanDetailModule,
+    MaterialExportRequestModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],
