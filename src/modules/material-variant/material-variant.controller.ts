@@ -15,6 +15,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
+// import { months } from 'src/common/constant/constant';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { HttpCacheInterceptor } from 'src/common/interceptor/cache.interceptor';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
@@ -30,7 +31,7 @@ export class MaterialVariantController {
     private readonly materialVariantService: MaterialVariantService,
   ) {}
 
-  @Get('search')
+  @Get()
   search(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.MaterialVariantScalarWhereInput>(
@@ -79,6 +80,14 @@ export class MaterialVariantController {
   getMaterialReceiptById(@Param('id', new CustomUUIDPipe()) id: string) {
     return this.materialVariantService.findMaterialReceiptByIdWithResponse(id);
   }
+
+  // @Get(':id/receipt/chart')
+  // getMaterialReceiptChartById(
+  //   @Param('id', new CustomUUIDPipe()) id: string,
+  //   @Query('months') months: months[],
+  // ) {
+  //   return this.materialVariantService.findMaterialReceiptChart(id, months);
+  // }
 
   @Patch(':id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
