@@ -66,7 +66,6 @@ export class MaterialReceiptService {
       inspectionReportDetail.map((detail) => {
         return {
           importReceiptId: id,
-          SKU: uuidv4(),
           materialPackageId: detail.materialPackageId,
           remainQuantityByPack: detail.quantityByPack,
           quantityByPack: detail.approvedQuantityByPack,

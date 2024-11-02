@@ -23,6 +23,8 @@ import { InspectionDepartmentModule } from './modules/inspection-department/insp
 import { InspectionReportModule } from './modules/inspection-report/inspection-report.module';
 import { InspectionRequestModule } from './modules/inspection-request/inspection-request.module';
 import { InventoryReportDetailModule } from './modules/inventory-report-detail/inventory-report-detail.module';
+import { InventoryReportPlanDetailModule } from './modules/inventory-report-plan-detail/inventory-report-plan-detail.module';
+import { InventoryReportPlanModule } from './modules/inventory-report-plan/inventory-report-plan.module';
 import { InventoryReportModule } from './modules/inventory-report/inventory-report.module';
 import { InventoryStockModule } from './modules/inventory-stock/inventory-stock.module';
 import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
@@ -92,8 +94,14 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
     WarehouseStaffModule,
     InventoryReportDetailModule,
     ProductPlanDetailModule,
+    InventoryReportPlanModule,
+    InventoryReportPlanDetailModule,
     ConfigModule.forRoot({ isGlobal: true }),
     CacheModule.register({
+      onBackgroundRefreshError: (error) => {
+        console.error(error);
+        throw error;
+      },
       isGlobal: true,
       ttl: 5,
       store: redisStore,

@@ -3,7 +3,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { MaterialReceiptStatus, Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
-import { Constant } from 'src/common/constant/constant';
+import { Constant, months } from 'src/common/constant/constant';
 import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
@@ -49,6 +49,10 @@ export class MaterialVariantService {
       },
     },
   };
+
+  findMaterialReceiptChart(id: string, months: months[]) {
+  
+  }
 
   async findMaterialReceiptByIdWithResponse(id: string) {
     const [
