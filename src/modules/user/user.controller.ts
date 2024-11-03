@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   UploadedFile,
   UseGuards,
@@ -10,16 +11,22 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
+import { RoleCode } from '@prisma/client';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { GetUser } from '../../common/decorator/get_user.decorator';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { UserService } from './user.service';
 
-@Controller('user')
-@ApiTags('user')
+@Controller('account')
+@ApiTags('Account')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get('role/:role')
+  getAllUserByRole(@Param('role') role: RoleCode) {
+    return this.userService.getAllUserByRole(role);
+  }
 
   @Post('/avatar')
   @UseGuards(AuthGuard('jwt'))
