@@ -19,6 +19,7 @@ export class InventoryReportPlanService {
   ) {
     const inventoryPlanInput: Prisma.InventoryReportPlanCreateInput = {
       code: undefined,
+      title: createInventoryReportPlanDto.title,
       from: createInventoryReportPlanDto.from,
       to: createInventoryReportPlanDto.to,
       warehouseManager: {
@@ -26,12 +27,23 @@ export class InventoryReportPlanService {
       },
     };
 
+    const isInventoryPlanValid = await this.validateInventoryReportPlan(
+      createInventoryReportPlanDto,
+    );
+
+    if (isInventoryPlanValid) {
+      return apiFailed(
+        400,
+        'Inventory report plan in time range already exists',
+      );
+    }
+
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const inventoryPlanResult =
           await prismaInstance.inventoryReportPlan.create({
             data: inventoryPlanInput,
-            include: { InventoryReportPlanDetail: true },
+            include: { inventoryReportPlanDetail: true },
           });
 
         const inventoryPlanDetailInput: Prisma.InventoryReportPlanDetailCreateManyInput[] =
@@ -55,7 +67,7 @@ export class InventoryReportPlanService {
             where: { inventoryReportPlanId: inventoryPlanResult.id },
           });
 
-        inventoryPlanResult.InventoryReportPlanDetail =
+        inventoryPlanResult.inventoryReportPlanDetail =
           inventoryPlanDetailResult;
 
         return inventoryPlanResult;
@@ -70,6 +82,27 @@ export class InventoryReportPlanService {
       );
     }
     return apiFailed(500, 'Create inventory report plan failed');
+  }
+
+  async validateInventoryReportPlan(
+    createInventoryReportPlanDto: CreateInventoryReportPlanDto,
+  ) {
+    const inventoryPlanInTimeRange = await this.getAllReportPlanInTimeRange(
+      createInventoryReportPlanDto.from,
+      createInventoryReportPlanDto.to,
+    );
+    return !!inventoryPlanInTimeRange.length;
+  }
+
+  async getAllReportPlanInTimeRange(from: Date, to?: Date) {
+    return await this.prismaService.inventoryReportPlan.findMany({
+      where: {
+        from: {
+          gte: from,
+        },
+        ...(to && { to: { lte: to } }),
+      },
+    });
   }
 
   findAll() {

@@ -25,6 +25,11 @@ export class CreateInventoryReportPlanDto {
 
   @ApiProperty()
   @IsNotEmpty()
+  @IsString()
+  title: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
   @IsDateString()
   @Transform(({ value }) => new Date(value).toISOString())
   to: Date;
