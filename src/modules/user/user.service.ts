@@ -1,6 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable } from '@nestjs/common';
-import { Prisma, RoleCode, Account } from '@prisma/client';
+import { Account, Prisma, RoleCode } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { PathConstants } from 'src/common/constant/path.constant';
@@ -33,6 +33,54 @@ export class UserService {
       data,
       total,
     };
+  }
+  async getAllUserByRole(role: RoleCode) {
+    let result;
+    switch (role) {
+      case RoleCode.FACTORY_DIRECTOR:
+        result = await this.prisma.factoryDirector.findMany({
+          include: {
+            account: true,
+          },
+        });
+      case RoleCode.WAREHOUSE_STAFF:
+        result = await this.prisma.warehouseStaff.findMany({
+          include: {
+            account: true,
+          },
+        });
+      case RoleCode.INSPECTION_DEPARTMENT:
+        result = await this.prisma.inspectionDepartment.findMany({
+          include: {
+            account: true,
+          },
+        });
+      case RoleCode.PURCHASING_STAFF:
+        result = await this.prisma.purchasingStaff.findMany({
+          include: {
+            account: true,
+          },
+        });
+      case RoleCode.PRODUCTION_DEPARTMENT:
+        result = await this.prisma.productionDepartment.findMany({
+          include: {
+            account: true,
+          },
+        });
+      case RoleCode.WAREHOUSE_MANAGER:
+        result = await this.prisma.warehouseManager.findMany({
+          include: {
+            account: true,
+          },
+        });
+      default:
+        break;
+    }
+
+    if (!result) {
+      return apiFailed(404, 'Role not found');
+    }
+    return apiSuccess(200, result, 'Get all user by role successfully');
   }
 
   async update() {}
