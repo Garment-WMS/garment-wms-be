@@ -39,9 +39,9 @@ export class InventoryReportService {
         const createInventoryReportInput: Prisma.InventoryReportCreateInput = {
           code: undefined,
           note: createInventoryReportDto.note,
-          materialVariant: {
-            connect: { id: createInventoryReportDto.materialVariantId },
-          },
+          // materialVariant: {
+          //   connect: { id: createInventoryReportDto.materialVariantId },
+          // },
           warehouseManager: {
             connect: { id: managerId },
           },
