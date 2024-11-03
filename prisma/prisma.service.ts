@@ -43,7 +43,7 @@ export class PrismaService
       await this.$connect();
       this.logger.log('Database connected');
     } catch (error) {
-      this.logger.log('Database connection failed');
+      this.logger.log('Database connection failed', error);
       throw new HttpException(
         'Database connection failed',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -159,14 +159,18 @@ export class PrismaService
       if (params.action === 'create') {
         if (params.args.data && params.args.data.code === undefined) {
           // Count the existing records in the table
-          const count = (await this[modelName].count()) || 1;
+          console.log(modelName);
+
+          //Need improvement, using count() is not right way to get the last record code
+          const count = (await this[modelName].count()) || 0;
           const nextNumber = (count + 1).toString().padStart(6, '0');
           const code = `${prefix}${delimiter}${nextNumber}`;
           params.args.data.code = code;
         }
       } else if (params.action === 'createMany') {
         if (params.args.data && Array.isArray(params.args.data)) {
-          const count = (await Prisma[modelName.toLowerCase()].count()) || 1;
+          console.log(modelName);
+          const count = (await this[modelName].count()) || 0;
           params.args.data.forEach((item, index) => {
             if (item.code === undefined) {
               const nextNumber = (count + index + 1)

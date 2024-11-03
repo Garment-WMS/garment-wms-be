@@ -1,3 +1,4 @@
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
@@ -12,6 +13,29 @@ export class InventoryReportPlanService {
     private readonly prismaService: PrismaService,
     private readonly inventoryReportPlanDetailService: InventoryReportPlanDetailService,
   ) {}
+
+  queryInclude: Prisma.InventoryReportPlanInclude = {
+    inventoryReportPlanDetail: true,
+  };
+
+  // async getAllInventoryReportPlanByWarehouseStaff(warehouseStaffId: string) {
+  //   const reportPlan = await this.prismaService.inventoryReportPlan.findMany({
+  //     where: {
+  //       inventoryReportPlanDetail: {
+  //         some: {
+  //           warehouseStaffId,
+  //         },
+  //       },
+  //     },
+  //     include: this.queryInclude,
+  //   });
+
+  //   return apiSuccess(
+  //     HttpStatus.OK,
+  //     reportPlan,
+  //     'Get all inventory report plan by warehouse staff successfully',
+  //   );
+  // }
 
   async create(
     createInventoryReportPlanDto: CreateInventoryReportPlanDto,
@@ -53,7 +77,7 @@ export class InventoryReportPlanService {
               inventoryReportPlanId: inventoryPlanResult.id,
               materialPackageId: el.materialPackageId,
               productIdSizeId: el.productSizeId,
-              warehouseStaffId: warehouseManagerId,
+              warehouseStaffId: el.warehouseStaffId,
             };
           });
 
@@ -105,8 +129,18 @@ export class InventoryReportPlanService {
     });
   }
 
-  findAll() {
-    return `This action returns all inventoryReportPlan`;
+  async findAll(
+    findOptions: GeneratedFindOptions<Prisma.InventoryReportPlanWhereInput>,
+  ) {
+    const result = await this.prismaService.inventoryReportPlan.findMany({
+      where: findOptions.where,
+      include: this.queryInclude,
+    });
+    return apiSuccess(
+      200,
+      result,
+      'Get all inventory report plan successfully',
+    );
   }
 
   findOne(id: number) {

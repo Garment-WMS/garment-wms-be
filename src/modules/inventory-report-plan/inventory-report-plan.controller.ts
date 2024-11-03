@@ -1,3 +1,4 @@
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
@@ -6,13 +7,15 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { RoleCode } from '@prisma/client';
+import { Prisma, RoleCode } from '@prisma/client';
 import { GetUser } from 'src/common/decorator/get_user.decorator';
 import { Roles } from 'src/common/decorator/roles.decorator';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { RolesGuard } from 'src/common/guard/roles.guard';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
@@ -34,13 +37,31 @@ export class InventoryReportPlanController {
     @Body() createInventoryReportPlanDto: CreateInventoryReportPlanDto,
     @GetUser() user: AuthenUser,
   ) {
-    return this.inventoryReportPlanService.create(createInventoryReportPlanDto,user.warehouseManagerId);
+    return this.inventoryReportPlanService.create(
+      createInventoryReportPlanDto,
+      user.warehouseManagerId,
+    );
   }
 
   @Get()
-  findAll() {
-    return this.inventoryReportPlanService.findAll();
+  findAll(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.InventoryReportPlanWhereInput>(
+        [],
+        [{ createdAt: 'desc' }, { id: 'asc' }, { updatedAt: 'asc' }],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.InventoryReportPlanWhereInput>,
+  ) {
+    return this.inventoryReportPlanService.findAll(filterOptions.findOptions);
   }
+
+  // @Get('warehouse-staff')
+  // @UseGuards(JwtAuthGuard,RolesGuard)
+  // @Roles(RoleCode.WAREHOUSE_STAFF)
+  // getAllInventoryReportPlanByWarehouseStaff(@GetUser() user: AuthenUser) {
+  //   return this.inventoryReportPlanService.getAllInventoryReportPlanByWarehouseStaff(user.warehouseStaffId);
+  // }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
