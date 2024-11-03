@@ -13,5 +13,4 @@ model ProductVariant {
 
   @@map("product_variant")
   ProductSize ProductSize[]
-  InventoryReport InventoryReport[]
 }

@@ -4,10 +4,11 @@ import { MaterialVariantModule } from '../material-variant/material-variant.modu
 import { ProductVariantModule } from '../product-variant/product-variant.module';
 import { InventoryReportController } from './inventory-report.controller';
 import { InventoryReportService } from './inventory-report.service';
+import { InventoryReportDetailModule } from '../inventory-report-detail/inventory-report-detail.module';
 
 @Module({
   controllers: [InventoryReportController],
-  imports: [MaterialVariantModule, ProductVariantModule, PrismaModule],
+  imports: [MaterialVariantModule, ProductVariantModule,InventoryReportDetailModule, PrismaModule],
   providers: [InventoryReportService],
 })
 export class InventoryReportModule {}

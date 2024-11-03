@@ -37,6 +37,9 @@ export class UserController {
   ) {
     return this.userService.addAvatar(file, user);
   }
+  
+
+
 
   @Get('/my')
   @UseGuards(JwtAuthGuard)

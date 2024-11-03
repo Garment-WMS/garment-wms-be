@@ -2,21 +2,25 @@ import { ApiProperty } from '@nestjs/swagger';
 import { RoleCode } from '@prisma/client';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { AtLeastOneExists } from 'src/common/pipe/at-least-one-exist.pipe';
+import { IsMaterialPackageExist } from 'src/modules/material-package/validator/is-material-package-exist.validator';
+import { IsProductSizeExist } from 'src/modules/product-size/validator/is-product-size-exist.validator';
 import { IsUserRoleExist } from 'src/modules/user/validator/is-user-of-role-exist.validator';
 
-export class CreateInventoryReportDto {
+export class CreateInventoryReportPlanDetailDto {
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  productVariantId: string;
+  @IsProductSizeExist()
+  productSizeId?: string;
 
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  materialVariantId: string;
+  @IsMaterialPackageExist()
+  materialPackageId?: string;
 
-  @AtLeastOneExists('productVariantId', 'materialVariantId')
-  dummyField: string; // This field is just a placeholder for the custom validation
+  @AtLeastOneExists('productSizeId', 'materialPackageId', {})
+  dummyField?: string;
 
   @ApiProperty()
   @IsNotEmpty()
@@ -27,5 +31,5 @@ export class CreateInventoryReportDto {
   @ApiProperty()
   @IsOptional()
   @IsString()
-  note: string;
+  note?: string;
 }

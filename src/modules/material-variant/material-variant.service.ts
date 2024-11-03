@@ -1,9 +1,9 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { MaterialReceiptStatus, Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
-import { Constant } from 'src/common/constant/constant';
+import { Constant, months } from 'src/common/constant/constant';
 import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
@@ -49,6 +49,10 @@ export class MaterialVariantService {
       },
     },
   };
+
+  findMaterialReceiptChart(id: string, months: months[]) {
+  
+  }
 
   async findMaterialReceiptByIdWithResponse(id: string) {
     const [
@@ -257,20 +261,7 @@ export class MaterialVariantService {
 
   findAllWithoutResponse() {
     const result = this.prismaService.materialVariant.findMany({
-      include: {
-        materialAttribute: true,
-        material: {
-          include: {
-            materialUom: true,
-          },
-        },
-        materialPackage: {
-          include: {
-            materialReceipt: true,
-            inventoryStock: true,
-          },
-        },
-      },
+      include: this.materialInclude,
     });
     return result;
   }
@@ -358,5 +349,24 @@ export class MaterialVariantService {
       return apiSuccess(HttpStatus.OK, result, 'Material found');
     }
     return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
+  }
+
+  async getAllMaterialReceiptOfMaterialVariant(id: string) {
+    const result = await this.prismaService.materialReceipt.findMany({
+      where: {
+        AND: {
+          materialPackage: {
+            materialVariantId: id,
+          },
+          status: {
+            in: [
+              MaterialReceiptStatus.PARTIAL_USED,
+              MaterialReceiptStatus.AVAILABLE,
+            ],
+          },
+        },
+      },
+    });
+    return result;
   }
 }

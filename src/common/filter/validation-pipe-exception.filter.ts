@@ -1,4 +1,4 @@
-import { ArgumentsHost, Catch, Logger, ValidationPipe } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, Logger } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 
 import { apiFailed } from '../dto/api-response';
@@ -6,12 +6,11 @@ import { ApiResponse } from '../dto/response.dto';
 import { CustomValidationException } from './custom-validation.exception';
 
 @Catch(CustomValidationException)
-export class ValidationPipeExceptionFilter extends ValidationPipe {
+export class ValidationPipeExceptionFilter implements ExceptionFilter {
   constructor(
     private readonly httpAdapterHost: HttpAdapterHost,
     isLogged: boolean = false,
   ) {
-    super();
     this.isLogged = isLogged;
   }
 
