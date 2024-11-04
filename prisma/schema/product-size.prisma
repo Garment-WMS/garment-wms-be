@@ -20,4 +20,5 @@ model ProductSize {
     inventoryStock         InventoryStock?
 
     @@map("product_size")
+    InventoryReportPlanDetail InventoryReportPlanDetail[]
 }

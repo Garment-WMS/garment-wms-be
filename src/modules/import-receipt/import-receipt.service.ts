@@ -66,10 +66,10 @@ export class ImportReceiptService {
       finishedAt: createImportReceiptDto.finishAt,
     };
 
-    this.validateMaterialReceipt(
-      inspectionReport.inspectionReportDetail,
-      createImportReceiptDto.materialReceipts,
-    );
+    // this.validateMaterialReceipt(
+    //   inspectionReport.inspectionReportDetail,
+    //   createImportReceiptDto.materialReceipts,
+    // );
 
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaClient) => {
@@ -81,7 +81,7 @@ export class ImportReceiptService {
             importReceipt.id,
             inspectionReport.inspectionReportDetail,
             prismaInstance,
-            createImportReceiptDto.materialReceipts,
+            // createImportReceiptDto.materialReceipts,
           );
 
           await this.poDeliveryService.updatePoDeliveryMaterialStatus(
@@ -171,6 +171,11 @@ export class ImportReceiptService {
       async (prismaInstance: PrismaClient) => {
         if (importReceipt.materialReceipt) {
           importReceipt.materialReceipt.forEach(async (detail) => {
+            await this.materialReceiptService.updateMaterialReceiptStatus(
+              detail.id,
+              $Enums.MaterialReceiptStatus.AVAILABLE,
+              prismaInstance,
+            );
             await this.inventoryStockService.updateMaterialStock(
               detail.materialPackageId,
               detail.quantityByPack,

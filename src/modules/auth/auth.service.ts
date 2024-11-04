@@ -180,7 +180,7 @@ export class AuthService {
   async registerGeneral(user: SignUpDTO, roleInput: RoleCode) {
     // Ensure the transaction either succeeds or fails completely
     return await this.prisma.$transaction(
-      async (prismaTransaction) => {
+      async (prismaTransaction: PrismaClient) => {
         //Hash user's password
         user.password = await this.hashPassword(user.password);
         const { role, ...ress } = user;
@@ -242,7 +242,23 @@ export class AuthService {
 
         return apiSuccess(
           201,
-          { accessToken, refreshToken, user: userResult },
+          {
+            accessToken,
+            refreshToken,
+            user: await prismaTransaction.account.findUnique({
+              where: {
+                id: userResult.id,
+              },
+              include: {
+                warehouseStaff: true,
+                warehouseManager: true,
+                factoryDirector: true,
+                inspectionDepartment: true,
+                productionDepartment: true,
+                purchasingStaff: true,
+              },
+            }),
+          },
           'Created user successfully',
         );
       },
