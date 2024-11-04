@@ -18,24 +18,29 @@ export class InventoryReportPlanService {
     inventoryReportPlanDetail: true,
   };
 
-  // async getAllInventoryReportPlanByWarehouseStaff(warehouseStaffId: string) {
-  //   const reportPlan = await this.prismaService.inventoryReportPlan.findMany({
-  //     where: {
-  //       inventoryReportPlanDetail: {
-  //         some: {
-  //           warehouseStaffId,
-  //         },
-  //       },
-  //     },
-  //     include: this.queryInclude,
-  //   });
-
-  //   return apiSuccess(
-  //     HttpStatus.OK,
-  //     reportPlan,
-  //     'Get all inventory report plan by warehouse staff successfully',
-  //   );
-  // }
+  async getAllInventoryReportPlanByWarehouseStaff(warehouseStaffId: string) {
+    const reportPlan = await this.prismaService.inventoryReportPlan.findMany({
+      where: {
+        inventoryReportPlanDetail: {
+          some: {
+            warehouseStaffId,
+          },
+        },
+      },
+      include: {
+        inventoryReportPlanDetail: {
+          where: {
+            warehouseStaffId,
+          },
+        },
+      },
+    });
+    return apiSuccess(
+      HttpStatus.OK,
+      reportPlan,
+      'Get all inventory report plan by warehouse staff successfully',
+    );
+  }
 
   async create(
     createInventoryReportPlanDto: CreateInventoryReportPlanDto,

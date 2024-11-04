@@ -56,12 +56,12 @@ export class InventoryReportPlanController {
     return this.inventoryReportPlanService.findAll(filterOptions.findOptions);
   }
 
-  // @Get('warehouse-staff')
-  // @UseGuards(JwtAuthGuard,RolesGuard)
-  // @Roles(RoleCode.WAREHOUSE_STAFF)
-  // getAllInventoryReportPlanByWarehouseStaff(@GetUser() user: AuthenUser) {
-  //   return this.inventoryReportPlanService.getAllInventoryReportPlanByWarehouseStaff(user.warehouseStaffId);
-  // }
+  @Get('warehouse-staff')
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_STAFF)
+  getAllInventoryReportPlanByWarehouseStaff(@GetUser() user: AuthenUser) {
+    return this.inventoryReportPlanService.getAllInventoryReportPlanByWarehouseStaff(user.warehouseStaffId);
+  }
 
   @Get(':id')
   findOne(@Param('id') id: string) {

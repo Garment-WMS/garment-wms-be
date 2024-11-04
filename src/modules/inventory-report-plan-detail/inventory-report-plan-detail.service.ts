@@ -8,6 +8,48 @@ import { UpdateInventoryReportPlanDetailDto } from './dto/update-inventory-repor
 export class InventoryReportPlanDetailService {
   constructor(private readonly prismaService: PrismaService) {}
 
+  includeQuery: Prisma.InventoryReportPlanDetailInclude = {
+    inventoryReportPlan: true,
+    materialPackage: {
+      include: {
+        materialVariant: {
+          include: {
+            material: {
+              include: {
+                materialUom: true,
+              },
+            },
+          },
+        },
+      },
+    },
+    productSize: {
+      include: {
+        productVariant: {
+          include: {
+            product: {
+              include: {
+                productUom: true,
+              },
+            },
+          },
+        },
+      },
+    },
+    inventoryReport: true,
+  };
+
+  async getAllInventoryReportPlanByWarehouseStaff(warehouseStaffId: string) {
+    const inventoryReportPlanDetail =
+      await this.prismaService.inventoryReportPlanDetail.findMany({
+        where: {
+          warehouseStaffId,
+        },
+        include: this.includeQuery,
+      });
+    return inventoryReportPlanDetail;
+  }
+
   async create(
     createInventoryReportPlanDetailDto: CreateInventoryReportPlanDetailDto,
   ) {}
