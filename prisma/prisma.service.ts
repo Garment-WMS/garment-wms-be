@@ -159,8 +159,6 @@ export class PrismaService
       if (params.action === 'create') {
         if (params.args.data && params.args.data.code === undefined) {
           // Count the existing records in the table
-          console.log(modelName);
-
           //Need improvement, using count() is not right way to get the last record code
           const count = (await this[modelName].count()) || 0;
           const nextNumber = (count + 1).toString().padStart(6, '0');
