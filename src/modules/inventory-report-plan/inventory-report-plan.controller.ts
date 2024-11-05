@@ -22,6 +22,7 @@ import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateInventoryReportPlanDto } from './dto/create-inventory-report-plan.dto';
 import { UpdateInventoryReportPlanDto } from './dto/update-inventory-report-plan.dto';
 import { InventoryReportPlanService } from './inventory-report-plan.service';
+import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 
 @Controller('inventory-report-plan')
 export class InventoryReportPlanController {
@@ -61,6 +62,19 @@ export class InventoryReportPlanController {
   @Roles(RoleCode.WAREHOUSE_STAFF)
   getAllInventoryReportPlanByWarehouseStaff(@GetUser() user: AuthenUser) {
     return this.inventoryReportPlanService.getAllInventoryReportPlanByWarehouseStaff(user.warehouseStaffId);
+  }
+
+  @Patch('/:id/process')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_STAFF)
+  processInventoryReportPlanDetail(
+    @Param('id', CustomUUIDPipe) id: string,
+    @GetUser() user: AuthenUser,
+  ) {
+    return this.inventoryReportPlanService.processInventoryReportPlan(
+      id,
+      user.warehouseStaffId,
+    );
   }
 
   @Get(':id')

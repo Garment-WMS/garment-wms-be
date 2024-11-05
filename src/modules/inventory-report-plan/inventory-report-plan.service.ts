@@ -1,10 +1,13 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
+import { InventoryReportPlanStatus, Prisma } from '@prisma/client';
+import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { InventoryReportPlanDetailService } from '../inventory-report-plan-detail/inventory-report-plan-detail.service';
+import { InventoryReportService } from '../inventory-report/inventory-report.service';
 import { CreateInventoryReportPlanDto } from './dto/create-inventory-report-plan.dto';
+import { InventoryReportPlanDto } from './dto/inventory-report-plan.dto';
 import { UpdateInventoryReportPlanDto } from './dto/update-inventory-report-plan.dto';
 
 @Injectable()
@@ -12,11 +15,107 @@ export class InventoryReportPlanService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly inventoryReportPlanDetailService: InventoryReportPlanDetailService,
+    private readonly inventoryReportService: InventoryReportService,
   ) {}
 
   queryInclude: Prisma.InventoryReportPlanInclude = {
     inventoryReportPlanDetail: true,
   };
+
+  async processInventoryReportPlan(id: string, warehouseStaffId: string) {
+    const inventoryReportPlan = await this.findById(id);
+
+    if (!inventoryReportPlan) {
+      return apiFailed(404, 'Inventory report plan not found');
+    }
+
+    const inventoryReportPlanDetailBelongToWarehouseStaff =
+      inventoryReportPlan.inventoryReportPlanDetail.filter((el) => {
+        if (el.warehouseStaffId === warehouseStaffId) {
+          return el;
+        }
+      });
+
+    if (
+      !inventoryReportPlanDetailBelongToWarehouseStaff ||
+      !inventoryReportPlanDetailBelongToWarehouseStaff.length
+    ) {
+      return apiFailed(
+        403,
+        'You are not allowed to process this inventory report plan',
+      );
+    }
+
+    if (
+      !inventoryReportPlanDetailBelongToWarehouseStaff.some(
+        (el) => el.inventoryReportId === null,
+      )
+    ) {
+      return apiFailed(
+        400,
+        'All inventory report plan detail already processed',
+      );
+    }
+    console.log(inventoryReportPlanDetailBelongToWarehouseStaff);
+    const inventoryReportInput: InventoryReportPlanDto = {
+      ...inventoryReportPlan,
+      inventoryReportPlanDetail:
+        inventoryReportPlanDetailBelongToWarehouseStaff,
+    };
+    const result = await this.prismaService.$transaction(
+      async (prismaInstance: PrismaService) => {
+        const inventoryReport =
+          await this.inventoryReportService.createInventoryReport(
+            inventoryReportInput,
+            warehouseStaffId,
+            prismaInstance,
+          );
+        if (!inventoryReport) {
+          return null;
+        }
+        console.log(inventoryReport);
+        await prismaInstance.inventoryReportPlanDetail.updateMany({
+          where: {
+            id: {
+              in: inventoryReportPlanDetailBelongToWarehouseStaff.map(
+                (el) => el.id,
+              ),
+            },
+          },
+          data: {
+            inventoryReportId: inventoryReport.id,
+          },
+        });
+
+        if (inventoryReport.status === InventoryReportPlanStatus.PENDING) {
+          await prismaInstance.inventoryReportPlan.update({
+            where: { id },
+            data: {
+              status: InventoryReportPlanStatus.IN_PROGRESS,
+            },
+          });
+        }
+        return inventoryReport;
+      },
+    );
+
+    if (result) {
+      return apiSuccess(
+        200,
+        result,
+        'Inventory report plan processed successfully',
+      );
+    }
+  }
+  findById(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Id is not valid');
+    }
+    return this.prismaService.inventoryReportPlan.findUnique({
+      where: { id },
+      include: this.queryInclude,
+    });
+  }
 
   async getAllInventoryReportPlanByWarehouseStaff(warehouseStaffId: string) {
     const reportPlan = await this.prismaService.inventoryReportPlan.findMany({
