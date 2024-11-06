@@ -1,12 +1,13 @@
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
   Delete,
   Get,
-  HttpStatus,
   Param,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
   UsePipes,
@@ -14,7 +15,8 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
-import { apiSuccess } from 'src/common/dto/api-response';
+import { Prisma } from '@prisma/client';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -32,9 +34,16 @@ export class ProductVariantController {
   }
 
   @Get()
-  async findAll() {
-    const result = await this.productVariantService.findAll();
-    return apiSuccess(HttpStatus.OK, result, 'Get all products successfully');
+  findAll(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ProductVariantScalarWhereInput>(
+        [],
+        [],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.ProductVariantScalarWhereInput>,
+  ) {
+    return this.productVariantService.findAll(filterOptions.findOptions);
   }
 
   @Get(':id')

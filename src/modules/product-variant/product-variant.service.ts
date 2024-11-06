@@ -1,9 +1,12 @@
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { getPageMeta } from 'src/common/utils/utils';
 import { ImageService } from '../image/image.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -73,11 +76,36 @@ export class ProductVariantService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product');
   }
 
-  async findAll() {
-    const result = await this.prismaService.productVariant.findMany({
-      include: this.includeQuery,
-    });
-    return result;
+  async findAll(
+    filterOption?: GeneratedFindOptions<Prisma.ProductVariantWhereInput>,
+  ) {
+    const { skip, take, ...rest } = filterOption;
+    const page = filterOption?.skip || Constant.DEFAULT_OFFSET;
+    const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
+    const [result, total] = await this.prismaService.$transaction([
+      this.prismaService.productVariant.findMany({
+        skip: page,
+        take: limit,
+        where: {
+          ...rest?.where,
+        },
+        orderBy: filterOption?.orderBy,
+        include: this.includeQuery,
+      }),
+      this.prismaService.productVariant.count({
+        where: {
+          ...rest?.where,
+        },
+      }),
+    ]);
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: result,
+        pageMeta: getPageMeta(total, page, limit),
+      },
+      'List of Purchase Order',
+    );
   }
 
   async findByIdWithResponse(id: string) {
