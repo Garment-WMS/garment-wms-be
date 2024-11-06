@@ -43,36 +43,42 @@ export class UserService {
             account: true,
           },
         });
+        break;
       case RoleCode.WAREHOUSE_STAFF:
         result = await this.prisma.warehouseStaff.findMany({
           include: {
             account: true,
           },
         });
+        break;
       case RoleCode.INSPECTION_DEPARTMENT:
         result = await this.prisma.inspectionDepartment.findMany({
           include: {
             account: true,
           },
         });
+        break;
       case RoleCode.PURCHASING_STAFF:
         result = await this.prisma.purchasingStaff.findMany({
           include: {
             account: true,
           },
         });
+        break;
       case RoleCode.PRODUCTION_DEPARTMENT:
         result = await this.prisma.productionDepartment.findMany({
           include: {
             account: true,
           },
         });
+        break;
       case RoleCode.WAREHOUSE_MANAGER:
         result = await this.prisma.warehouseManager.findMany({
           include: {
             account: true,
           },
         });
+        break;
       default:
         break;
     }
@@ -80,6 +86,7 @@ export class UserService {
     if (!result) {
       return apiFailed(404, 'Role not found');
     }
+    console.log(result);
     return apiSuccess(200, result, 'Get all user by role successfully');
   }
 
