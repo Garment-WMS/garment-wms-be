@@ -5,8 +5,9 @@ model InventoryReportDetail {
   productReceiptId  String?             @map("product_receipt_id") @db.Uuid
   storageQuantity   Float               @map("storage_quantity")
   recordedQuantity  Float               @map("recorded_quantity")
-  createdAt         DateTime?           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime?           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  recoredAt         DateTime?           @map("recored_at") @db.Timestamptz(6)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt         DateTime?           @map("deleted_at") @db.Timestamptz(6)
   inventoryReport   InventoryReport     @relation(fields: [inventoryReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialReceipt   MaterialReceipt?    @relation(fields: [materialReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
