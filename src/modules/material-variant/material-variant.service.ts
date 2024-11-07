@@ -15,6 +15,7 @@ import { UpdateMaterialDto } from './dto/update-material.dto';
 
 @Injectable()
 export class MaterialVariantService {
+ 
   constructor(
     private readonly prismaService: PrismaService,
     private readonly imageService: ImageService,
@@ -49,6 +50,10 @@ export class MaterialVariantService {
       },
     },
   };
+
+  async getAllMaterialReceiptOfMaterialPackage(materialPackageId: any) {
+    throw new Error('Method not implemented.');
+  }
 
   findMaterialReceiptChart(id: string, months: months[]) {
   

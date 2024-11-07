@@ -43,7 +43,7 @@ export class PrismaService
       await this.$connect();
       this.logger.log('Database connected');
     } catch (error) {
-      this.logger.log('Database connection failed');
+      this.logger.log('Database connection failed', error);
       throw new HttpException(
         'Database connection failed',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -167,7 +167,8 @@ export class PrismaService
         }
       } else if (params.action === 'createMany') {
         if (params.args.data && Array.isArray(params.args.data)) {
-          const count = (await Prisma[modelName.toLowerCase()].count()) || 1;
+          console.log(modelName);
+          const count = (await this[modelName].count()) || 0;
           params.args.data.forEach((item, index) => {
             if (item.code === undefined) {
               const nextNumber = (count + index + 1)
