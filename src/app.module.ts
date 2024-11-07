@@ -46,13 +46,36 @@ import { ProductModule } from './modules/product/product.module';
 import { PurchaseOrderModule } from './modules/purchase-order/purchase-order.module';
 import { QuarterlyProductDetailModule } from './modules/quarterly-product-detail/quarterly-product-detail.module';
 import { QuarterlyProductPlanModule } from './modules/quarterly-product-plan/quarterly-product-plan.module';
+import { ReceiptAdjustmentModule } from './modules/receipt-adjustment/receipt-adjustment.module';
 import { SupplierModule } from './modules/supplier/supplier.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    CacheModule.register({
+      onBackgroundRefreshError: (error) => {
+        console.error(error);
+        throw error;
+      },
+      isGlobal: true,
+      ttl: 5,
+      store: redisStore,
+      host: process.env.REDIS_HOST,
+      password: process.env.REDIS_PASSWORD,
+      port: process.env.REDIS_PORT,
+    }),
+    BullModule.forRoot({
+      connection:{
+        host: process.env.REDIS_HOST,
+        password: process.env.REDIS_PASSWORD,
+        port: parseInt(process.env.REDIS_PORT),
+      },
+    
+    }),
     PrismaModule,
     AuthModule,
     UserModule,
@@ -96,19 +119,7 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
     ProductPlanDetailModule,
     InventoryReportPlanModule,
     InventoryReportPlanDetailModule,
-    ConfigModule.forRoot({ isGlobal: true }),
-    CacheModule.register({
-      onBackgroundRefreshError: (error) => {
-        console.error(error);
-        throw error;
-      },
-      isGlobal: true,
-      ttl: 5,
-      store: redisStore,
-      host: process.env.REDIS_HOST,
-      password: process.env.REDIS_PASSWORD,
-      port: process.env.REDIS_PORT,
-    }),
+    ReceiptAdjustmentModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

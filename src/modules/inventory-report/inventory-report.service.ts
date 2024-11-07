@@ -1,7 +1,10 @@
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
+import { getPageMeta } from 'src/common/utils/utils';
 import { CreateInventoryReportDetailDto } from '../inventory-report-detail/dto/create-inventory-report-detail.dto';
 import { InventoryReportDetailService } from '../inventory-report-detail/inventory-report-detail.service';
 import { InventoryReportPlanDto } from '../inventory-report-plan/dto/inventory-report-plan.dto';
@@ -22,6 +25,49 @@ export class InventoryReportService {
   includeQuery: Prisma.InventoryReportInclude = {
     inventoryReportDetail: true,
   };
+
+  async findAllByWarehouseStaff(
+    findOptions: GeneratedFindOptions<Prisma.InventoryReportWhereInput>,
+    warehouseStaffId: string,
+  ) {
+    const { skip, take, ...rest } = findOptions;
+    const page = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+
+    const [result, total] = await this.prismaService.$transaction([
+      this.prismaService.inventoryReport.findMany({
+        where: {
+          AND: [
+            {
+              warehouseStaffId,
+              ...rest?.where,
+            },
+          ],
+        },
+        include: this.includeQuery,
+        skip: page,
+        take: limit,
+      }),
+      this.prismaService.inventoryReport.count({
+        where: {
+          AND: [
+            {
+              warehouseStaffId,
+              ...rest?.where,
+            },
+          ],
+        },
+      }),
+    ]);
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: result,
+        pageMeta: getPageMeta(total, page, limit),
+      },
+      'List of Purchase Order',
+    );
+  }
 
   async createInventoryReport(
     inventoryReportParam: InventoryReportPlanDto,
