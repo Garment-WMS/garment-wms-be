@@ -77,9 +77,9 @@ export class InventoryReportService {
     receipt.materialReceipt.forEach((materialReceipt) => {
       createInventoryReportDetailDto.push({
         materialReceiptId: materialReceipt.id,
-        recordedQuantity: materialReceipt.remainQuantityByPack,
+        expectedQuantity: materialReceipt.remainQuantityByPack,
         inventoryReportId: inventoryReport.id,
-        storageQuantity: 0,
+        actualQuantity: undefined,
       });
     });
     console.log(receipt.productReceipt);
@@ -156,9 +156,9 @@ export class InventoryReportService {
         materialReceipt.forEach((materialReceipt) => {
           createInventoryReportDetailDto.push({
             materialReceiptId: materialReceipt.id,
-            recordedQuantity: materialReceipt.remainQuantityByPack,
+            expectedQuantity: materialReceipt.remainQuantityByPack,
             inventoryReportId: inventoryReport.id,
-            storageQuantity: 0,
+            actualQuantity: undefined,
           });
         });
         await this.inventoryReportDetailService.create(
