@@ -28,6 +28,4 @@ export class CreateMaterialExportRequestDto
   @IsOptional()
   @IsString()
   description?: string;
-
-  materialExportDetail?: Prisma.MaterialExportDetailCreateNestedManyWithoutMaterialExportRequestInput;
 }

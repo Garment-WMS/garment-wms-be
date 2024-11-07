@@ -1,26 +1,47 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from 'prisma/prisma.service';
 import { CreateMaterialExportRequestDto } from './dto/create-material-export-request.dto';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
 
 @Injectable()
 export class MaterialExportRequestService {
-  create(createMaterialExportRequestDto: CreateMaterialExportRequestDto) {
-    return 'This action adds a new materialExportRequest';
+  constructor(private readonly prismaService: PrismaService) {}
+  async create(createMaterialExportRequestDto: CreateMaterialExportRequestDto) {
+    const materialExportRequestInput: Prisma.MaterialExportRequestUncheckedCreateInput =
+      {
+        productionBatchId: createMaterialExportRequestDto.productionBatchId,
+        productionDepartmentId:
+          createMaterialExportRequestDto.productionDepartmentId,
+        description: createMaterialExportRequestDto.description,
+        status: createMaterialExportRequestDto.status,
+      };
   }
 
-  findAll() {
-    return `This action returns all materialExportRequest`;
+  async findAll() {
+    return await this.prismaService.materialExportRequest.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} materialExportRequest`;
+  async findUnique(id: string) {
+    return await this.prismaService.materialExportRequest.findUnique({
+      where: {
+        id: id,
+      },
+    });
   }
 
-  update(id: number, updateMaterialExportRequestDto: UpdateMaterialExportRequestDto) {
+  async update(
+    id: string,
+    updateMaterialExportRequestDto: UpdateMaterialExportRequestDto,
+  ) {
     return `This action updates a #${id} materialExportRequest`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} materialExportRequest`;
+  remove(id: string) {
+    return this.prismaService.materialExportRequest.delete({
+      where: {
+        id: id,
+      },
+    });
   }
 }

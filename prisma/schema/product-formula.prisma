@@ -9,6 +9,7 @@ model ProductFormula {
   deletedAt              DateTime?                @map("deleted_at") @db.Timestamptz(6)
   productSize            ProductSize?             @relation(fields: [productSizeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productFormulaMaterial ProductFormulaMaterial[]
+  materialExportRequest  MaterialExportRequest[]
 
   @@map("product_formula")
 }
