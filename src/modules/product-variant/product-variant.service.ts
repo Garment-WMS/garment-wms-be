@@ -9,6 +9,7 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ImageService } from '../image/image.service';
 import { CreateProductDto } from './dto/create-product.dto';
+import { ProductStock } from './dto/product-stock.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
@@ -19,12 +20,33 @@ export class ProductVariantService {
   ) {}
 
   includeQuery: Prisma.ProductVariantInclude = {
+    productAttribute: true,
     product: {
       include: {
         productUom: true,
       },
     },
-    productSize: true,
+    productSize: {
+      include: {
+        productReceipt: true,
+        inventoryStock: true,
+      },
+    },
+  };
+
+  includeQueryAny = {
+    productAttribute: true,
+    product: {
+      include: {
+        productUom: true,
+      },
+    },
+    productSize: {
+      include: {
+        productReceipt: true,
+        inventoryStock: true,
+      },
+    },
   };
 
   async addImage(file: Express.Multer.File, id: string) {
@@ -83,7 +105,7 @@ export class ProductVariantService {
     const { skip, take, ...rest } = filterOption;
     const page = filterOption?.skip || Constant.DEFAULT_OFFSET;
     const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
-    const [result, total] = await this.prismaService.$transaction([
+    const [data, total] = await this.prismaService.$transaction([
       this.prismaService.productVariant.findMany({
         skip: page,
         take: limit,
@@ -91,7 +113,7 @@ export class ProductVariantService {
           ...rest?.where,
         },
         orderBy: filterOption?.orderBy,
-        include: this.includeQuery,
+        include: this.includeQueryAny,
       }),
       this.prismaService.productVariant.count({
         where: {
@@ -99,10 +121,26 @@ export class ProductVariantService {
         },
       }),
     ]);
+
+    data.forEach((product: ProductStock) => {
+      product.numberOfProductSize = product.productSize.length;
+      product.onHand = product?.productSize?.reduce(
+        (totalAcc, productSizeEl) => {
+          let variantTotal = 0;
+          //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+          if (productSizeEl.inventoryStock) {
+            variantTotal = productSizeEl.inventoryStock.quantityByPack;
+          }
+          return totalAcc + variantTotal;
+        },
+        0,
+      );
+    });
+
     return apiSuccess(
       HttpStatus.OK,
       {
-        data: result,
+        data: data,
         pageMeta: getPageMeta(total, page, limit),
       },
       'List of Purchase Order',
