@@ -24,6 +24,7 @@ export class ProductVariantService {
         productUom: true,
       },
     },
+    productSize: true,
   };
 
   async addImage(file: Express.Multer.File, id: string) {
