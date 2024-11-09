@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { InventoryReportStatus, Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { InventoryReportService } from '../inventory-report/inventory-report.service';
@@ -43,6 +43,51 @@ export class InventoryReportPlanDetailService {
     },
     inventoryReport: true,
   };
+
+  async checkLastInventoryReportInPlan(inventoryReportId: string) {
+    let inventoryReportPlanDetail =
+      await this.findByInventoryReportId(inventoryReportId);
+    if (inventoryReportPlanDetail.length === 0) {
+      return null;
+    }
+    inventoryReportPlanDetail = await this.findByInventoryReportPlanId(
+      inventoryReportPlanDetail[0].inventoryReportPlanId,
+    );
+    const hasPendingOrExecuting = inventoryReportPlanDetail.some((el) => {
+      return (
+        el.inventoryReport.status === InventoryReportStatus.PENDING ||
+        el.inventoryReport.status === InventoryReportStatus.EXECUTING
+      );
+    });
+
+    if (hasPendingOrExecuting) {
+      return null;
+    }
+    // Further processing...
+    return inventoryReportPlanDetail[0].inventoryReportPlanId;
+  }
+  findByInventoryReportId(inventoryReportId: string) {
+    if (!isUUID(inventoryReportId)) {
+      throw new Error('Id is required');
+    }
+    return this.prismaService.inventoryReportPlanDetail.findMany({
+      where: {
+        inventoryReportId,
+      },
+      include: this.includeQuery,
+    });
+  }
+  findByInventoryReportPlanId(inventoryReportPlanId: string) {
+    if (!isUUID(inventoryReportPlanId)) {
+      throw new Error('Id is required');
+    }
+    return this.prismaService.inventoryReportPlanDetail.findMany({
+      where: {
+        inventoryReportPlanId,
+      },
+      include: this.includeQuery,
+    });
+  }
 
   // async processInventoryReportPlanDetail(
   //   id: string,

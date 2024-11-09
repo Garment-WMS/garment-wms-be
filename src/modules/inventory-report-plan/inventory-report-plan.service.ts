@@ -12,6 +12,12 @@ import { UpdateInventoryReportPlanDto } from './dto/update-inventory-report-plan
 
 @Injectable()
 export class InventoryReportPlanService {
+  async checkLastInventoryReportInPlan(inventoryReportId: string) {
+    throw new Error('Method not implemented.');
+  }
+  async updateStatus(inventoryReportId: string, FINISHED: string) {
+    return;
+  }
   constructor(
     private readonly prismaService: PrismaService,
     private readonly inventoryReportPlanDetailService: InventoryReportPlanDetailService,
@@ -19,7 +25,15 @@ export class InventoryReportPlanService {
   ) {}
 
   queryInclude: Prisma.InventoryReportPlanInclude = {
-    inventoryReportPlanDetail: true,
+    inventoryReportPlanDetail: {
+      include: {
+        inventoryReport: {
+          include: {
+            inventoryReportDetail: true,
+          },
+        },
+      },
+    },
   };
 
   async processInventoryReportPlan(id: string, warehouseStaffId: string) {

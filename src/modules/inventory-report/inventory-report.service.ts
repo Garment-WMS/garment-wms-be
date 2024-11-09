@@ -1,6 +1,7 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
+import { InventoryReportStatus, Prisma, PrismaClient } from '@prisma/client';
+import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
@@ -119,7 +120,6 @@ export class InventoryReportService {
         }
       }),
     );
-    console.log('asd', receipt.materialReceipt);
     receipt.materialReceipt.forEach((materialReceipt) => {
       createInventoryReportDetailDto.push({
         materialReceiptId: materialReceipt.id,
@@ -179,9 +179,6 @@ export class InventoryReportService {
           code: undefined,
           from: new Date(),
           note: createInventoryReportDto.note,
-          // materialVariant: {
-          //   connect: { id: createInventoryReportDto.materialVariantId },
-          // },
           warehouseManager: {
             connect: { id: managerId },
           },
@@ -255,9 +252,52 @@ export class InventoryReportService {
     );
   }
 
-  update(id: number, updateInventoryReportDto: UpdateInventoryReportDto) {
+  async findById(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Id is not valid');
+    }
+    const result = await this.prismaService.inventoryReport.findUnique({
+      where: { id },
+      include: this.includeQuery,
+    });
+    return result;
+  }
+
+  async update(id: string, updateInventoryReportDto: UpdateInventoryReportDto) {
     return `This action updates a #${id} inventoryReport`;
   }
+
+  async updateStatus(id: string, status: InventoryReportStatus) {
+    const inventoryReport = await this.findById(id);
+  
+    if (!inventoryReport) {
+      throw new BadRequestException('Inventory Report not found');
+    }
+    const result = await this.prismaService.inventoryReport.update({
+      where: { id },
+      data: {
+        status,
+      },
+    });
+  }
+
+  // async checkLastInventoryReport(inventoryReportPlanId: string) {
+  //   const inventoryReport = await this.prismaService.inventoryReport.findMany({
+  //     where: {
+  //       : inventoryId,
+  //       status: {
+  //         notIn: [
+  //           InventoryReportStatus.EXECUTING,
+  //           InventoryReportStatus.PENDING,
+  //         ],
+  //       },
+  //     },
+  //   });
+  //   if (inventoryReport.length > 0) {
+  //     return false;
+  //   }
+  //   return true;
+  // }
 
   remove(id: number) {
     return `This action removes a #${id} inventoryReport`;

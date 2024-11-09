@@ -86,7 +86,7 @@ export class InventoryReportController {
     @Param('id') id: string,
     @Body() updateInventoryReportDto: UpdateInventoryReportDto,
   ) {
-    return this.inventoryReportService.update(+id, updateInventoryReportDto);
+    return this.inventoryReportService.update(id, updateInventoryReportDto);
   }
 
   @Delete(':id')

@@ -14,8 +14,10 @@ import { PrismaModule } from 'prisma/prisma.module';
 import { ExcelModule } from './modules/excel/excel.module';
 import { MaterialVariantModule } from './modules/material-variant/material-variant.module';
 
+import { BullModule } from '@nestjs/bullmq';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import * as redisStore from 'cache-manager-redis-store';
 import { ImportReceiptModule } from './modules/import-receipt/import-receipt.module';
 import { ImportRequestModule } from './modules/import-request/import-request.module';
@@ -27,6 +29,7 @@ import { InventoryReportPlanDetailModule } from './modules/inventory-report-plan
 import { InventoryReportPlanModule } from './modules/inventory-report-plan/inventory-report-plan.module';
 import { InventoryReportModule } from './modules/inventory-report/inventory-report.module';
 import { InventoryStockModule } from './modules/inventory-stock/inventory-stock.module';
+import { InventoryUpdateStatusModule } from './modules/inventory-update-status/inventory-update-status.module';
 import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
 import { MaterialPackageModule } from './modules/material-package/material-package.module';
 import { MaterialReceiptModule } from './modules/material-receipt/material-receipt.module';
@@ -51,7 +54,6 @@ import { SupplierModule } from './modules/supplier/supplier.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
-import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -69,13 +71,13 @@ import { BullModule } from '@nestjs/bullmq';
       port: process.env.REDIS_PORT,
     }),
     BullModule.forRoot({
-      connection:{
+      connection: {
         host: process.env.REDIS_HOST,
         password: process.env.REDIS_PASSWORD,
         port: parseInt(process.env.REDIS_PORT),
       },
-    
     }),
+    EventEmitterModule.forRoot(),
     PrismaModule,
     AuthModule,
     UserModule,
@@ -120,6 +122,7 @@ import { BullModule } from '@nestjs/bullmq';
     InventoryReportPlanModule,
     InventoryReportPlanDetailModule,
     ReceiptAdjustmentModule,
+    InventoryUpdateStatusModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],
