@@ -10,7 +10,7 @@ model ProductVariant {
   product                   Product                     @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productAttribute          ProductAttribute[]
   productInspectionCriteria ProductInspectionCriteria[]
+  productSize               ProductSize[]
 
   @@map("product_variant")
-  ProductSize ProductSize[]
 }

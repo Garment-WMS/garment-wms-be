@@ -5,8 +5,8 @@ model InventoryReportPlan {
     code                      String                      @unique @map("code") @db.VarChar()
     status                    InventoryReportPlanStatus   @default(PENDING) @map("status")
     note                      String?                     @map("note") @db.VarChar()
-    from                      DateTime                    @map("from") @db.Timestamptz(6)
-    to                        DateTime                    @map("to") @db.Timestamptz(6)
+    from                      DateTime?                   @map("from") @db.Timestamptz(6)
+    to                        DateTime?                   @map("to") @db.Timestamptz(6)
     createdAt                 DateTime                    @default(now())
     updatedAt                 DateTime                    @updatedAt
     deletedAt                 DateTime?                   @map("deleted_at") @db.Timestamptz(6)

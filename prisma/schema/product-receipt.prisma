@@ -11,7 +11,6 @@ model ProductReceipt {
   InventoryReportDetail InventoryReportDetail[]
   importReceipt         ImportReceipt           @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productSize           ProductSize             @relation(fields: [productSizeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  ReceiptAdjustment     ReceiptAdjustment[]
 
   @@map("product_receipt")
 }

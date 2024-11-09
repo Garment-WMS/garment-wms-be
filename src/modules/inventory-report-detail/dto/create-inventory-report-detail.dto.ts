@@ -22,10 +22,10 @@ export class CreateInventoryReportDetailDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsInt()
-  recordedQuantity: number;
+  expectedQuantity: number;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsInt()
-  storageQuantity: number;
+  actualQuantity: number;
 }

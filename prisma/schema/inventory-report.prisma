@@ -5,7 +5,9 @@ model InventoryReport {
   inventoryReportType       InventoryReportTypeEnum     @default(MATERIAL) @map("inventory_report_type")
   status                    InventoryReportStatus       @default(PENDING) @map("status")
   code                      String                      @unique @db.VarChar
-  note                      String                      @map("note")
+  note                      String?                     @map("note")
+  from                      DateTime?                   @map("from") @db.Timestamptz(6)
+  to                        DateTime?                   @map("to") @db.Timestamptz(6)
   createdAt                 DateTime?                   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime?                   @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                 DateTime?                   @map("deleted_at") @db.Timestamptz(6)

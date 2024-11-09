@@ -2,7 +2,6 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { MaterialReceiptStatus, Prisma, PrismaClient } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
-import { v4 as uuidv4 } from 'uuid';
 import { CreateMaterialReceiptDto } from './dto/create-material-receipt.dto';
 import { UpdateMaterialReceiptDto } from './dto/update-material-receipt.dto';
 
@@ -25,6 +24,23 @@ export class MaterialReceiptService {
       },
     },
   };
+
+  async getAllMaterialReceiptOfMaterialPackage(materialPackageId: string) {
+    const materialReceipts = await this.prismaService.materialReceipt.findMany({
+      where: {
+        materialPackageId,
+        status: {
+          in: [
+            MaterialReceiptStatus.AVAILABLE,
+            MaterialReceiptStatus.PARTIAL_USED,
+          ],
+        },
+      },
+      include: this.includeQuery,
+    });
+
+    return materialReceipts;
+  }
 
   findAllMaterialVariant() {
     throw new Error('Method not implemented.');

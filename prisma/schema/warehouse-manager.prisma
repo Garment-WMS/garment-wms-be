@@ -8,7 +8,7 @@ model WarehouseManager {
   account               Account                 @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   ImportReceipt         ImportReceipt[]
   InventoryReport       InventoryReport[]
-  ReceiptAdjustment     ReceiptAdjustment[]
+  // ReceiptAdjustment     ReceiptAdjustment[]
   MaterialExportRequest MaterialExportRequest[]
   InspectionRequest     InspectionRequest[]
 

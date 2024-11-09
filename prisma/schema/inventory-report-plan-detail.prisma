@@ -1,7 +1,7 @@
 model InventoryReportPlanDetail {
     id                    String              @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
     inventoryReportPlanId String              @map("inventory_report_plan_id") @db.Uuid
-    inventoryReportId     String?             @map("inventory_report") @db.VarChar()
+    inventoryReportId     String?             @map("inventory_report") @db.Uuid()
     productSizeId         String?             @map("product_size_id") @db.Uuid
     materialPackageId     String?             @map("material_package_id") @db.Uuid
     warehouseStaffId      String              @map("warehouse_staff_id") @db.Uuid
@@ -14,7 +14,7 @@ model InventoryReportPlanDetail {
     productSize           ProductSize?        @relation(fields: [productSizeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
     materialPackage       MaterialPackage?    @relation(fields: [materialPackageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
     warehouseStaff        WarehouseStaff      @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-    inventoryReport       InventoryReport?    @relation(fields: [inventoryReportId], references: [code], onDelete: NoAction, onUpdate: NoAction)
+    inventoryReport       InventoryReport?    @relation(fields: [inventoryReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
     @@map("inventory_report_plan_detail")
 }
