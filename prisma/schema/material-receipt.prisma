@@ -14,6 +14,7 @@ model MaterialReceipt {
   MaterialExportReceipt MaterialExportReceipt[]
   importReceipt         ImportReceipt           @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialPackage       MaterialPackage         @relation(fields: [materialPackageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialExportReceiptDetail MaterialExportReceiptDetail[]
 
   @@map("material_receipt")
 }

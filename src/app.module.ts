@@ -28,6 +28,7 @@ import { InventoryReportPlanModule } from './modules/inventory-report-plan/inven
 import { InventoryReportModule } from './modules/inventory-report/inventory-report.module';
 import { InventoryStockModule } from './modules/inventory-stock/inventory-stock.module';
 import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
+import { MaterialExportRequestModule } from './modules/material-export-request/material-export-request.module';
 import { MaterialPackageModule } from './modules/material-package/material-package.module';
 import { MaterialReceiptModule } from './modules/material-receipt/material-receipt.module';
 import { MaterialUnitModule } from './modules/material-unit/material-unit.module';
@@ -109,6 +110,7 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
       password: process.env.REDIS_PASSWORD,
       port: process.env.REDIS_PORT,
     }),
+    MaterialExportRequestModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],
