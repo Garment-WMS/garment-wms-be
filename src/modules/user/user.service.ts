@@ -1,6 +1,8 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
+import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { Account, Prisma, RoleCode } from '@prisma/client';
+import { Queue } from 'bullmq';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { PathConstants } from 'src/common/constant/path.constant';
@@ -10,6 +12,12 @@ import { ImageService } from '../image/image.service';
 
 @Injectable()
 export class UserService {
+  constructor(
+    private prisma: PrismaService,
+    private readonly imageService: ImageService,
+    @InjectQueue('receipt-adjustment') private readonly testQueue: Queue,
+  ) {}
+
   async search(findOptions: GeneratedFindOptions<Prisma.AccountWhereInput>) {
     const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
@@ -86,7 +94,18 @@ export class UserService {
     if (!result) {
       return apiFailed(404, 'Role not found');
     }
-    console.log(result);
+    await this.testQueue.add(
+      'create-receipt-adjustment',
+      {
+        data: {
+          id: '1',
+          name: 'test',
+        },
+      },
+      {
+        delay: 1000,
+      },
+    );
     return apiSuccess(200, result, 'Get all user by role successfully');
   }
 
@@ -136,10 +155,6 @@ export class UserService {
         return null;
     }
   }
-  constructor(
-    private prisma: PrismaService,
-    private readonly imageService: ImageService,
-  ) {}
 
   async findOne(query: Prisma.AccountWhereInput): Promise<Account | undefined> {
     return await this.prisma.account.findFirst({

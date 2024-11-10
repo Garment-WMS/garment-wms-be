@@ -53,7 +53,10 @@ export class InventoryStockService {
         materialPackageId: materialPackageId,
       },
       update: {
-        quantityByPack: { increment: quantity },
+        quantityByPack:
+          quantity >= 0
+            ? { increment: quantity }
+            : { decrement: Math.abs(quantity) },
       },
       create: {
         materialPackageId,
@@ -61,6 +64,27 @@ export class InventoryStockService {
       },
     });
   }
+
+  updateMaterialStockQuantity(
+    materialPackageId: string,
+    quantity: number,
+    prismaInstance: PrismaClient = this.prismaService,
+  ) {
+    return prismaInstance.inventoryStock.upsert({
+      where: {
+        materialPackageId: materialPackageId,
+      },
+      update: {
+        quantityByPack: quantity,
+      },
+      create: {
+        materialPackageId,
+        quantityByPack: quantity,
+      },
+    });
+  }
+
+  recountMaterialStock(materialPackageId: String) {}
 
   findOne(id: number) {
     return `This action returns a #${id} inventoryStock`;

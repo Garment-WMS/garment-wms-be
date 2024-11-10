@@ -41,7 +41,7 @@ export class MaterialReceiptController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.materialReceiptService.findOne(+id);
+    return this.materialReceiptService.findOne(id);
   }
 
   @Patch(':id')
@@ -56,4 +56,7 @@ export class MaterialReceiptController {
   remove(@Param('id') id: string) {
     return this.materialReceiptService.remove(+id);
   }
+
+
+
 }

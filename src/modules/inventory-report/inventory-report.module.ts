@@ -12,7 +12,6 @@ import { InventoryReportService } from './inventory-report.service';
   imports: [
     MaterialVariantModule,
     MaterialReceiptModule,
-    
     ProductVariantModule,
     InventoryReportDetailModule,
     PrismaModule,

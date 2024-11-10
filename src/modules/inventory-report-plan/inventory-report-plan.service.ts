@@ -19,8 +19,41 @@ export class InventoryReportPlanService {
   ) {}
 
   queryInclude: Prisma.InventoryReportPlanInclude = {
-    inventoryReportPlanDetail: true,
+    inventoryReportPlanDetail: {
+      include: {
+        materialPackage: {
+          include: {
+            inventoryStock: true,
+          },
+        },
+        productSize: {
+          include: {
+            inventoryStock: true,
+          },
+        },
+        inventoryReport: {
+          include: {
+            inventoryReportDetail: true,
+          },
+        },
+      },
+    },
   };
+
+  async checkLastInventoryReportInPlan(inventoryReportId: string) {
+    throw new Error('Method not implemented.');
+  }
+  async updateStatus(
+    inventoryReportPlanId: string,
+    status: InventoryReportPlanStatus,
+  ) {
+    return await this.prismaService.inventoryReportPlan.update({
+      where: { id: inventoryReportPlanId },
+      data: {
+        status,
+      },
+    });
+  }
 
   async processInventoryReportPlan(id: string, warehouseStaffId: string) {
     const inventoryReportPlan = await this.findById(id);
@@ -126,13 +159,7 @@ export class InventoryReportPlanService {
           },
         },
       },
-      include: {
-        inventoryReportPlanDetail: {
-          where: {
-            warehouseStaffId,
-          },
-        },
-      },
+      include: this.queryInclude,
     });
     return apiSuccess(
       HttpStatus.OK,

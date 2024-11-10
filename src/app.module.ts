@@ -14,8 +14,10 @@ import { PrismaModule } from 'prisma/prisma.module';
 import { ExcelModule } from './modules/excel/excel.module';
 import { MaterialVariantModule } from './modules/material-variant/material-variant.module';
 
+import { BullModule } from '@nestjs/bullmq';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import * as redisStore from 'cache-manager-redis-store';
 import { ImportReceiptModule } from './modules/import-receipt/import-receipt.module';
 import { ImportRequestModule } from './modules/import-request/import-request.module';
@@ -27,6 +29,7 @@ import { InventoryReportPlanDetailModule } from './modules/inventory-report-plan
 import { InventoryReportPlanModule } from './modules/inventory-report-plan/inventory-report-plan.module';
 import { InventoryReportModule } from './modules/inventory-report/inventory-report.module';
 import { InventoryStockModule } from './modules/inventory-stock/inventory-stock.module';
+import { InventoryUpdateStatusModule } from './modules/inventory-update-status/inventory-update-status.module';
 import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
 import { MaterialExportRequestModule } from './modules/material-export-request/material-export-request.module';
 import { MaterialPackageModule } from './modules/material-package/material-package.module';
@@ -47,6 +50,7 @@ import { ProductModule } from './modules/product/product.module';
 import { PurchaseOrderModule } from './modules/purchase-order/purchase-order.module';
 import { QuarterlyProductDetailModule } from './modules/quarterly-product-detail/quarterly-product-detail.module';
 import { QuarterlyProductPlanModule } from './modules/quarterly-product-plan/quarterly-product-plan.module';
+import { ReceiptAdjustmentModule } from './modules/receipt-adjustment/receipt-adjustment.module';
 import { SupplierModule } from './modules/supplier/supplier.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
@@ -54,6 +58,27 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    CacheModule.register({
+      onBackgroundRefreshError: (error) => {
+        console.error(error);
+        throw error;
+      },
+      isGlobal: true,
+      ttl: 5,
+      store: redisStore,
+      host: process.env.REDIS_HOST,
+      password: process.env.REDIS_PASSWORD,
+      port: process.env.REDIS_PORT,
+    }),
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST,
+        password: process.env.REDIS_PASSWORD,
+        port: parseInt(process.env.REDIS_PORT),
+      },
+    }),
+    EventEmitterModule.forRoot(),
     PrismaModule,
     AuthModule,
     UserModule,
@@ -111,6 +136,8 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
       port: process.env.REDIS_PORT,
     }),
     MaterialExportRequestModule,
+    ReceiptAdjustmentModule,
+    InventoryUpdateStatusModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],
