@@ -6,6 +6,7 @@ import { Queue } from 'bullmq';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
+import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { CreateReceiptAdjustmentDto } from '../receipt-adjustment/dto/create-receipt-adjustment.dto';
 import { ApprovalInventoryReportDetailDto } from './dto/approval-inventory-report-detail.dto';
 import { CreateInventoryReportDetailDto } from './dto/create-inventory-report-detail.dto';
@@ -19,6 +20,7 @@ export class InventoryReportDetailService {
     @InjectQueue('receipt-adjustment')
     private readonly receiptAdjustQueue: Queue,
     private readonly eventEmitter: EventEmitter2,
+    private readonly materialReceiptService: MaterialReceiptService,
   ) {}
 
   async create(
@@ -143,6 +145,8 @@ export class InventoryReportDetailService {
       },
       include: {},
       data: {
+        managerQuantityConfirm:
+          approvalInventoryReportDetailDto.managerQuantityConfirm,
         status: InventoryReportDetailStatus.APPROVED,
       },
     });
@@ -151,19 +155,39 @@ export class InventoryReportDetailService {
       throw new Error('Approve Inventory Report Detail failed');
     }
 
-    if (result.actualQuantity !== inventoryReportDetail.expectedQuantity) {
+    if (
+      result.managerQuantityConfirm !== inventoryReportDetail.expectedQuantity
+    ) {
+      if (result.materialReceiptId) {
+        await this.materialReceiptService.updateMaterialReceiptQuantity(
+          result.materialReceiptId,
+          result.managerQuantityConfirm,
+        );
+      }
+
+      //TODO: Call productReceiptService.updateQuantity
+      // if (result.productReceiptId) {
+      //   await this.productReceiptService.updateProductReceiptQuantity(
+      //     result.productReceiptId,
+      //     result.managerQuantityConfirm,
+      //     result.managerQuantityConfirm - result.expectedQuantity,
+      //   );
+      // }
+
       const createReceiptAdjustmentDto: CreateReceiptAdjustmentDto = {
+        warehouseManagerId: warehouseManagerId,
+        materialReceiptId: inventoryReportDetail.materialReceiptId,
+        productReceiptId: inventoryReportDetail.productReceiptId,
         inventoryReportDetailId: result.id,
         beforeAdjustQuantity: inventoryReportDetail.expectedQuantity,
-        afterAdjustQuantity: result.actualQuantity,
-        reason: undefined,
+        afterAdjustQuantity: result.managerQuantityConfirm,
+        reason: approvalInventoryReportDetailDto.note,
       };
       await this.receiptAdjustQueue.add(
         'create-receipt-adjustment',
         createReceiptAdjustmentDto,
       );
     }
-    console.log(inventoryReportDetail);
     await this.checkLastInventoryReport(
       inventoryReportDetail.inventoryReportId,
     );
@@ -222,8 +246,6 @@ export class InventoryReportDetailService {
           },
         },
       });
-    console.log(inventoryReportId);
-
     if (isAllInventoryReportDetailRecorded.length > 0) {
       return;
     }

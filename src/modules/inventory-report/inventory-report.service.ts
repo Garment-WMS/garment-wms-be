@@ -25,6 +25,11 @@ export class InventoryReportService {
 
   includeQuery: Prisma.InventoryReportInclude = {
     inventoryReportDetail: true,
+    inventoryReportPlanDetail: {
+      include: {
+        inventoryReportPlan: true,
+      },
+    },
   };
 
   async findAllByWarehouseStaff(
@@ -269,7 +274,7 @@ export class InventoryReportService {
 
   async updateStatus(id: string, status: InventoryReportStatus) {
     const inventoryReport = await this.findById(id);
-  
+
     if (!inventoryReport) {
       throw new BadRequestException('Inventory Report not found');
     }

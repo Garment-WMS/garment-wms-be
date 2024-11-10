@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { InventoryReportStatus } from '@prisma/client';
+import {
+  InventoryReportPlanStatus,
+  InventoryReportStatus,
+} from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { InventoryReportPlanDetailService } from '../inventory-report-plan-detail/inventory-report-plan-detail.service';
 import { InventoryReportPlanService } from '../inventory-report-plan/inventory-report-plan.service';
@@ -27,10 +30,11 @@ export class InventoryUpdateStatusService {
       await this.inventoryReportPlanDetailService.checkLastInventoryReportInPlan(
         inventoryReportId,
       );
+
     if (isLastInventoryReportInPlan) {
       await this.inventoryReportPlanService.updateStatus(
-        inventoryReportId,
-        InventoryReportStatus.FINISHED,
+        isLastInventoryReportInPlan,
+        InventoryReportPlanStatus.DONE,
       );
     }
   }

@@ -13,5 +13,11 @@ import { UpdateRefreshTokenDto } from './dto/update-refresh-token.dto';
 
 @Controller('refresh-token')
 export class RefreshTokenController {
-  constructor(private readonly refreshTokenService: RefreshTokenService) {}
+  constructor(private readonly refreshTokenService: RefreshTokenService) {}''
+
+
+  @Post('test')
+  create(@Body() createRefreshTokenDto: CreateRefreshTokenDto) {
+    return this.refreshTokenService.test(createRefreshTokenDto);
+  }
 }

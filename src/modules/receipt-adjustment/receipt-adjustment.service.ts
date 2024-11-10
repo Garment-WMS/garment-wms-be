@@ -10,6 +10,15 @@ export class ReceiptAdjustmentService {
 
   create(createReceiptAdjustmentDto: CreateReceiptAdjustmentDto) {
     const createReceiptAdjustmentInput: Prisma.ReceiptAdjustmentCreateInput = {
+      warehouseManager: {
+        connect: { id: createReceiptAdjustmentDto.warehouseManagerId },
+      },
+      materialReceipt: {
+        connect: { id: createReceiptAdjustmentDto.materialReceiptId },
+      },
+      productReceipt: {
+        connect: { id: createReceiptAdjustmentDto.productReceiptId },
+      },
       beforeAdjustQuantity: createReceiptAdjustmentDto.beforeAdjustQuantity,
       afterAdjustQuantity: createReceiptAdjustmentDto.afterAdjustQuantity,
       adjustedAt: new Date(),

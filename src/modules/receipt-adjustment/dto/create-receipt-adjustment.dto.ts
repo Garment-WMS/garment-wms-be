@@ -1,8 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 export class CreateReceiptAdjustmentDto {
-    
   @ApiProperty()
   @IsUUID()
   @IsNotEmpty()
@@ -24,4 +30,19 @@ export class CreateReceiptAdjustmentDto {
   @IsNotEmpty()
   @IsString()
   reason: string;
+
+  @ApiProperty()
+  @IsUUID()
+  @IsNotEmpty()
+  warehouseManagerId: string;
+
+  @ApiProperty()
+  @IsUUID()
+  @IsOptional()
+  materialReceiptId: string;
+
+  @ApiProperty()
+  @IsUUID()
+  @IsOptional()
+  productReceiptId: string;
 }

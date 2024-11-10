@@ -76,7 +76,6 @@ export class InventoryReportDetailController {
     @Body() approvalInventoryReportDetailDto: ApprovalInventoryReportDetailDto,
     @GetUser() user: AuthenUser,
   ) {
-    // return this.inventoryReportDetailService.checkLastInventoryReport(id)
     return this.inventoryReportDetailService.handleInventoryReportDetailApproval(
       id,
       approvalInventoryReportDetailDto,
