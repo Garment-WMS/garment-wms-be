@@ -1,17 +1,22 @@
 model MaterialExportRequest {
-  id                     String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  productionBatchId      String                      @map("production_batch_id") @db.Uuid
-  warehouseManagerId     String?                     @map("warehouse_manager_id") @db.Uuid
-  productionDepartmentId String                      @map("production_department_id") @db.Uuid
-  status                 MaterialExportRequestStatus @default(PENDING) @map("status")
-  description            String?                     @map("description") @db.VarChar
-  createdAt              DateTime?                   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt              DateTime?                   @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt              DateTime?                   @map("deleted_at") @db.Timestamptz(6)
-  materialExportDetail   MaterialExportDetail[]
-  productionBatch        ProductionBatch             @relation(fields: [productionBatchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  warehouseManager       WarehouseManager?           @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productionDepartment   ProductionDepartment        @relation(fields: [productionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  productionBatchId           String                        @map("production_batch_id") @db.Uuid
+  productFormulaId            String?                       @map("product_formula_id") @db.Uuid
+  warehouseManagerId          String?                       @map("warehouse_manager_id") @db.Uuid
+  productionDepartmentId      String                        @map("production_department_id") @db.Uuid
+  status                      MaterialExportRequestStatus   @default(PENDING) @map("status")
+  description                 String?                       @map("description") @db.VarChar
+  approveNote                 String?                       @map("appove_note") @db.VarChar
+  rejectAt                    DateTime?                     @map("reject_at") @db.Timestamptz(6)
+  rejectReason                String?                       @map("reject_reason") @db.VarChar
+  createdAt                   DateTime?                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
+  productionBatch             ProductionBatch               @relation(fields: [productionBatchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productFormula              ProductFormula?               @relation(fields: [productFormulaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouseManager            WarehouseManager?             @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productionDepartment        ProductionDepartment          @relation(fields: [productionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialExportRequestDetail MaterialExportRequestDetail[]
 
   @@map("material_export_request")
 }
@@ -20,4 +25,8 @@ enum MaterialExportRequestStatus {
   PENDING
   APPROVED
   CANCELLED
+  DELIVERED
+  PRODUCTION_APPROVED
+  PRODUCTION_REJECTED
+  RETURNED
 }

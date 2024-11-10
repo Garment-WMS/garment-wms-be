@@ -1,16 +1,16 @@
 model MaterialExportReceipt {
-  id                     String               @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  materialExportDetailId String               @map("material_export_detail_id") @db.Uuid
-  materialReceiptId      String?              @map("material_receipt_id") @db.Uuid
-  warehouseStaffId       String?              @map("warehouse_staff_id") @db.Uuid
-  quantityByPack         Float                @map("quantity_by_pack")
-  status                 ExportReceiptStatus  @default(EXPORTING) @map("status")
-  createdAt              DateTime?            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt              DateTime?            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt              DateTime?            @map("deleted_at") @db.Timestamptz(6)
-  materialExportDetail   MaterialExportDetail @relation(fields: [materialExportDetailId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  materialReceipt        MaterialReceipt?     @relation(fields: [materialReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  warehouseStaff         WarehouseStaff?      @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialExportDetailId      String                        @map("material_export_detail_id") @db.Uuid
+  materialReceiptId           String?                       @map("material_receipt_id") @db.Uuid
+  warehouseStaffId            String?                       @map("warehouse_staff_id") @db.Uuid
+  quantityByPack              Float                         @map("quantity_by_pack")
+  status                      ExportReceiptStatus           @default(EXPORTING) @map("status")
+  createdAt                   DateTime?                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
+  materialReceipt             MaterialReceipt?              @relation(fields: [materialReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouseStaff              WarehouseStaff?               @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialExportReceiptDetail MaterialExportReceiptDetail[]
 
   @@map("material_export_receipt")
 }

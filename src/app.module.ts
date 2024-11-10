@@ -31,6 +31,7 @@ import { InventoryReportModule } from './modules/inventory-report/inventory-repo
 import { InventoryStockModule } from './modules/inventory-stock/inventory-stock.module';
 import { InventoryUpdateStatusModule } from './modules/inventory-update-status/inventory-update-status.module';
 import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
+import { MaterialExportRequestModule } from './modules/material-export-request/material-export-request.module';
 import { MaterialPackageModule } from './modules/material-package/material-package.module';
 import { MaterialReceiptModule } from './modules/material-receipt/material-receipt.module';
 import { MaterialUnitModule } from './modules/material-unit/material-unit.module';
@@ -121,6 +122,20 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
     ProductPlanDetailModule,
     InventoryReportPlanModule,
     InventoryReportPlanDetailModule,
+    ConfigModule.forRoot({ isGlobal: true }),
+    CacheModule.register({
+      onBackgroundRefreshError: (error) => {
+        console.error(error);
+        throw error;
+      },
+      isGlobal: true,
+      ttl: 5,
+      store: redisStore,
+      host: process.env.REDIS_HOST,
+      password: process.env.REDIS_PASSWORD,
+      port: process.env.REDIS_PORT,
+    }),
+    MaterialExportRequestModule,
     ReceiptAdjustmentModule,
     InventoryUpdateStatusModule,
   ],
