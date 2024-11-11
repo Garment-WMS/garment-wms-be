@@ -1,4 +1,4 @@
-import { DirectFilterPipe } from '@chax-at/prisma-filter';
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
@@ -29,16 +29,7 @@ export class InspectionRequestController {
   @Get()
   async search(
     @Query(
-      new DirectFilterPipe<any, Prisma.InspectionRequestWhereInput>(
-        [
-          'id',
-          'inspectionDepartmentId',
-          'purchasingStaffId',
-          'warehouseManagerId',
-          'importRequestId',
-          'status',
-          'createdAt',
-        ],
+      new AllFilterPipeUnsafe<any, Prisma.InspectionRequestWhereInput>(
         [
           'inspectionReport.id',
           'inspectionReport.code',

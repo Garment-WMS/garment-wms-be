@@ -1,4 +1,4 @@
-import { DirectFilterPipe } from '@chax-at/prisma-filter';
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
@@ -34,16 +34,13 @@ export class MaterialPackageController {
   @Get()
   getAllMaterialVariant(
     @Query(
-      new DirectFilterPipe<any, Prisma.MaterialPackageWhereInput>(
-        ['id', 'materialVariantId', 'createdAt', 'updatedAt', 'name', 'code'],
-        [
-          'material.name',
-          'material.code',
-          'material.materialType.name',
-          'material.materialType.code',
-          'material.materialType.id',
-        ],
-      ),
+      new AllFilterPipeUnsafe<any, Prisma.MaterialPackageWhereInput>([
+        'material.name',
+        'material.code',
+        'material.materialType.name',
+        'material.materialType.code',
+        'material.materialType.id',
+      ]),
     )
     filterOptions: FilterDto<Prisma.MaterialPackageWhereInput>,
   ) {
