@@ -1,11 +1,12 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { $Enums, Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { NotFoundError } from 'rxjs';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { accountSelect } from '../inspection-department/inspection-department.service';
 
 @Injectable()
 export class WarehouseStaffService {
@@ -65,11 +66,29 @@ export class WarehouseStaffService {
 }
 
 export const WarehouseStaffInclude: Prisma.WarehouseStaffInclude = {
-  account: true,
+  account: {
+    select: accountSelect,
+  },
   _count: {
     select: {
-      importRequest: true,
-      importReceipt: true,
+      importRequest: {
+        where: {
+          inspectionRequest: {
+            some: {
+              inspectionReport: {
+                importReceipt: {
+                  status: $Enums.ImportReceiptStatus.IMPORTING,
+                },
+              },
+            },
+          },
+        },
+      },
+      importReceipt: {
+        where: {
+          status: $Enums.ImportReceiptStatus.IMPORTING,
+        },
+      },
     },
   },
 };

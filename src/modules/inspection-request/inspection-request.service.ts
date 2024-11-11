@@ -43,17 +43,23 @@ export class InspectionRequestService {
     return dataResponse;
   }
 
-  async getStatistics() {
+  async getStatistics(type?: $Enums.InspectionRequestType) {
     const [total, inspecting, inspected] =
       await this.prismaService.$transaction([
-        this.prismaService.inspectionRequest.count(),
         this.prismaService.inspectionRequest.count({
           where: {
+            type: type,
+          },
+        }),
+        this.prismaService.inspectionRequest.count({
+          where: {
+            type: type,
             status: $Enums.InspectionRequestStatus.INSPECTING,
           },
         }),
         this.prismaService.inspectionRequest.count({
           where: {
+            type: type,
             status: $Enums.InspectionRequestStatus.INSPECTED,
           },
         }),
