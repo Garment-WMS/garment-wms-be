@@ -3,6 +3,7 @@ model MaterialExportRequest {
   productionBatchId           String                        @map("production_batch_id") @db.Uuid
   productFormulaId            String?                       @map("product_formula_id") @db.Uuid
   warehouseManagerId          String?                       @map("warehouse_manager_id") @db.Uuid
+  warehouseStaffId            String?                       @map("warehouse_staff_id") @db.Uuid
   productionDepartmentId      String                        @map("production_department_id") @db.Uuid
   status                      MaterialExportRequestStatus   @default(PENDING) @map("status")
   description                 String?                       @map("description") @db.VarChar
@@ -16,6 +17,7 @@ model MaterialExportRequest {
   productFormula              ProductFormula?               @relation(fields: [productFormulaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warehouseManager            WarehouseManager?             @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productionDepartment        ProductionDepartment          @relation(fields: [productionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouseStaff              WarehouseStaff?               @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialExportRequestDetail MaterialExportRequestDetail[]
 
   @@map("material_export_request")

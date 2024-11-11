@@ -64,8 +64,30 @@ export class InspectionDepartmentService {
   }
 }
 
+export const accountSelect: Prisma.AccountSelect = {
+  id: true,
+  email: true,
+  password: false,
+  username: true,
+  avatarUrl: true,
+  cidId: true,
+  dateOfBirth: true,
+  firstName: true,
+  gender: true,
+  isDeleted: true,
+  isVerified: true,
+  lastName: true,
+  phoneNumber: true,
+  status: true,
+  createdAt: true,
+  deletedAt: true,
+  updatedAt: true,
+};
+
 export const inspectionDepartmentInclude: Prisma.InspectionDepartmentInclude = {
-  account: true,
+  account: {
+    select: accountSelect,
+  },
   _count: {
     select: {
       inspectionRequest: {

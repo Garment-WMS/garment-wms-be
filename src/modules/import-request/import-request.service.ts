@@ -15,6 +15,7 @@ import { DataResponse } from 'src/common/dto/data-response';
 import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { nonExistUUID } from 'src/common/utils/utils';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
@@ -165,7 +166,7 @@ export class ImportRequestService {
     });
   }
 
-  async create(dto: CreateImportRequestDto) {
+  async create(purchasingStaff: AuthenUser, dto: CreateImportRequestDto) {
     const activeImportReq = await this.getActiveImportReqOfPoDelivery(
       dto.poDeliveryId,
     );
@@ -183,8 +184,8 @@ export class ImportRequestService {
       warehouseManager: dto.warehouseManagerId
         ? { connect: { id: dto.warehouseManagerId } }
         : undefined,
-      purchasingStaff: dto.purchasingStaffId
-        ? { connect: { id: dto.purchasingStaffId } }
+      purchasingStaff: purchasingStaff.purchasingStaffId
+        ? { connect: { id: purchasingStaff.purchasingStaffId } }
         : undefined,
       warehouseStaff: dto.warehouseStaffId
         ? { connect: { id: dto.warehouseStaffId } }
@@ -194,7 +195,6 @@ export class ImportRequestService {
         : undefined,
       status: dto.status,
       description: dto.description,
-      rejectReason: dto.rejectReason,
       cancelReason: dto.cancelReason,
       startedAt: dto.startAt,
       finishedAt: dto.finishAt,
@@ -359,6 +359,7 @@ export class ImportRequestService {
           where: { id: id },
           data: {
             status: $Enums.ImportRequestStatus.APPROVED,
+            approveNote: managerProcess.approveNote,
           },
         });
       case $Enums.ImportRequestStatus.REJECTED:
