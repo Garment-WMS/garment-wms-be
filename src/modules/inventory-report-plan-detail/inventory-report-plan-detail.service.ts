@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InventoryReportStatus, Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
+import { apiSuccess } from 'src/common/dto/api-response';
 import { InventoryReportService } from '../inventory-report/inventory-report.service';
 import { CreateInventoryReportPlanDetailDto } from './dto/create-inventory-report-plan-detail.dto';
 import { UpdateInventoryReportPlanDetailDto } from './dto/update-inventory-report-plan-detail.dto';
@@ -140,8 +141,16 @@ export class InventoryReportPlanDetailService {
     return `This action returns all inventoryReportPlanDetail`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} inventoryReportPlanDetail`;
+  async findOne(id: string) {
+    const inventoryReportPlanDetail = await this.findById(id);
+    if (!inventoryReportPlanDetail) {
+      throw new Error('Inventory report plan detail not found');
+    }
+    return apiSuccess(
+      HttpStatus.OK,
+      inventoryReportPlanDetail,
+      'Get inventory report plan detail successfully',
+    );
   }
 
   update(

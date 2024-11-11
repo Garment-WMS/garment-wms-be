@@ -53,7 +53,7 @@ export class InventoryReportPlanDetailController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.inventoryReportPlanDetailService.findOne(+id);
+    return this.inventoryReportPlanDetailService.findOne(id);
   }
 
   @Patch(':id')
