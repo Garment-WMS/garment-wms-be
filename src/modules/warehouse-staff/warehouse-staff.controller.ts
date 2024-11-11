@@ -1,4 +1,4 @@
-import { DirectFilterPipe } from '@chax-at/prisma-filter';
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 import {
   Controller,
   Delete,
@@ -19,8 +19,7 @@ export class WarehouseStaffController {
   @Get()
   async search(
     @Query(
-      new DirectFilterPipe<any, Prisma.WarehouseStaffWhereInput>(
-        ['id', 'account', 'createdAt', 'updatedAt'],
+      new AllFilterPipeUnsafe<any, Prisma.WarehouseStaffWhereInput>(
         ['importRequest.id', 'importReceipt.id'],
         [{ id: 'asc', createdAt: 'desc', updatedAt: 'desc' }],
       ),
