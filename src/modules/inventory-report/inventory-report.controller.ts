@@ -31,6 +31,20 @@ export class InventoryReportController {
     private readonly inventoryReportService: InventoryReportService,
   ) {}
 
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER)
+  @UsePipes(new ValidationPipe())
+  createPost(
+    @Body() createInventoryReportDto: CreateInventoryReportDto,
+    @GetUser() user: AuthenUser,
+  ) {
+    return this.inventoryReportService.create(
+      createInventoryReportDto,
+      user.warehouseManagerId,
+    );
+  }
+
   @Post('/material-variant')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.WAREHOUSE_MANAGER)

@@ -57,6 +57,11 @@ export class MaterialVariantController {
     return this.materialVariantService.create(createMaterialDto);
   }
 
+  @Get('chart')
+  getChart(@Body() chartDto: any) {
+    return this.materialVariantService.getChart(chartDto);
+  }
+
   @Get('all')
   getAllMaterial() {
     return this.materialVariantService.findAll();

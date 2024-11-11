@@ -168,14 +168,24 @@ export class InventoryReportService {
     createInventoryReportDto: CreateInventoryReportDto,
     managerId: string,
   ) {
-    const materialReceipt =
-      await this.materialVariantService.getAllMaterialReceiptOfMaterialVariant(
-        createInventoryReportDto.materialVariantId,
-      );
+    let materialReceipt = [];
+    let productReceipt = [];
+    if (createInventoryReportDto.materialPackageId) {
+      materialReceipt =
+        await this.materialReceiptService.getAllMaterialReceiptOfMaterialPackage(
+          createInventoryReportDto.materialPackageId,
+        );
 
-    if (!materialReceipt) {
-      throw new Error('Material Receipt not found');
+      if (!materialReceipt) {
+        throw new Error('Material Receipt not found');
+      }
     }
+
+    //TODO: Product receipt
+    if (createInventoryReportDto.productSizeId) {
+      // const productReceipt = await this.
+    }
+
     const createInventoryReportDetailDto: CreateInventoryReportDetailDto[] = [];
 
     const result = await this.prismaService.$transaction(
@@ -201,14 +211,29 @@ export class InventoryReportService {
         if (!inventoryReport) {
           throw new Error('Inventory Report created failed');
         }
-        materialReceipt.forEach((materialReceipt) => {
-          createInventoryReportDetailDto.push({
-            materialReceiptId: materialReceipt.id,
-            expectedQuantity: materialReceipt.remainQuantityByPack,
-            inventoryReportId: inventoryReport.id,
-            actualQuantity: undefined,
+
+        if (materialReceipt.length > 0) {
+          materialReceipt.forEach((materialReceipt) => {
+            createInventoryReportDetailDto.push({
+              materialReceiptId: materialReceipt.id,
+              expectedQuantity: materialReceipt.remainQuantityByPack,
+              inventoryReportId: inventoryReport.id,
+              actualQuantity: undefined,
+            });
           });
-        });
+        }
+        if (productReceipt.length > 0) {
+          productReceipt.forEach((materialReceipt) => {
+            createInventoryReportDetailDto.push({
+              // materialReceiptId: materialReceipt.id,
+              productReceiptId: materialReceipt.id,
+              expectedQuantity: materialReceipt.remainQuantityByPack,
+              inventoryReportId: inventoryReport.id,
+              actualQuantity: undefined,
+            });
+          });
+        }
+
         await this.inventoryReportDetailService.create(
           createInventoryReportDetailDto,
           prismaInstance,
@@ -224,6 +249,17 @@ export class InventoryReportService {
         }
 
         inventoryReport.inventoryReportDetail = inventoryReportDetail;
+
+        if (createInventoryReportDto.inventoryReportPlanDetailId) {
+          await prismaInstance.inventoryReportPlanDetail.update({
+            where: { id: createInventoryReportDto.inventoryReportPlanDetailId },
+            data: {
+              inventoryReport: {
+                connect: { id: inventoryReport.id },
+              },
+            },
+          });
+        }
 
         return inventoryReport;
       },
