@@ -9,7 +9,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
-import { importRequestInclude } from '../import-request/import-request.service';
+import { ImportRequestService } from '../import-request/import-request.service';
 import { inspectionReportInclude } from '../inspection-report/inspection-report.service';
 import { CreateInspectionRequestDto } from './dto/create-inspection-request.dto';
 import { UpdateInspectionRequestDto } from './dto/update-inspection-request.dto';
@@ -233,7 +233,7 @@ export class InspectionRequestService {
 
 export const inspectionRequestInclude: Prisma.InspectionRequestInclude = {
   importRequest: {
-    include: importRequestInclude,
+    include: ImportRequestService.importRequestInclude,
   },
   inspectionDepartment: {
     include: {

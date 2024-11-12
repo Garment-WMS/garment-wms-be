@@ -6,13 +6,13 @@ import {
   IsUUID,
   MinLength,
 } from 'class-validator';
-import { IsProductTypeExist } from 'src/modules/product/validator/is-product-type-exist.validator';
+import { IsProductExist } from 'src/modules/product/validator/is-product-exist.validator';
 
 export class CreateProductDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsUUID()
-  @IsProductTypeExist()
+  @IsProductExist()
   productId: string;
 
   @ApiProperty()

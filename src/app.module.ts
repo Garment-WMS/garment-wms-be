@@ -47,6 +47,7 @@ import { ProductSizeModule } from './modules/product-size/product-size.module';
 import { ProductUomModule } from './modules/product-uom/product-uom.module';
 import { ProductVariantModule } from './modules/product-variant/product-variant.module';
 import { ProductModule } from './modules/product/product.module';
+import { ProductionBatchModule } from './modules/production-batch/production-batch.module';
 import { PurchaseOrderModule } from './modules/purchase-order/purchase-order.module';
 import { QuarterlyProductDetailModule } from './modules/quarterly-product-detail/quarterly-product-detail.module';
 import { QuarterlyProductPlanModule } from './modules/quarterly-product-plan/quarterly-product-plan.module';
@@ -138,6 +139,7 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
     MaterialExportRequestModule,
     ReceiptAdjustmentModule,
     InventoryUpdateStatusModule,
+    ProductionBatchModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

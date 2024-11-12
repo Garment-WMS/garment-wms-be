@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { RoleCode } from '@prisma/client';
 import { GetUser } from 'src/common/decorator/get_user.decorator';
 import { Roles } from 'src/common/decorator/roles.decorator';
@@ -21,6 +22,7 @@ import { RecordInventoryReportDetail } from './dto/record-inventory-report-detai
 import { UpdateInventoryReportDetailDto } from './dto/update-inventory-report-detail.dto';
 import { InventoryReportDetailService } from './inventory-report-detail.service';
 
+@ApiTags('inventory-report-detail')
 @Controller('inventory-report-detail')
 export class InventoryReportDetailController {
   constructor(

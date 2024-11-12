@@ -16,6 +16,7 @@ import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { nonExistUUID } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
@@ -40,7 +41,7 @@ export class ImportRequestService {
         take: limit,
         where: findOptions?.where,
         orderBy: findOptions?.orderBy,
-        include: importRequestInclude,
+        include: ImportRequestService.importRequestInclude,
       }),
       this.prismaService.importRequest.count(
         findOptions?.where
@@ -53,15 +54,7 @@ export class ImportRequestService {
 
     const dataResponse: DataResponse = {
       data,
-      pageMeta: {
-        offset: offset,
-        limit: limit,
-        page: Math.ceil(offset / limit) + 1,
-        total: total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: total > offset + limit,
-        hasPrevious: offset > 0,
-      },
+      pageMeta: getPageMeta(total, offset, limit),
     };
     return dataResponse;
   }
@@ -110,7 +103,7 @@ export class ImportRequestService {
 
   findAll() {
     return this.prismaService.importRequest.findMany({
-      include: importRequestInclude,
+      include: ImportRequestService.importRequestInclude,
     });
   }
 
@@ -136,7 +129,7 @@ export class ImportRequestService {
   async findUnique(id: string) {
     const importRequest = await this.prismaService.importRequest.findUnique({
       where: { id },
-      include: importRequestInclude,
+      include: ImportRequestService.importRequestInclude,
     });
     if (!importRequest) {
       throw new NotFoundException("Import request doesn't exist");
@@ -147,7 +140,7 @@ export class ImportRequestService {
   async findFirst(id: string) {
     const importRequest = await this.prismaService.importRequest.findFirst({
       where: { id },
-      include: importRequestInclude,
+      include: ImportRequestService.importRequestInclude,
     });
     return importRequest;
   }
@@ -226,7 +219,7 @@ export class ImportRequestService {
     const [result, updatePoDelivery] = await this.prismaService.$transaction([
       this.prismaService.importRequest.create({
         data: createImportRequestInput,
-        include: importRequestInclude,
+        include: ImportRequestService.importRequestInclude,
       }),
       this.poDeliveryService.updateStatus(
         dto.poDeliveryId,
@@ -282,7 +275,7 @@ export class ImportRequestService {
     return this.prismaService.importRequest.update({
       where: { id },
       data: updateImportRequestInput,
-      include: importRequestInclude,
+      include: ImportRequestService.importRequestInclude,
     });
   }
 
@@ -436,55 +429,55 @@ export class ImportRequestService {
     );
     return productVariantIds.every((id) => productVariantsInDb.has(id));
   }
-}
 
-export const importRequestInclude: Prisma.ImportRequestInclude = {
-  importRequestDetail: {
-    include: {
-      materialPackage: {
-        include: {
-          materialVariant: {
-            include: {
-              material: {
-                include: {
-                  materialUom: true,
+  static importRequestInclude: Prisma.ImportRequestInclude = {
+    importRequestDetail: {
+      include: {
+        materialPackage: {
+          include: {
+            materialVariant: {
+              include: {
+                material: {
+                  include: {
+                    materialUom: true,
+                  },
                 },
+                materialAttribute: true,
+                materialInspectionCriteria: true,
               },
-              materialAttribute: true,
-              materialInspectionCriteria: true,
             },
           },
         },
       },
     },
-  },
-  warehouseManager: {
-    include: {
-      account: true,
+    warehouseManager: {
+      include: {
+        account: true,
+      },
     },
-  },
-  purchasingStaff: {
-    include: {
-      account: true,
+    purchasingStaff: {
+      include: {
+        account: true,
+      },
     },
-  },
-  warehouseStaff: {
-    include: {
-      account: true,
+    warehouseStaff: {
+      include: {
+        account: true,
+      },
     },
-  },
-  poDelivery: {
-    include: {
-      purchaseOrder: {
-        include: {
-          purchasingStaff: {
-            include: {
-              account: true,
+    poDelivery: {
+      include: {
+        purchaseOrder: {
+          include: {
+            purchasingStaff: {
+              include: {
+                account: true,
+              },
             },
+            supplier: true,
           },
-          supplier: true,
         },
       },
     },
-  },
-};
+  };
+}
