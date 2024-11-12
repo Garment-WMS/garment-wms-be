@@ -40,6 +40,8 @@ enum ImportRequestStatus {
   APPROVED
   INSPECTING
   INSPECTED
+  IMPORTING
+  IMPORTED
 
   @@map("import_request_status")
 }

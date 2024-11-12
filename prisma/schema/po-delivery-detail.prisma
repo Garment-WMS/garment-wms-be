@@ -12,5 +12,6 @@ model PoDeliveryDetail {
   materialPackage      MaterialPackage @relation(fields: [materialPackageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   poDelivery           PoDelivery      @relation(fields: [poDeliveryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  @@unique([poDeliveryId, materialPackageId])
   @@map("po_delivery_detail")
 }
