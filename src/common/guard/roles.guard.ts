@@ -33,25 +33,8 @@ export class RolesGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const user: Partial<AuthenUser> = request.user;
-    let query = '';
     for (const role of requiredRoles) {
       switch (role) {
-        case RoleCode.WAREHOUSE_STAFF: {
-          if (user?.purchasingStaffId) {
-            let purchasingStaff;
-            try {
-              purchasingStaff =
-                await this.prismaService.purchasingStaff.findUnique({
-                  where: { id: user.purchasingStaffId },
-                });
-            } catch (error) {
-              return false;
-            }
-            if (purchasingStaff) {
-              return true;
-            }
-          }
-        }
         case RoleCode.WAREHOUSE_MANAGER: {
           if (user?.warehouseManagerId) {
             let warehouseManager;
@@ -61,12 +44,14 @@ export class RolesGuard implements CanActivate {
                   where: { id: user.warehouseManagerId },
                 });
             } catch (error) {
+              console.log('error', error);
               return false;
             }
             if (warehouseManager) {
               return true;
             }
           }
+          break;
         }
         case RoleCode.PRODUCTION_DEPARTMENT: {
           if (user?.productionDepartmentId) {
@@ -83,6 +68,7 @@ export class RolesGuard implements CanActivate {
               return true;
             }
           }
+          break;
         }
         case RoleCode.INSPECTION_DEPARTMENT: {
           if (user?.inspectionDepartmentId) {
@@ -99,6 +85,7 @@ export class RolesGuard implements CanActivate {
               return true;
             }
           }
+          break;
         }
         case RoleCode.FACTORY_DIRECTOR: {
           if (user?.factoryDirectorId) {
@@ -115,6 +102,7 @@ export class RolesGuard implements CanActivate {
               return true;
             }
           }
+          break;
         }
 
         case RoleCode.WAREHOUSE_STAFF: {
@@ -132,8 +120,8 @@ export class RolesGuard implements CanActivate {
               return true;
             }
           }
+          break;
         }
-
         case RoleCode.PURCHASING_STAFF: {
           if (user?.purchasingStaffId) {
             let purchasingStaff;
@@ -149,9 +137,8 @@ export class RolesGuard implements CanActivate {
               return true;
             }
           }
-        }
-        default:
           break;
+        }
       }
     }
     throw new CustomAuthException(403, 'Forbidden', ['UNAUTHORIZED']);
