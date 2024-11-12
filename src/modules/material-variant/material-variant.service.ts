@@ -160,8 +160,8 @@ export class MaterialVariantService {
       string,
       {
         materialVariant: any;
-        totalImportQuantity: number;
-        totalExportQuantity: number;
+        totalImportQuantityByUom: number;
+        totalExportQuantityByUom: number;
       }
     > = {};
 
@@ -171,12 +171,12 @@ export class MaterialVariantService {
       const importQuantity = el.quantityByPack * el.materialPackage.uomPerPack;
 
       if (acc[materialVariantId]) {
-        acc[materialVariantId].totalImportQuantity += importQuantity;
+        acc[materialVariantId].totalImportQuantityByUom += importQuantity;
       } else {
         acc[materialVariantId] = {
           materialVariant,
-          totalImportQuantity: importQuantity,
-          totalExportQuantity: 0,
+          totalImportQuantityByUom: importQuantity,
+          totalExportQuantityByUom: 0,
         };
       }
 
@@ -191,12 +191,12 @@ export class MaterialVariantService {
         el.quantityByPack * el.materialReceipt.materialPackage.uomPerPack;
 
       if (acc[materialVariantId]) {
-        acc[materialVariantId].totalExportQuantity += exportQuantity;
+        acc[materialVariantId].totalExportQuantityByUom += exportQuantity;
       } else {
         acc[materialVariantId] = {
           materialVariant,
-          totalImportQuantity: 0,
-          totalExportQuantity: exportQuantity,
+          totalImportQuantityByUom: 0,
+          totalExportQuantityByUom: exportQuantity,
         };
       }
 
