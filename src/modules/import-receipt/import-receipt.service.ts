@@ -7,6 +7,7 @@ import { ImportRequestService } from '../import-request/import-request.service';
 import { InspectionReportService } from '../inspection-report/inspection-report.service';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
+import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreateImportReceiptDto } from './dto/create-import-receipt.dto';
 import { UpdateImportReceiptDto } from './dto/update-import-receipt.dto';
@@ -20,6 +21,7 @@ export class ImportReceiptService {
     private readonly poDeliveryService: PoDeliveryService,
     private readonly inventoryStockService: InventoryStockService,
     private readonly importRequestService: ImportRequestService,
+    private readonly poDeliveryDetailsService: PoDeliveryMaterialService,
   ) {}
 
   includeQuery: Prisma.ImportReceiptInclude = {
@@ -42,6 +44,7 @@ export class ImportReceiptService {
     if (!inspectionReport) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Inspection Report not found');
     }
+    console.log(managerId);
     const importReceiptInput: Prisma.ImportReceiptCreateInput = {
       inspectionReport: {
         connect: {
@@ -55,7 +58,7 @@ export class ImportReceiptService {
       },
       warehouseStaff: {
         connect: {
-          id: createImportReceiptDto.warehouseStaffId,
+          id: inspectionReport.inspectionRequest.importRequest.warehouseStaffId,
         },
       },
       code: createImportReceiptDto.code,
@@ -72,23 +75,83 @@ export class ImportReceiptService {
     // );
 
     const result = await this.prismaService.$transaction(
-      async (prismaInstance: PrismaClient) => {
+      async (prismaInstance: PrismaService) => {
         const importReceipt = await prismaInstance.importReceipt.create({
           data: importReceiptInput,
         });
         if (importReceipt) {
-          await this.materialReceiptService.createMaterialReceipts(
-            importReceipt.id,
-            inspectionReport.inspectionReportDetail,
-            prismaInstance,
-            // createImportReceiptDto.materialReceipts,
-          );
+          const result =
+            await this.materialReceiptService.createMaterialReceipts(
+              importReceipt.id,
+              inspectionReport.inspectionReportDetail,
+              prismaInstance,
+              // createImportReceiptDto.materialReceipts,
+            );
 
           await this.poDeliveryService.updatePoDeliveryMaterialStatus(
             importRequest.poDeliveryId,
             PoDeliveryStatus.FINISHED,
             prismaInstance,
           );
+
+          let poDeliveryExtra;
+          //Compare number of imported materials with number of approved material
+          for (let i = 0; i < result.length; i++) {
+            await this.prismaService.poDeliveryDetail.updateMany({
+              where: {
+                AND: [
+                  {
+                    poDeliveryId: importRequest.poDeliveryId,
+                  },
+                  {
+                    materialPackageId: result[i].materialPackageId,
+                  },
+                ],
+              },
+              data: {
+                actualImportQuantity: result[i].quantityByPack,
+              },
+            });
+            //Create the extra PO delivery for the rejected material
+            //Can use job queue to handle this
+            let poDelivery: any = importRequest.poDelivery;
+            let poDeliveryDetail = poDelivery.poDeliveryDetail as any;
+            let expectedImportQuantity = poDeliveryDetail.find(
+              (detail) =>
+                detail.materialPackageId === result[i].materialPackageId,
+            );
+            console.log(result[i].materialPackageId);
+            console.log(expectedImportQuantity);
+            if (result[i].quantityByPack !== expectedImportQuantity) {
+              if (!poDeliveryExtra) {
+                poDeliveryExtra = await this.poDeliveryService.createPoDelivery(
+                  {
+                    purchaseOrderId: importRequest.poDelivery.purchaseOrderId,
+                    isExtra: true,
+                    status: PoDeliveryStatus.PENDING,
+                  },
+                  prismaInstance,
+                );
+              }
+
+              console.log('poDeliveryExtra', poDeliveryExtra);
+
+              await this.poDeliveryDetailsService.createPoDeliveryMaterial(
+                {
+                  poDelivery: {
+                    connect: { id: poDeliveryExtra.id },
+                  },
+                  materialPackage: {
+                    connect: { id: result[i].materialPackageId },
+                  },
+                  quantityByPack:
+                    result[i].quantityByPack - expectedImportQuantity,
+                  totalAmount: 0,
+                },
+                prismaInstance,
+              );
+            }
+          }
 
           //Update import request status to Approved
           await this.importRequestService.updateImportRequestStatus(
@@ -120,9 +183,9 @@ export class ImportReceiptService {
       throw new BadRequestException('Import Request not found');
     }
 
-    if (importRequest.status !== $Enums.ImportRequestStatus.APPROVED) {
+    if (importRequest.status !== $Enums.ImportRequestStatus.INSPECTED) {
       throw new BadRequestException(
-        'Cannot create import receipt, Import Request status is not valid',
+        'Import receipt cannot be created. The import request must be inspected before creating an import receipt.',
       );
     }
     return importRequest;

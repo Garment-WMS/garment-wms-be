@@ -96,10 +96,13 @@ export class MaterialReceiptService {
           quantityByPack: detail.approvedQuantityByPack,
         };
       });
+    const createdMaterialReceipts = await Promise.all(
+      materialReceiptsInput.map((input) =>
+        prismaInstance.materialReceipt.create({ data: input }),
+      ),
+    );
 
-    return prismaInstance.materialReceipt.createMany({
-      data: materialReceiptsInput,
-    });
+    return createdMaterialReceipts;
   }
 
   async updateMaterialReceiptQuantity(

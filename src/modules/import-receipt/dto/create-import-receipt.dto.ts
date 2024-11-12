@@ -21,11 +21,11 @@ export class CreateImportReceiptDto {
   @IsUUID()
   importRequestId: string;
 
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsUUID()
-  @IsUserRoleExist(RoleCode.WAREHOUSE_STAFF)
-  warehouseStaffId: string;
+  // @ApiProperty()
+  // @IsNotEmpty()
+  // @IsUUID()
+  // @IsUserRoleExist(RoleCode.WAREHOUSE_STAFF)
+  // warehouseStaffId: string;
 
   // @ApiProperty()
   // @IsNotEmpty()

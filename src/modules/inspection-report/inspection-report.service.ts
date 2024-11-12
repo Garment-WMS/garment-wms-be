@@ -18,6 +18,9 @@ export class InspectionReportService {
         where: {
           importRequestId: importRequestId,
         },
+        include: {
+          importRequest: true,
+        },
       });
 
     if (!inspectionRequest) {
@@ -28,7 +31,16 @@ export class InspectionReportService {
       where: {
         inspectionRequestId: inspectionRequest.id,
       },
-      include: inspectionReportInclude,
+      include: {
+        inspectionRequest: {
+          include: {
+            importRequest: true,
+            inspectionDepartment: true,
+            purchasingStaff: true,
+          },
+        },
+        inspectionReportDetail: true,
+      },
     });
 
     return result;
@@ -220,7 +232,7 @@ export const inspectionReportInclude: Prisma.InspectionReportInclude = {
       purchasingStaff: true,
     },
   },
-  
+
   inspectionReportDetail: {
     include: {
       materialPackage: {
