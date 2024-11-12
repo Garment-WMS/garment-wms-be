@@ -9,13 +9,13 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ImageService } from '../image/image.service';
+import { ChartDto } from './dto/chart.dto';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { MaterialStock } from './dto/stock-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 
 @Injectable()
 export class MaterialVariantService {
- 
   constructor(
     private readonly prismaService: PrismaService,
     private readonly imageService: ImageService,
@@ -55,9 +55,139 @@ export class MaterialVariantService {
     throw new Error('Method not implemented.');
   }
 
-  findMaterialReceiptChart(id: string, months: months[]) {
-  
+  async getChart(chartDto: ChartDto) {
+    const { year } = chartDto;
+    const monthlyData = [];
+
+    for (let month = 0; month < 12; month++) {
+      const from = new Date(year, month, 1);
+      const to = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+      const importMaterialReceipt =
+        await this.prismaService.materialReceipt.findMany({
+          where: {
+            AND: {
+              createdAt: {
+                gte: from,
+                lte: to,
+              },
+              status: {
+                in: [
+                  MaterialReceiptStatus.PARTIAL_USED,
+                  MaterialReceiptStatus.AVAILABLE,
+                ],
+              },
+            },
+          },
+          include: {
+            materialPackage: {
+              include: {
+                materialVariant: true,
+              },
+            },
+          },
+        });
+
+      const exportMaterialReceipt =
+        await this.prismaService.materialExportReceipt.findMany({
+          where: {
+            AND: {
+              createdAt: {
+                gte: from,
+                lte: to,
+              },
+            },
+          },
+          include: {
+            materialReceipt: {
+              include: {
+                materialPackage: {
+                  include: {
+                    materialVariant: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+      const totalQuantities = this.calculateTotalQuantities(
+        importMaterialReceipt,
+        exportMaterialReceipt,
+      );
+
+      monthlyData.push({
+        month: month + 1,
+        data: totalQuantities,
+      });
+    }
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        monthlyData,
+      },
+      'Material Receipt found for each month',
+    );
   }
+
+  private calculateTotalQuantities(
+    materialReceipt: any[],
+    exportMaterialReceipt: any[],
+  ) {
+    const totals: Record<
+      string,
+      {
+        materialVariant: any;
+        totalImportQuantity: number;
+        totalExportQuantity: number;
+      }
+    > = {};
+
+    materialReceipt.reduce((acc, el) => {
+      const materialVariant = el.materialPackage.materialVariant;
+      const materialVariantId = materialVariant.id;
+      const importQuantity = el.quantityByPack * el.materialPackage.uomPerPack;
+
+      if (acc[materialVariantId]) {
+        acc[materialVariantId].totalImportQuantity += importQuantity;
+      } else {
+        acc[materialVariantId] = {
+          materialVariant,
+          totalImportQuantity: importQuantity,
+          totalExportQuantity: 0,
+        };
+      }
+
+      return acc;
+    }, totals);
+
+    exportMaterialReceipt.reduce((acc, el) => {
+      const materialVariant =
+        el.materialReceipt.materialPackage.materialVariant;
+      const materialVariantId = materialVariant.id;
+      const exportQuantity =
+        el.quantityByPack * el.materialReceipt.materialPackage.uomPerPack;
+
+      if (acc[materialVariantId]) {
+        acc[materialVariantId].totalExportQuantity += exportQuantity;
+      } else {
+        acc[materialVariantId] = {
+          materialVariant,
+          totalImportQuantity: 0,
+          totalExportQuantity: exportQuantity,
+        };
+      }
+
+      return acc;
+    }, totals);
+
+    const result = Object.values(totals);
+
+    return result;
+  }
+
+  findMaterialReceiptChart(id: string, months: months[]) {}
 
   async findMaterialReceiptByIdWithResponse(id: string) {
     const [
