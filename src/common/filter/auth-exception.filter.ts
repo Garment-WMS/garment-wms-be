@@ -31,7 +31,11 @@ export class AuthExceptionFilter implements ExceptionFilter {
     let code = exception.getCode();
     switch (exception.message) {
       default:
-        responseBody = apiFailed(exception.getStatus(), message, code);
+        responseBody = apiFailed(
+          exception.getStatusCode(),
+          message,
+          exception.getCode(),
+        );
         break;
     }
 

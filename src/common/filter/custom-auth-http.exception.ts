@@ -8,4 +8,7 @@ export class CustomAuthException extends UnauthorizedException {
   getCode(): string {
     return (this.getResponse() as any).code;
   }
+  getStatusCode(): number {
+    return (this.getResponse() as any).statusCode;
+  }
 }
