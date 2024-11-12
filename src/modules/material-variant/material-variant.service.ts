@@ -56,6 +56,18 @@ export class MaterialVariantService {
   }
 
   async getChart(chartDto: ChartDto) {
+    const materialVariantIds = chartDto.materialVariantId || [];
+    let additionQuery: Prisma.MaterialReceiptWhereInput;
+
+    if (materialVariantIds.length > 0) {
+      additionQuery = {
+        materialPackage: {
+          materialVariantId: {
+            in: materialVariantIds,
+          },
+        },
+      };
+    }
     const { year } = chartDto;
     const monthlyData = [];
 
@@ -67,6 +79,7 @@ export class MaterialVariantService {
         await this.prismaService.materialReceipt.findMany({
           where: {
             AND: {
+              ...additionQuery,
               createdAt: {
                 gte: from,
                 lte: to,
@@ -82,7 +95,15 @@ export class MaterialVariantService {
           include: {
             materialPackage: {
               include: {
-                materialVariant: true,
+                materialVariant: {
+                  include: {
+                    material: {
+                      include: {
+                        materialUom: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },

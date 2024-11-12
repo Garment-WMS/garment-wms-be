@@ -22,6 +22,7 @@ import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { MaterialVariantService } from './material-variant.service';
+import { ChartDto } from './dto/chart.dto';
 
 @Controller('material-variant')
 @UseInterceptors(HttpCacheInterceptor)
@@ -58,7 +59,7 @@ export class MaterialVariantController {
   }
 
   @Get('chart')
-  getChart(@Body() chartDto: any) {
+  getChart(@Body() chartDto: ChartDto) {
     return this.materialVariantService.getChart(chartDto);
   }
 
