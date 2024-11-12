@@ -146,7 +146,7 @@ export class ImportRequestController {
     return apiSuccess(
       HttpStatus.OK,
       await this.importRequestService.managerProcess(id, managerProcessDto),
-      'Import request manager process successfully',
+      'Manager process import request successfully',
     );
   }
 

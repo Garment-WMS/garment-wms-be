@@ -120,17 +120,18 @@ export class MaterialVariantService {
               },
             },
           },
-          include: {
-            materialReceipt: {
-              include: {
-                materialPackage: {
-                  include: {
-                    materialVariant: true,
-                  },
-                },
-              },
-            },
-          },
+          //TODO
+          // include: {
+          //   materialReceipt: {
+          //     include: {
+          //       materialPackage: {
+          //         include: {
+          //           materialVariant: true,
+          //         },
+          //       },
+          //     },
+          //   },
+          // },
         });
 
       const totalQuantities = this.calculateTotalQuantities(
@@ -241,20 +242,21 @@ export class MaterialVariantService {
         },
       }),
       this.prismaService.materialExportReceipt.findMany({
-        where: {
-          materialReceipt: {
-            materialPackage: {
-              materialVariantId: id,
-            },
-          },
-        },
-        include: {
-          materialReceipt: {
-            include: {
-              materialPackage: true,
-            },
-          },
-        },
+        //TODO
+        // where: {
+        //   materialReceipt: {
+        //     materialPackage: {
+        //       materialVariantId: id,
+        //     },
+        //   },
+        // },
+        // include: {
+        //   materialReceipt: {
+        //     include: {
+        //       materialPackage: true,
+        //     },
+        //   },
+        // },
       }),
       this.prismaService.materialReceipt.count({
         where: {
@@ -265,11 +267,12 @@ export class MaterialVariantService {
       }),
       this.prismaService.materialExportReceipt.count({
         where: {
-          materialReceipt: {
-            materialPackage: {
-              materialVariantId: id,
-            },
-          },
+          //TODO
+          // materialReceipt: {
+          //   materialPackage: {
+          //     materialVariantId: id,
+          //   },
+          // },
         },
       }),
     ]);

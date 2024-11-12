@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from 'prisma/prisma.module';
+import { InspectionRequestModule } from '../inspection-request/inspection-request.module';
 import { PoDeliveryModule } from '../po-delivery/po-delivery.module';
 import { ImportRequestController } from './import-request.controller';
 import { ImportRequestService } from './import-request.service';
@@ -9,7 +10,7 @@ import { IsImportRequestExistValidator } from './validator/is-import-request-exi
 import { IsPoDeliveryDoesNotHaveActiveImportRequestValidator } from './validator/is-po-delivery-has-active-import-request';
 
 @Module({
-  imports: [PrismaModule, PoDeliveryModule],
+  imports: [PrismaModule, PoDeliveryModule, InspectionRequestModule],
   controllers: [ImportRequestController],
   providers: [
     ImportRequestService,
