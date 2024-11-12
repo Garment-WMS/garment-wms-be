@@ -5,7 +5,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
-import { ImportRequestService } from '../import-request/import-request.service';
+import { importRequestInclude } from '../import-request/import-request.service';
 import { CreateProductionBatchDto } from './dto/create-production-batch.dto';
 import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
 
@@ -32,7 +32,7 @@ export class ProductionBatchService {
         take: limit,
         where: findOptions?.where,
         orderBy: findOptions?.orderBy,
-        include: ProductionBatchService.productionBatchInclude,
+        include: productionBatchInclude,
       }),
       this.prismaService.productionBatch.count({
         where: findOptions?.where,
@@ -86,12 +86,12 @@ export class ProductionBatchService {
       },
     });
   }
-
-  static productionBatchInclude: Prisma.ProductionBatchInclude = {
-    importRequest: {
-      include: ImportRequestService.importRequestInclude,
-    },
-    materialExportRequest: true,
-    productionPlanDetail: true,
-  };
 }
+
+export const productionBatchInclude: Prisma.ProductionBatchInclude = {
+  importRequest: {
+    include: importRequestInclude,
+  },
+  materialExportRequest: true,
+  productionPlanDetail: true,
+};

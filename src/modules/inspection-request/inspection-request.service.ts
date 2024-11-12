@@ -4,12 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { $Enums, Prisma } from '@prisma/client';
+import { $Enums, Prisma, PrismaClient } from '@prisma/client';
+import { DefaultArgs } from '@prisma/client/runtime/library';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
-import { ImportRequestService } from '../import-request/import-request.service';
+import { importRequestInclude } from '../import-request/import-request.service';
 import { inspectionReportInclude } from '../inspection-report/inspection-report.service';
 import { CreateInspectionRequestDto } from './dto/create-inspection-request.dto';
 import { UpdateInspectionRequestDto } from './dto/update-inspection-request.dto';
@@ -92,7 +93,13 @@ export class InspectionRequestService {
     }
   }
 
-  async create(createInspectionRequestDto: CreateInspectionRequestDto) {
+  async create(
+    createInspectionRequestDto: CreateInspectionRequestDto,
+    prismaClient?: Omit<
+      PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+    >,
+  ) {
     const inspectionRequestCreateInput: Prisma.InspectionRequestCreateInput = {
       importRequest: {
         connect: {
@@ -233,7 +240,7 @@ export class InspectionRequestService {
 
 export const inspectionRequestInclude: Prisma.InspectionRequestInclude = {
   importRequest: {
-    include: ImportRequestService.importRequestInclude,
+    include: importRequestInclude,
   },
   inspectionDepartment: {
     include: {

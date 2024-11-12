@@ -137,6 +137,9 @@ export class PrismaService
     'Product',
     'ProductBatch',
     'ProductionPlan',
+    'ProductReceipt',
+    'MaterialReceipt',
+    'PoDelivery',
     'Supplier',
   ];
 

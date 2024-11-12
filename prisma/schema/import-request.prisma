@@ -14,9 +14,8 @@ model ImportRequest {
   cancelledAt            DateTime?             @map("cancelled_at") @db.Timestamptz(6)
   cancelReason           String?               @map("cancelled_reason") @db.VarChar
   description            String?               @map("description") @db.VarChar
-  approveNote            String?               @map("appove_note") @db.VarChar
+  managerNote            String?               @map("manager_note") @db.VarChar
   rejectAt               DateTime?             @map("reject_at") @db.Timestamptz(6)
-  rejectReason           String?               @map("reject_reason") @db.VarChar
   createdAt              DateTime?             @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime?             @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime?             @map("deleted_at") @db.Timestamptz(6)
@@ -40,6 +39,8 @@ enum ImportRequestStatus {
   APPROVED
   INSPECTING
   INSPECTED
+  IMPORTING
+  IMPORTED
 
   @@map("import_request_status")
 }
