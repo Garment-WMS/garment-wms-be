@@ -12,7 +12,6 @@ model MaterialReceipt {
   updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
   InventoryReportDetail       InventoryReportDetail[]
-  MaterialExportReceipt       MaterialExportReceipt[]
   importReceipt               ImportReceipt                 @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialPackage             MaterialPackage               @relation(fields: [materialPackageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialExportReceiptDetail MaterialExportReceiptDetail[]
