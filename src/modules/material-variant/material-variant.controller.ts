@@ -87,9 +87,40 @@ export class MaterialVariantController {
     return this.materialVariantService.findMaterialReceiptByIdWithResponse(id);
   }
 
-  @Get(':id/receipt')
-  getMaterialReceiptById2(@Param('id', new CustomUUIDPipe()) id: string) {
-    return this.materialVariantService.findMaterialReceiptByIdWithResponse2(id);
+  @Get(':id/export-receipt')
+  getMaterialExportReceipt(
+    @Query(
+      new AllFilterPipeUnsafe<
+        any,
+        Prisma.MaterialExportReceiptDetailScalarWhereInput
+      >(['material.name', 'material.code', 'material.materialUom.name'], []),
+    )
+    filterOptions: FilterDto<Prisma.MaterialExportReceiptDetailScalarWhereInput>,
+
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.materialVariantService.findMaterialExportReceipt(
+      id,
+      filterOptions.findOptions,
+    );
+  }
+
+  @Get(':id/import-receipt')
+  getMaterialImportReceipt(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialReceiptScalarWhereInput>(
+        ['material.name', 'material.code', 'material.materialUom.name'],
+        [],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.MaterialReceiptScalarWhereInput>,
+
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.materialVariantService.findMaterialImportReceipt(
+      id,
+      filterOptions.findOptions,
+    );
   }
 
   // @Get(':id/receipt/chart')

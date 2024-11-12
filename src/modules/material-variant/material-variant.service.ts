@@ -51,6 +51,89 @@ export class MaterialVariantService {
     },
   };
 
+  async findMaterialExportReceipt(
+    id: string,
+    findOptions: GeneratedFindOptions<Prisma.MaterialExportReceiptDetailScalarWhereInput>,
+  ) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.materialExportReceiptDetail.findMany({
+        skip: offset,
+        take: limit,
+        where: {
+          materialReceipt: {
+            materialPackage: {
+              materialVariantId: id,
+            },
+          },
+        },
+        include: {
+          materialReceipt: {
+            include: {
+              materialPackage: true,
+            },
+          },
+        },
+      }),
+      this.prismaService.materialExportReceiptDetail.count({
+        where: {
+          materialReceipt: {
+            materialPackage: {
+              materialVariantId: id,
+            },
+          },
+        },
+      }),
+    ]);
+    const dataResponse: DataResponse = {
+      data,
+      pageMeta: getPageMeta(total, offset, limit),
+    };
+
+    return apiSuccess(
+      HttpStatus.OK,
+      dataResponse,
+      'List of Material Export Receipt',
+    );
+  }
+
+  async findMaterialImportReceipt(
+    id: string,
+    findOptions: GeneratedFindOptions<Prisma.MaterialReceiptScalarWhereInput>,
+  ) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.materialReceipt.findMany({
+        skip: offset,
+        take: limit,
+        where: {
+          materialPackage: {
+            materialVariantId: id,
+          },
+        },
+        include: {
+          materialPackage: true,
+        },
+      }),
+      this.prismaService.materialReceipt.count({
+        where: {
+          materialPackage: {
+            materialVariantId: id,
+          },
+        },
+      }),
+    ]);
+
+    const dataResponse: DataResponse = {
+      data,
+      pageMeta: getPageMeta(total, offset, limit),
+    };
+
+    return apiSuccess(HttpStatus.OK, dataResponse, 'List of Material Receipt');
+  }
+
   async getAllMaterialReceiptOfMaterialPackage(materialPackageId: any) {
     throw new Error('Method not implemented.');
   }
