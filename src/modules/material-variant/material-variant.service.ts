@@ -307,7 +307,7 @@ export class MaterialVariantService {
         },
       }),
       //TODO: Need to check if this is correct after doing materialExportReceipt
-      this.prismaService.materialExportReceipt.findMany({
+      this.prismaService.materialExportReceiptDetail.findMany({
         where: {
           materialReceipt: {
             materialPackage: {
@@ -330,7 +330,7 @@ export class MaterialVariantService {
           },
         },
       }),
-      this.prismaService.materialExportReceipt.count({
+      this.prismaService.materialExportReceiptDetail.count({
         where: {
           materialReceipt: {
             materialPackage: {
