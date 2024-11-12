@@ -19,10 +19,10 @@ import { Prisma } from '@prisma/client';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { HttpCacheInterceptor } from 'src/common/interceptor/cache.interceptor';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
+import { ChartDto } from './dto/chart.dto';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { MaterialVariantService } from './material-variant.service';
-import { ChartDto } from './dto/chart.dto';
 
 @Controller('material-variant')
 @UseInterceptors(HttpCacheInterceptor)
@@ -82,9 +82,14 @@ export class MaterialVariantController {
     return this.materialVariantService.findByIdWithResponse(id);
   }
 
-  @Get(':id/receipt')
+  @Get(':id/receiptV1')
   getMaterialReceiptById(@Param('id', new CustomUUIDPipe()) id: string) {
     return this.materialVariantService.findMaterialReceiptByIdWithResponse(id);
+  }
+
+  @Get(':id/receipt')
+  getMaterialReceiptById2(@Param('id', new CustomUUIDPipe()) id: string) {
+    return this.materialVariantService.findMaterialReceiptByIdWithResponse2(id);
   }
 
   // @Get(':id/receipt/chart')
@@ -95,6 +100,15 @@ export class MaterialVariantController {
   //   return this.materialVariantService.findMaterialReceiptChart(id, months);
   // }
 
+<<<<<<< Tabnine <<<<<<<
+  /**//+
+   * Updates an existing material variant by its ID.//+
+   *//+
+   * @param id - The unique identifier of the material variant to be updated.//+
+   * @param updateMaterialDto - The data to be used for updating the material variant.//+
+   *//+
+   * @returns The updated material variant.//+
+   *///+
   @Patch(':id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   updateMaterial(
@@ -103,4 +117,5 @@ export class MaterialVariantController {
   ) {
     return this.materialVariantService.update(id, updateMaterialDto);
   }
+>>>>>>> Tabnine >>>>>>>// {"conversationId":"fe9480af-7261-464f-819f-5731695d0241","source":"instruct"}
 }

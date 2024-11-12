@@ -109,6 +109,7 @@ export class MaterialVariantService {
           },
         });
 
+      //TODO: Need to check if this is correct after doing materialExportReceipt
       const exportMaterialReceipt =
         await this.prismaService.materialExportReceipt.findMany({
           where: {
@@ -172,7 +173,7 @@ export class MaterialVariantService {
       const materialVariantId = materialVariant.id;
       const importQuantity = el.quantityByPack * el.materialPackage.uomPerPack;
       const importQuantityByPack = el.quantityByPack;
-
+      console.log('importQuantity', importQuantityByPack);
       if (acc[materialVariantId]) {
         acc[materialVariantId].totalImportQuantityByUom += importQuantity;
         acc[materialVariantId].totalImportQuantityByPack +=
@@ -283,6 +284,77 @@ export class MaterialVariantService {
       },
       'Material Receipt found',
     );
+  }
+
+  async findMaterialReceiptByIdWithResponse2(id: string) {
+    const [
+      materialImportReceipt,
+      materialExportReceipt,
+      materialImportReceiptCount,
+      materialExportReceiptCount,
+    ] = await this.prismaService.$transaction([
+      this.prismaService.materialReceipt.findMany({
+        where: {
+          materialPackage: {
+            materialVariantId: id,
+          },
+        },
+        include: {
+          materialPackage: true,
+        },
+      }),
+      //TODO: Need to check if this is correct after doing materialExportReceipt
+      this.prismaService.materialExportReceipt.findMany({
+        where: {
+          materialReceipt: {
+            materialPackage: {
+              materialVariantId: id,
+            },
+          },
+        },
+        include: {
+          materialReceipt: {
+            include: {
+              materialPackage: true,
+            },
+          },
+        },
+      }),
+      this.prismaService.materialReceipt.count({
+        where: {
+          materialPackage: {
+            materialVariantId: id,
+          },
+        },
+      }),
+      this.prismaService.materialExportReceipt.count({
+        where: {
+          materialReceipt: {
+            materialPackage: {
+              materialVariantId: id,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const result = [];
+
+    materialImportReceipt.forEach((el) => {
+      result.push({
+        ...el,
+        type: 'importReceipt',
+      });
+    });
+
+    materialExportReceipt.forEach((el) => {
+      result.push({
+        ...el,
+        type: 'exportReceipt',
+      });
+    });
+
+    return apiSuccess(HttpStatus.OK, result, 'Material Receipt found');
   }
 
   async search(
