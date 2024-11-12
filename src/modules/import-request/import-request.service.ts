@@ -501,18 +501,17 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
     include: {
       account: true,
     },
-    poDelivery: {
-      include: {
-        poDeliveryDetail: true,
-        purchaseOrder: {
-          include: {
-            purchasingStaff: {
-              include: {
-                account: true,
-              },
+  },
+  poDelivery: {
+    include: {
+      poDeliveryDetail: true,
+      purchaseOrder: {
+        include: {
+          purchasingStaff: {
+            include: {
+              account: true,
             },
           },
-          supplier: true,
         },
       },
     },

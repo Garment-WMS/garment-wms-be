@@ -17,6 +17,26 @@ export class PoDeliveryService {
     private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
   ) {}
 
+  getExpiredDate(
+    poDeliveryId: string,
+    materialPackageId: string,
+    prismaInstance: PrismaClient<
+      Prisma.PrismaClientOptions,
+      never,
+      DefaultArgs
+    >,
+  ) {
+    return prismaInstance.poDeliveryDetail.findFirst({
+      where: {
+        poDeliveryId,
+        materialPackageId,
+      },
+      select: {
+        expiredDate: true,
+      },
+    });
+  }
+
   async getPoDeliveryByPoId(Poid: string) {
     const result = await this.findPoDelivery({
       purchaseOrderId: Poid,

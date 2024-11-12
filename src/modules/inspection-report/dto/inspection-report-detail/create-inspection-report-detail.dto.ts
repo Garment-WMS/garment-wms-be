@@ -33,13 +33,13 @@ export class CreateInspectionReportDetailDto
   )
   @IsUUID()
   @IsMaterialPackageExist()
-  materialVariantId: string;
+  materialPackageId: string;
 
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsOptional()
   @ValidateIf(
     (o: CreateInspectionReportDetailDto, v) =>
-      o.materialVariantId === undefined,
+      o.materialPackageId === undefined,
   )
   @IsUUID()
   @IsProductSizeExist()

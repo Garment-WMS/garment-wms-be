@@ -27,12 +27,26 @@ export class PoDeliveryMaterialService {
   //   }
   constructor(private readonly prismaService: PrismaService) {}
 
+  //Need to test this function
   async createPoDeliveryMaterial(
     createPoDeliveryMaterial: Prisma.PoDeliveryDetailCreateInput,
+    poDeliveryId: string,
+    materialPackageId: string,
     prismaInstance: PrismaService = this.prismaService,
   ) {
-    return prismaInstance.poDeliveryDetail.create({
-      data: createPoDeliveryMaterial,
+    return prismaInstance.poDeliveryDetail.upsert({
+      where: {
+        poDeliveryId_materialPackageId: {
+          poDeliveryId: poDeliveryId,
+          materialPackageId: materialPackageId,
+        },
+      },
+      create: createPoDeliveryMaterial,
+      update: {
+        quantityByPack: {
+          increment: createPoDeliveryMaterial.quantityByPack,
+        },
+      },
     });
   }
 }

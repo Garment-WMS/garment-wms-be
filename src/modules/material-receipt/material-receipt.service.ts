@@ -4,6 +4,7 @@ import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
+import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreateMaterialReceiptDto } from './dto/create-material-receipt.dto';
 import { UpdateMaterialReceiptDto } from './dto/update-material-receipt.dto';
 
@@ -11,6 +12,7 @@ import { UpdateMaterialReceiptDto } from './dto/update-material-receipt.dto';
 export class MaterialReceiptService {
   constructor(
     private readonly prismaService: PrismaService,
+    private readonly poDeliveryService: PoDeliveryService,
     private readonly inventoryStockService: InventoryStockService,
   ) {}
 
@@ -65,6 +67,7 @@ export class MaterialReceiptService {
         id,
       },
       data: {
+        importDate: new Date(),
         status,
       },
     });
@@ -84,23 +87,29 @@ export class MaterialReceiptService {
       inspectionReportId: string;
       quantityByPack: number | null;
     }[],
+    poDeliveryId: string,
     prismaInstance: PrismaClient = this.prismaService,
     // materialReceipts: CreateMaterialReceiptDto[],
   ) {
-    const materialReceiptsInput: Prisma.MaterialReceiptCreateManyInput[] =
-      inspectionReportDetail.map((detail) => {
-        return {
+    let createdMaterialReceipts;
+    for (let i = 0; i < inspectionReportDetail.length; i++) {
+      const expiredDate = (await this.poDeliveryService.getExpiredDate(
+        poDeliveryId,
+        inspectionReportDetail[0].materialPackageId,
+        prismaInstance,
+      )) as unknown;
+      const expireDate = expiredDate instanceof Date ? expiredDate : null;
+      const resutl = await prismaInstance.materialReceipt.create({
+        data: {
           importReceiptId: id,
-          materialPackageId: detail.materialPackageId,
-          remainQuantityByPack: detail.quantityByPack,
-          quantityByPack: detail.approvedQuantityByPack,
-        };
+          materialPackageId: inspectionReportDetail[i].materialPackageId,
+          remainQuantityByPack: inspectionReportDetail[i].quantityByPack,
+          quantityByPack: inspectionReportDetail[i].approvedQuantityByPack,
+          expireDate: expireDate,
+        },
       });
-    const createdMaterialReceipts = await Promise.all(
-      materialReceiptsInput.map((input) =>
-        prismaInstance.materialReceipt.create({ data: input }),
-      ),
-    );
+      createdMaterialReceipts.push(resutl);
+    }
 
     return createdMaterialReceipts;
   }

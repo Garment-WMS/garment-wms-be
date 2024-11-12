@@ -27,6 +27,15 @@ export class ImportReceiptService {
   includeQuery: Prisma.ImportReceiptInclude = {
     materialReceipt: true,
     productReceipt: true,
+    inspectionReport: {
+      include: {
+        inspectionRequest: {
+          include: {
+            importRequest: true,
+          },
+        },
+      },
+    },
   };
 
   async createMaterialReceipt(
@@ -84,6 +93,7 @@ export class ImportReceiptService {
             await this.materialReceiptService.createMaterialReceipts(
               importReceipt.id,
               inspectionReport.inspectionReportDetail,
+              importRequest.poDeliveryId,
               prismaInstance,
               // createImportReceiptDto.materialReceipts,
             );
@@ -119,9 +129,7 @@ export class ImportReceiptService {
             let expectedImportQuantity = poDeliveryDetail.find(
               (detail) =>
                 detail.materialPackageId === result[i].materialPackageId,
-            );
-            console.log(result[i].materialPackageId);
-            console.log(expectedImportQuantity);
+            ).quantityByPack;
             if (result[i].quantityByPack !== expectedImportQuantity) {
               if (!poDeliveryExtra) {
                 poDeliveryExtra = await this.poDeliveryService.createPoDelivery(
@@ -133,9 +141,8 @@ export class ImportReceiptService {
                   prismaInstance,
                 );
               }
-
-              console.log('poDeliveryExtra', poDeliveryExtra);
-
+              console.log('poDeliveryExtra', result[i].quantityByPack);
+              console.log('expectedImportQuantity', expectedImportQuantity);
               await this.poDeliveryDetailsService.createPoDeliveryMaterial(
                 {
                   poDelivery: {
@@ -145,9 +152,11 @@ export class ImportReceiptService {
                     connect: { id: result[i].materialPackageId },
                   },
                   quantityByPack:
-                    result[i].quantityByPack - expectedImportQuantity,
+                    expectedImportQuantity - result[i].quantityByPack,
                   totalAmount: 0,
                 },
+                poDeliveryExtra.id,
+                result[i].materialPackageId,
                 prismaInstance,
               );
             }
@@ -156,7 +165,7 @@ export class ImportReceiptService {
           //Update import request status to Approved
           await this.importRequestService.updateImportRequestStatus(
             inspectionReport.inspectionRequest.importRequestId,
-            $Enums.ImportRequestStatus.APPROVED,
+            $Enums.ImportRequestStatus.IMPORTING,
             prismaInstance,
           );
         }
@@ -218,7 +227,8 @@ export class ImportReceiptService {
   }
 
   async finishImportReceipt(importReceiptId: string) {
-    const importReceipt = await this.findUnique(importReceiptId);
+    const importReceipt: any = await this.findUnique(importReceiptId);
+
     if (!importReceipt) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Import Receipt not found');
     }
@@ -242,6 +252,11 @@ export class ImportReceiptService {
             await this.inventoryStockService.updateMaterialStock(
               detail.materialPackageId,
               detail.quantityByPack,
+              prismaInstance,
+            );
+            await this.importRequestService.updateImportRequestStatus(
+              importReceipt.inspectionReport.inspectionRequest.importReqeuestId,
+              $Enums.ImportRequestStatus.IMPORTED,
               prismaInstance,
             );
           });

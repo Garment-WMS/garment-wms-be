@@ -29,7 +29,7 @@ export class IsInspectionReportDetailInImportRequestDetail
       case this.materialVariantIdPropertyName:
         const materialVariantIds =
           createInspectionReportDto.inspectionReportDetail.map(
-            (materialVariant) => materialVariant.materialVariantId,
+            (materialVariant) => materialVariant.materialPackageId,
           );
         const isMaterialEveryVariantInImportRequest =
           await this.importRequestService.isInspectReportMaterialVariantInImportRequest(
