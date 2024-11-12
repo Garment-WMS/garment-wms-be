@@ -55,27 +55,7 @@ export class ImportRequestController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.ImportRequestWhereInput>(
         ['inspectionRequest.code', 'inspectionRequest.inspectionReport.code'],
-        [
-          { createdAt: 'desc' },
-          { id: 'asc' },
-          { warehouseStaffId: 'asc' },
-          { poDeliveryId: 'asc' },
-          { warehouseManagerId: 'asc' },
-          { purchasingStaffId: 'asc' },
-          { productionDepartmentId: 'asc' },
-          { productionBatchId: 'asc' },
-          { status: 'asc' },
-          { type: 'asc' },
-          { startedAt: 'asc' },
-          { finishedAt: 'asc' },
-          { cancelledAt: 'asc' },
-          { cancelReason: 'asc' },
-          { description: 'asc' },
-          { rejectAt: 'asc' },
-          { rejectReason: 'asc' },
-          { updatedAt: 'asc' },
-          { deletedAt: 'asc' },
-        ],
+        [{ createdAt: 'desc' }, { id: 'asc' }],
       ),
     )
     filterDto: FilterDto<Prisma.ImportRequestWhereInput>,

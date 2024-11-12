@@ -253,7 +253,7 @@ export class ImportRequestService {
         : undefined,
       status: dto.status,
       description: dto.description,
-      rejectReason: dto.rejectReason,
+      managerNote: dto.managerNote,
       cancelReason: dto.cancelReason,
       startedAt: dto.startAt,
       finishedAt: dto.finishAt,
@@ -360,7 +360,7 @@ export class ImportRequestService {
           where: { id: id },
           data: {
             status: $Enums.ImportRequestStatus.APPROVED,
-            approveNote: managerProcess.approveNote,
+            managerNote: managerProcess.managerNote,
             warehouseStaffId: managerProcess.warehouseStaffId,
           },
         });
@@ -393,7 +393,7 @@ export class ImportRequestService {
           data: {
             status: $Enums.ImportRequestStatus.REJECTED,
             rejectAt: new Date(),
-            rejectReason: managerProcess.rejectReason,
+            managerNote: managerProcess.managerNote,
           },
         });
       default:

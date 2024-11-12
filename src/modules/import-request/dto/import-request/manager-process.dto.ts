@@ -25,16 +25,10 @@ export class ManagerProcessDto {
   @IsNotEmpty()
   @IsString()
   @IsOptional()
-  approveNote?: string;
+  managerNote?: string;
 
   @ApiProperty({ required: false })
   rejectAt?: string | Date;
-
-  @ApiProperty({ required: false })
-  @IsNotEmpty()
-  @IsString()
-  @IsOptional()
-  rejectReason?: string;
 
   constructor() {
     this.rejectAt =

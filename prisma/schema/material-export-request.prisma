@@ -7,9 +7,8 @@ model MaterialExportRequest {
   productionDepartmentId      String                        @map("production_department_id") @db.Uuid
   status                      MaterialExportRequestStatus   @default(PENDING) @map("status")
   description                 String?                       @map("description") @db.VarChar
-  approveNote                 String?                       @map("appove_note") @db.VarChar
+  managerNote                 String?                       @map("manager_note") @db.VarChar
   rejectAt                    DateTime?                     @map("reject_at") @db.Timestamptz(6)
-  rejectReason                String?                       @map("reject_reason") @db.VarChar
   createdAt                   DateTime?                     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
