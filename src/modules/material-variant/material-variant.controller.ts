@@ -100,15 +100,6 @@ export class MaterialVariantController {
   //   return this.materialVariantService.findMaterialReceiptChart(id, months);
   // }
 
-<<<<<<< Tabnine <<<<<<<
-  /**//+
-   * Updates an existing material variant by its ID.//+
-   *//+
-   * @param id - The unique identifier of the material variant to be updated.//+
-   * @param updateMaterialDto - The data to be used for updating the material variant.//+
-   *//+
-   * @returns The updated material variant.//+
-   *///+
   @Patch(':id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   updateMaterial(
@@ -117,5 +108,4 @@ export class MaterialVariantController {
   ) {
     return this.materialVariantService.update(id, updateMaterialDto);
   }
->>>>>>> Tabnine >>>>>>>// {"conversationId":"fe9480af-7261-464f-819f-5731695d0241","source":"instruct"}
 }
