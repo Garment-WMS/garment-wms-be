@@ -1,4 +1,4 @@
-import { DirectFilterPipe } from '@chax-at/prisma-filter';
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
@@ -33,7 +33,7 @@ export class MaterialReceiptController {
 
   @Get()
   findAllMaterialVariant(
-    @Query(new DirectFilterPipe<any, Prisma.MaterialWhereInput>([]))
+    @Query(new AllFilterPipeUnsafe<any, Prisma.MaterialWhereInput>([]))
     filterDto: FilterDto<Prisma.MaterialWhereInput>,
   ) {
     return this.materialReceiptService.findAll();
@@ -41,7 +41,7 @@ export class MaterialReceiptController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.materialReceiptService.findOne(+id);
+    return this.materialReceiptService.findOne(id);
   }
 
   @Patch(':id')

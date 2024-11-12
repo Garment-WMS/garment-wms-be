@@ -58,12 +58,6 @@ export class CreateImportRequestDto {
   @IsNotEmpty()
   @IsString()
   @IsOptional()
-  rejectReason?: string;
-
-  @ApiProperty({ required: false })
-  @IsNotEmpty()
-  @IsString()
-  @IsOptional()
   cancelReason?: string;
 
   @ApiProperty({ required: false })

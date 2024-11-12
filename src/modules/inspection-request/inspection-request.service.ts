@@ -1,5 +1,9 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { $Enums, Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -39,23 +43,53 @@ export class InspectionRequestService {
     return dataResponse;
   }
 
-  async getStatistics() {
+  async getStatistics(type?: $Enums.InspectionRequestType) {
     const [total, inspecting, inspected] =
       await this.prismaService.$transaction([
-        this.prismaService.inspectionRequest.count(),
         this.prismaService.inspectionRequest.count({
           where: {
+            type: type,
+          },
+        }),
+        this.prismaService.inspectionRequest.count({
+          where: {
+            type: type,
             status: $Enums.InspectionRequestStatus.INSPECTING,
           },
         }),
         this.prismaService.inspectionRequest.count({
           where: {
+            type: type,
             status: $Enums.InspectionRequestStatus.INSPECTED,
           },
         }),
       ]);
 
     return { total, inspecting, inspected };
+  }
+
+  private async getInspectionRequestTypeByImportRequestId(
+    importRequestId: string,
+  ) {
+    const importRequest = await this.prismaService.importRequest.findUnique({
+      select: {
+        type: true,
+      },
+      where: {
+        id: importRequestId,
+      },
+    });
+
+    if (!importRequest)
+      throw new ConflictException(
+        `Get Inspection Request Type failed because Import Request Id ${importRequestId} not found`,
+      );
+
+    if (importRequest.type.toString().startsWith('PRODUCT')) {
+      return $Enums.InspectionRequestType.PRODUCT;
+    } else {
+      return $Enums.InspectionRequestType.MATERIAL;
+    }
   }
 
   async create(createInspectionRequestDto: CreateInspectionRequestDto) {
@@ -87,6 +121,9 @@ export class InspectionRequestService {
       status: createInspectionRequestDto.status,
       note: createInspectionRequestDto.note,
       code: undefined,
+      type: await this.getInspectionRequestTypeByImportRequestId(
+        createInspectionRequestDto.importRequestId,
+      ),
     };
     const [inspectionRequest, importRequest] =
       await this.prismaService.$transaction([
@@ -134,7 +171,10 @@ export class InspectionRequestService {
   }
 
   async getEnum() {
-    return { InspectionRequestStatus: $Enums.InspectionRequestStatus };
+    return {
+      InspectionRequestStatus: $Enums.InspectionRequestStatus,
+      InspectionRequestType: $Enums.InspectionRequestType,
+    };
   }
 
   async update(

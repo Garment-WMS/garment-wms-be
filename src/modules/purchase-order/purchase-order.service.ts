@@ -49,6 +49,18 @@ export class PurchaseOrderService {
     },
   };
 
+  async getAllPurchaseOrders() {
+    const result = await this.prismaService.purchaseOrder.findMany({
+      include: this.queryInclude,
+    });
+
+    return apiSuccess(
+      HttpStatus.OK,
+      result,
+      'List of Purchase Order retrieved successfully',
+    );
+  }
+
   async cancelledPurchaseOrder(
     id: string,
     cancelPurchaseOrder: CancelledPurchaseOrderDto,

@@ -1,4 +1,4 @@
-import { DirectFilterPipe } from '@chax-at/prisma-filter';
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 import {
   Controller,
   Delete,
@@ -21,8 +21,7 @@ export class InspectionDepartmentController {
   @Get()
   async search(
     @Query(
-      new DirectFilterPipe<any, Prisma.InspectionDepartmentWhereInput>(
-        ['id', 'accountId', 'createdAt', 'updatedAt'],
+      new AllFilterPipeUnsafe<any, Prisma.InspectionDepartmentWhereInput>(
         ['inspectionRequest.id', 'inspectionReport.id'],
         [{ id: 'asc', createdAt: 'desc', updatedAt: 'desc' }],
       ),

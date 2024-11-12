@@ -8,14 +8,19 @@ export class CreateInventoryReportDto {
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  productVariantId: string;
+  inventoryReportPlanDetailId: string;
 
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  materialVariantId: string;
+  productSizeId: string;
 
-  @AtLeastOneExists('productVariantId', 'materialVariantId')
+  @ApiProperty()
+  @IsOptional()
+  @IsUUID()
+  materialPackageId: string;
+
+  @AtLeastOneExists('productSizeId', 'materialPackageId')
   dummyField: string; // This field is just a placeholder for the custom validation
 
   @ApiProperty()

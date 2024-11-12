@@ -13,5 +13,6 @@ import { InventoryReportPlanService } from './inventory-report-plan.service';
     InventoryReportModule,
   ],
   providers: [InventoryReportPlanService],
+  exports: [InventoryReportPlanService],
 })
 export class InventoryReportPlanModule {}

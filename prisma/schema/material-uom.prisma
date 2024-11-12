@@ -1,10 +1,11 @@
 model MaterialUom {
-  id        String     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  name      String     @unique @map("name") @db.VarChar
-  createdAt DateTime?  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime?  @updatedAt @map("updated_at") @db.Timestamp(6)
-  deletedAt DateTime?  @map("deleted_at") @db.Timestamp(6)
-  material  Material[]
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  name         String     @unique @map("name") @db.VarChar
+  uomCharacter String     @default("") @map("uom_character") @db.VarChar
+  createdAt    DateTime?  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime?  @updatedAt @map("updated_at") @db.Timestamp(6)
+  deletedAt    DateTime?  @map("deleted_at") @db.Timestamp(6)
+  material     Material[]
 
   @@map("material_uom")
 }

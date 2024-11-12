@@ -1,15 +1,16 @@
 model WarehouseStaff {
-  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  accountId             String                  @unique @map("account_id") @db.Uuid
-  createdAt             DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime?               @updatedAt @map("updated_at") @db.Timestamp(6)
-  deletedAt             DateTime?               @map("deleted_at") @db.Timestamp(6)
-  importReceipt         ImportReceipt[]
-  importRequest         ImportRequest[]
-  account               Account                 @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  InventoryReport       InventoryReport[]
-  MaterialExportReceipt MaterialExportReceipt[]
+  id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  accountId                 String                      @unique @map("account_id") @db.Uuid
+  createdAt                 DateTime?                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime?                   @updatedAt @map("updated_at") @db.Timestamp(6)
+  deletedAt                 DateTime?                   @map("deleted_at") @db.Timestamp(6)
+  importReceipt             ImportReceipt[]
+  importRequest             ImportRequest[]
+  account                   Account                     @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  InventoryReport           InventoryReport[]
+  MaterialExportReceipt     MaterialExportReceipt[]
+  InventoryReportPlanDetail InventoryReportPlanDetail[]
+  MaterialExportRequest     MaterialExportRequest[]
 
   @@map("warehouse_staff")
-  InventoryReportPlanDetail InventoryReportPlanDetail[]
 }

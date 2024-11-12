@@ -6,6 +6,7 @@ model InspectionRequest {
   productionDeparmentId  String?                 @map("production_deparment_id") @db.Uuid
   inspectionDepartmentId String                  @map("inspection_department_id") @db.Uuid
   status                 InspectionRequestStatus @default(INSPECTING) @map("status")
+  type                   InspectionRequestType   @default(MATERIAL) @map("type")
   createdAt              DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime?               @map("deleted_at") @db.Timestamptz(6)
@@ -27,4 +28,11 @@ enum InspectionRequestStatus {
   INSPECTED
 
   @@map("inspection_request_status")
+}
+
+enum InspectionRequestType {
+  MATERIAL
+  PRODUCT
+
+  @@map("inspection_request_type")
 }

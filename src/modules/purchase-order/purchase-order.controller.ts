@@ -64,6 +64,12 @@ export class PurchaseOrderController {
   ) {
     return this.purchaseOrderService.getPurchaseOrders(filterDto.findOptions);
   }
+
+
+  @Get('all')
+  getAllPurchaseOrders() {
+    return this.purchaseOrderService.getAllPurchaseOrders();
+  } 
   @Get('status')
   getPurchaseOrderStatus() {
     return this.purchaseOrderService.getPurchaseOrderStatus();

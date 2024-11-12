@@ -33,7 +33,9 @@ export class IsImportReqStatusCanCreateInspectionReqValidator
     return allowCreateInspectionRequestStatus.includes(importRequest.status);
   }
   defaultMessage?(validationArguments?: ValidationArguments): string {
-    return 'Import request is not exist or canceled';
+    return `Allowed Import Request Status to create Inspection Request: ${allowActionImportRequestStatus.allowCreateInspectionRequestStatus.join(
+      ', ',
+    )}`;
   }
 }
 

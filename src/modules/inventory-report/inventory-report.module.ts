@@ -6,13 +6,13 @@ import { MaterialVariantModule } from '../material-variant/material-variant.modu
 import { ProductVariantModule } from '../product-variant/product-variant.module';
 import { InventoryReportController } from './inventory-report.controller';
 import { InventoryReportService } from './inventory-report.service';
+import { InventoryReportPlanDetailModule } from '../inventory-report-plan-detail/inventory-report-plan-detail.module';
 
 @Module({
   controllers: [InventoryReportController],
   imports: [
     MaterialVariantModule,
     MaterialReceiptModule,
-    
     ProductVariantModule,
     InventoryReportDetailModule,
     PrismaModule,

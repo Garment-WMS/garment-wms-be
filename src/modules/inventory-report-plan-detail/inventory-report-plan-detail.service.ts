@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { InventoryReportStatus, Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
+import { apiSuccess } from 'src/common/dto/api-response';
 import { InventoryReportService } from '../inventory-report/inventory-report.service';
 import { CreateInventoryReportPlanDetailDto } from './dto/create-inventory-report-plan-detail.dto';
 import { UpdateInventoryReportPlanDetailDto } from './dto/update-inventory-report-plan-detail.dto';
@@ -43,6 +44,51 @@ export class InventoryReportPlanDetailService {
     },
     inventoryReport: true,
   };
+
+  async checkLastInventoryReportInPlan(inventoryReportId: string) {
+    let inventoryReportPlanDetail =
+      await this.findByInventoryReportId(inventoryReportId);
+    if (inventoryReportPlanDetail.length === 0) {
+      return null;
+    }
+    inventoryReportPlanDetail = await this.findByInventoryReportPlanId(
+      inventoryReportPlanDetail[0].inventoryReportPlanId,
+    );
+    const hasPendingOrExecuting = inventoryReportPlanDetail.some((el) => {
+      return (
+        el.inventoryReport.status === InventoryReportStatus.PENDING ||
+        el.inventoryReport.status === InventoryReportStatus.EXECUTING
+      );
+    });
+
+    if (hasPendingOrExecuting) {
+      return null;
+    }
+    // Further processing...
+    return inventoryReportPlanDetail[0].inventoryReportPlanId;
+  }
+  findByInventoryReportId(inventoryReportId: string) {
+    if (!isUUID(inventoryReportId)) {
+      throw new Error('Id is required');
+    }
+    return this.prismaService.inventoryReportPlanDetail.findMany({
+      where: {
+        inventoryReportId,
+      },
+      include: this.includeQuery,
+    });
+  }
+  findByInventoryReportPlanId(inventoryReportPlanId: string) {
+    if (!isUUID(inventoryReportPlanId)) {
+      throw new Error('Id is required');
+    }
+    return this.prismaService.inventoryReportPlanDetail.findMany({
+      where: {
+        inventoryReportPlanId,
+      },
+      include: this.includeQuery,
+    });
+  }
 
   // async processInventoryReportPlanDetail(
   //   id: string,
@@ -95,8 +141,16 @@ export class InventoryReportPlanDetailService {
     return `This action returns all inventoryReportPlanDetail`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} inventoryReportPlanDetail`;
+  async findOne(id: string) {
+    const inventoryReportPlanDetail = await this.findById(id);
+    if (!inventoryReportPlanDetail) {
+      throw new Error('Inventory report plan detail not found');
+    }
+    return apiSuccess(
+      HttpStatus.OK,
+      inventoryReportPlanDetail,
+      'Get inventory report plan detail successfully',
+    );
   }
 
   update(

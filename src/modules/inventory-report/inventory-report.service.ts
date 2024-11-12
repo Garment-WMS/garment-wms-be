@@ -1,7 +1,11 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
+import { InventoryReportStatus, Prisma, PrismaClient } from '@prisma/client';
+import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
+import { getPageMeta } from 'src/common/utils/utils';
 import { CreateInventoryReportDetailDto } from '../inventory-report-detail/dto/create-inventory-report-detail.dto';
 import { InventoryReportDetailService } from '../inventory-report-detail/inventory-report-detail.service';
 import { InventoryReportPlanDto } from '../inventory-report-plan/dto/inventory-report-plan.dto';
@@ -21,7 +25,55 @@ export class InventoryReportService {
 
   includeQuery: Prisma.InventoryReportInclude = {
     inventoryReportDetail: true,
+    inventoryReportPlanDetail: {
+      include: {
+        inventoryReportPlan: true,
+      },
+    },
   };
+
+  async findAllByWarehouseStaff(
+    findOptions: GeneratedFindOptions<Prisma.InventoryReportWhereInput>,
+    warehouseStaffId: string,
+  ) {
+    const { skip, take, ...rest } = findOptions;
+    const page = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+
+    const [result, total] = await this.prismaService.$transaction([
+      this.prismaService.inventoryReport.findMany({
+        where: {
+          AND: [
+            {
+              warehouseStaffId,
+              ...rest?.where,
+            },
+          ],
+        },
+        include: this.includeQuery,
+        skip: page,
+        take: limit,
+      }),
+      this.prismaService.inventoryReport.count({
+        where: {
+          AND: [
+            {
+              warehouseStaffId,
+              ...rest?.where,
+            },
+          ],
+        },
+      }),
+    ]);
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: result,
+        pageMeta: getPageMeta(total, page, limit),
+      },
+      'List of Purchase Order',
+    );
+  }
 
   async createInventoryReport(
     inventoryReportParam: InventoryReportPlanDto,
@@ -73,7 +125,6 @@ export class InventoryReportService {
         }
       }),
     );
-    console.log('asd', receipt.materialReceipt);
     receipt.materialReceipt.forEach((materialReceipt) => {
       createInventoryReportDetailDto.push({
         materialReceiptId: materialReceipt.id,
@@ -117,14 +168,24 @@ export class InventoryReportService {
     createInventoryReportDto: CreateInventoryReportDto,
     managerId: string,
   ) {
-    const materialReceipt =
-      await this.materialVariantService.getAllMaterialReceiptOfMaterialVariant(
-        createInventoryReportDto.materialVariantId,
-      );
+    let materialReceipt = [];
+    let productReceipt = [];
+    if (createInventoryReportDto.materialPackageId) {
+      materialReceipt =
+        await this.materialReceiptService.getAllMaterialReceiptOfMaterialPackage(
+          createInventoryReportDto.materialPackageId,
+        );
 
-    if (!materialReceipt) {
-      throw new Error('Material Receipt not found');
+      if (!materialReceipt) {
+        throw new Error('Material Receipt not found');
+      }
     }
+
+    //TODO: Product receipt
+    if (createInventoryReportDto.productSizeId) {
+      // const productReceipt = await this.
+    }
+
     const createInventoryReportDetailDto: CreateInventoryReportDetailDto[] = [];
 
     const result = await this.prismaService.$transaction(
@@ -133,9 +194,6 @@ export class InventoryReportService {
           code: undefined,
           from: new Date(),
           note: createInventoryReportDto.note,
-          // materialVariant: {
-          //   connect: { id: createInventoryReportDto.materialVariantId },
-          // },
           warehouseManager: {
             connect: { id: managerId },
           },
@@ -153,14 +211,29 @@ export class InventoryReportService {
         if (!inventoryReport) {
           throw new Error('Inventory Report created failed');
         }
-        materialReceipt.forEach((materialReceipt) => {
-          createInventoryReportDetailDto.push({
-            materialReceiptId: materialReceipt.id,
-            expectedQuantity: materialReceipt.remainQuantityByPack,
-            inventoryReportId: inventoryReport.id,
-            actualQuantity: undefined,
+
+        if (materialReceipt.length > 0) {
+          materialReceipt.forEach((materialReceipt) => {
+            createInventoryReportDetailDto.push({
+              materialReceiptId: materialReceipt.id,
+              expectedQuantity: materialReceipt.remainQuantityByPack,
+              inventoryReportId: inventoryReport.id,
+              actualQuantity: undefined,
+            });
           });
-        });
+        }
+        if (productReceipt.length > 0) {
+          productReceipt.forEach((materialReceipt) => {
+            createInventoryReportDetailDto.push({
+              // materialReceiptId: materialReceipt.id,
+              productReceiptId: materialReceipt.id,
+              expectedQuantity: materialReceipt.remainQuantityByPack,
+              inventoryReportId: inventoryReport.id,
+              actualQuantity: undefined,
+            });
+          });
+        }
+
         await this.inventoryReportDetailService.create(
           createInventoryReportDetailDto,
           prismaInstance,
@@ -176,6 +249,17 @@ export class InventoryReportService {
         }
 
         inventoryReport.inventoryReportDetail = inventoryReportDetail;
+
+        if (createInventoryReportDto.inventoryReportPlanDetailId) {
+          await prismaInstance.inventoryReportPlanDetail.update({
+            where: { id: createInventoryReportDto.inventoryReportPlanDetailId },
+            data: {
+              inventoryReport: {
+                connect: { id: inventoryReport.id },
+              },
+            },
+          });
+        }
 
         return inventoryReport;
       },
@@ -209,9 +293,52 @@ export class InventoryReportService {
     );
   }
 
-  update(id: number, updateInventoryReportDto: UpdateInventoryReportDto) {
+  async findById(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Id is not valid');
+    }
+    const result = await this.prismaService.inventoryReport.findUnique({
+      where: { id },
+      include: this.includeQuery,
+    });
+    return result;
+  }
+
+  async update(id: string, updateInventoryReportDto: UpdateInventoryReportDto) {
     return `This action updates a #${id} inventoryReport`;
   }
+
+  async updateStatus(id: string, status: InventoryReportStatus) {
+    const inventoryReport = await this.findById(id);
+
+    if (!inventoryReport) {
+      throw new BadRequestException('Inventory Report not found');
+    }
+    const result = await this.prismaService.inventoryReport.update({
+      where: { id },
+      data: {
+        status,
+      },
+    });
+  }
+
+  // async checkLastInventoryReport(inventoryReportPlanId: string) {
+  //   const inventoryReport = await this.prismaService.inventoryReport.findMany({
+  //     where: {
+  //       : inventoryId,
+  //       status: {
+  //         notIn: [
+  //           InventoryReportStatus.EXECUTING,
+  //           InventoryReportStatus.PENDING,
+  //         ],
+  //       },
+  //     },
+  //   });
+  //   if (inventoryReport.length > 0) {
+  //     return false;
+  //   }
+  //   return true;
+  // }
 
   remove(id: number) {
     return `This action removes a #${id} inventoryReport`;

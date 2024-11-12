@@ -1,4 +1,4 @@
-import { DirectFilterPipe } from '@chax-at/prisma-filter';
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
@@ -9,12 +9,18 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Prisma } from '@prisma/client';
+import { Prisma, RoleCode } from '@prisma/client';
+import { GetUser } from 'src/common/decorator/get_user.decorator';
+import { Roles } from 'src/common/decorator/roles.decorator';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
+import { RolesGuard } from 'src/common/guard/roles.guard';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
 import { PurchasingStaffProcessDto } from './dto/import-request/purchasing-staff-process.dto';
@@ -28,10 +34,18 @@ export class ImportRequestController {
   constructor(private readonly importRequestService: ImportRequestService) {}
 
   @Post()
-  async create(@Body() createImportRequestDto: CreateImportRequestDto) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.PURCHASING_STAFF)
+  async create(
+    @GetUser() purchasingStaff: AuthenUser,
+    @Body() createImportRequestDto: CreateImportRequestDto,
+  ) {
     return apiSuccess(
       HttpStatus.CREATED,
-      await this.importRequestService.create(createImportRequestDto),
+      await this.importRequestService.create(
+        purchasingStaff,
+        createImportRequestDto,
+      ),
       'Import request created successfully',
     );
   }
@@ -39,29 +53,7 @@ export class ImportRequestController {
   @Get()
   async search(
     @Query(
-      new DirectFilterPipe<any, Prisma.ImportRequestWhereInput>(
-        [
-          'id',
-          'warehouseStaffId',
-          'poDeliveryId',
-          'purchasingStaffId',
-          'warehouseManagerId',
-          'productionDepartmentId',
-          'productionBatchId',
-          'status',
-          'code',
-          'type',
-          'startedAt',
-          'finishedAt',
-          'cancelledAt',
-          'cancelReason',
-          'description',
-          'rejectAt',
-          'rejectReason',
-          'createdAt',
-          'updatedAt',
-          'deletedAt',
-        ],
+      new AllFilterPipeUnsafe<any, Prisma.ImportRequestWhereInput>(
         ['inspectionRequest.code', 'inspectionRequest.inspectionReport.code'],
         [
           { createdAt: 'desc' },
@@ -144,6 +136,8 @@ export class ImportRequestController {
   }
 
   @Post(':id/manager-process')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER)
   async managerProcess(
     @Param('id', IsImportRequestExistPipe)
     id: string,
@@ -157,6 +151,8 @@ export class ImportRequestController {
   }
 
   @Post(':id/purchasing-staff-process')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.PURCHASING_STAFF)
   async purchasingStaffProcess(
     @Param('id', IsImportRequestExistPipe)
     id: string,
