@@ -1,8 +1,10 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import {
   BadRequestException,
+  ConflictException,
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { $Enums, Prisma, PrismaClient } from '@prisma/client';
@@ -14,8 +16,10 @@ import { apiFailed } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
-import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { CreateInspectionRequestDto } from '../inspection-request/dto/create-inspection-request.dto';
+import { InspectionRequestService } from '../inspection-request/inspection-request.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
@@ -27,6 +31,7 @@ export class ImportRequestService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly poDeliveryService: PoDeliveryService,
+    private readonly inspectionRequestService: InspectionRequestService,
   ) {}
 
   async search(
@@ -40,7 +45,7 @@ export class ImportRequestService {
         take: limit,
         where: findOptions?.where,
         orderBy: findOptions?.orderBy,
-        include: ImportRequestService.importRequestInclude,
+        include: importRequestInclude,
       }),
       this.prismaService.importRequest.count(
         findOptions?.where
@@ -102,7 +107,7 @@ export class ImportRequestService {
 
   findAll() {
     return this.prismaService.importRequest.findMany({
-      include: ImportRequestService.importRequestInclude,
+      include: importRequestInclude,
     });
   }
 
@@ -128,7 +133,7 @@ export class ImportRequestService {
   async findUnique(id: string) {
     const importRequest = await this.prismaService.importRequest.findUnique({
       where: { id },
-      include: ImportRequestService.importRequestInclude,
+      include: importRequestInclude,
     });
     if (!importRequest) {
       throw new NotFoundException("Import request doesn't exist");
@@ -139,7 +144,7 @@ export class ImportRequestService {
   async findFirst(id: string) {
     const importRequest = await this.prismaService.importRequest.findFirst({
       where: { id },
-      include: ImportRequestService.importRequestInclude,
+      include: importRequestInclude,
     });
     return importRequest;
   }
@@ -218,7 +223,7 @@ export class ImportRequestService {
     const [result, updatePoDelivery] = await this.prismaService.$transaction([
       this.prismaService.importRequest.create({
         data: createImportRequestInput,
-        include: ImportRequestService.importRequestInclude,
+        include: importRequestInclude,
       }),
       this.poDeliveryService.updateStatus(
         dto.poDeliveryId,
@@ -248,7 +253,7 @@ export class ImportRequestService {
         : undefined,
       status: dto.status,
       description: dto.description,
-      rejectReason: dto.rejectReason,
+      managerNote: dto.managerNote,
       cancelReason: dto.cancelReason,
       startedAt: dto.startAt,
       finishedAt: dto.finishAt,
@@ -274,7 +279,7 @@ export class ImportRequestService {
     return this.prismaService.importRequest.update({
       where: { id },
       data: updateImportRequestInput,
-      include: ImportRequestService.importRequestInclude,
+      include: importRequestInclude,
     });
   }
 
@@ -331,7 +336,11 @@ export class ImportRequestService {
   async managerProcess(id: string, managerProcess: ManagerProcessDto) {
     const importRequest = await this.prismaService.importRequest.findUnique({
       where: { id },
-      select: { status: true },
+      select: {
+        id: true,
+        status: true,
+        warehouseManagerId: true,
+      },
     });
 
     const allowApproveAndReject: $Enums.ImportRequestStatus[] = [
@@ -347,22 +356,50 @@ export class ImportRequestService {
 
     switch (managerProcess.action) {
       case $Enums.ImportRequestStatus.APPROVED:
-        return await this.prismaService.importRequest.update({
+        const importRequest = await this.prismaService.importRequest.update({
           where: { id: id },
           data: {
             status: $Enums.ImportRequestStatus.APPROVED,
-            approveNote: managerProcess.approveNote,
+            managerNote: managerProcess.managerNote,
+            warehouseStaffId: managerProcess.warehouseStaffId,
           },
         });
+        Logger.debug(importRequest);
+
+        const createInspectionRequestDto: CreateInspectionRequestDto = {
+          importRequestId: importRequest.id,
+          inspectionDepartmentId: managerProcess.inspectionDepartmentId,
+          warehouseManagerId: importRequest.warehouseManagerId,
+          note: managerProcess.InspectionNote,
+        };
+
+        let inspectionRequest;
+        try {
+          inspectionRequest = await this.inspectionRequestService.create(
+            createInspectionRequestDto,
+          );
+        } catch (e) {
+          Logger.error(e);
+          throw new ConflictException(
+            'Can not create Inspection Request automatically',
+          );
+        }
+
+        return { importRequest, inspectionRequest };
+
       case $Enums.ImportRequestStatus.REJECTED:
         return await this.prismaService.importRequest.update({
           where: { id },
           data: {
             status: $Enums.ImportRequestStatus.REJECTED,
             rejectAt: new Date(),
-            rejectReason: managerProcess.rejectReason,
+            managerNote: managerProcess.managerNote,
           },
         });
+      default:
+        throw new BadRequestException(
+          `Allowed action is ${$Enums.ImportRequestStatus.APPROVED} or ${$Enums.ImportRequestStatus.REJECTED}`,
+        );
     }
   }
 
@@ -428,55 +465,55 @@ export class ImportRequestService {
     );
     return productVariantIds.every((id) => productVariantsInDb.has(id));
   }
-
-  static importRequestInclude: Prisma.ImportRequestInclude = {
-    importRequestDetail: {
-      include: {
-        materialPackage: {
-          include: {
-            materialVariant: {
-              include: {
-                material: {
-                  include: {
-                    materialUom: true,
-                  },
-                },
-                materialAttribute: true,
-                materialInspectionCriteria: true,
-              },
-            },
-          },
-        },
-      },
-    },
-    warehouseManager: {
-      include: {
-        account: true,
-      },
-    },
-    purchasingStaff: {
-      include: {
-        account: true,
-      },
-    },
-    warehouseStaff: {
-      include: {
-        account: true,
-      },
-    },
-    poDelivery: {
-      include: {
-        purchaseOrder: {
-          include: {
-            purchasingStaff: {
-              include: {
-                account: true,
-              },
-            },
-            supplier: true,
-          },
-        },
-      },
-    },
-  };
 }
+
+export const importRequestInclude: Prisma.ImportRequestInclude = {
+  importRequestDetail: {
+    include: {
+      materialPackage: {
+        include: {
+          materialVariant: {
+            include: {
+              material: {
+                include: {
+                  materialUom: true,
+                },
+              },
+              materialAttribute: true,
+              materialInspectionCriteria: true,
+            },
+          },
+        },
+      },
+    },
+  },
+  warehouseManager: {
+    include: {
+      account: true,
+    },
+  },
+  purchasingStaff: {
+    include: {
+      account: true,
+    },
+  },
+  warehouseStaff: {
+    include: {
+      account: true,
+    },
+  },
+  poDelivery: {
+    include: {
+      purchaseOrder: {
+        include: {
+          purchasingStaff: {
+            include: {
+              account: true,
+            },
+          },
+          supplier: true,
+        },
+      },
+    },
+  },
+};

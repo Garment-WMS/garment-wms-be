@@ -24,7 +24,7 @@ export class CreateInspectionRequestDto {
   @ApiProperty({ required: false })
   @ValidateIf((o) => o.warehouseManagerId === undefined)
   @IsUUID()
-  purchasingStaffId: string;
+  purchasingStaffId?: string;
 
   @ApiProperty({ required: false })
   @ValidateIf((o) => o.purchasingStaffId === undefined)
@@ -40,7 +40,7 @@ export class CreateInspectionRequestDto {
   @ApiProperty({ required: true })
   @IsOptional()
   @IsEnum($Enums.InspectionRequestStatus)
-  status: $Enums.InspectionRequestStatus;
+  status?: $Enums.InspectionRequestStatus;
 
   @ApiProperty({ required: false })
   @IsOptional()

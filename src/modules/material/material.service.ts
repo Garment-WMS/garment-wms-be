@@ -39,8 +39,19 @@ export class MaterialService {
   }
 
   async findAll() {
-    const result = await this.prismaService.material.findMany();
-    return apiSuccess(HttpStatus.OK, result, 'List of Material Type');
+    const result = await this.prismaService.material.findMany({
+      include: {
+        _count: {
+          select: { materialVariant: true },
+        },
+      },
+    });
+    // const { _count, ...rest } = result as any;
+    const formattedResult = result.map(({ _count, ...material }) => ({
+      ...material,
+      numberOfMaterialVariants: _count.materialVariant,
+    }));
+    return apiSuccess(HttpStatus.OK, formattedResult, 'List of Material Type');
   }
 
   async findOne(id: string) {

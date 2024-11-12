@@ -19,6 +19,7 @@ import { Prisma } from '@prisma/client';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { HttpCacheInterceptor } from 'src/common/interceptor/cache.interceptor';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
+import { ChartDto } from './dto/chart.dto';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { MaterialVariantService } from './material-variant.service';
@@ -58,7 +59,7 @@ export class MaterialVariantController {
   }
 
   @Get('chart')
-  getChart(@Body() chartDto: any) {
+  getChart(@Body() chartDto: ChartDto) {
     return this.materialVariantService.getChart(chartDto);
   }
 
@@ -81,9 +82,45 @@ export class MaterialVariantController {
     return this.materialVariantService.findByIdWithResponse(id);
   }
 
-  @Get(':id/receipt')
+  @Get(':id/receiptV1')
   getMaterialReceiptById(@Param('id', new CustomUUIDPipe()) id: string) {
     return this.materialVariantService.findMaterialReceiptByIdWithResponse(id);
+  }
+
+  @Get(':id/export-receipt')
+  getMaterialExportReceipt(
+    @Query(
+      new AllFilterPipeUnsafe<
+        any,
+        Prisma.MaterialExportReceiptDetailScalarWhereInput
+      >(['material.name', 'material.code', 'material.materialUom.name'], []),
+    )
+    filterOptions: FilterDto<Prisma.MaterialExportReceiptDetailScalarWhereInput>,
+
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.materialVariantService.findMaterialExportReceipt(
+      id,
+      filterOptions.findOptions,
+    );
+  }
+
+  @Get(':id/import-receipt')
+  getMaterialImportReceipt(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialReceiptScalarWhereInput>(
+        ['material.name', 'material.code', 'material.materialUom.name'],
+        [],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.MaterialReceiptScalarWhereInput>,
+
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.materialVariantService.findMaterialImportReceipt(
+      id,
+      filterOptions.findOptions,
+    );
   }
 
   // @Get(':id/receipt/chart')

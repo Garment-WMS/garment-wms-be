@@ -51,11 +51,106 @@ export class MaterialVariantService {
     },
   };
 
+  async findMaterialExportReceipt(
+    id: string,
+    findOptions: GeneratedFindOptions<Prisma.MaterialExportReceiptDetailScalarWhereInput>,
+  ) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.materialExportReceiptDetail.findMany({
+        skip: offset,
+        take: limit,
+        where: {
+          materialReceipt: {
+            materialPackage: {
+              materialVariantId: id,
+            },
+          },
+        },
+        include: {
+          materialReceipt: {
+            include: {
+              materialPackage: true,
+            },
+          },
+        },
+      }),
+      this.prismaService.materialExportReceiptDetail.count({
+        where: {
+          materialReceipt: {
+            materialPackage: {
+              materialVariantId: id,
+            },
+          },
+        },
+      }),
+    ]);
+    const dataResponse: DataResponse = {
+      data,
+      pageMeta: getPageMeta(total, offset, limit),
+    };
+
+    return apiSuccess(
+      HttpStatus.OK,
+      dataResponse,
+      'List of Material Export Receipt',
+    );
+  }
+
+  async findMaterialImportReceipt(
+    id: string,
+    findOptions: GeneratedFindOptions<Prisma.MaterialReceiptScalarWhereInput>,
+  ) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.materialReceipt.findMany({
+        skip: offset,
+        take: limit,
+        where: {
+          materialPackage: {
+            materialVariantId: id,
+          },
+        },
+        include: {
+          materialPackage: true,
+        },
+      }),
+      this.prismaService.materialReceipt.count({
+        where: {
+          materialPackage: {
+            materialVariantId: id,
+          },
+        },
+      }),
+    ]);
+
+    const dataResponse: DataResponse = {
+      data,
+      pageMeta: getPageMeta(total, offset, limit),
+    };
+
+    return apiSuccess(HttpStatus.OK, dataResponse, 'List of Material Receipt');
+  }
+
   async getAllMaterialReceiptOfMaterialPackage(materialPackageId: any) {
     throw new Error('Method not implemented.');
   }
 
   async getChart(chartDto: ChartDto) {
+    const materialVariantIds = chartDto.materialVariantId || [];
+    let additionQuery: Prisma.MaterialReceiptWhereInput;
+
+    if (materialVariantIds.length > 0) {
+      additionQuery = {
+        materialPackage: {
+          materialVariantId: {
+            in: materialVariantIds,
+          },
+        },
+      };
+    }
     const { year } = chartDto;
     const monthlyData = [];
 
@@ -67,6 +162,7 @@ export class MaterialVariantService {
         await this.prismaService.materialReceipt.findMany({
           where: {
             AND: {
+              ...additionQuery,
               createdAt: {
                 gte: from,
                 lte: to,
@@ -82,12 +178,21 @@ export class MaterialVariantService {
           include: {
             materialPackage: {
               include: {
-                materialVariant: true,
+                materialVariant: {
+                  include: {
+                    material: {
+                      include: {
+                        materialUom: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
         });
 
+      //TODO: Need to check if this is correct after doing materialExportReceipt
       const exportMaterialReceipt =
         await this.prismaService.materialExportReceipt.findMany({
           where: {
@@ -98,17 +203,18 @@ export class MaterialVariantService {
               },
             },
           },
-          include: {
-            materialReceipt: {
-              include: {
-                materialPackage: {
-                  include: {
-                    materialVariant: true,
-                  },
-                },
-              },
-            },
-          },
+          //TODO
+          // include: {
+          //   materialReceipt: {
+          //     include: {
+          //       materialPackage: {
+          //         include: {
+          //           materialVariant: true,
+          //         },
+          //       },
+          //     },
+          //   },
+          // },
         });
 
       const totalQuantities = this.calculateTotalQuantities(
@@ -139,8 +245,10 @@ export class MaterialVariantService {
       string,
       {
         materialVariant: any;
-        totalImportQuantity: number;
-        totalExportQuantity: number;
+        totalImportQuantityByUom: number;
+        totalExportQuantityByUom: number;
+        totalImportQuantityByPack: number;
+        totalExportQuantityByPack: number;
       }
     > = {};
 
@@ -148,14 +256,19 @@ export class MaterialVariantService {
       const materialVariant = el.materialPackage.materialVariant;
       const materialVariantId = materialVariant.id;
       const importQuantity = el.quantityByPack * el.materialPackage.uomPerPack;
-
+      const importQuantityByPack = el.quantityByPack;
+      console.log('importQuantity', importQuantityByPack);
       if (acc[materialVariantId]) {
-        acc[materialVariantId].totalImportQuantity += importQuantity;
+        acc[materialVariantId].totalImportQuantityByUom += importQuantity;
+        acc[materialVariantId].totalImportQuantityByPack +=
+          importQuantityByPack;
       } else {
         acc[materialVariantId] = {
           materialVariant,
-          totalImportQuantity: importQuantity,
-          totalExportQuantity: 0,
+          totalImportQuantityByUom: importQuantity,
+          totalImportQuantityByPack: importQuantityByPack,
+          totalExportQuantityByPack: 0,
+          totalExportQuantityByUom: 0,
         };
       }
 
@@ -168,14 +281,19 @@ export class MaterialVariantService {
       const materialVariantId = materialVariant.id;
       const exportQuantity =
         el.quantityByPack * el.materialReceipt.materialPackage.uomPerPack;
+      const exportQuantityByPack = el.quantityByPack;
 
       if (acc[materialVariantId]) {
-        acc[materialVariantId].totalExportQuantity += exportQuantity;
+        acc[materialVariantId].totalExportQuantityByPack +=
+          exportQuantityByPack;
+        acc[materialVariantId].totalExportQuantityByUom += exportQuantity;
       } else {
         acc[materialVariantId] = {
           materialVariant,
-          totalImportQuantity: 0,
-          totalExportQuantity: exportQuantity,
+          totalImportQuantityByUom: 0,
+          totalImportQuantityByPack: 0,
+          totalExportQuantityByPack: exportQuantityByPack,
+          totalExportQuantityByUom: exportQuantity,
         };
       }
 
@@ -207,6 +325,72 @@ export class MaterialVariantService {
         },
       }),
       this.prismaService.materialExportReceipt.findMany({
+        //TODO
+        // where: {
+        //   materialReceipt: {
+        //     materialPackage: {
+        //       materialVariantId: id,
+        //     },
+        //   },
+        // },
+        // include: {
+        //   materialReceipt: {
+        //     include: {
+        //       materialPackage: true,
+        //     },
+        //   },
+        // },
+      }),
+      this.prismaService.materialReceipt.count({
+        where: {
+          materialPackage: {
+            materialVariantId: id,
+          },
+        },
+      }),
+      this.prismaService.materialExportReceipt.count({
+        where: {
+          //TODO
+          // materialReceipt: {
+          //   materialPackage: {
+          //     materialVariantId: id,
+          //   },
+          // },
+        },
+      }),
+    ]);
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        materialImportReceipt,
+        materialExportReceipt,
+        materialImportReceiptCount,
+        materialExportReceiptCount,
+      },
+      'Material Receipt found',
+    );
+  }
+
+  async findMaterialReceiptByIdWithResponse2(id: string) {
+    const [
+      materialImportReceipt,
+      materialExportReceipt,
+      materialImportReceiptCount,
+      materialExportReceiptCount,
+    ] = await this.prismaService.$transaction([
+      this.prismaService.materialReceipt.findMany({
+        where: {
+          materialPackage: {
+            materialVariantId: id,
+          },
+        },
+        include: {
+          materialPackage: true,
+        },
+      }),
+      //TODO: Need to check if this is correct after doing materialExportReceipt
+      this.prismaService.materialExportReceiptDetail.findMany({
         where: {
           materialReceipt: {
             materialPackage: {
@@ -229,7 +413,7 @@ export class MaterialVariantService {
           },
         },
       }),
-      this.prismaService.materialExportReceipt.count({
+      this.prismaService.materialExportReceiptDetail.count({
         where: {
           materialReceipt: {
             materialPackage: {
@@ -240,16 +424,23 @@ export class MaterialVariantService {
       }),
     ]);
 
-    return apiSuccess(
-      HttpStatus.OK,
-      {
-        materialImportReceipt,
-        materialExportReceipt,
-        materialImportReceiptCount,
-        materialExportReceiptCount,
-      },
-      'Material Receipt found',
-    );
+    const result = [];
+
+    materialImportReceipt.forEach((el) => {
+      result.push({
+        ...el,
+        type: 'importReceipt',
+      });
+    });
+
+    materialExportReceipt.forEach((el) => {
+      result.push({
+        ...el,
+        type: 'exportReceipt',
+      });
+    });
+
+    return apiSuccess(HttpStatus.OK, result, 'Material Receipt found');
   }
 
   async search(

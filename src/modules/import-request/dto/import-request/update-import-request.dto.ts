@@ -16,7 +16,7 @@ export class UpdateImportRequestDto extends PartialType(
   @IsNotEmpty()
   @IsString()
   @IsOptional()
-  rejectReason?: string;
+  managerNote?: string;
 
   @IsOptional()
   @ValidateNested({ each: true })

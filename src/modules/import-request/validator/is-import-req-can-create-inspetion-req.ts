@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   registerDecorator,
   ValidationArguments,
@@ -29,13 +29,12 @@ export class IsImportReqStatusCanCreateInspectionReqValidator
     if (!importRequest) {
       return false;
     }
+    Logger.debug('Import request status: ', importRequest.status);
 
     return allowCreateInspectionRequestStatus.includes(importRequest.status);
   }
   defaultMessage?(validationArguments?: ValidationArguments): string {
-    return `Allowed Import Request Status to create Inspection Request: ${allowActionImportRequestStatus.allowCreateInspectionRequestStatus.join(
-      ', ',
-    )}`;
+    return `Import request cancelled or imported`;
   }
 }
 
