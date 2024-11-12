@@ -12,18 +12,20 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Prisma, RoleCode } from '@prisma/client';
 import { GetUser } from 'src/common/decorator/get_user.decorator';
 import { Roles } from 'src/common/decorator/roles.decorator';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { RolesGuard } from 'src/common/guard/roles.guard';
+import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateInventoryReportPlanDto } from './dto/create-inventory-report-plan.dto';
 import { UpdateInventoryReportPlanDto } from './dto/update-inventory-report-plan.dto';
 import { InventoryReportPlanService } from './inventory-report-plan.service';
-import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 
+@ApiTags('inventory-report-plan')
 @Controller('inventory-report-plan')
 export class InventoryReportPlanController {
   constructor(
@@ -58,10 +60,12 @@ export class InventoryReportPlanController {
   }
 
   @Get('warehouse-staff')
-  @UseGuards(JwtAuthGuard,RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.WAREHOUSE_STAFF)
   getAllInventoryReportPlanByWarehouseStaff(@GetUser() user: AuthenUser) {
-    return this.inventoryReportPlanService.getAllInventoryReportPlanByWarehouseStaff(user.warehouseStaffId);
+    return this.inventoryReportPlanService.getAllInventoryReportPlanByWarehouseStaff(
+      user.warehouseStaffId,
+    );
   }
 
   @Patch('/:id/process')

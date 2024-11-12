@@ -7,10 +7,12 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { CreateInventoryReportDetailDto } from './dto/create-inventory-report-detail.dto';
 import { UpdateInventoryReportDetailDto } from './dto/update-inventory-report-detail.dto';
 import { InventoryReportDetailService } from './inventory-report-detail.service';
 
+@ApiTags('inventory-report-detail')
 @Controller('inventory-report-detail')
 export class InventoryReportDetailController {
   constructor(

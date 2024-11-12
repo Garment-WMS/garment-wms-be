@@ -10,9 +10,7 @@ import { ProductService } from '../product.service';
 
 @Injectable()
 @ValidatorConstraint({ async: true })
-export class IsProductTypeExistValidator
-  implements ValidatorConstraintInterface
-{
+export class IsProductExistValidator implements ValidatorConstraintInterface {
   constructor(private readonly productService: ProductService) {}
   async validate(
     value: string,
@@ -23,18 +21,18 @@ export class IsProductTypeExistValidator
     return !!productType;
   }
   defaultMessage?(validationArguments?: ValidationArguments): string {
-    return "Product type doesn't exist";
+    return "Product doesn't exist";
   }
 }
 
-export function IsProductTypeExist(validationOptions?: ValidationOptions) {
+export function IsProductExist(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: IsProductTypeExistValidator,
+      validator: IsProductExistValidator,
       async: true,
     });
   };

@@ -8,7 +8,7 @@ model ProductionBatch {
   canceledAt             DateTime?               @map("canceled_at") @db.Timestamptz(6)
   canceledBy             String?                 @map("canceled_by") @db.Uuid
   canceledReason         String?                 @map("canceled_reason") @db.VarChar
-  status                 ManufactureOrderStatus  @default(EXECUTING) @map("status")
+  status                 ProductionBatchStatus   @default(EXECUTING) @map("status")
   startDate              DateTime?               @map("start_date") @db.Time(6)
   finishedDate           DateTime?               @map("finished_date") @db.Time(6)
   expectedFinishDate     DateTime?               @map("expected_finish_date") @db.Time(6)
@@ -17,13 +17,15 @@ model ProductionBatch {
   deletedAt              DateTime?               @map("deleted_at") @db.Timestamptz(6)
   materialExportRequest  MaterialExportRequest[]
   productionPlanDetail   ProductionPlanDetail?   @relation(fields: [productionPlanDetailId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  importRequest          ImportRequest[]
 
   @@map("production_batch")
-  ImportRequest ImportRequest[]
 }
 
-enum ManufactureOrderStatus {
+enum ProductionBatchStatus {
   EXECUTING
   FINISHED
   CANCELED
+
+  @@map("production_batch_status")
 }

@@ -58,6 +58,7 @@ export class ImportRequestController {
           'description',
           'rejectAt',
           'rejectReason',
+          'createdAt',
           'updatedAt',
           'deletedAt',
         ],
