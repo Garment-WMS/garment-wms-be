@@ -1,5 +1,5 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { BadGatewayException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
@@ -84,7 +84,7 @@ export class MaterialPackageService {
 
   async findById(id: string) {
     if (!isUUID(id)) {
-      return null;
+      throw new BadGatewayException('Invalid id');
     }
     const result = await this.prismaService.materialPackage.findUnique({
       where: { id },
