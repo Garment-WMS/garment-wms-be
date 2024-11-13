@@ -15,6 +15,7 @@ export class CreateInspectionReportDetailDto
   inspectionReportId: string;
 
   @ApiProperty({ required: true, type: 'number' })
+  @IsOptional()
   @IsInt()
   quantityByPack?: number;
 
@@ -29,19 +30,19 @@ export class CreateInspectionReportDetailDto
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsOptional()
   @ValidateIf(
-    (o: CreateInspectionReportDetailDto, v) => o.productVariantId === undefined,
+    (o: CreateInspectionReportDetailDto, v) => o.productSizeId === undefined,
   )
   @IsUUID()
   @IsMaterialPackageExist()
-  materialVariantId: string;
+  materialPackageId: string;
 
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsOptional()
   @ValidateIf(
     (o: CreateInspectionReportDetailDto, v) =>
-      o.materialVariantId === undefined,
+      o.materialPackageId === undefined,
   )
   @IsUUID()
   @IsProductSizeExist()
-  productVariantId: string;
+  productSizeId: string;
 }
