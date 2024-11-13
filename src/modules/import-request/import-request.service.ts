@@ -478,6 +478,9 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
   importRequestDetail: {
     include: {
       materialPackage: {
+        where: {
+          deletedAt: null,
+        },
         include: {
           materialVariant: {
             include: {
@@ -495,16 +498,25 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
     },
   },
   warehouseManager: {
+    where: {
+      deletedAt: null,
+    },
     include: {
       account: true,
     },
   },
   purchasingStaff: {
+    where: {
+      deletedAt: null,
+    },
     include: {
       account: true,
     },
   },
   warehouseStaff: {
+    where: {
+      deletedAt: null,
+    },
     include: {
       account: true,
     },
@@ -524,6 +536,9 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
     },
   },
   inspectionRequest: {
+    where: {
+      deletedAt: null,
+    },
     include: {
       inspectionDepartment: { include: inspectionDepartmentInclude },
     },

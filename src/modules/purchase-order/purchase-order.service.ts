@@ -27,8 +27,14 @@ export class PurchaseOrderService {
   queryInclude: Prisma.PurchaseOrderInclude = {
     supplier: true,
     poDelivery: {
+      where: {
+        deletedAt: null,
+      },
       include: {
         poDeliveryDetail: {
+          where: {
+            deletedAt: null,
+          },
           include: {
             materialPackage: {
               include: {
