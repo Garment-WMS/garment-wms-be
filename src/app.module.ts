@@ -56,7 +56,6 @@ import { SupplierModule } from './modules/supplier/supplier.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
-import { WarehouseManagerModule } from './warehouse-manager/warehouse-manager.module';
 
 @Module({
   imports: [
@@ -141,7 +140,6 @@ import { WarehouseManagerModule } from './warehouse-manager/warehouse-manager.mo
     ReceiptAdjustmentModule,
     InventoryUpdateStatusModule,
     ProductionBatchModule,
-    WarehouseManagerModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],
