@@ -14,7 +14,7 @@ import { IsUserRoleExist } from 'src/modules/user/validator/is-user-of-role-exis
 import { CreateInspectionReportDetailDto } from '../inspection-report-detail/create-inspection-report-detail.dto';
 
 export class CreateInspectionReportDto {
-  // implements Prisma.InspectionReportCreateInput
+  // implements Prisma.InspectionReportUncheckedCreateInput
   @ApiProperty({ required: false, type: 'string' })
   @IsOptional()
   @IsString()
