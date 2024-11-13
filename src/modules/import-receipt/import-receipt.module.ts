@@ -7,6 +7,7 @@ import { MaterialReceiptModule } from '../material-receipt/material-receipt.modu
 import { PoDeliveryModule } from '../po-delivery/po-delivery.module';
 import { ImportReceiptController } from './import-receipt.controller';
 import { ImportReceiptService } from './import-receipt.service';
+import { PoDeliveryMaterialModule } from '../po-delivery-material/po-delivery-material.module';
 
 @Module({
   controllers: [ImportReceiptController],
@@ -15,6 +16,7 @@ import { ImportReceiptService } from './import-receipt.service';
     PrismaModule,
     InspectionReportModule,
     PoDeliveryModule,
+    PoDeliveryMaterialModule,
     InventoryStockModule,
     ImportRequestModule,
   ],

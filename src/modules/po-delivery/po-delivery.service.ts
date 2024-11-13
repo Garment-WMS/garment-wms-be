@@ -7,6 +7,7 @@ import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { CreateImportRequestDetailDto } from '../import-request/dto/import-request-detail/create-import-request-detail.dto';
 import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
+import { PoDeliveryDto } from './dto/po-delivery.dto';
 import { UpdatePoDeliveryDto } from './dto/update-po-delivery.dto';
 
 @Injectable()
@@ -15,6 +16,26 @@ export class PoDeliveryService {
     private readonly pirsmaService: PrismaService,
     private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
   ) {}
+
+  getExpiredDate(
+    poDeliveryId: string,
+    materialPackageId: string,
+    prismaInstance: PrismaClient<
+      Prisma.PrismaClientOptions,
+      never,
+      DefaultArgs
+    >,
+  ) {
+    return prismaInstance.poDeliveryDetail.findFirst({
+      where: {
+        poDeliveryId,
+        materialPackageId,
+      },
+      select: {
+        expiredDate: true,
+      },
+    });
+  }
 
   async getPoDeliveryByPoId(Poid: string) {
     const result = await this.findPoDelivery({
@@ -94,7 +115,40 @@ export class PoDeliveryService {
     importRequest: true,
   };
 
-  async createPoDelivery(CreatePoDelivery: Prisma.PoDeliveryCreateInput) {
+  async createPoDelivery(
+    CreatePoDelivery: Partial<PoDeliveryDto>,
+    prismaInstance: PrismaService = this.pirsmaService,
+  ) {
+    const result = await prismaInstance.poDelivery.findMany({
+      where: {
+        AND: [
+          { purchaseOrderId: CreatePoDelivery.purchaseOrderId },
+          { isExtra: true },
+          { status: PoDeliveryStatus.PENDING },
+        ],
+      },
+    });
+
+    if (result.length > 0) {
+      return result[0];
+    }
+
+    const poDeliveryInput: Prisma.PoDeliveryCreateInput = {
+      code: undefined,
+      isExtra: true,
+      purchaseOrder: {
+        connect: {
+          id: CreatePoDelivery.purchaseOrderId,
+        },
+      },
+    };
+
+    return prismaInstance.poDelivery.create({
+      data: poDeliveryInput,
+    });
+  }
+
+  async createPoDeliveryExtra(CreatePoDelivery: Prisma.PoDeliveryCreateInput) {
     return this.pirsmaService.poDelivery.create({
       data: CreatePoDelivery,
     });
@@ -138,19 +192,19 @@ export class PoDeliveryService {
   }
 
   async updatePoDelivery(id: string, updatePoDeliveryDto: UpdatePoDeliveryDto) {
-    const result = await this.updatePoDeliveryMaterialStatus(
-      id,
-      updatePoDeliveryDto.status,
-      this.pirsmaService,
-    );
+    // const result = await this.updatePoDeliveryMaterialStatus(
+    //   id,
+    //   updatePoDeliveryDto.status,
+    //   this.pirsmaService,
+    // );
 
-    if (result) {
-      return apiSuccess(
-        HttpStatus.OK,
-        result,
-        'Update po delivery successfully',
-      );
-    }
+    // if (result) {
+    //   return apiSuccess(
+    //     HttpStatus.OK,
+    //     result,
+    //     'Update po delivery successfully',
+    //   );
+    // }
     return apiSuccess(HttpStatus.NOT_FOUND, null, 'Po delivery not found');
   }
 
