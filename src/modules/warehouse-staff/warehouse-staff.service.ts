@@ -93,7 +93,7 @@ export const warehouseStaffInclude: Prisma.WarehouseStaffInclude = {
   },
 };
 
-export const warehouseManagerInclude: Prisma.WarehouseStaffInclude = {
+export const warehouseManagerInclude: Prisma.WarehouseManagerInclude = {
   account: {
     select: accountSelect,
   },
