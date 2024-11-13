@@ -524,9 +524,6 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
     },
   },
   inspectionRequest: {
-    select: {
-      inspectionDepartment: true,
-    },
     include: {
       inspectionDepartment: { include: inspectionDepartmentInclude },
     },
