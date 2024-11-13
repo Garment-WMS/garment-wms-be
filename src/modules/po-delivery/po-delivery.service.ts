@@ -93,6 +93,9 @@ export class PoDeliveryService {
 
   includeQuery: Prisma.PoDeliveryInclude = {
     poDeliveryDetail: {
+      where: {
+        deletedAt: null,
+      },
       include: {
         materialPackage: {
           include: {

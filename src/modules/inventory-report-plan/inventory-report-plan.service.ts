@@ -20,18 +20,30 @@ export class InventoryReportPlanService {
 
   queryInclude: Prisma.InventoryReportPlanInclude = {
     inventoryReportPlanDetail: {
+      where: {
+        deletedAt: null,
+      },
       include: {
         materialPackage: {
+          where: {
+            deletedAt: null,
+          },
           include: {
             inventoryStock: true,
           },
         },
         productSize: {
+          where: {
+            deletedAt: null,
+          },
           include: {
             inventoryStock: true,
           },
         },
         inventoryReport: {
+          where: {
+            deletedAt: null,
+          },
           include: {
             inventoryReportDetail: true,
           },

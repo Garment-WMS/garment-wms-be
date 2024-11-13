@@ -26,6 +26,9 @@ export class InventoryReportService {
   includeQuery: Prisma.InventoryReportInclude = {
     inventoryReportDetail: true,
     inventoryReportPlanDetail: {
+      where: {
+        deletedAt: null,
+      },
       include: {
         inventoryReportPlan: true,
       },
