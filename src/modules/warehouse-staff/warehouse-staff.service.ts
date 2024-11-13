@@ -23,7 +23,7 @@ export class WarehouseStaffService {
         where: findOptions?.where,
         skip: offset,
         take: limit,
-        include: WarehouseStaffInclude,
+        include: warehouseStaffInclude,
       }),
       this.prismaService.warehouseStaff.count({
         where: findOptions?.where,
@@ -65,7 +65,7 @@ export class WarehouseStaffService {
   }
 }
 
-export const WarehouseStaffInclude: Prisma.WarehouseStaffInclude = {
+export const warehouseStaffInclude: Prisma.WarehouseStaffInclude = {
   account: {
     select: accountSelect,
   },
@@ -90,5 +90,23 @@ export const WarehouseStaffInclude: Prisma.WarehouseStaffInclude = {
         },
       },
     },
+  },
+};
+
+export const warehouseManagerInclude: Prisma.WarehouseStaffInclude = {
+  account: {
+    select: accountSelect,
+  },
+};
+
+export const productionDepartmentInclude: Prisma.ProductionDepartmentInclude = {
+  account: {
+    select: accountSelect,
+  },
+};
+
+export const factoryDirectorInclude: Prisma.FactoryDirectorInclude = {
+  account: {
+    select: accountSelect,
   },
 };

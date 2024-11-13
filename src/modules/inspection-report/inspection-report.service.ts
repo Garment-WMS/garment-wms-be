@@ -1,10 +1,16 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { $Enums, Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
+import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta } from 'src/common/utils/utils';
+import { importRequestInclude } from '../import-request/import-request.service';
 import { CreateInspectionReportDto } from './dto/inspection-report/create-inspection-report.dto';
 import { UpdateInspectionReportDto } from './dto/inspection-report/update-inspection-report.dto';
 
@@ -93,7 +99,74 @@ export class InspectionReportService {
     });
   }
 
+  private async mapInspectionReportByImportRequest(
+    dto: CreateInspectionReportDto,
+  ) {
+    const importRequest = await this.prismaService.importRequest.findFirst({
+      where: { id: dto.inspectionRequestId },
+      include: importRequestInclude,
+    });
+
+    if (!importRequest) {
+      throw new NotFoundException('Inspection request not found');
+    }
+    this.mapInspectionReportDetail(importRequest, dto);
+  }
+
+  private async mapInspectionReportDetail(
+    importRequest,
+    dto: CreateInspectionReportDto,
+  ) {
+    let errorInspectionReportDetail = [];
+    dto.inspectionReportDetail.forEach((inspectionReportDetail) => {
+      importRequest.importRequestDetail.forEach((importRequestDetail) => {
+        if (
+          importRequestDetail.materialPackageId ===
+            inspectionReportDetail.materialPackageId ||
+          importRequestDetail.productSizeId ===
+            inspectionReportDetail.productSizeId
+        ) {
+          inspectionReportDetail.quantityByPack =
+            importRequestDetail.quantityByPack;
+        }
+      });
+      if (
+        inspectionReportDetail.approvedQuantityByPack +
+          inspectionReportDetail.defectQuantityByPack <
+        inspectionReportDetail.quantityByPack
+      ) {
+        errorInspectionReportDetail.push(inspectionReportDetail);
+      }
+    });
+    if (errorInspectionReportDetail.length > 0) {
+      throw new CustomValidationException(
+        400,
+        'Approved + defect quantity must equal to quantity by pack',
+        errorInspectionReportDetail,
+      );
+    }
+  }
+
+  async isInspectionRequestHasInspectionReport(inspectionRequestId: string) {
+    const inspectionReport =
+      await this.prismaService.inspectionReport.findFirst({
+        where: {
+          inspectionRequestId,
+        },
+      });
+
+    return inspectionReport ? true : false;
+  }
+
   async create(dto: CreateInspectionReportDto) {
+    if (
+      await this.isInspectionRequestHasInspectionReport(dto.inspectionRequestId)
+    ) {
+      throw new ConflictException(
+        'Inspection report for this inspection request already exists',
+      );
+    }
+    await this.mapInspectionReportByImportRequest(dto);
     const inspectionReportCreateInput: Prisma.InspectionReportCreateInput = {
       code: dto.code,
       inspectionRequest: dto.inspectionRequestId
@@ -103,16 +176,9 @@ export class InspectionReportService {
             },
           }
         : undefined,
-      // inspectionDepartment: dto.inspectionDepartmentId
-      //   ? {
-      //       connect: {
-      //         id: dto.inspectionDepartmentId,
-      //       },
-      //     }
-      //   : undefined,
       inspectionReportDetail: {
         createMany: {
-          data: dto.inspectionReportDetail,
+          data: { ...dto.inspectionReportDetail },
         },
       },
     };
@@ -196,14 +262,14 @@ export class InspectionReportService {
                 defectQuantityByPack: detail.defectQuantityByPack,
                 quantityByPack: detail.quantityByPack,
                 materialPackageId: detail.materialPackageId,
-                productVariantId: detail.productVariantId,
+                productSizeId: detail.productSizeId,
               },
               create: {
                 approvedQuantityByPack: detail.approvedQuantityByPack,
                 defectQuantityByPack: detail.defectQuantityByPack,
                 quantityByPack: detail.quantityByPack,
                 materialPackageId: detail.materialPackageId,
-                productVariantId: detail.productVariantId,
+                productSizeId: detail.productSizeId,
               },
             })),
           }
@@ -227,7 +293,9 @@ export class InspectionReportService {
 export const inspectionReportInclude: Prisma.InspectionReportInclude = {
   inspectionRequest: {
     include: {
-      importRequest: true,
+      importRequest: {
+        include: importRequestInclude,
+      },
       inspectionDepartment: true,
       purchasingStaff: true,
     },

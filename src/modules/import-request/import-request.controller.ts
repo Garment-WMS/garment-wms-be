@@ -122,10 +122,15 @@ export class ImportRequestController {
     @Param('id', IsImportRequestExistPipe)
     id: string,
     @Body() managerProcessDto: ManagerProcessDto,
+    @GetUser() warehouseManager: AuthenUser,
   ) {
     return apiSuccess(
       HttpStatus.OK,
-      await this.importRequestService.managerProcess(id, managerProcessDto),
+      await this.importRequestService.managerProcess(
+        warehouseManager.warehouseManagerId,
+        id,
+        managerProcessDto,
+      ),
       'Manager process import request successfully',
     );
   }

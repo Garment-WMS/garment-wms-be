@@ -12,6 +12,7 @@ import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { importRequestInclude } from '../import-request/import-request.service';
 import { inspectionReportInclude } from '../inspection-report/inspection-report.service';
+import { warehouseStaffInclude } from '../warehouse-staff/warehouse-staff.service';
 import { CreateInspectionRequestDto } from './dto/create-inspection-request.dto';
 import { UpdateInspectionRequestDto } from './dto/update-inspection-request.dto';
 
@@ -251,6 +252,9 @@ export const inspectionRequestInclude: Prisma.InspectionRequestInclude = {
     include: {
       account: true,
     },
+  },
+  warehouseManager: {
+    include: warehouseStaffInclude,
   },
   inspectionReport: {
     include: inspectionReportInclude,

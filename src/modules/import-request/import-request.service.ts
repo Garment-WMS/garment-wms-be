@@ -18,6 +18,7 @@ import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { inspectionDepartmentInclude } from '../inspection-department/inspection-department.service';
 import { CreateInspectionRequestDto } from '../inspection-request/dto/create-inspection-request.dto';
 import { InspectionRequestService } from '../inspection-request/inspection-request.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
@@ -333,7 +334,11 @@ export class ImportRequestService {
 
   // REJECTED
   // APPROVED
-  async managerProcess(id: string, managerProcess: ManagerProcessDto) {
+  async managerProcess(
+    warehouseManagerId: string,
+    id: string,
+    managerProcess: ManagerProcessDto,
+  ) {
     const importRequest = await this.prismaService.importRequest.findUnique({
       where: { id },
       select: {
@@ -362,6 +367,7 @@ export class ImportRequestService {
             status: $Enums.ImportRequestStatus.APPROVED,
             managerNote: managerProcess.managerNote,
             warehouseStaffId: managerProcess.warehouseStaffId,
+            warehouseManagerId: warehouseManagerId,
           },
         });
         Logger.debug(importRequest);
@@ -369,7 +375,7 @@ export class ImportRequestService {
         const createInspectionRequestDto: CreateInspectionRequestDto = {
           importRequestId: importRequest.id,
           inspectionDepartmentId: managerProcess.inspectionDepartmentId,
-          warehouseManagerId: importRequest.warehouseManagerId,
+          warehouseManagerId: warehouseManagerId,
           note: managerProcess.InspectionNote,
         };
 
@@ -393,6 +399,7 @@ export class ImportRequestService {
           data: {
             status: $Enums.ImportRequestStatus.REJECTED,
             rejectAt: new Date(),
+            warehouseManagerId: warehouseManagerId,
             managerNote: managerProcess.managerNote,
           },
         });
@@ -514,6 +521,11 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
           },
         },
       },
+    },
+  },
+  inspectionRequest: {
+    include: {
+      inspectionDepartment: { include: inspectionDepartmentInclude },
     },
   },
 };
