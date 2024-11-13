@@ -29,11 +29,7 @@ export class ImportReceiptService {
     productReceipt: true,
     inspectionReport: {
       include: {
-        inspectionRequest: {
-          include: {
-            importRequest: true,
-          },
-        },
+        inspectionRequest: true,
       },
     },
   };
@@ -141,8 +137,6 @@ export class ImportReceiptService {
                   prismaInstance,
                 );
               }
-              console.log('poDeliveryExtra', result[i].quantityByPack);
-              console.log('expectedImportQuantity', expectedImportQuantity);
               await this.poDeliveryDetailsService.createPoDeliveryMaterial(
                 {
                   poDelivery: {
@@ -192,6 +186,42 @@ export class ImportReceiptService {
       throw new BadRequestException('Import Request not found');
     }
 
+    if (importRequest.status === $Enums.ImportRequestStatus.IMPORTED) {
+      throw new BadRequestException(
+        'Import receipt cannot be created. The import request has been imported before.',
+      );
+    }
+
+    if (importRequest.status === $Enums.ImportRequestStatus.REJECTED) {
+      throw new BadRequestException(
+        'Import receipt cannot be created. The import request has been rejected.',
+      );
+    }
+
+    if (importRequest.status === $Enums.ImportRequestStatus.CANCELED) {
+      throw new BadRequestException(
+        'Import receipt cannot be created. The import request has been canceled.',
+      );
+    }
+
+    // if (importRequest.status === $Enums.ImportRequestStatus.APPROVED) {
+    //   throw new BadRequestException(
+    //     'Import receipt cannot be created. The import request has been approved.',
+    //   );
+    // }
+
+    if (importRequest.status === $Enums.ImportRequestStatus.INSPECTING) {
+      throw new BadRequestException(
+        'Import receipt cannot be created. The import request is being inspected.',
+      );
+    }
+
+    if (importRequest.status === $Enums.ImportRequestStatus.IMPORTING) {
+      throw new BadRequestException(
+        'Import receipt cannot be created. The import request is being imported.',
+      );
+    }
+
     if (importRequest.status !== $Enums.ImportRequestStatus.INSPECTED) {
       throw new BadRequestException(
         'Import receipt cannot be created. The import request must be inspected before creating an import receipt.',
@@ -227,7 +257,7 @@ export class ImportReceiptService {
   }
 
   async finishImportReceipt(importReceiptId: string) {
-    const importReceipt: any = await this.findUnique(importReceiptId);
+    const importReceipt = await this.findUnique(importReceiptId);
 
     if (!importReceipt) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Import Receipt not found');
@@ -240,10 +270,10 @@ export class ImportReceiptService {
       );
     }
 
-    const result = this.prismaService.$transaction(
+    const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaClient) => {
         if (importReceipt.materialReceipt) {
-          importReceipt.materialReceipt.forEach(async (detail) => {
+          for (const detail of importReceipt.materialReceipt) {
             await this.materialReceiptService.updateMaterialReceiptStatus(
               detail.id,
               $Enums.MaterialReceiptStatus.AVAILABLE,
@@ -254,12 +284,17 @@ export class ImportReceiptService {
               detail.quantityByPack,
               prismaInstance,
             );
+            if (
+              !importReceipt.inspectionReport.inspectionRequest.importRequestId
+            ) {
+              throw new Error('Import Request not found');
+            }
             await this.importRequestService.updateImportRequestStatus(
-              importReceipt.inspectionReport.inspectionRequest.importReqeuestId,
+              importReceipt.inspectionReport.inspectionRequest.importRequestId,
               $Enums.ImportRequestStatus.IMPORTED,
               prismaInstance,
             );
-          });
+          }
         } else {
           throw new Error('Material Receipt not found');
         }
@@ -292,7 +327,15 @@ export class ImportReceiptService {
 
     return this.prismaService.importReceipt.findUnique({
       where: { id },
-      include: this.includeQuery,
+      include: {
+        materialReceipt: true,
+        productReceipt: true,
+        inspectionReport: {
+          include: {
+            inspectionRequest: true,
+          },
+        },
+      },
     });
   }
 

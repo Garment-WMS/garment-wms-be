@@ -5,12 +5,14 @@ import { MaterialVariantModule } from '../material-variant/material-variant.modu
 import { PoDeliveryModule } from '../po-delivery/po-delivery.module';
 import { MaterialReceiptController } from './material-receipt.controller';
 import { MaterialReceiptService } from './material-receipt.service';
+import { MaterialPackageModule } from '../material-package/material-package.module';
 
 @Module({
   controllers: [MaterialReceiptController],
   imports: [
     PrismaModule,
     MaterialVariantModule,
+    MaterialPackageModule,
     InventoryStockModule,
     PoDeliveryModule,
   ],

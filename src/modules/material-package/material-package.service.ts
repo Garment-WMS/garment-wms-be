@@ -125,4 +125,11 @@ export class MaterialPackageService {
       'Failed to update Material Package',
     );
   }
+
+  findAllRaw() {
+    const result = this.prismaService.materialPackage.findMany({
+      include: this.includeQuery,
+    });
+    return result;
+  }
 }

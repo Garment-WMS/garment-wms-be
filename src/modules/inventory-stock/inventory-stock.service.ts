@@ -9,6 +9,7 @@ import { UpdateInventoryStockDto } from './dto/update-inventory-stock.dto';
 
 @Injectable()
 export class InventoryStockService {
+  
   constructor(
     private readonly prismaService: PrismaService,
     private readonly materialVariantService: MaterialVariantService,
@@ -82,6 +83,10 @@ export class InventoryStockService {
         quantityByPack: quantity,
       },
     });
+  }
+
+  reCount() {
+    throw new Error('Method not implemented.');
   }
 
   recountMaterialStock(materialPackageId: String) {}
