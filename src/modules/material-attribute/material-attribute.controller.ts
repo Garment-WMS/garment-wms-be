@@ -13,6 +13,7 @@ import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateMaterialAttributeDto } from './dto/create-material-attribute.dto';
 import { UpdateMaterialAttributeDto } from './dto/update-material-attribute.dto';
 import { MaterialAttributeService } from './material-attribute.service';
+import { ArrayMaterialAttribute } from './dto/array-material-attribute.dto';
 
 @Controller('material-attribute')
 @ApiTags('Material Attribute')
@@ -38,7 +39,7 @@ export class MaterialAttributeController {
       ],
     },
   })
-  create(@Body() createMaterialAttributeDto: CreateMaterialAttributeDto) {
+  create(@Body() createMaterialAttributeDto: ArrayMaterialAttribute) {
     return this.materialAttributeService.create(createMaterialAttributeDto);
   }
 

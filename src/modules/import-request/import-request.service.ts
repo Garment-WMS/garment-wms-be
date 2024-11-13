@@ -511,6 +511,7 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
   },
   poDelivery: {
     include: {
+      poDeliveryDetail: true,
       purchaseOrder: {
         include: {
           purchasingStaff: {
@@ -518,7 +519,6 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
               account: true,
             },
           },
-          supplier: true,
         },
       },
     },
