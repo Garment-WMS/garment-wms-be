@@ -17,9 +17,6 @@ export class MaterialPackageService {
     inventoryStock: true,
     materialReceipt: true,
     materialVariant: {
-      where: {
-        deletedAt: null,
-      },
       include: {
         material: {
           include: {
