@@ -189,19 +189,19 @@ export class PoDeliveryService {
   }
 
   async updatePoDelivery(id: string, updatePoDeliveryDto: UpdatePoDeliveryDto) {
-    const result = await this.updatePoDeliveryMaterialStatus(
-      id,
-      updatePoDeliveryDto.status,
-      this.pirsmaService,
-    );
+    // const result = await this.updatePoDeliveryMaterialStatus(
+    //   id,
+    //   updatePoDeliveryDto.status,
+    //   this.pirsmaService,
+    // );
 
-    if (result) {
-      return apiSuccess(
-        HttpStatus.OK,
-        result,
-        'Update po delivery successfully',
-      );
-    }
+    // if (result) {
+    //   return apiSuccess(
+    //     HttpStatus.OK,
+    //     result,
+    //     'Update po delivery successfully',
+    //   );
+    // }
     return apiSuccess(HttpStatus.NOT_FOUND, null, 'Po delivery not found');
   }
 

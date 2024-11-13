@@ -118,9 +118,11 @@ export class ImportReceiptService {
                 actualImportQuantity: result[i].quantityByPack,
               },
             });
+
             //Create the extra PO delivery for the rejected material
-            //Can use job queue to handle this
+            //TODO: Can use job queue to handle this to avoid bottleneck issues
             let poDelivery: any = importRequest.poDelivery;
+            //Has to cast to any because issue with includeQuery ( Typescript error not mine, if include raw still work )
             let poDeliveryDetail = poDelivery.poDeliveryDetail as any;
             let expectedImportQuantity = poDeliveryDetail.find(
               (detail) =>

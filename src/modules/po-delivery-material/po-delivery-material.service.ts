@@ -27,7 +27,6 @@ export class PoDeliveryMaterialService {
   //   }
   constructor(private readonly prismaService: PrismaService) {}
 
-  //Need to test this function
   async createPoDeliveryMaterial(
     createPoDeliveryMaterial: Prisma.PoDeliveryDetailCreateInput,
     poDeliveryId: string,
