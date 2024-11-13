@@ -102,6 +102,7 @@ export class MaterialVariantService {
     id: string,
     findOptions: GeneratedFindOptions<Prisma.MaterialReceiptScalarWhereInput>,
   ) {
+    console.log(findOptions.orderBy);
     const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
     const [data, total] = await this.prismaService.$transaction([
@@ -116,6 +117,7 @@ export class MaterialVariantService {
         include: {
           materialPackage: true,
         },
+        orderBy: findOptions?.orderBy,
       }),
       this.prismaService.materialReceipt.count({
         where: {

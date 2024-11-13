@@ -42,6 +42,7 @@ export class MaterialVariantController {
           { id: 'asc' },
           { name: 'asc' },
           { materialId: 'asc' },
+          { code: 'asc' },
           { reorderLevel: 'asc' },
           { updatedAt: 'asc' },
         ],
@@ -109,8 +110,14 @@ export class MaterialVariantController {
   getMaterialImportReceipt(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.MaterialReceiptScalarWhereInput>(
-        ['material.name', 'material.code', 'material.materialUom.name'],
-        [],
+        [
+          'material.name',
+          'material.code',
+          'material.materialUom.name',
+          'materialPackage.code',
+          'materialPackage.name',
+        ],
+        [{ code: 'asc' }, { createdAt: 'desc' }],
       ),
     )
     filterOptions: FilterDto<Prisma.MaterialReceiptScalarWhereInput>,
