@@ -249,23 +249,14 @@ export const inspectionRequestInclude: Prisma.InspectionRequestInclude = {
     },
   },
   purchasingStaff: {
-    where: {
-      deletedAt: null,
-    },
     include: {
       account: true,
     },
   },
   warehouseManager: {
-    where: {
-      deletedAt: null,
-    },
     include: warehouseStaffInclude,
   },
   inspectionReport: {
-    where: {
-      deletedAt: null,
-    },
     include: inspectionReportInclude,
   },
 };

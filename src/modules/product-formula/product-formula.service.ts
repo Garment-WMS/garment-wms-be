@@ -17,9 +17,6 @@ export class ProductFormulaService {
 
   queryInclude: Prisma.ProductFormulaInclude = {
     productFormulaMaterial: {
-      where: {
-        deletedAt: null,
-      },
       include: {
         materialVariant: {
           include: {

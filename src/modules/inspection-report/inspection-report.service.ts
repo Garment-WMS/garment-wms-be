@@ -302,14 +302,8 @@ export const inspectionReportInclude: Prisma.InspectionReportInclude = {
   },
 
   inspectionReportDetail: {
-    where: {
-      deletedAt: null,
-    },
     include: {
       materialPackage: {
-        where: {
-          deletedAt: null,
-        },
         include: {
           materialVariant: {
             include: {
@@ -323,9 +317,6 @@ export const inspectionReportInclude: Prisma.InspectionReportInclude = {
         },
       },
       productSize: {
-        where: {
-          deletedAt: null,
-        },
         include: {
           productVariant: {
             include: {

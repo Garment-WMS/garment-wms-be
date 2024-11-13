@@ -24,9 +24,6 @@ export class MaterialVariantService {
   materialInclude: Prisma.MaterialVariantInclude = {
     materialAttribute: true,
     materialPackage: {
-      where: {
-        deletedAt: null,
-      },
       include: {
         materialReceipt: true,
         inventoryStock: true,
@@ -42,17 +39,11 @@ export class MaterialVariantService {
   materialStockInclude = {
     materialAttribute: true,
     material: {
-      where: {
-        deletedAt: null,
-      },
       include: {
         materialUom: true,
       },
     },
     materialPackage: {
-      where: {
-        deletedAt: null,
-      },
       include: {
         materialReceipt: true,
         inventoryStock: true, // Make sure to include inventoryStock

@@ -27,9 +27,6 @@ export class ProductVariantService {
       },
     },
     productSize: {
-      where: {
-        deletedAt: null,
-      },
       include: {
         productReceipt: true,
         inventoryStock: true,
