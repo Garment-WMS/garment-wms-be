@@ -171,7 +171,7 @@ export class MaterialVariantService {
               },
               status: {
                 in: [
-                  MaterialReceiptStatus.PARTIAL_USED,
+                  // MaterialReceiptStatus.PARTIAL_USED,
                   MaterialReceiptStatus.AVAILABLE,
                 ],
               },
@@ -688,7 +688,7 @@ export class MaterialVariantService {
           },
           status: {
             in: [
-              MaterialReceiptStatus.PARTIAL_USED,
+              // MaterialReceiptStatus.PARTIAL_USED,
               MaterialReceiptStatus.AVAILABLE,
             ],
           },
