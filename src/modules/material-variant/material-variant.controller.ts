@@ -59,7 +59,7 @@ export class MaterialVariantController {
     return this.materialVariantService.create(createMaterialDto);
   }
 
-  @Get('chart')
+  @Post('chart')
   getChart(@Body() chartDto: ChartDto) {
     return this.materialVariantService.getChart(chartDto);
   }
@@ -129,15 +129,6 @@ export class MaterialVariantController {
       filterOptions.findOptions,
     );
   }
-
-  // @Get(':id/receipt/chart')
-  // getMaterialReceiptChartById(
-  //   @Param('id', new CustomUUIDPipe()) id: string,
-  //   @Query('months') months: months[],
-  // ) {
-  //   return this.materialVariantService.findMaterialReceiptChart(id, months);
-  // }
-
   @Patch(':id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   updateMaterial(

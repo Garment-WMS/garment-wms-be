@@ -60,7 +60,7 @@ export class MaterialReceiptService {
         status: {
           in: [
             MaterialReceiptStatus.AVAILABLE,
-            MaterialReceiptStatus.PARTIAL_USED,
+            // MaterialReceiptStatus.PARTIAL_USED,
           ],
         },
       },

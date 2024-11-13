@@ -23,7 +23,7 @@ model MaterialReceipt {
 enum MaterialReceiptStatus {
   IMPORTING
   AVAILABLE
-  PARTIAL_USED
+  // PARTIAL_USED
   USED
-  DISPOSED
+  // DISPOSED
 }
