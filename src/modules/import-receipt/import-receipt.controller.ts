@@ -1,3 +1,4 @@
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
@@ -6,14 +7,16 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { RoleCode } from '@prisma/client';
+import { Prisma, RoleCode } from '@prisma/client';
 import { GetUser } from 'src/common/decorator/get_user.decorator';
 import { Roles } from 'src/common/decorator/roles.decorator';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { RolesGuard } from 'src/common/guard/roles.guard';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
@@ -42,8 +45,35 @@ export class ImportReceiptController {
   }
 
   @Get()
-  findAll() {
-    return this.importReceiptService.findAll();
+  search(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ImportReceiptWhereInput>(
+        [],
+        [{ createdAt: 'desc' }, { id: 'asc' }, { updatedAt: 'asc' }],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.ImportReceiptWhereInput>,
+  ) {
+    return this.importReceiptService.search(filterOptions.findOptions);
+  }
+
+  @Get('/my')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER, RoleCode.WAREHOUSE_STAFF)
+  getByUser(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ImportReceiptWhereInput>(
+        [],
+        [{ createdAt: 'desc' }, { id: 'asc' }, { updatedAt: 'asc' }],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.ImportReceiptWhereInput>,
+    @GetUser() user: AuthenUser,
+  ) {
+    return this.importReceiptService.getByUserToken(
+      user,
+      filterOptions.findOptions,
+    );
   }
 
   @Get(':id')
