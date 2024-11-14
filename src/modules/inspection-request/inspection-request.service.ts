@@ -1,15 +1,17 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { $Enums, Prisma, PrismaClient } from '@prisma/client';
+import { $Enums, Prisma, PrismaClient, RoleCode } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { importRequestInclude } from '../import-request/import-request.service';
 import { inspectionReportInclude } from '../inspection-report/inspection-report.service';
 import { warehouseManagerInclude } from '../warehouse-staff/warehouse-staff.service';
@@ -236,6 +238,31 @@ export class InspectionRequestService {
         id: id,
       },
     });
+  }
+
+  async getByUserToken(
+    authenUser: AuthenUser,
+    findOptions: GeneratedFindOptions<Prisma.InspectionRequestWhereInput>,
+  ) {
+    switch (authenUser.role) {
+      case RoleCode.WAREHOUSE_MANAGER:
+        findOptions.where = {
+          warehouseManagerId: authenUser.warehouseManagerId,
+        };
+        return this.search(findOptions);
+      case RoleCode.PURCHASING_STAFF:
+        findOptions.where = {
+          purchasingStaffId: authenUser.purchasingStaffId,
+        };
+        return this.search(findOptions);
+      case RoleCode.INSPECTION_DEPARTMENT:
+        findOptions.where = {
+          inspectionDepartmentId: authenUser.inspectionDepartmentId,
+        };
+        return this.search(findOptions);
+      default:
+        throw new ForbiddenException('This role is not allowed');
+    }
   }
 }
 

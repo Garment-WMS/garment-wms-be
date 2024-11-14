@@ -1,8 +1,24 @@
-import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
-import { $Enums, PoDeliveryStatus, Prisma, PrismaClient } from '@prisma/client';
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
+import {
+  BadRequestException,
+  ForbiddenException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
+import {
+  $Enums,
+  PoDeliveryStatus,
+  Prisma,
+  PrismaClient,
+  RoleCode,
+} from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { DataResponse } from 'src/common/dto/data-response';
+import { getPageMeta } from 'src/common/utils/utils';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ImportRequestService } from '../import-request/import-request.service';
 import { InspectionReportService } from '../inspection-report/inspection-report.service';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
@@ -373,4 +389,49 @@ export class ImportReceiptService {
   }
 
   validateMaterialReceipt(inspectionReportDetail: any, materialReceipts: any) {}
+
+  async search(
+    findOptions: GeneratedFindOptions<Prisma.ImportReceiptWhereInput>,
+  ) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.importReceipt.findMany({
+        skip: offset,
+        take: limit,
+        where: findOptions?.where,
+        include: this.includeQuery,
+      }),
+      this.prismaService.importReceipt.count({ where: findOptions?.where }),
+    ]);
+    const dataResponse: DataResponse = {
+      data,
+      pageMeta: getPageMeta(total, offset, limit),
+    };
+    return apiSuccess(
+      HttpStatus.OK,
+      dataResponse,
+      'Get import receipts successfully',
+    );
+  }
+
+  async getByUserToken(
+    authenUser: AuthenUser,
+    findOptions: GeneratedFindOptions<Prisma.ImportReceiptWhereInput>,
+  ) {
+    switch (authenUser.role) {
+      case RoleCode.WAREHOUSE_MANAGER:
+        findOptions.where = {
+          warehouseManagerId: authenUser.warehouseManagerId,
+        };
+        return this.search(findOptions);
+      case RoleCode.WAREHOUSE_STAFF:
+        findOptions.where = {
+          warehouseStaffId: authenUser.warehouseStaffId,
+        };
+        return this.search(findOptions);
+      default:
+        throw new ForbiddenException('This role is not allowed');
+    }
+  }
 }
