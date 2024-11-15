@@ -274,8 +274,12 @@ export class InventoryReportPlanService {
     );
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} inventoryReportPlan`;
+  async findOne(id: string) {
+    const result = await this.prismaService.inventoryReportPlan.findUnique({
+      where: { id },
+      include: this.queryInclude,
+    });
+    return apiSuccess(200, result, 'Get inventory report plan successfully');
   }
 
   update(
