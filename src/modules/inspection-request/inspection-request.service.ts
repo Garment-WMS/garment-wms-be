@@ -7,14 +7,12 @@ import {
 } from '@nestjs/common';
 import { $Enums, Prisma, PrismaClient, RoleCode } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
+import { inspectionRequestInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
-import { importRequestDetailInclude } from '../import-request/import-request.service';
-import { inspectionReportInclude } from '../inspection-report/inspection-report.service';
-import { warehouseManagerInclude } from '../warehouse-staff/warehouse-staff.service';
 import { CreateInspectionRequestDto } from './dto/create-inspection-request.dto';
 import { UpdateInspectionRequestDto } from './dto/update-inspection-request.dto';
 
@@ -265,29 +263,3 @@ export class InspectionRequestService {
     }
   }
 }
-
-export const inspectionRequestInclude: Prisma.InspectionRequestInclude = {
-  importRequest: {
-    include: {
-      importRequestDetail: {
-        include: importRequestDetailInclude,
-      },
-    },
-  },
-  inspectionDepartment: {
-    include: {
-      account: true,
-    },
-  },
-  purchasingStaff: {
-    include: {
-      account: true,
-    },
-  },
-  warehouseManager: {
-    include: warehouseManagerInclude,
-  },
-  inspectionReport: {
-    include: inspectionReportInclude,
-  },
-};

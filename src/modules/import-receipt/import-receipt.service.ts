@@ -13,6 +13,7 @@ import {
   RoleCode,
 } from '@prisma/client';
 import { isUUID } from 'class-validator';
+import { importReceiptInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
@@ -25,7 +26,6 @@ import { InventoryStockService } from '../inventory-stock/inventory-stock.servic
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
-import { warehouseManagerInclude } from '../warehouse-staff/warehouse-staff.service';
 import { CreateImportReceiptDto } from './dto/create-import-receipt.dto';
 import { UpdateImportReceiptDto } from './dto/update-import-receipt.dto';
 
@@ -426,19 +426,3 @@ export class ImportReceiptService {
     }
   }
 }
-
-export const importReceiptInclude: Prisma.ImportReceiptInclude = {
-  warehouseManager: {
-    include: warehouseManagerInclude,
-  },
-  warehouseStaff: {
-    include: warehouseManagerInclude,
-  },
-  materialReceipt: true,
-  productReceipt: true,
-  inspectionReport: {
-    include: {
-      inspectionRequest: true,
-    },
-  },
-};

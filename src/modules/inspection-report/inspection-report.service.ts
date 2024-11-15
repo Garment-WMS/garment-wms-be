@@ -5,12 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { $Enums, Prisma } from '@prisma/client';
+import {
+  importRequestInclude,
+  inspectionReportInclude,
+} from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta } from 'src/common/utils/utils';
-import { importRequestInclude } from '../import-request/import-request.service';
 import { CreateInspectionReportDto } from './dto/inspection-report/create-inspection-report.dto';
 import { UpdateInspectionReportDto } from './dto/inspection-report/update-inspection-report.dto';
 
@@ -289,46 +292,3 @@ export class InspectionReportService {
     });
   }
 }
-
-export const inspectionReportInclude: Prisma.InspectionReportInclude = {
-  inspectionRequest: {
-    include: {
-      importRequest: {
-        include: importRequestInclude,
-      },
-      inspectionDepartment: true,
-      purchasingStaff: true,
-    },
-  },
-
-  inspectionReportDetail: {
-    include: {
-      materialPackage: {
-        include: {
-          materialVariant: {
-            include: {
-              material: {
-                include: {
-                  materialUom: true,
-                },
-              },
-            },
-          },
-        },
-      },
-      productSize: {
-        include: {
-          productVariant: {
-            include: {
-              product: {
-                include: {
-                  productUom: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-};
