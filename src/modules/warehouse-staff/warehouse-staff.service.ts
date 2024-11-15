@@ -1,12 +1,12 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable } from '@nestjs/common';
-import { $Enums, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { warehouseStaffInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { NotFoundError } from 'rxjs';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
-import { accountSelect } from '../inspection-department/inspection-department.service';
 
 @Injectable()
 export class WarehouseStaffService {
@@ -64,49 +64,3 @@ export class WarehouseStaffService {
     });
   }
 }
-
-export const warehouseStaffInclude: Prisma.WarehouseStaffInclude = {
-  account: {
-    select: accountSelect,
-  },
-  _count: {
-    select: {
-      importRequest: {
-        where: {
-          inspectionRequest: {
-            some: {
-              inspectionReport: {
-                importReceipt: {
-                  status: $Enums.ImportReceiptStatus.IMPORTING,
-                },
-              },
-            },
-          },
-        },
-      },
-      importReceipt: {
-        where: {
-          status: $Enums.ImportReceiptStatus.IMPORTING,
-        },
-      },
-    },
-  },
-};
-
-export const warehouseManagerInclude: Prisma.WarehouseManagerInclude = {
-  account: {
-    select: accountSelect,
-  },
-};
-
-export const productionDepartmentInclude: Prisma.ProductionDepartmentInclude = {
-  account: {
-    select: accountSelect,
-  },
-};
-
-export const factoryDirectorInclude: Prisma.FactoryDirectorInclude = {
-  account: {
-    select: accountSelect,
-  },
-};

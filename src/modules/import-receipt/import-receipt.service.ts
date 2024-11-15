@@ -13,6 +13,7 @@ import {
   RoleCode,
 } from '@prisma/client';
 import { isUUID } from 'class-validator';
+import { importReceiptInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
@@ -39,16 +40,6 @@ export class ImportReceiptService {
     private readonly importRequestService: ImportRequestService,
     private readonly poDeliveryDetailsService: PoDeliveryMaterialService,
   ) {}
-
-  includeQuery: Prisma.ImportReceiptInclude = {
-    materialReceipt: true,
-    productReceipt: true,
-    inspectionReport: {
-      include: {
-        inspectionRequest: true,
-      },
-    },
-  };
 
   async createMaterialReceipt(
     createImportReceiptDto: CreateImportReceiptDto,
@@ -359,7 +350,7 @@ export class ImportReceiptService {
 
   async findAll() {
     const result = await this.prismaService.importReceipt.findMany({
-      include: this.includeQuery,
+      include: importReceiptInclude,
     });
     return apiSuccess(
       HttpStatus.OK,
@@ -400,7 +391,7 @@ export class ImportReceiptService {
         skip: offset,
         take: limit,
         where: findOptions?.where,
-        include: this.includeQuery,
+        include: importReceiptInclude,
       }),
       this.prismaService.importReceipt.count({ where: findOptions?.where }),
     ]);

@@ -11,6 +11,7 @@ import {
 import { $Enums, Prisma, PrismaClient, RoleCode } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isNotEmpty } from 'class-validator';
+import { importRequestInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed } from 'src/common/dto/api-response';
@@ -19,7 +20,6 @@ import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
-import { inspectionDepartmentInclude } from '../inspection-department/inspection-department.service';
 import { CreateInspectionRequestDto } from '../inspection-request/dto/create-inspection-request.dto';
 import { InspectionRequestService } from '../inspection-request/inspection-request.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
@@ -499,60 +499,3 @@ export class ImportRequestService {
     }
   }
 }
-export const importRequestDetailInclude: Prisma.ImportRequestDetailInclude = {
-  materialPackage: {
-    include: {
-      materialVariant: {
-        include: {
-          material: {
-            include: {
-              materialUom: true,
-            },
-          },
-          materialAttribute: true,
-          materialInspectionCriteria: true,
-        },
-      },
-    },
-  },
-};
-
-export const importRequestInclude: Prisma.ImportRequestInclude = {
-  importRequestDetail: {
-    include: importRequestDetailInclude,
-  },
-  warehouseManager: {
-    include: {
-      account: true,
-    },
-  },
-  purchasingStaff: {
-    include: {
-      account: true,
-    },
-  },
-  warehouseStaff: {
-    include: {
-      account: true,
-    },
-  },
-  poDelivery: {
-    include: {
-      poDeliveryDetail: true,
-      purchaseOrder: {
-        include: {
-          purchasingStaff: {
-            include: {
-              account: true,
-            },
-          },
-        },
-      },
-    },
-  },
-  inspectionRequest: {
-    include: {
-      inspectionDepartment: { include: inspectionDepartmentInclude },
-    },
-  },
-};
