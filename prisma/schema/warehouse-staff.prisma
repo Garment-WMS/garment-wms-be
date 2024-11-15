@@ -11,6 +11,7 @@ model WarehouseStaff {
   MaterialExportReceipt     MaterialExportReceipt[]
   InventoryReportPlanDetail InventoryReportPlanDetail[]
   MaterialExportRequest     MaterialExportRequest[]
+  task                      Task[]
 
   @@map("warehouse_staff")
 }
