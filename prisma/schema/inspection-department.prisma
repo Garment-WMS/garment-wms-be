@@ -6,6 +6,7 @@ model InspectionDepartment {
   deletedAt         DateTime?           @map("deleted_at") @db.Timestamp(6)
   account           Account?            @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   inspectionRequest InspectionRequest[]
+  task              Task[]
 
   @@map("inspection_department")
 }

@@ -17,6 +17,7 @@ model ImportReceipt {
   materialReceipt    MaterialReceipt[]
   productReceipt     ProductReceipt[]
   warehouseManager   WarehouseManager?   @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  task               Task[]
 
   @@map("import_receipt")
 }

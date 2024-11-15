@@ -499,26 +499,27 @@ export class ImportRequestService {
     }
   }
 }
-
-export const importRequestInclude: Prisma.ImportRequestInclude = {
-  importRequestDetail: {
+export const importRequestDetailInclude: Prisma.ImportRequestDetailInclude = {
+  materialPackage: {
     include: {
-      materialPackage: {
+      materialVariant: {
         include: {
-          materialVariant: {
+          material: {
             include: {
-              material: {
-                include: {
-                  materialUom: true,
-                },
-              },
-              materialAttribute: true,
-              materialInspectionCriteria: true,
+              materialUom: true,
             },
           },
+          materialAttribute: true,
+          materialInspectionCriteria: true,
         },
       },
     },
+  },
+};
+
+export const importRequestInclude: Prisma.ImportRequestInclude = {
+  importRequestDetail: {
+    include: importRequestDetailInclude,
   },
   warehouseManager: {
     include: {

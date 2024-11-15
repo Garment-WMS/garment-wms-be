@@ -15,6 +15,7 @@ model InventoryReport {
   warehouseManager          WarehouseManager            @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warehouseStaff            WarehouseStaff              @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   inventoryReportPlanDetail InventoryReportPlanDetail[]
+  task                      Task[]
 
   @@map("inventory_report")
 }

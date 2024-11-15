@@ -12,7 +12,7 @@ import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
-import { importRequestInclude } from '../import-request/import-request.service';
+import { importRequestDetailInclude } from '../import-request/import-request.service';
 import { inspectionReportInclude } from '../inspection-report/inspection-report.service';
 import { warehouseManagerInclude } from '../warehouse-staff/warehouse-staff.service';
 import { CreateInspectionRequestDto } from './dto/create-inspection-request.dto';
@@ -268,7 +268,11 @@ export class InspectionRequestService {
 
 export const inspectionRequestInclude: Prisma.InspectionRequestInclude = {
   importRequest: {
-    include: importRequestInclude,
+    include: {
+      importRequestDetail: {
+        include: importRequestDetailInclude,
+      },
+    },
   },
   inspectionDepartment: {
     include: {
