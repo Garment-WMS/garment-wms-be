@@ -25,6 +25,7 @@ import { InventoryStockService } from '../inventory-stock/inventory-stock.servic
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
+import { warehouseManagerInclude } from '../warehouse-staff/warehouse-staff.service';
 import { CreateImportReceiptDto } from './dto/create-import-receipt.dto';
 import { UpdateImportReceiptDto } from './dto/update-import-receipt.dto';
 
@@ -39,16 +40,6 @@ export class ImportReceiptService {
     private readonly importRequestService: ImportRequestService,
     private readonly poDeliveryDetailsService: PoDeliveryMaterialService,
   ) {}
-
-  includeQuery: Prisma.ImportReceiptInclude = {
-    materialReceipt: true,
-    productReceipt: true,
-    inspectionReport: {
-      include: {
-        inspectionRequest: true,
-      },
-    },
-  };
 
   async createMaterialReceipt(
     createImportReceiptDto: CreateImportReceiptDto,
@@ -359,7 +350,7 @@ export class ImportReceiptService {
 
   async findAll() {
     const result = await this.prismaService.importReceipt.findMany({
-      include: this.includeQuery,
+      include: importReceiptInclude,
     });
     return apiSuccess(
       HttpStatus.OK,
@@ -400,7 +391,7 @@ export class ImportReceiptService {
         skip: offset,
         take: limit,
         where: findOptions?.where,
-        include: this.includeQuery,
+        include: importReceiptInclude,
       }),
       this.prismaService.importReceipt.count({ where: findOptions?.where }),
     ]);
@@ -435,3 +426,19 @@ export class ImportReceiptService {
     }
   }
 }
+
+export const importReceiptInclude: Prisma.ImportReceiptInclude = {
+  warehouseManager: {
+    include: warehouseManagerInclude,
+  },
+  warehouseStaff: {
+    include: warehouseManagerInclude,
+  },
+  materialReceipt: true,
+  productReceipt: true,
+  inspectionReport: {
+    include: {
+      inspectionRequest: true,
+    },
+  },
+};
