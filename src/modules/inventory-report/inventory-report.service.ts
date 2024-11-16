@@ -276,8 +276,33 @@ export class InventoryReportService {
     );
   }
 
-  async findAll() {
-    return `This action returns all inventoryReport`;
+  async findAll(
+    findOptions: GeneratedFindOptions<Prisma.InventoryReportWhereInput>,
+  ) {
+    const { skip, take, ...rest } = findOptions;
+    const page = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+
+    const [result, total] = await this.prismaService.$transaction([
+      this.prismaService.inventoryReport.findMany({
+        where: rest?.where,
+        include: this.includeQuery,
+        skip: page,
+        take: limit,
+      }),
+      this.prismaService.inventoryReport.count({
+        where: rest?.where,
+      }),
+    ]);
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: result,
+        pageMeta: getPageMeta(total, page, limit),
+      },
+      'Get all inventory report successfully',
+    );
   }
 
   async findOne(id: string) {
