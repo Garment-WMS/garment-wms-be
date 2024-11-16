@@ -245,3 +245,30 @@ export const warehouseStaffInclude: Prisma.WarehouseStaffInclude = {
     },
   },
 };
+
+export const inventoryReportPlan: Prisma.InventoryReportPlanInclude = {
+  inventoryReportPlanDetail: {
+    include: {
+      warehouseStaff: {
+        include: {
+          account: true,
+        },
+      },
+      materialPackage: {
+        include: {
+          inventoryStock: true,
+        },
+      },
+      productSize: {
+        include: {
+          inventoryStock: true,
+        },
+      },
+      inventoryReport: {
+        include: {
+          inventoryReportDetail: true,
+        },
+      },
+    },
+  },
+};

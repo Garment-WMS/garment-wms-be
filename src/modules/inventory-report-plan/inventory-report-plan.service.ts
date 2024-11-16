@@ -2,6 +2,7 @@ import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { InventoryReportPlanStatus, Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
+import { inventoryReportPlan } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { InventoryReportPlanDetailService } from '../inventory-report-plan-detail/inventory-report-plan-detail.service';
@@ -17,28 +18,6 @@ export class InventoryReportPlanService {
     private readonly inventoryReportPlanDetailService: InventoryReportPlanDetailService,
     private readonly inventoryReportService: InventoryReportService,
   ) {}
-
-  queryInclude: Prisma.InventoryReportPlanInclude = {
-    inventoryReportPlanDetail: {
-      include: {
-        materialPackage: {
-          include: {
-            inventoryStock: true,
-          },
-        },
-        productSize: {
-          include: {
-            inventoryStock: true,
-          },
-        },
-        inventoryReport: {
-          include: {
-            inventoryReportDetail: true,
-          },
-        },
-      },
-    },
-  };
 
   async checkLastInventoryReportInPlan(inventoryReportId: string) {
     throw new Error('Method not implemented.');
@@ -146,7 +125,7 @@ export class InventoryReportPlanService {
     }
     return this.prismaService.inventoryReportPlan.findUnique({
       where: { id },
-      include: this.queryInclude,
+      include: inventoryReportPlan,
     });
   }
 
@@ -159,7 +138,7 @@ export class InventoryReportPlanService {
           },
         },
       },
-      include: this.queryInclude,
+      include: inventoryReportPlan,
     });
     return apiSuccess(
       HttpStatus.OK,
@@ -265,7 +244,7 @@ export class InventoryReportPlanService {
   ) {
     const result = await this.prismaService.inventoryReportPlan.findMany({
       where: findOptions.where,
-      include: this.queryInclude,
+      include: inventoryReportPlan,
     });
     return apiSuccess(
       200,
@@ -277,7 +256,7 @@ export class InventoryReportPlanService {
   async findOne(id: string) {
     const result = await this.prismaService.inventoryReportPlan.findUnique({
       where: { id },
-      include: this.queryInclude,
+      include: inventoryReportPlan,
     });
     return apiSuccess(200, result, 'Get inventory report plan successfully');
   }
