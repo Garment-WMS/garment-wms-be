@@ -257,6 +257,7 @@ export class InventoryReportPlanService {
             if (!acc[staffId]) {
               acc[staffId] = {
                 warehouseStaff: detail.warehouseStaff,
+                inventoryReport: detail.inventoryReport,
                 staffInventoryReportPlanDetails: [],
               };
             }
@@ -267,7 +268,8 @@ export class InventoryReportPlanService {
           {} as Record<
             string,
             {
-              warehouseStaffId: string;
+              // warehouseStaffId: string;
+              inventoryReport?: string;
               warehouseStaff: any;
               staffInventoryReportPlanDetails: any[];
             }
