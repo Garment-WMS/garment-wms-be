@@ -341,7 +341,19 @@ export class ImportReceiptService {
         productReceipt: true,
         inspectionReport: {
           include: {
-            inspectionRequest: true,
+            inspectionRequest: {
+              include: {
+                importRequest: {
+                  include: {
+                    warehouseStaff: {
+                      include: {
+                        account: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },

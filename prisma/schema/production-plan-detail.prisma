@@ -3,6 +3,7 @@ model ProductionPlanDetail {
   productionPlanId  String            @map("production_plan_id") @db.Uuid
   productSizeId     String            @map("product_size_id") @db.Uuid
   quantityToProduce Float             @map("quantity_to_produce")
+  code              String?           @map("code") @db.VarChar
   note              String?           @map("map") @db.VarChar
   startDate         DateTime?         @map("start_date") @db.Date
   finishDate        DateTime?         @map("finish_date") @db.Date

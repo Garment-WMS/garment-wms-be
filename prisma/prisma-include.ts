@@ -245,3 +245,62 @@ export const warehouseStaffInclude: Prisma.WarehouseStaffInclude = {
     },
   },
 };
+
+export const inventoryReportPlan: Prisma.InventoryReportPlanInclude = {
+  inventoryReportPlanDetail: {
+    include: {
+      warehouseStaff: {
+        include: {
+          account: true,
+        },
+      },
+      materialPackage: {
+        include: {
+          materialVariant: {
+            include: {
+              material: {
+                include: {
+                  materialUom: true,
+                },
+              },
+            },
+          },
+          inventoryStock: true,
+        },
+      },
+      productSize: {
+        include: {
+          productVariant: true,
+          inventoryStock: true,
+        },
+      },
+      inventoryReport: {
+        include: {
+          inventoryReportDetail: true,
+        },
+      },
+    },
+  },
+};
+
+export const importReceipt: Prisma.ImportReceiptInclude = {
+  materialReceipt: true,
+  productReceipt: true,
+  inspectionReport: {
+    include: {
+      inspectionRequest: {
+        include: {
+          importRequest: {
+            include: {
+              warehouseStaff: {
+                include: {
+                  account: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+};
