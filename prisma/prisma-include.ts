@@ -304,3 +304,97 @@ export const importReceipt: Prisma.ImportReceiptInclude = {
     },
   },
 };
+
+export const materialInclude: Prisma.MaterialInclude = {
+  materialUom: true,
+};
+
+export const MaterialVariantInclude: Prisma.MaterialVariantInclude = {
+  material: {
+    include: {
+      materialUom: true,
+    },
+  },
+  materialAttribute: true,
+  materialInspectionCriteria: true,
+};
+
+export const materialPackageInclude: Prisma.MaterialPackageInclude = {
+  materialVariant: {
+    include: MaterialVariantInclude,
+  },
+};
+
+export const productVariantInclude: Prisma.ProductVariantInclude = {
+  product: {
+    include: {
+      productUom: true,
+    },
+  },
+};
+
+export const productFormulaInclude: Prisma.ProductFormulaInclude = {
+  productSize: {
+    include: {
+      productVariant: {
+        include: productVariantInclude,
+      },
+    },
+  },
+  productFormulaMaterial: {
+    include: {},
+  },
+};
+
+export const materialExportRequest: Prisma.MaterialExportRequestInclude = {
+  productFormula: {
+    include: productFormulaInclude,
+  },
+  materialExportRequestDetail: {
+    include: {
+      materialVariant: {
+        include: MaterialVariantInclude,
+      },
+    },
+  },
+};
+
+export const materialExportReceiptInclude: Prisma.MaterialExportReceiptInclude =
+  {
+    warehouseStaff: {
+      include: warehouseStaffInclude,
+    },
+    materialExportReceiptDetail: {
+      include: {
+        materialReceipt: {
+          include: {
+            materialPackage: {
+              include: materialPackageInclude,
+            },
+          },
+        },
+      },
+    },
+  };
+
+export const taskInclude: Prisma.TaskInclude = {
+  warehouseStaff: {
+    include: warehouseManagerInclude,
+  },
+  inspectionRequest: {
+    include: inspectionRequestInclude,
+  },
+  importReceipt: {
+    include: importReceiptInclude,
+  },
+  materialExportReceipt: {
+    include: materialExportReceiptInclude,
+  },
+  inspectionDepartment: {
+    include: inspectionDepartmentInclude,
+  },
+  inventoryReport: {
+    include: inventoryReportPlan,
+  },
+  todo: true,
+};
