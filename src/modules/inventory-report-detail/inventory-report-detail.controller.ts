@@ -70,20 +70,20 @@ export class InventoryReportDetailController {
     );
   }
 
-  @Patch(':id/approve')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(RoleCode.WAREHOUSE_MANAGER)
-  processInventoryDetailApproval(
-    @Param('id', CustomUUIDPipe) id: string,
-    @Body() approvalInventoryReportDetailDto: ApprovalInventoryReportDetailDto,
-    @GetUser() user: AuthenUser,
-  ) {
-    return this.inventoryReportDetailService.handleInventoryReportDetailApproval(
-      id,
-      approvalInventoryReportDetailDto,
-      user.warehouseManagerId,
-    );
-  }
+  // @Patch(':id/approve')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles(RoleCode.WAREHOUSE_MANAGER)
+  // processInventoryDetailApproval(
+  //   @Param('id', CustomUUIDPipe) id: string,
+  //   @Body() approvalInventoryReportDetailDto: ApprovalInventoryReportDetailDto,
+  //   @GetUser() user: AuthenUser,
+  // ) {
+  //   return this.inventoryReportDetailService.handleInventoryReportDetailApproval(
+  //     id,
+  //     approvalInventoryReportDetailDto,
+  //     user.warehouseManagerId,
+  //   );
+  // }
 
   @Delete(':id')
   remove(@Param('id') id: string) {

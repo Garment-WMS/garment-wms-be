@@ -6,7 +6,7 @@ model InventoryReportDetail {
   expectedQuantity       Float                       @map("expected_quantity")
   actualQuantity         Float?                      @map("actual_quantity")
   managerQuantityConfirm Float?                      @map("manager_quantity_confirm")
-  status                 InventoryReportDetailStatus @default(IN_PROGRESS) @map("status")
+  // status                 InventoryReportDetailStatus @default(IN_PROGRESS) @map("status")
   note                   String?                     @map("note")
   recoredAt              DateTime?                   @map("recored_at") @db.Timestamptz(6)
   createdAt              DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)

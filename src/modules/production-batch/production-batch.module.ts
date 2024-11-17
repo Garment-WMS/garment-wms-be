@@ -4,9 +4,10 @@ import { IsProductionBatchExistPipe } from './pipe/is-production-batch-exist.pip
 import { ProductionBatchController } from './production-batch.controller';
 import { ProductionBatchService } from './production-batch.service';
 import { IsProductionBatchExistValidator } from './validator/is-production-batch-exist.validator';
+import { ExcelModule } from '../excel/excel.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule,ExcelModule],
   controllers: [ProductionBatchController],
   providers: [
     ProductionBatchService,

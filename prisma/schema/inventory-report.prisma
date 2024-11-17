@@ -3,7 +3,7 @@ model InventoryReport {
   warehouseManagerId        String                      @map("warehouse_manager_id") @db.Uuid
   warehouseStaffId          String                      @map("warehouse_staff_id") @db.Uuid
   inventoryReportType       InventoryReportTypeEnum     @default(MATERIAL) @map("inventory_report_type")
-  status                    InventoryReportStatus       @default(PENDING) @map("status")
+  status                    InventoryReportStatus       @default(NOT_YET) @map("status")
   code                      String                      @unique @db.VarChar
   note                      String?                     @map("note")
   from                      DateTime?                   @map("from") @db.Timestamptz(6)
@@ -28,7 +28,8 @@ enum InventoryReportTypeEnum {
 }
 
 enum InventoryReportStatus {
-  PENDING
+  // PENDING
+  NOT_YET
   EXECUTING
   FINISHED
   CANCELLED

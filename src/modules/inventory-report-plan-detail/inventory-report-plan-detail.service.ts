@@ -56,7 +56,7 @@ export class InventoryReportPlanDetailService {
     );
     const hasPendingOrExecuting = inventoryReportPlanDetail.some((el) => {
       return (
-        el.inventoryReport.status === InventoryReportStatus.PENDING ||
+        el.inventoryReport.status === InventoryReportStatus.NOT_YET ||
         el.inventoryReport.status === InventoryReportStatus.EXECUTING
       );
     });
