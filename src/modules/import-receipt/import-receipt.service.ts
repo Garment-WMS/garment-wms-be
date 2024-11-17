@@ -181,7 +181,10 @@ export class ImportReceiptService {
     );
     if (result) {
       try {
-        await this.createTaskByImportReceipt(result.id);
+        await this.createTaskByImportReceipt(
+          result.id,
+          inspectionReport.inspectionRequest.importRequest.warehouseStaffId,
+        );
       } catch (e) {
         Logger.error(e);
         throw new ConflictException('Can not create Task automatically');
@@ -199,10 +202,14 @@ export class ImportReceiptService {
     );
   }
 
-  async createTaskByImportReceipt(importReceiptId: string) {
+  async createTaskByImportReceipt(
+    importReceiptId: string,
+    warehouseId: string,
+  ) {
     const createTaskDto: CreateTaskDto = {
       taskType: 'IMPORT',
       importReceiptId: importReceiptId,
+      warehouseStaffId: warehouseId,
       status: $Enums.TaskStatus.OPEN,
     };
     const task = await this.taskService.create(createTaskDto);
