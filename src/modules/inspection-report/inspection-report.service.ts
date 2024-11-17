@@ -122,14 +122,14 @@ export class InspectionReportService {
           inspectionReportDetail.quantityByPack =
             importRequestDetail.quantityByPack;
         }
+        if (
+          inspectionReportDetail.approvedQuantityByPack +
+            inspectionReportDetail.defectQuantityByPack !==
+          importRequestDetail.quantityByPack
+        ) {
+          errorInspectionReportDetail.push(inspectionReportDetail);
+        }
       });
-      if (
-        inspectionReportDetail.approvedQuantityByPack +
-          inspectionReportDetail.defectQuantityByPack <
-        inspectionReportDetail.quantityByPack
-      ) {
-        errorInspectionReportDetail.push(inspectionReportDetail);
-      }
     });
     //log all inspection report details
     Logger.log(
@@ -140,7 +140,7 @@ export class InspectionReportService {
     if (errorInspectionReportDetail.length > 0) {
       throw new CustomValidationException(
         400,
-        'Approved + defect quantity must equal to quantity by pack',
+        'Approved + defect quantity must equal to quantity by pack ',
         errorInspectionReportDetail,
       );
     }
@@ -213,21 +213,22 @@ export class InspectionReportService {
       ) => {
         const inspectionReport = await prismaInstance.inspectionReport.create({
           data: inspectionReportCreateInput,
+          include: inspectionReportInclude,
         });
-        const inspectionRequest =
+        const inspectionRequestStatusUpdated =
           await this.updateInspectionRequestStatusByInspectionRequestIdToInspected(
             inspectionReport.inspectionRequestId,
             prismaInstance,
           );
-        const importRequest =
-          await this.updateImportRequestStatusByInspectionRequestIdToInspected(
-            inspectionRequest.importRequestId,
+        const importRequestStatusUpdated =
+          await this.updateImportRequestStatusByImportRequestIdToInspected(
+            importRequest.id,
             prismaInstance,
           );
         return {
           inspectionReport,
-          inspectionRequest,
-          importRequest,
+          'inspectionRequest.status': inspectionRequestStatusUpdated.status,
+          'importRequest.status': importRequestStatusUpdated.status,
         };
       },
     );
@@ -252,22 +253,17 @@ export class InspectionReportService {
     });
   }
 
-  async updateImportRequestStatusByInspectionRequestIdToInspected(
-    inspectionRequestId: string,
+  async updateImportRequestStatusByImportRequestIdToInspected(
+    importRequestId: string,
     prismaInstance: Omit<
       PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
       '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
     >,
   ) {
     const prisma = prismaInstance || this.prismaService;
-    return await prisma.importRequest.updateMany({
+    return await prisma.importRequest.update({
       where: {
-        inspectionRequest: {
-          some: {
-            id: inspectionRequestId,
-            deletedAt: null,
-          },
-        },
+        id: importRequestId,
       },
       data: {
         status: $Enums.ImportRequestStatus.INSPECTED,
