@@ -216,12 +216,13 @@ export class InspectionRequestService {
   }
 
   async findFirst(id: string) {
-    const inspectionRequest = this.prismaService.inspectionRequest.findFirst({
-      where: {
-        id: id,
-      },
-      include: inspectionRequestInclude,
-    });
+    const inspectionRequest =
+      await this.prismaService.inspectionRequest.findFirst({
+        where: {
+          id: id,
+        },
+        include: inspectionRequestInclude,
+      });
     return inspectionRequest;
   }
 

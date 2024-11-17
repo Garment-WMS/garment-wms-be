@@ -21,8 +21,8 @@ export class CreateInspectionReportDto {
   code?: string;
 
   @ApiProperty({ required: true, type: 'string', format: 'uuid' })
-  @IsUUID()
   @IsInspectionRequestExist()
+  @IsUUID('4')
   inspectionRequestId: string;
 
   @ApiProperty({ required: true, type: 'string', format: 'uuid' })
