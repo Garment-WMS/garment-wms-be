@@ -1,20 +1,19 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import {  PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
-import { CreateReceiptAdjustmentDto } from '../receipt-adjustment/dto/create-receipt-adjustment.dto';
-import { ApprovalInventoryReportDetailDto } from './dto/approval-inventory-report-detail.dto';
 import { CreateInventoryReportDetailDto } from './dto/create-inventory-report-detail.dto';
 import { RecordInventoryReportDetail } from './dto/record-inventory-report-detail.dto';
 import { UpdateInventoryReportDetailDto } from './dto/update-inventory-report-detail.dto';
 
 @Injectable()
 export class InventoryReportDetailService {
+
   constructor(
     private readonly prismaService: PrismaService,
     @InjectQueue('receipt-adjustment')
@@ -22,6 +21,11 @@ export class InventoryReportDetailService {
     private readonly eventEmitter: EventEmitter2,
     private readonly materialReceiptService: MaterialReceiptService,
   ) {}
+
+
+  isInventoryReportDetailExist(value: string) {
+    return this.findById(value);
+  }
 
   async create(
     createInventoryReportDetailDto: CreateInventoryReportDetailDto[],
@@ -200,7 +204,7 @@ export class InventoryReportDetailService {
 
   findById(id: string) {
     if (!isUUID(id)) {
-      throw new Error('Invalid id');
+      throw new BadRequestException('Invalid id');
     }
     return this.prismaService.inventoryReportDetail.findUnique({
       where: {

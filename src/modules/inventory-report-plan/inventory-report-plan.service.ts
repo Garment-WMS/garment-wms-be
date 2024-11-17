@@ -152,6 +152,7 @@ export class InventoryReportPlanService {
   ) {
     const inventoryPlanInput: Prisma.InventoryReportPlanCreateInput = {
       code: undefined,
+      type: createInventoryReportPlanDto.inventoryReportPlanType,
       title: createInventoryReportPlanDto.title,
       from: createInventoryReportPlanDto.from,
       to: createInventoryReportPlanDto.to,

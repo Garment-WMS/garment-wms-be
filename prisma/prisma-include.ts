@@ -116,6 +116,7 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
       poDeliveryDetail: true,
       purchaseOrder: {
         include: {
+          supplier: true,
           purchasingStaff: {
             include: {
               account: true,
@@ -301,6 +302,7 @@ export const importReceipt: Prisma.ImportReceiptInclude = {
       },
     },
   },
+
   productReceipt: true,
   inspectionReport: {
     include: {
@@ -308,6 +310,15 @@ export const importReceipt: Prisma.ImportReceiptInclude = {
         include: {
           importRequest: {
             include: {
+              poDelivery: {
+                include: {
+                  purchaseOrder: {
+                    include: {
+                      supplier: true,
+                    },
+                  },
+                },
+              },
               warehouseStaff: {
                 include: {
                   account: true,

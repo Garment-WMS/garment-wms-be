@@ -407,6 +407,15 @@ export class ImportReceiptService {
                 },
                 importRequest: {
                   include: {
+                    poDelivery: {
+                      include: {
+                        purchaseOrder: {
+                          include: {
+                            supplier: true,
+                          },
+                        },
+                      },
+                    },
                     warehouseStaff: {
                       include: {
                         account: true,

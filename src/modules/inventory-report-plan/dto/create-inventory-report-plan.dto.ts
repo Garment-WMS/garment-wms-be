@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { InventoryReportPlanType } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
@@ -13,14 +14,12 @@ import { FromToValidation } from 'src/common/decorator/validator/from-to-validat
 import { MinDateCustom } from 'src/common/decorator/validator/min-date.decorator';
 import { UniqueInArray } from 'src/common/decorator/validator/unique-property.decorator';
 import { CreateInventoryReportPlanDetailDto } from './create-inventory-report-plan-detail.dto';
-import { InventoryReportPlanType, Prisma } from '@prisma/client';
 
 export class CreateInventoryReportPlanDto {
-
   @ApiProperty()
   @IsNotEmpty()
   @IsEnum(InventoryReportPlanType)
-  inventoryReportPlanType: string;
+  inventoryReportPlanType: InventoryReportPlanType;
 
   @ApiProperty()
   @IsOptional()
