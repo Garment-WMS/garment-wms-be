@@ -1,9 +1,12 @@
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
+import { getPageMeta } from 'src/common/utils/utils';
 import { ExcelService } from '../excel/excel.service';
 import { ProductPlanDetailService } from '../product-plan-detail/product-plan-detail.service';
 import { CreateProductPlanDto } from './dto/create-product-plan.dto';
@@ -104,15 +107,36 @@ export class ProductPlanService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product Plan');
   }
 
-  async findAll() {
-    const productPlans = await this.prismaService.productionPlan.findMany({
-      include: this.includeQuery,
-    });
+  async findAll(
+    filterOption?: GeneratedFindOptions<Prisma.ProductionPlanWhereInput>,
+  ) {
+    const { skip, take, ...rest } = filterOption;
+    const page = filterOption?.skip || Constant.DEFAULT_OFFSET;
+    const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
+
+    const [result, total] = await this.prismaService.$transaction([
+      this.prismaService.productionPlan.findMany({
+        skip: page,
+        take: limit,
+        where: {
+          ...rest?.where,
+        },
+        include: this.includeQuery,
+      }),
+      this.prismaService.productionPlan.count({
+        where: {
+          ...rest?.where,
+        },
+      }),
+    ]);
 
     return apiSuccess(
       HttpStatus.OK,
-      productPlans,
-      'Get all product plan successfully',
+      {
+        data: result,
+        pageMeta: getPageMeta(total, page, limit),
+      },
+      'List of Production plan',
     );
   }
 

@@ -6,12 +6,13 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { RoleCode } from '@prisma/client';
+import { Prisma, RoleCode } from '@prisma/client';
 import { GetUser } from 'src/common/decorator/get_user.decorator';
 import { Roles } from 'src/common/decorator/roles.decorator';
 import { RolesGuard } from 'src/common/guard/roles.guard';
@@ -20,6 +21,8 @@ import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { UpdateProductPlanDto } from './dto/update-product-plan.dto';
 import { ProductPlanService } from './product-plan.service';
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 
 @Controller('production-plan')
 export class ProductPlanController {
@@ -38,8 +41,16 @@ export class ProductPlanController {
   }
 
   @Get()
-  findAll() {
-    return this.productPlanService.findAll();
+  findAll(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ProductionPlanWhereInput>(
+        [],
+        [{ id: 'asc', createdAt: 'desc', updatedAt: 'desc' }],
+      ),
+    )
+    filterDto: FilterDto<Prisma.ProductionPlanWhereInput>,
+  ) {
+    return this.productPlanService.findAll(filterDto.findOptions);;
   }
 
   @Get(':id')
