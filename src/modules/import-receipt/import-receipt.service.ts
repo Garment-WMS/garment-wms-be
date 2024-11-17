@@ -337,8 +337,55 @@ export class ImportReceiptService {
     return this.prismaService.importReceipt.findUnique({
       where: { id },
       include: {
-        materialReceipt: true,
-        productReceipt: true,
+        warehouseManager: {
+          include: {
+            account: true,
+          },
+        },
+        task: {
+          include: {
+            todo: true,
+          },
+        },
+        warehouseStaff: {
+          include: {
+            account: true,
+          },
+        },
+        materialReceipt: {
+          include: {
+            materialPackage: {
+              include: {
+                materialVariant: {
+                  include: {
+                    material: {
+                      include: {
+                        materialUom: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        productReceipt: {
+          include: {
+            productSize: {
+              include: {
+                productVariant: {
+                  include: {
+                    product: {
+                      include: {
+                        productUom: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         inspectionReport: {
           include: {
             inspectionRequest: {

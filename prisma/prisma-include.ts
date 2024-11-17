@@ -284,7 +284,23 @@ export const inventoryReportPlan: Prisma.InventoryReportPlanInclude = {
 };
 
 export const importReceipt: Prisma.ImportReceiptInclude = {
-  materialReceipt: true,
+  materialReceipt: {
+    include: {
+      materialPackage: {
+        include: {
+          materialVariant: {
+            include: {
+              material: {
+                include: {
+                  materialUom: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   productReceipt: true,
   inspectionReport: {
     include: {
