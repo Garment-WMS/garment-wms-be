@@ -390,6 +390,21 @@ export class ImportReceiptService {
           include: {
             inspectionRequest: {
               include: {
+                inspectionDepartment: {
+                  include: {
+                    account: true,
+                  },
+                },
+                productionDeparment: {
+                  include: {
+                    account: true,
+                  },
+                },
+                purchasingStaff: {
+                  include: {
+                    account: true,
+                  },
+                },
                 importRequest: {
                   include: {
                     warehouseStaff: {
