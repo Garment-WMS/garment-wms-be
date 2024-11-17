@@ -6,6 +6,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 
 @Injectable()
@@ -155,6 +156,19 @@ export class TaskService {
       pageMeta: getPageMeta(total, offset, limit),
     };
     return dataResponse;
+  }
+
+  async getByUserToken(authenUser: AuthenUser) {
+    const task = await this.prismaService.task.findMany({
+      where: {
+        OR: [
+          { warehouseStaffId: authenUser.warehouseStaffId },
+          { inspectionDepartmentId: authenUser.inspectionDepartmentId },
+        ],
+      },
+      include: taskInclude,
+    });
+    return task;
   }
 
   async findOne(id: number) {

@@ -1,7 +1,22 @@
 import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { Prisma, RoleCode } from '@prisma/client';
+import { GetUser } from 'src/common/decorator/get_user.decorator';
+import { Roles } from 'src/common/decorator/roles.decorator';
+import { apiSuccess } from 'src/common/dto/api-response';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
+import { RolesGuard } from 'src/common/guard/roles.guard';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { TaskService } from './task.service';
 
@@ -10,12 +25,16 @@ export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
   @Post()
-  create(@Body() createTaskDto: CreateTaskDto) {
-    return this.taskService.create(createTaskDto);
+  async create(@Body() createTaskDto: CreateTaskDto) {
+    return apiSuccess(
+      HttpStatus.CREATED,
+      await this.taskService.create(createTaskDto),
+      'Task has been created successfully',
+    );
   }
 
   @Get()
-  search(
+  async search(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.TaskWhereInput>(
         [],
@@ -24,7 +43,22 @@ export class TaskController {
     )
     filterDto: FilterDto<Prisma.TaskWhereInput>,
   ) {
-    return this.taskService.search(filterDto.findOptions);
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.taskService.search(filterDto.findOptions),
+      'Tasks have been retrieved successfully',
+    );
+  }
+
+  @Get('/my')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_STAFF, RoleCode.INSPECTION_DEPARTMENT)
+  async getMyTasks(@GetUser() authenUser: AuthenUser) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.taskService.getByUserToken(authenUser),
+      'Tasks have been retrieved successfully',
+    );
   }
 
   @Get(':id')
