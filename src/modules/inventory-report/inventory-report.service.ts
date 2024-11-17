@@ -111,16 +111,16 @@ export class InventoryReportService {
 
     await Promise.all(
       inventoryReportParam.inventoryReportPlanDetail.map(async (el) => {
-        if (el.materialPackageId) {
+        if (el.materialVariantId) {
           const materialReceipt =
             await this.materialReceiptService.getAllMaterialReceiptOfMaterialPackage(
-              el.materialPackageId,
+              el.materialVariantId,
             );
           if (materialReceipt.length > 0) {
             receipt.materialReceipt.push(...materialReceipt);
           }
         }
-        if (el.productSizeId) {
+        if (el.productVariantId) {
           //DO LATER
         }
       }),

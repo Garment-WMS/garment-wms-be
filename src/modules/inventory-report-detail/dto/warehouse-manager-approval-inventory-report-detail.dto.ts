@@ -1,16 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Min,
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { IsInventoryReportDetailExist } from '../validator/is-inventory-report-detail-exist.validation';
 
-export class WarehouseStaffApprovalInventoryReportDetailDto {
+export class WarehouseManagerApprovalInventoryReportDetailDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsUUID()
@@ -21,5 +13,10 @@ export class WarehouseStaffApprovalInventoryReportDetailDto {
   @IsNumber()
   @IsNotEmpty()
   @Min(0)
-  actualQuantity: number;
+  managerConfirmQuantity: number;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  note?: string;
 }

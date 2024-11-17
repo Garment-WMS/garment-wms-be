@@ -21,6 +21,7 @@ import { CreateInventoryReportDetailDto } from './dto/create-inventory-report-de
 import { RecordInventoryReportDetail } from './dto/record-inventory-report-detail.dto';
 import { UpdateInventoryReportDetailDto } from './dto/update-inventory-report-detail.dto';
 import { InventoryReportDetailService } from './inventory-report-detail.service';
+import { WarehouseStaffQuantityReportDetails } from './dto/warehouse-staff-quantity-report.dto';
 
 @ApiTags('inventory-report-detail')
 @Controller('inventory-report-detail')
@@ -55,12 +56,12 @@ export class InventoryReportDetailController {
     );
   }
 
-  @Patch(':id/process')
+  @Patch(':id/warehouse-staff/process')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.WAREHOUSE_STAFF)
   processInventoryDetail(
     @Param('id', CustomUUIDPipe) id: string,
-    @Body() updateInventoryReportDetailDto: RecordInventoryReportDetail,
+    @Body() updateInventoryReportDetailDto: WarehouseStaffQuantityReportDetails,
     @GetUser() user: AuthenUser,
   ) {
     return this.inventoryReportDetailService.handleRecordInventoryReportDetail(
@@ -69,6 +70,21 @@ export class InventoryReportDetailController {
       user.warehouseStaffId,
     );
   }
+
+  // @Patch(':id/process')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles(RoleCode.WAREHOUSE_STAFF)
+  // processInventoryDetail(
+  //   @Param('id', CustomUUIDPipe) id: string,
+  //   @Body() updateInventoryReportDetailDto: RecordInventoryReportDetail,
+  //   @GetUser() user: AuthenUser,
+  // ) {
+  //   return this.inventoryReportDetailService.handleRecordInventoryReportDetail(
+  //     id,
+  //     updateInventoryReportDetailDto,
+  //     user.warehouseStaffId,
+  //   );
+  // }
 
   // @Patch(':id/approve')
   // @UseGuards(JwtAuthGuard, RolesGuard)

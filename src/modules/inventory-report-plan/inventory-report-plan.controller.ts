@@ -40,7 +40,6 @@ export class InventoryReportPlanController {
     @Body() createInventoryReportPlanDto: CreateInventoryReportPlanDto,
     @GetUser() user: AuthenUser,
   ) {
-    // return 'inventory';
     return this.inventoryReportPlanService.create(
       createInventoryReportPlanDto,
       user.warehouseManagerId,

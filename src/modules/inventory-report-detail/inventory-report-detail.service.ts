@@ -10,6 +10,7 @@ import { MaterialReceiptService } from '../material-receipt/material-receipt.ser
 import { CreateInventoryReportDetailDto } from './dto/create-inventory-report-detail.dto';
 import { RecordInventoryReportDetail } from './dto/record-inventory-report-detail.dto';
 import { UpdateInventoryReportDetailDto } from './dto/update-inventory-report-detail.dto';
+import { WarehouseStaffQuantityReportDetails } from './dto/warehouse-staff-quantity-report.dto';
 
 @Injectable()
 export class InventoryReportDetailService {
@@ -39,7 +40,7 @@ export class InventoryReportDetailService {
 
   async handleRecordInventoryReportDetail(
     id: string,
-    recordInventoryReportDetail: RecordInventoryReportDetail,
+    recordInventoryReportDetail: WarehouseStaffQuantityReportDetails,
     warehouseStaffId: string,
   ) {
     const inventoryReportDetail = await this.findById(id);
@@ -62,13 +63,12 @@ export class InventoryReportDetailService {
     ) {
       throw new BadRequestException('Inventory Report Detail already recorded');
     }
-    const result = await this.prismaService.inventoryReportDetail.update({
+    const result = await this.prismaService.inventoryReportDetail.updateMany({
       where: {
         id,
       },
-      include: {},
       data: {
-        ...recordInventoryReportDetail,
+        
         recoredAt: new Date(),
       },
     });

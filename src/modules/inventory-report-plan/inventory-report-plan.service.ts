@@ -185,8 +185,8 @@ export class InventoryReportPlanService {
             return {
               code: undefined,
               inventoryReportPlanId: inventoryPlanResult.id,
-              materialPackageId: el.materialPackageId,
-              productSizeId: el.productSizeId,
+              materialVariantId: el.materialVariantId,
+              productVariantId: el.productVariantId,
               warehouseStaffId: el.warehouseStaffId,
             };
           });
@@ -395,37 +395,35 @@ export class InventoryReportPlanService {
           const groupedByMaterialOrProduct =
             staffGroup.staffInventoryReportPlanDetails.reduce(
               (acc, detail) => {
+                console.log(detail);
                 // Check for materialVariant grouping
-                if (detail.materialPackage?.materialVariant) {
-                  const materialVariantId =
-                    detail.materialPackage.materialVariant.id;
+                if (detail.materialVariant) {
+                  const materialVariantId = detail.materialVariant.id;
 
                   if (!acc[materialVariantId]) {
                     acc[materialVariantId] = {
-                      materialVariant: detail.materialPackage.materialVariant,
+                      materialVariant: detail.materialVariant,
                       packagePlanDetails: [],
                     };
                   }
 
-                  acc[materialVariantId].packagePlanDetails.push(
-                    detail.materialPackage,
-                  );
+                  acc[materialVariantId].packagePlanDetails =
+                    detail.materialVariant.materialPackage;
                 }
 
                 // Check for productVariant grouping
-                else if (detail.productSize?.productVariant) {
-                  const productVariantId = detail.productSize.productVariant.id;
+                else if (detail.productVariant) {
+                  const productVariantId = detail.productVariant.id;
 
                   if (!acc[productVariantId]) {
                     acc[productVariantId] = {
-                      productVariant: detail.productSize.productVariant,
+                      productVariant: detail.productVariant,
                       sizePlanDetails: [],
                     };
                   }
 
-                  acc[productVariantId].sizePlanDetails.push(
-                    detail.productSize,
-                  );
+                  acc[productVariantId].sizePlanDetails =
+                    detail.productVariant.productSize;
                 }
 
                 return acc;
