@@ -2,9 +2,11 @@ import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { $Enums, Prisma } from '@prisma/client';
+import { $Enums, Prisma, PrismaClient } from '@prisma/client';
+import { DefaultArgs } from '@prisma/client/runtime/library';
 import {
   importRequestInclude,
   inspectionReportInclude,
@@ -102,23 +104,11 @@ export class InspectionReportService {
     });
   }
 
-  private async mapInspectionReportByImportRequest(
+  private mapInspectionReportDetail(
     dto: CreateInspectionReportDto,
-  ) {
-    const importRequest = await this.prismaService.importRequest.findFirst({
-      where: { id: dto.inspectionRequestId },
-      include: importRequestInclude,
-    });
-
-    if (!importRequest) {
-      throw new NotFoundException('Inspection request not found');
-    }
-    this.mapInspectionReportDetail(importRequest, dto);
-  }
-
-  private async mapInspectionReportDetail(
-    importRequest,
-    dto: CreateInspectionReportDto,
+    importRequest: Prisma.ImportRequestGetPayload<{
+      include: typeof importRequestInclude;
+    }>,
   ) {
     let errorInspectionReportDetail = [];
     dto.inspectionReportDetail.forEach((inspectionReportDetail) => {
@@ -141,6 +131,12 @@ export class InspectionReportService {
         errorInspectionReportDetail.push(inspectionReportDetail);
       }
     });
+    //log all inspection report details
+    Logger.log(
+      `Inspection report details: ${JSON.stringify(
+        dto.inspectionReportDetail,
+      )}`,
+    );
     if (errorInspectionReportDetail.length > 0) {
       throw new CustomValidationException(
         400,
@@ -148,6 +144,30 @@ export class InspectionReportService {
         errorInspectionReportDetail,
       );
     }
+  }
+
+  async getImportRequestOfInspectionRequestOrThrow(
+    inspectionRequestId: string,
+  ) {
+    const importRequest = await this.prismaService.importRequest.findFirst({
+      where: {
+        inspectionRequest: {
+          some: {
+            id: inspectionRequestId,
+            deletedAt: null,
+          },
+        },
+      },
+      include: importRequestInclude,
+    });
+
+    if (!importRequest) {
+      Logger.error(`Import request of inspection request not found`);
+      throw new NotFoundException(
+        'Import request of inspection request not found',
+      );
+    }
+    return importRequest;
   }
 
   async isInspectionRequestHasInspectionReport(inspectionRequestId: string) {
@@ -162,6 +182,7 @@ export class InspectionReportService {
   }
 
   async create(dto: CreateInspectionReportDto) {
+    //check inspection request valid
     if (
       await this.isInspectionRequestHasInspectionReport(dto.inspectionRequestId)
     ) {
@@ -169,64 +190,89 @@ export class InspectionReportService {
         'Inspection report for this inspection request already exists',
       );
     }
-    await this.mapInspectionReportByImportRequest(dto);
-    const inspectionReportCreateInput: Prisma.InspectionReportCreateInput = {
-      code: dto.code,
-      inspectionRequest: dto.inspectionRequestId
-        ? {
-            connect: {
-              id: dto.inspectionRequestId,
-            },
-          }
-        : undefined,
-      inspectionReportDetail: {
-        createMany: {
-          data: { ...dto.inspectionReportDetail },
+    const importRequest = await this.getImportRequestOfInspectionRequestOrThrow(
+      dto.inspectionRequestId,
+    );
+    this.mapInspectionReportDetail(dto, importRequest);
+    const inspectionReportCreateInput: Prisma.InspectionReportUncheckedCreateInput =
+      {
+        code: dto.code,
+        inspectionRequestId: dto.inspectionRequestId,
+      };
+    const result = await this.prismaService.$transaction(
+      async (
+        prismaInstance: Omit<
+          PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+          | '$connect'
+          | '$disconnect'
+          | '$on'
+          | '$transaction'
+          | '$use'
+          | '$extends'
+        >,
+      ) => {
+        const inspectionReport = await prismaInstance.inspectionReport.create({
+          data: inspectionReportCreateInput,
+        });
+        const inspectionRequest =
+          await this.updateInspectionRequestStatusByInspectionRequestIdToInspected(
+            inspectionReport.inspectionRequestId,
+            prismaInstance,
+          );
+        const importRequest =
+          await this.updateImportRequestStatusByInspectionRequestIdToInspected(
+            inspectionRequest.importRequestId,
+            prismaInstance,
+          );
+        return {
+          inspectionReport,
+          inspectionRequest,
+          importRequest,
+        };
+      },
+    );
+    return result;
+  }
+
+  async updateInspectionRequestStatusByInspectionRequestIdToInspected(
+    inspectionRequestId: string,
+    prismaInstance: Omit<
+      PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+    >,
+  ) {
+    const prisma = prismaInstance || this.prismaService;
+    return await prisma.inspectionRequest.update({
+      where: {
+        id: inspectionRequestId,
+      },
+      data: {
+        status: $Enums.InspectionRequestStatus.INSPECTED,
+      },
+    });
+  }
+
+  async updateImportRequestStatusByInspectionRequestIdToInspected(
+    inspectionRequestId: string,
+    prismaInstance: Omit<
+      PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+    >,
+  ) {
+    const prisma = prismaInstance || this.prismaService;
+    return await prisma.importRequest.updateMany({
+      where: {
+        inspectionRequest: {
+          some: {
+            id: inspectionRequestId,
+            deletedAt: null,
+          },
         },
       },
-    };
-
-    const importRequestId =
-      await this.prismaService.inspectionRequest.findFirst({
-        where: {
-          id: dto.inspectionRequestId,
-        },
-      });
-
-    let importRequestPromise = undefined;
-    if (importRequestId) {
-      importRequestPromise = this.prismaService.importRequest.update({
-        where: {
-          id: importRequestId.importRequestId,
-        },
-        data: {
-          status: $Enums.ImportRequestStatus.INSPECTED,
-        },
-      });
-    }
-
-    const [data, inspectionRequest, importRequest] =
-      await this.prismaService.$transaction([
-        this.prismaService.inspectionReport.create({
-          data: inspectionReportCreateInput,
-          include: inspectionReportInclude,
-        }),
-        this.prismaService.inspectionRequest.update({
-          where: {
-            id: dto.inspectionRequestId,
-          },
-          data: {
-            status: $Enums.InspectionRequestStatus.INSPECTED,
-          },
-        }),
-        importRequestPromise,
-      ]);
-
-    return {
-      ...data,
-      inspectionRequestStatus: inspectionRequest?.status,
-      importRequestStatus: importRequest?.status,
-    };
+      data: {
+        status: $Enums.ImportRequestStatus.INSPECTED,
+      },
+    });
   }
 
   async update(id: string, dto: UpdateInspectionReportDto) {

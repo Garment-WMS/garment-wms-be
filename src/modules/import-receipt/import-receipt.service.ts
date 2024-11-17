@@ -1,9 +1,11 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   HttpStatus,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import {
   $Enums,
@@ -26,6 +28,8 @@ import { InventoryStockService } from '../inventory-stock/inventory-stock.servic
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
+import { CreateTaskDto } from '../task/dto/create-task.dto';
+import { TaskService } from '../task/task.service';
 import { CreateImportReceiptDto } from './dto/create-import-receipt.dto';
 import { UpdateImportReceiptDto } from './dto/update-import-receipt.dto';
 
@@ -39,6 +43,7 @@ export class ImportReceiptService {
     private readonly inventoryStockService: InventoryStockService,
     private readonly importRequestService: ImportRequestService,
     private readonly poDeliveryDetailsService: PoDeliveryMaterialService,
+    private readonly taskService: TaskService,
   ) {}
 
   async createMaterialReceipt(
@@ -56,7 +61,6 @@ export class ImportReceiptService {
     if (!inspectionReport) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Inspection Report not found');
     }
-    console.log(managerId);
     const importReceiptInput: Prisma.ImportReceiptCreateInput = {
       inspectionReport: {
         connect: {
@@ -176,6 +180,13 @@ export class ImportReceiptService {
       },
     );
     if (result) {
+      try {
+        await this.createTaskByImportReceipt(result.id);
+      } catch (e) {
+        Logger.error(e);
+        throw new ConflictException('Can not create Task automatically');
+      }
+
       return apiSuccess(
         HttpStatus.CREATED,
         result,
@@ -186,6 +197,16 @@ export class ImportReceiptService {
       HttpStatus.INTERNAL_SERVER_ERROR,
       'Create import receipt failed',
     );
+  }
+
+  async createTaskByImportReceipt(importReceiptId: string) {
+    const createTaskDto: CreateTaskDto = {
+      taskType: 'IMPORT',
+      importReceiptId: importReceiptId,
+      status: $Enums.TaskStatus.OPEN,
+    };
+    const task = await this.taskService.create(createTaskDto);
+    return task;
   }
 
   async validateImportRequest(importRequestId: string) {

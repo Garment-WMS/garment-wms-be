@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { $Enums, Prisma, PrismaClient, RoleCode } from '@prisma/client';
@@ -13,12 +14,18 @@ import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { ManagerProcessDto } from '../import-request/dto/import-request/manager-process.dto';
+import { CreateTaskDto } from '../task/dto/create-task.dto';
+import { TaskService } from '../task/task.service';
 import { CreateInspectionRequestDto } from './dto/create-inspection-request.dto';
 import { UpdateInspectionRequestDto } from './dto/update-inspection-request.dto';
 
 @Injectable()
 export class InspectionRequestService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly taskService: TaskService,
+  ) {}
 
   async search(
     findOptions: GeneratedFindOptions<Prisma.InspectionRequestWhereInput>,
@@ -149,6 +156,46 @@ export class InspectionRequestService {
         }),
       ]);
     return inspectionRequest;
+  }
+
+  async createInspectionRequestByImportRequest(
+    warehouseManagerId: string,
+    managerProcess: ManagerProcessDto,
+    importRequest: Prisma.ImportRequestWhereUniqueInput,
+  ) {
+    const createInspectionRequestDto: CreateInspectionRequestDto = {
+      importRequestId: importRequest.id,
+      inspectionDepartmentId: managerProcess.inspectionDepartmentId,
+      warehouseManagerId: warehouseManagerId,
+      note: managerProcess.InspectionNote,
+    };
+    try {
+      let inspectionRequest = await this.create(createInspectionRequestDto);
+      await this.createTaskByInspectionRequest(
+        inspectionRequest.inspectionDepartmentId,
+        inspectionRequest.id,
+      );
+      return inspectionRequest;
+    } catch (e) {
+      Logger.error(e);
+      throw new ConflictException(
+        'Can not create Inspection Request automatically',
+      );
+    }
+  }
+
+  async createTaskByInspectionRequest(
+    inspectionDepartmentId: string,
+    inspectionRequestId: string,
+  ) {
+    const createTaskDto: CreateTaskDto = {
+      taskType: 'INSPECTION',
+      inspectionDepartmentId: inspectionDepartmentId,
+      inspectionRequestId: inspectionRequestId,
+      status: 'OPEN',
+    };
+    const task = await this.taskService.create(createTaskDto);
+    return task;
   }
 
   async findAll() {

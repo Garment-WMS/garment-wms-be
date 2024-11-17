@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { $Enums, Prisma } from '@prisma/client';
+import { $Enums } from '@prisma/client';
 import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 
-export class CreateTaskDto implements Prisma.TaskUncheckedCreateInput {
+export class CreateTaskDto {
   @ApiProperty()
   @IsOptional()
   @IsUUID()
@@ -58,5 +58,8 @@ export class CreateTaskDto implements Prisma.TaskUncheckedCreateInput {
   @IsString()
   staffNote?: string;
 
-  status: $Enums.TaskStatus;
+  @ApiProperty()
+  @IsOptional()
+  @IsEnum($Enums.TaskStatus)
+  status: $Enums.TaskStatus = $Enums.TaskStatus.OPEN;
 }

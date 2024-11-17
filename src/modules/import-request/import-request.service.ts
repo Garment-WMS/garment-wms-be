@@ -1,11 +1,9 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   HttpStatus,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { $Enums, Prisma, PrismaClient, RoleCode } from '@prisma/client';
@@ -20,7 +18,6 @@ import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
-import { CreateInspectionRequestDto } from '../inspection-request/dto/create-inspection-request.dto';
 import { InspectionRequestService } from '../inspection-request/inspection-request.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
@@ -371,27 +368,13 @@ export class ImportRequestService {
             warehouseManagerId: warehouseManagerId,
           },
         });
-        Logger.debug(importRequest);
 
-        const createInspectionRequestDto: CreateInspectionRequestDto = {
-          importRequestId: importRequest.id,
-          inspectionDepartmentId: managerProcess.inspectionDepartmentId,
-          warehouseManagerId: warehouseManagerId,
-          note: managerProcess.InspectionNote,
-        };
-
-        let inspectionRequest;
-        try {
-          inspectionRequest = await this.inspectionRequestService.create(
-            createInspectionRequestDto,
+        const inspectionRequest =
+          await this.inspectionRequestService.createInspectionRequestByImportRequest(
+            warehouseManagerId,
+            managerProcess,
+            importRequest,
           );
-        } catch (e) {
-          Logger.error(e);
-          throw new ConflictException(
-            'Can not create Inspection Request automatically',
-          );
-        }
-
         return { importRequest, inspectionRequest };
 
       case $Enums.ImportRequestStatus.REJECTED:

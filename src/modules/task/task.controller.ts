@@ -1,4 +1,7 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { TaskService } from './task.service';
 
@@ -12,8 +15,16 @@ export class TaskController {
   }
 
   @Get()
-  search() {
-    return this.taskService.search();
+  search(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.TaskWhereInput>(
+        [],
+        [{ createdAt: 'desc' }, { id: 'asc' }],
+      ),
+    )
+    filterDto: FilterDto<Prisma.TaskWhereInput>,
+  ) {
+    return this.taskService.search(filterDto.findOptions);
   }
 
   @Get(':id')
