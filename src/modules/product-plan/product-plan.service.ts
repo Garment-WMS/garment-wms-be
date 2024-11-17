@@ -23,10 +23,32 @@ export class ProductPlanService {
   includeQuery: Prisma.ProductionPlanInclude = {
     purchaseOrder: {
       include: {
+        purchasingStaff: {
+          include: {
+            account: true,
+          },
+        },
+        supplier: true,
         poDelivery: {
           include: {
             importRequest: true,
-            poDeliveryDetail: true,
+            poDeliveryDetail: {
+              include: {
+                materialPackage: {
+                  include: {
+                    materialVariant: {
+                      include: {
+                        material: {
+                          include: {
+                            materialUom: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
