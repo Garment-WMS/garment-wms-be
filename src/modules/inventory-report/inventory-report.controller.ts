@@ -60,8 +60,23 @@ export class InventoryReportController {
   }
 
   @Get()
-  findAll() {
-    return this.inventoryReportService.findAll();
+  findAll(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.InventoryReportWhereInput>(
+        ['quarterlyProductionPlan'],
+        [
+          {
+            createdAt: 'desc',
+          },
+          {
+            id: 'asc',
+          },
+        ],
+      ),
+    )
+    filterDto: FilterDto<Prisma.InventoryReportWhereInput>,
+  ) {
+    return this.inventoryReportService.findAll(filterDto.findOptions);
   }
 
   @Get('warehouse-staff')

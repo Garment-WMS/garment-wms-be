@@ -141,6 +141,7 @@ export class PrismaService
     'MaterialReceipt',
     'PoDelivery',
     'Supplier',
+    'ProductionPlanDetail',
   ];
 
   getPrefix(modelName: string, delimiter: string): string {

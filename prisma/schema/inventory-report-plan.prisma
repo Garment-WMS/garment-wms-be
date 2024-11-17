@@ -19,7 +19,7 @@ model InventoryReportPlan {
 enum InventoryReportPlanStatus {
     PENDING
     IN_PROGRESS
-    DONE
+    FINISHED
     CANCELLED
 
     @@map("inventory_report_plan_status")

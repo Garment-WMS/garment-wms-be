@@ -45,7 +45,7 @@ export class CreateInventoryReportPlanDto {
   @IsArray()
   @IsNotEmpty()
   @ValidateNested({ each: true })
-  @UniqueInArray(['materialPackageId', 'productIdSizeId'])
+  @UniqueInArray(['materialPackageId', 'productSizeId'])
   @Type(() => CreateInventoryReportPlanDetailDto)
   inventoryReportPlanDetails: CreateInventoryReportPlanDetailDto[];
 }

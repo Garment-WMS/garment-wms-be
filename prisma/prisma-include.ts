@@ -256,11 +256,21 @@ export const inventoryReportPlan: Prisma.InventoryReportPlanInclude = {
       },
       materialPackage: {
         include: {
+          materialVariant: {
+            include: {
+              material: {
+                include: {
+                  materialUom: true,
+                },
+              },
+            },
+          },
           inventoryStock: true,
         },
       },
       productSize: {
         include: {
+          productVariant: true,
           inventoryStock: true,
         },
       },

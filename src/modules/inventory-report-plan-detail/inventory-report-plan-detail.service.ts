@@ -132,6 +132,7 @@ export class InventoryReportPlanDetailService {
     createInventoryReportPlanDetailDto: Prisma.InventoryReportPlanDetailCreateManyInput[],
     prismaInstace: PrismaService = this.prismaService,
   ) {
+    console.log(createInventoryReportPlanDetailDto);
     return prismaInstace.inventoryReportPlanDetail.createMany({
       data: createInventoryReportPlanDetailDto,
     });
