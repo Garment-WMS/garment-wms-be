@@ -68,7 +68,6 @@ export class InventoryReportPlanService {
         'All inventory report plan detail already processed',
       );
     }
-    console.log(inventoryReportPlanDetailBelongToWarehouseStaff);
     const inventoryReportInput: InventoryReportPlanDto = {
       ...inventoryReportPlan,
       inventoryReportPlanDetail:
@@ -99,7 +98,7 @@ export class InventoryReportPlanService {
           },
         });
 
-        if (inventoryReport.status === InventoryReportPlanStatus.PENDING) {
+        if (inventoryReportPlan.status === InventoryReportPlanStatus.NOT_YET) {
           await prismaInstance.inventoryReportPlan.update({
             where: { id },
             data: {
