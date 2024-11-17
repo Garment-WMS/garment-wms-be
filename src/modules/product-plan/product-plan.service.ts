@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PrismaClient } from '@prisma/client';
+import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
@@ -7,7 +8,6 @@ import { ExcelService } from '../excel/excel.service';
 import { ProductPlanDetailService } from '../product-plan-detail/product-plan-detail.service';
 import { CreateProductPlanDto } from './dto/create-product-plan.dto';
 import { UpdateProductPlanDto } from './dto/update-product-plan.dto';
-import { isUUID, IsUUID } from 'class-validator';
 
 @Injectable()
 export class ProductPlanService {
@@ -18,8 +18,18 @@ export class ProductPlanService {
   ) {}
 
   includeQuery: Prisma.ProductionPlanInclude = {
+    purchaseOrder: {
+      include: {
+        poDelivery: {
+          include: {
+            importRequest: true,
+            poDeliveryDetail: true,
+          },
+        },
+      },
+    },
     productionPlanDetail: {
-      include:{
+      include: {
         productSize: {
           include: {
             productVariant: {
@@ -33,7 +43,7 @@ export class ProductPlanService {
             },
           },
         },
-      }
+      },
     },
   };
 

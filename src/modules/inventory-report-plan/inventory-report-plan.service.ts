@@ -466,7 +466,23 @@ export class InventoryReportPlanService {
     return `This action updates a #${id} inventoryReportPlan`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} inventoryReportPlan`;
+  async remove(id: string) {
+    const result = await this.prismaService.inventoryReportPlan.delete({
+      where: { id },
+    });
+
+    await this.prismaService.inventoryReportPlanDetail.deleteMany({
+      where: {
+        inventoryReportPlanId: id,
+      },
+    });
+
+    if (result) {
+      return apiSuccess(
+        200,
+        result,
+        'Inventory report plan deleted successfully',
+      );
+    }
   }
 }
