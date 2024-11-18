@@ -23,11 +23,13 @@ import { UpdateInspectionReportDto } from './dto/inspection-report/update-inspec
 export class InspectionReportService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async findUniqueByRequestId(importRequestId: string) {
+  async findUniqueInspectedByRequestId(importRequestId: string) {
+    Logger.debug('importRequestId: ' + importRequestId);
     const inspectionRequest =
       await this.prismaService.inspectionRequest.findFirst({
         where: {
           importRequestId: importRequestId,
+          status: $Enums.InspectionRequestStatus.INSPECTED,
         },
         include: {
           importRequest: true,
@@ -35,26 +37,41 @@ export class InspectionReportService {
       });
 
     if (!inspectionRequest) {
-      return null;
+      throw new ConflictException(
+        'Inspection request not found for import request ' +
+          inspectionRequest.code,
+      );
     }
 
-    const result = await this.prismaService.inspectionReport.findFirst({
-      where: {
-        inspectionRequestId: inspectionRequest.id,
-      },
-      include: {
-        inspectionRequest: {
-          include: {
-            importRequest: true,
-            inspectionDepartment: true,
-            purchasingStaff: true,
-          },
-        },
-        inspectionReportDetail: true,
-      },
-    });
+    Logger.debug('inspectionRequest', inspectionRequest);
 
-    return result;
+    const inspectionReport =
+      await this.prismaService.inspectionReport.findFirst({
+        where: {
+          inspectionRequestId: inspectionRequest.id,
+        },
+        include: {
+          inspectionRequest: {
+            include: {
+              importRequest: true,
+              inspectionDepartment: true,
+              purchasingStaff: true,
+            },
+          },
+          inspectionReportDetail: true,
+        },
+      });
+
+    if (!inspectionReport) {
+      throw new NotFoundException(
+        'Inspection report not found for inspection request' +
+          inspectionRequest.code,
+      );
+    }
+
+    Logger.debug('inspectionReport', inspectionReport);
+
+    return inspectionReport;
   }
 
   async search(

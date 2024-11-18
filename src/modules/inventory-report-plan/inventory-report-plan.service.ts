@@ -367,7 +367,6 @@ export class InventoryReportPlanService {
                 staffInventoryReportPlanDetails: [],
               };
             }
-
             acc[staffId].staffInventoryReportPlanDetails.push(detail);
             return acc;
           },
@@ -381,7 +380,6 @@ export class InventoryReportPlanService {
             }
           >,
         );
-
       // Replace with grouped data
       inventoryReportPlan.inventoryReportPlanDetail =
         Object.values(groupedByStaff);

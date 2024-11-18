@@ -2,7 +2,7 @@ model ProductionPlan {
   id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   factoryDirectorId    String                 @map("factory_director_id") @db.Uuid
   name                 String                 @map("name") @db.VarChar
-  code                 String                 @unique @map("code") @db.VarChar
+  code                 String?                @map("code") @db.VarChar
   note                 String?                @map("note") @db.VarChar
   status               ProductionStatus       @default(PLANNING) @map("status")
   expectedStartDate    DateTime               @map("expected_start_date") @db.Date
