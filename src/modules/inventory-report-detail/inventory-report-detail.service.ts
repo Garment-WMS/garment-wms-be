@@ -7,6 +7,7 @@ import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
+import { CreateReceiptAdjustmentDto } from '../receipt-adjustment/dto/create-receipt-adjustment.dto';
 import { CreateInventoryReportDetailDto } from './dto/create-inventory-report-detail.dto';
 import { UpdateInventoryReportDetailDto } from './dto/update-inventory-report-detail.dto';
 import { WarehouseManagerApprovalInventoryReportDetailDto } from './dto/warehouse-manager-approval-inventory-report-detail.dto';
@@ -71,6 +72,41 @@ export class InventoryReportDetailService {
     if (!result) {
       throw new Error('Record Inventory Report Detail failed');
     }
+
+    if (
+      result.managerQuantityConfirm !== inventoryReportDetail.expectedQuantity
+    ) {
+      if (result.materialReceiptId) {
+        await this.materialReceiptService.updateMaterialReceiptQuantity(
+          result.materialReceiptId,
+          result.managerQuantityConfirm,
+        );
+      }
+
+      //TODO: Call productReceiptService.updateQuantity
+      // if (result.productReceiptId) {
+      //   await this.productReceiptService.updateProductReceiptQuantity(
+      //     result.productReceiptId,
+      //     result.managerQuantityConfirm,
+      //     result.managerQuantityConfirm - result.expectedQuantity,
+      //   );
+      // }
+
+      const createReceiptAdjustmentDto: CreateReceiptAdjustmentDto = {
+        warehouseManagerId: warehouseManagerId,
+        materialReceiptId: inventoryReportDetail.materialReceiptId,
+        productReceiptId: inventoryReportDetail.productReceiptId,
+        inventoryReportDetailId: result.id,
+        beforeAdjustQuantity: inventoryReportDetail.expectedQuantity,
+        afterAdjustQuantity: result.managerQuantityConfirm,
+        reason: inventoryRecordDetail.note,
+      };
+      await this.receiptAdjustQueue.add(
+        'create-receipt-adjustment',
+        createReceiptAdjustmentDto,
+      );
+    }
+
     return result;
   }
 
@@ -192,39 +228,6 @@ export class InventoryReportDetailService {
   //     throw new Error('Approve Inventory Report Detail failed');
   //   }
 
-  //   if (
-  //     result.managerQuantityConfirm !== inventoryReportDetail.expectedQuantity
-  //   ) {
-  //     if (result.materialReceiptId) {
-  //       await this.materialReceiptService.updateMaterialReceiptQuantity(
-  //         result.materialReceiptId,
-  //         result.managerQuantityConfirm,
-  //       );
-  //     }
-
-  //     //TODO: Call productReceiptService.updateQuantity
-  //     // if (result.productReceiptId) {
-  //     //   await this.productReceiptService.updateProductReceiptQuantity(
-  //     //     result.productReceiptId,
-  //     //     result.managerQuantityConfirm,
-  //     //     result.managerQuantityConfirm - result.expectedQuantity,
-  //     //   );
-  //     // }
-
-  //     const createReceiptAdjustmentDto: CreateReceiptAdjustmentDto = {
-  //       warehouseManagerId: warehouseManagerId,
-  //       materialReceiptId: inventoryReportDetail.materialReceiptId,
-  //       productReceiptId: inventoryReportDetail.productReceiptId,
-  //       inventoryReportDetailId: result.id,
-  //       beforeAdjustQuantity: inventoryReportDetail.expectedQuantity,
-  //       afterAdjustQuantity: result.managerQuantityConfirm,
-  //       reason: approvalInventoryReportDetailDto.note,
-  //     };
-  //     await this.receiptAdjustQueue.add(
-  //       'create-receipt-adjustment',
-  //       createReceiptAdjustmentDto,
-  //     );
-  //   }
   //   // await this.checkLastInventoryReport(
   //   //   inventoryReportDetail.inventoryReportId,
   //   // );
