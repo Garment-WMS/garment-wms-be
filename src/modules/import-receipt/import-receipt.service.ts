@@ -54,12 +54,15 @@ export class ImportReceiptService {
       createImportReceiptDto.importRequestId,
     );
     const inspectionReport =
-      await this.inspectionReportService.findUniqueByRequestId(
+      await this.inspectionReportService.findUniqueInspectedByRequestId(
         importRequest.id,
       );
 
     if (!inspectionReport) {
-      return apiFailed(HttpStatus.NOT_FOUND, 'Inspection Report not found');
+      return apiFailed(
+        HttpStatus.NOT_FOUND,
+        'Inspection report of this import request not found',
+      );
     }
     const importReceiptInput: Prisma.ImportReceiptCreateInput = {
       inspectionReport: {
