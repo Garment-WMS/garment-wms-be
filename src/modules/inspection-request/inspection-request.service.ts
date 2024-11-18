@@ -171,10 +171,11 @@ export class InspectionRequestService {
     };
     try {
       let inspectionRequest = await this.create(createInspectionRequestDto);
-      await this.createTaskByInspectionRequest(
+      const task = await this.createTaskByInspectionRequest(
         inspectionRequest.inspectionDepartmentId,
         inspectionRequest.id,
       );
+      Logger.log(task);
       return inspectionRequest;
     } catch (e) {
       Logger.error(e);

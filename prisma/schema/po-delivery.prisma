@@ -3,7 +3,7 @@ model PoDelivery {
   purchaseOrderId     String             @map("purchase_order_id") @db.Uuid
   expectedDeliverDate DateTime?          @map("expected_deliver_date") @db.Date
   deliverDate         DateTime?          @map("deliver_date") @db.Date
-  code                String             @unique @map("code") @db.VarChar(255)
+  code                String?            @map("code") @db.VarChar(255)
   status              PoDeliveryStatus   @default(PENDING) @map("status")
   isExtra             Boolean            @map("is_extra")
   cancelledAt         DateTime?          @map("cancelled_at") @db.Timestamptz(6)

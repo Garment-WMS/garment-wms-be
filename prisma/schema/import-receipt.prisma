@@ -3,7 +3,7 @@ model ImportReceipt {
   warehouseStaffId   String              @map("warehouse_staff_id") @db.Uuid
   warehouseManagerId String              @map("warehouse_manager_id") @db.Uuid
   inspectionReportId String?             @unique @map("inspection_report_id") @db.Uuid
-  code               String              @unique @map("code") @db.VarChar
+  code               String?             @map("code") @db.VarChar
   status             ImportReceiptStatus @default(IMPORTING)
   type               ReceiptType         @map("type")
   note               String?             @map("note") @db.Text

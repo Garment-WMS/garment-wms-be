@@ -2,7 +2,7 @@ model MaterialInspectionCriteria {
   id                String          @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   materialVariantId String          @map("material_variant_id") @db.Uuid
   name              String          @map("name") @db.VarChar
-  code              String          @unique @map("code") @db.VarChar
+  code              String?         @map("code") @db.VarChar
   criteria          String          @map("criteria") @db.VarChar
   createdAt         DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime?       @updatedAt @map("updated_at") @db.Timestamptz(6)

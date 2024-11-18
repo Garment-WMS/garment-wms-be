@@ -119,7 +119,7 @@ export class PrismaService
     return next(params);
   };
 
-  modelsWithCode = [
+  modelsWithCode: Prisma.ModelName[] = [
     'ImportRequest',
     'ImportReceipt',
     'InspectionRequest',
@@ -135,7 +135,7 @@ export class PrismaService
     'ProductSize',
     'ProductVariant',
     'Product',
-    'ProductBatch',
+    'ProductionBatch',
     'ProductionPlan',
     'ProductReceipt',
     'MaterialReceipt',
@@ -144,6 +144,7 @@ export class PrismaService
     'ProductionPlanDetail',
     'Task',
     'Todo',
+    'ProductFormula',
   ];
 
   getPrefix(modelName: string, delimiter: string): string {
@@ -162,26 +163,33 @@ export class PrismaService
       const modelName = params.model;
       const prefix = this.getPrefix(modelName, delimiter);
 
+      // Find the maximum existing code number
+      const lastRecord = await this[modelName].findFirst({
+        orderBy: { code: 'desc' },
+        select: { code: true },
+      });
+
+      let lastNumber = 0;
+      if (lastRecord && lastRecord.code) {
+        const match = lastRecord.code.match(/\d+$/);
+        if (match) {
+          lastNumber = parseInt(match[0], 10);
+        }
+      }
+
       if (params.action === 'create') {
         if (params.args.data && params.args.data.code === undefined) {
-          // Count the existing records in the table
-          //Need improvement, using count() is not right way to get the last record code
-          const count = (await this[modelName].count()) || 0;
-          const nextNumber = (count + 1).toString().padStart(6, '0');
-          const code = `${prefix}${delimiter}${nextNumber}`;
-          params.args.data.code = code;
+          const nextNumber = (lastNumber + 1).toString().padStart(6, '0');
+          params.args.data.code = `${prefix}${delimiter}${nextNumber}`;
         }
       } else if (params.action === 'createMany') {
         if (params.args.data && Array.isArray(params.args.data)) {
-          console.log(modelName);
-          const count = (await this[modelName].count()) || 0;
           params.args.data.forEach((item, index) => {
             if (item.code === undefined) {
-              const nextNumber = (count + index + 1)
+              const nextNumber = (lastNumber + index + 1)
                 .toString()
                 .padStart(6, '0');
-              const code = `${prefix}${nextNumber}`;
-              item.code = code;
+              item.code = `${prefix}${delimiter}${nextNumber}`;
             }
           });
         }

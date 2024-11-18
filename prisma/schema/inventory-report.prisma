@@ -4,7 +4,7 @@ model InventoryReport {
   warehouseStaffId          String                      @map("warehouse_staff_id") @db.Uuid
   // inventoryReportType       InventoryReportTypeEnum     @default(MATERIAL) @map("inventory_report_type")
   status                    InventoryReportStatus       @default(IN_PROGRESS) @map("status")
-  code                      String                      @unique @db.VarChar
+  code                      String?                     @db.VarChar
   note                      String?                     @map("note")
   from                      DateTime?                   @map("from") @db.Timestamptz(6)
   to                        DateTime?                   @map("to") @db.Timestamptz(6)

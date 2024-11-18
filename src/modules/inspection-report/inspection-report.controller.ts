@@ -41,7 +41,7 @@ export class InspectionReportController {
         UpdateInspectionReportDto,
         Prisma.InspectionReportWhereInput
       >(
-        [],
+        ['inspectionRequest.importRequestId', 'inspectionRequest.code'],
         [
           { createdAt: 'desc' },
           { id: 'asc' },
