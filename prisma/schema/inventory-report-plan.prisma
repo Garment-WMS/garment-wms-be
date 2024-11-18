@@ -1,9 +1,10 @@
 model InventoryReportPlan {
     id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
     warehouseManagerId        String                      @map("warehouse_manager_id") @db.Uuid
+    type                      InventoryReportPlanType?    @default(ALL) @map("type")
     title                     String                      @map("title") @db.VarChar()
     code                      String                      @unique @map("code") @db.VarChar()
-    status                    InventoryReportPlanStatus   @default(PENDING) @map("status")
+    status                    InventoryReportPlanStatus   @default(NOT_YET) @map("status")
     note                      String?                     @map("note") @db.VarChar()
     from                      DateTime?                   @map("from") @db.Timestamptz(6)
     to                        DateTime?                   @map("to") @db.Timestamptz(6)
@@ -16,10 +17,15 @@ model InventoryReportPlan {
     @@map("inventory_report_plan")
 }
 
+enum InventoryReportPlanType {
+    ALL
+    PARTIAL
+}
+
 enum InventoryReportPlanStatus {
-    PENDING
+    NOT_YET
     IN_PROGRESS
-    DONE
+    FINISHED
     CANCELLED
 
     @@map("inventory_report_plan_status")

@@ -4,6 +4,7 @@ import { MaterialVariantModule } from '../material-variant/material-variant.modu
 import { ProductVariantModule } from '../product-variant/product-variant.module';
 import { InventoryStockController } from './inventory-stock.controller';
 import { InventoryStockService } from './inventory-stock.service';
+import { MaterialReceiptModule } from '../material-receipt/material-receipt.module';
 
 @Module({
   controllers: [InventoryStockController],

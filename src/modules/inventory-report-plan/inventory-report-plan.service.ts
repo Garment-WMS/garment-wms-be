@@ -2,6 +2,7 @@ import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { InventoryReportPlanStatus, Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
+import { inventoryReportPlan } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { InventoryReportPlanDetailService } from '../inventory-report-plan-detail/inventory-report-plan-detail.service';
@@ -17,28 +18,6 @@ export class InventoryReportPlanService {
     private readonly inventoryReportPlanDetailService: InventoryReportPlanDetailService,
     private readonly inventoryReportService: InventoryReportService,
   ) {}
-
-  queryInclude: Prisma.InventoryReportPlanInclude = {
-    inventoryReportPlanDetail: {
-      include: {
-        materialPackage: {
-          include: {
-            inventoryStock: true,
-          },
-        },
-        productSize: {
-          include: {
-            inventoryStock: true,
-          },
-        },
-        inventoryReport: {
-          include: {
-            inventoryReportDetail: true,
-          },
-        },
-      },
-    },
-  };
 
   async checkLastInventoryReportInPlan(inventoryReportId: string) {
     throw new Error('Method not implemented.');
@@ -89,7 +68,6 @@ export class InventoryReportPlanService {
         'All inventory report plan detail already processed',
       );
     }
-    console.log(inventoryReportPlanDetailBelongToWarehouseStaff);
     const inventoryReportInput: InventoryReportPlanDto = {
       ...inventoryReportPlan,
       inventoryReportPlanDetail:
@@ -106,7 +84,6 @@ export class InventoryReportPlanService {
         if (!inventoryReport) {
           return null;
         }
-        console.log(inventoryReport);
         await prismaInstance.inventoryReportPlanDetail.updateMany({
           where: {
             id: {
@@ -120,7 +97,7 @@ export class InventoryReportPlanService {
           },
         });
 
-        if (inventoryReport.status === InventoryReportPlanStatus.PENDING) {
+        if (inventoryReportPlan.status === InventoryReportPlanStatus.NOT_YET) {
           await prismaInstance.inventoryReportPlan.update({
             where: { id },
             data: {
@@ -146,7 +123,7 @@ export class InventoryReportPlanService {
     }
     return this.prismaService.inventoryReportPlan.findUnique({
       where: { id },
-      include: this.queryInclude,
+      include: inventoryReportPlan,
     });
   }
 
@@ -159,7 +136,7 @@ export class InventoryReportPlanService {
           },
         },
       },
-      include: this.queryInclude,
+      include: inventoryReportPlan,
     });
     return apiSuccess(
       HttpStatus.OK,
@@ -174,6 +151,7 @@ export class InventoryReportPlanService {
   ) {
     const inventoryPlanInput: Prisma.InventoryReportPlanCreateInput = {
       code: undefined,
+      type: createInventoryReportPlanDto.inventoryReportPlanType,
       title: createInventoryReportPlanDto.title,
       from: createInventoryReportPlanDto.from,
       to: createInventoryReportPlanDto.to,
@@ -206,8 +184,8 @@ export class InventoryReportPlanService {
             return {
               code: undefined,
               inventoryReportPlanId: inventoryPlanResult.id,
-              materialPackageId: el.materialPackageId,
-              productIdSizeId: el.productSizeId,
+              materialVariantId: el.materialVariantId,
+              productVariantId: el.productVariantId,
               warehouseStaffId: el.warehouseStaffId,
             };
           });
@@ -265,17 +243,216 @@ export class InventoryReportPlanService {
   ) {
     const result = await this.prismaService.inventoryReportPlan.findMany({
       where: findOptions.where,
-      include: this.queryInclude,
+      include: inventoryReportPlan, // Ensure this includes relevant relations
     });
+
+    // Step 1: Group by warehouseStaffId
+    result.forEach((inventoryReportPlan: any) => {
+      const groupedByStaff =
+        inventoryReportPlan.inventoryReportPlanDetail.reduce(
+          (acc, detail) => {
+            const staffId = detail.warehouseStaffId;
+
+            if (!acc[staffId]) {
+              acc[staffId] = {
+                warehouseStaff: detail.warehouseStaff,
+                inventoryReport: detail.inventoryReport,
+                staffInventoryReportPlanDetails: [],
+              };
+            }
+
+            acc[staffId].staffInventoryReportPlanDetails.push(detail);
+            return acc;
+          },
+          {} as Record<
+            string,
+            {
+              // warehouseStaffId: string;
+              inventoryReport?: string;
+              warehouseStaff: any;
+              staffInventoryReportPlanDetails: any[];
+            }
+          >,
+        );
+
+      // Replace with grouped data
+      inventoryReportPlan.inventoryReportPlanDetail =
+        Object.values(groupedByStaff);
+    });
+
+    // Step 2: Group each warehouseStaff's details by materialVariantId or productVariantId
+    result.forEach((inventoryReportPlan: any) => {
+      inventoryReportPlan.inventoryReportPlanDetail.forEach(
+        (staffGroup: any) => {
+          const groupedByMaterialOrProduct =
+            staffGroup.staffInventoryReportPlanDetails.reduce(
+              (acc, detail) => {
+                // Check for materialVariant grouping
+                if (detail.materialPackage?.materialVariant) {
+                  const materialVariantId =
+                    detail.materialPackage.materialVariant.id;
+
+                  if (!acc[materialVariantId]) {
+                    acc[materialVariantId] = {
+                      materialVariant: detail.materialPackage.materialVariant,
+                      packagePlanDetails: [],
+                    };
+                  }
+
+                  acc[materialVariantId].packagePlanDetails.push(
+                    detail.materialPackage,
+                  );
+                }
+
+                // Check for productVariant grouping
+                else if (detail.productSize?.productVariant) {
+                  const productVariantId = detail.productSize.productVariant.id;
+
+                  if (!acc[productVariantId]) {
+                    acc[productVariantId] = {
+                      productVariant: detail.productSize.productVariant,
+                      sizePlanDetails: [],
+                    };
+                  }
+
+                  acc[productVariantId].sizePlanDetails.push(
+                    detail.productSize,
+                  );
+                }
+
+                return acc;
+              },
+              {} as Record<
+                string,
+                {
+                  materialVariant?: any;
+                  productVariant?: any;
+                  packagePlanDetails?: any[];
+                  sizePlanDetails?: any[];
+                }
+              >,
+            );
+
+          // Replace staffGroup details with grouped data
+          staffGroup.staffInventoryReportPlanDetails = Object.values(
+            groupedByMaterialOrProduct,
+          );
+        },
+      );
+    });
+
     return apiSuccess(
       200,
       result,
-      'Get all inventory report plan successfully',
+      'Get all inventory report plans successfully',
     );
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} inventoryReportPlan`;
+  async findOne(id: string) {
+    const result = await this.prismaService.inventoryReportPlan.findMany({
+      where: { id },
+      include: inventoryReportPlan,
+    });
+
+    result.forEach((inventoryReportPlan: any) => {
+      const groupedByStaff =
+        inventoryReportPlan.inventoryReportPlanDetail.reduce(
+          (acc, detail) => {
+            const staffId = detail.warehouseStaffId;
+
+            if (!acc[staffId]) {
+              acc[staffId] = {
+                warehouseStaff: detail.warehouseStaff,
+                inventoryReport: detail.inventoryReport,
+                staffInventoryReportPlanDetails: [],
+              };
+            }
+
+            acc[staffId].staffInventoryReportPlanDetails.push(detail);
+            return acc;
+          },
+          {} as Record<
+            string,
+            {
+              // warehouseStaffId: string;
+              inventoryReport?: string;
+              warehouseStaff: any;
+              staffInventoryReportPlanDetails: any[];
+            }
+          >,
+        );
+
+      // Replace with grouped data
+      inventoryReportPlan.inventoryReportPlanDetail =
+        Object.values(groupedByStaff);
+    });
+
+    // Step 2: Group each warehouseStaff's details by materialVariantId or productVariantId
+    result.forEach((inventoryReportPlan: any) => {
+      inventoryReportPlan.inventoryReportPlanDetail.forEach(
+        (staffGroup: any) => {
+          const groupedByMaterialOrProduct =
+            staffGroup.staffInventoryReportPlanDetails.reduce(
+              (acc, detail) => {
+                // Check for materialVariant grouping
+                if (detail.materialVariant) {
+                  const materialVariantId = detail.materialVariant.id;
+
+                  if (!acc[materialVariantId]) {
+                    acc[materialVariantId] = {
+                      materialVariant: detail.materialVariant,
+                      packagePlanDetails: [],
+                    };
+                  }
+
+                  acc[materialVariantId].packagePlanDetails =
+                    detail.materialVariant.materialPackage;
+                }
+
+                // Check for productVariant grouping
+                else if (detail.productVariant) {
+                  const productVariantId = detail.productVariant.id;
+
+                  if (!acc[productVariantId]) {
+                    acc[productVariantId] = {
+                      productVariant: detail.productVariant,
+                      sizePlanDetails: [],
+                    };
+                  }
+
+                  acc[productVariantId].sizePlanDetails =
+                    detail.productVariant.productSize;
+                }
+
+                return acc;
+              },
+              {} as Record<
+                string,
+                {
+                  materialVariant?: any;
+                  productVariant?: any;
+                  packagePlanDetails?: any[];
+                  sizePlanDetails?: any[];
+                }
+              >,
+            );
+
+          // Replace staffGroup details with grouped data
+          staffGroup.staffInventoryReportPlanDetails = Object.values(
+            groupedByMaterialOrProduct,
+          );
+        },
+      );
+    });
+
+    if (result.length > 0) {
+      return apiSuccess(
+        200,
+        result[0],
+        'Get inventory report plan successfully',
+      );
+    }
+    return apiFailed(404, 'Inventory report plan not found');
   }
 
   update(
@@ -285,7 +462,23 @@ export class InventoryReportPlanService {
     return `This action updates a #${id} inventoryReportPlan`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} inventoryReportPlan`;
+  async remove(id: string) {
+    const result = await this.prismaService.inventoryReportPlan.delete({
+      where: { id },
+    });
+
+    await this.prismaService.inventoryReportPlanDetail.deleteMany({
+      where: {
+        inventoryReportPlanId: id,
+      },
+    });
+
+    if (result) {
+      return apiSuccess(
+        200,
+        result,
+        'Inventory report plan deleted successfully',
+      );
+    }
   }
 }

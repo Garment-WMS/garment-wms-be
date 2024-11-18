@@ -39,18 +39,23 @@ export class MaterialReceiptController {
     return this.materialReceiptService.findAll();
   }
 
+  @Patch('/re-count')
+  recountMaterialReceipt() {
+    return this.materialReceiptService.recountMaterialInventoryStock();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.materialReceiptService.findOne(id);
   }
 
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateMaterialReceiptDto: UpdateMaterialReceiptDto,
-  ) {
-    return this.materialReceiptService.update(+id, updateMaterialReceiptDto);
-  }
+  // @Patch(':id')
+  // update(
+  //   @Param('id') id: string,
+  //   @Body() updateMaterialReceiptDto: UpdateMaterialReceiptDto,
+  // ) {
+  //   return this.materialReceiptService.update(+id, updateMaterialReceiptDto);
+  // }
 
   @Delete(':id')
   remove(@Param('id') id: string) {

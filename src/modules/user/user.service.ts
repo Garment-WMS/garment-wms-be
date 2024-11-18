@@ -3,6 +3,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { Account, Prisma, RoleCode } from '@prisma/client';
 import { Queue } from 'bullmq';
+import { userInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { PathConstants } from 'src/common/constant/path.constant';
@@ -276,12 +277,3 @@ export class UserService {
     });
   }
 }
-
-export const userInclude: Prisma.AccountInclude = {
-  factoryDirector: true,
-  warehouseStaff: true,
-  inspectionDepartment: true,
-  purchasingStaff: true,
-  productionDepartment: true,
-  warehouseManager: true,
-};

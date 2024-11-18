@@ -42,6 +42,7 @@ export class MaterialVariantController {
           { id: 'asc' },
           { name: 'asc' },
           { materialId: 'asc' },
+          { code: 'asc' },
           { reorderLevel: 'asc' },
           { updatedAt: 'asc' },
         ],
@@ -58,7 +59,7 @@ export class MaterialVariantController {
     return this.materialVariantService.create(createMaterialDto);
   }
 
-  @Get('chart')
+  @Post('chart')
   getChart(@Body() chartDto: ChartDto) {
     return this.materialVariantService.getChart(chartDto);
   }
@@ -87,19 +88,47 @@ export class MaterialVariantController {
     return this.materialVariantService.findMaterialReceiptByIdWithResponse(id);
   }
 
-  @Get(':id/receipt')
-  getMaterialReceiptById2(@Param('id', new CustomUUIDPipe()) id: string) {
-    return this.materialVariantService.findMaterialReceiptByIdWithResponse2(id);
+  @Get(':id/export-receipt')
+  getMaterialExportReceipt(
+    @Query(
+      new AllFilterPipeUnsafe<
+        any,
+        Prisma.MaterialExportReceiptDetailScalarWhereInput
+      >(['material.name', 'material.code', 'material.materialUom.name'], []),
+    )
+    filterOptions: FilterDto<Prisma.MaterialExportReceiptDetailScalarWhereInput>,
+
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.materialVariantService.findMaterialExportReceipt(
+      id,
+      filterOptions.findOptions,
+    );
   }
 
-  // @Get(':id/receipt/chart')
-  // getMaterialReceiptChartById(
-  //   @Param('id', new CustomUUIDPipe()) id: string,
-  //   @Query('months') months: months[],
-  // ) {
-  //   return this.materialVariantService.findMaterialReceiptChart(id, months);
-  // }
+  @Get(':id/import-receipt')
+  getMaterialImportReceipt(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialReceiptScalarWhereInput>(
+        [
+          'material.name',
+          'material.code',
+          'material.materialUom.name',
+          'materialPackage.code',
+          'materialPackage.name',
+        ],
+        [{ code: 'asc' }, { createdAt: 'desc' }],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.MaterialReceiptScalarWhereInput>,
 
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.materialVariantService.findMaterialImportReceipt(
+      id,
+      filterOptions.findOptions,
+    );
+  }
   @Patch(':id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   updateMaterial(

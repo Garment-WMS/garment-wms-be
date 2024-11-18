@@ -2,8 +2,8 @@ model InventoryReport {
   id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   warehouseManagerId        String                      @map("warehouse_manager_id") @db.Uuid
   warehouseStaffId          String                      @map("warehouse_staff_id") @db.Uuid
-  inventoryReportType       InventoryReportTypeEnum     @default(MATERIAL) @map("inventory_report_type")
-  status                    InventoryReportStatus       @default(PENDING) @map("status")
+  // inventoryReportType       InventoryReportTypeEnum     @default(MATERIAL) @map("inventory_report_type")
+  status                    InventoryReportStatus       @default(IN_PROGRESS) @map("status")
   code                      String                      @unique @db.VarChar
   note                      String?                     @map("note")
   from                      DateTime?                   @map("from") @db.Timestamptz(6)
@@ -15,20 +15,14 @@ model InventoryReport {
   warehouseManager          WarehouseManager            @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warehouseStaff            WarehouseStaff              @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   inventoryReportPlanDetail InventoryReportPlanDetail[]
+  task                      Task[]
 
   @@map("inventory_report")
 }
 
-enum InventoryReportTypeEnum {
-  MATERIAL
-  PRODUCT
-
-  @@map("inventory_report_type_enum")
-}
-
 enum InventoryReportStatus {
-  PENDING
-  EXECUTING
+  IN_PROGRESS
+  REPORTED
   FINISHED
   CANCELLED
 

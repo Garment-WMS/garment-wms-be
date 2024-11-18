@@ -34,7 +34,7 @@ export class InventoryUpdateStatusService {
     if (isLastInventoryReportInPlan) {
       await this.inventoryReportPlanService.updateStatus(
         isLastInventoryReportInPlan,
-        InventoryReportPlanStatus.DONE,
+        InventoryReportPlanStatus.FINISHED,
       );
     }
   }

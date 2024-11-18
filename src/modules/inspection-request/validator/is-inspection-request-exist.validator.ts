@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  isUUID,
   registerDecorator,
   ValidatorConstraint,
   ValidatorConstraintInterface,
@@ -15,6 +16,9 @@ export class IsInspectionRequestExistValidator
     private readonly inspectionRequestService: InspectionRequestService,
   ) {}
   async validate(inspectionRequestId: string) {
+    if (!isUUID(inspectionRequestId)) {
+      return false;
+    }
     const inspectionRequest =
       await this.inspectionRequestService.findFirst(inspectionRequestId);
     return !!inspectionRequest;

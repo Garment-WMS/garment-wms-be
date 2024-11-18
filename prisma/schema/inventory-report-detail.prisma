@@ -1,20 +1,21 @@
 model InventoryReportDetail {
-  id                     String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  inventoryReportId      String                      @map("inventory_report_id") @db.Uuid
-  materialReceiptId      String?                     @map("material_receipt_id") @db.Uuid
-  productReceiptId       String?                     @map("product_receipt_id") @db.Uuid
-  expectedQuantity       Float                       @map("expected_quantity")
-  actualQuantity         Float?                      @map("actual_quantity")
-  managerQuantityConfirm Float?                      @map("manager_quantity_confirm")
-  status                 InventoryReportDetailStatus @default(IN_PROGRESS) @map("status")
-  note                   String?                     @map("note")
-  recoredAt              DateTime?                   @map("recored_at") @db.Timestamptz(6)
-  createdAt              DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt              DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt              DateTime?                   @map("deleted_at") @db.Timestamptz(6)
-  inventoryReport        InventoryReport             @relation(fields: [inventoryReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  materialReceipt        MaterialReceipt?            @relation(fields: [materialReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productReceipt         ProductReceipt?             @relation(fields: [productReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                     String              @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  inventoryReportId      String              @map("inventory_report_id") @db.Uuid
+  materialReceiptId      String?             @map("material_receipt_id") @db.Uuid
+  productReceiptId       String?             @map("product_receipt_id") @db.Uuid
+  expectedQuantity       Float               @map("expected_quantity")
+  actualQuantity         Float?              @map("actual_quantity")
+  managerQuantityConfirm Float?              @map("manager_quantity_confirm")
+  // status                 InventoryReportDetailStatus @default(IN_PROGRESS) @map("status")
+  warehouseStaffNote     String?             @map("warehouse_staff_note") @db.VarChar()
+  warehouseManagerNote   String?             @map("warehouse_manager_note") @db.VarChar()
+  recoredAt              DateTime?           @map("recored_at") @db.Timestamptz(6)
+  createdAt              DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt              DateTime?           @map("deleted_at") @db.Timestamptz(6)
+  inventoryReport        InventoryReport     @relation(fields: [inventoryReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialReceipt        MaterialReceipt?    @relation(fields: [materialReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productReceipt         ProductReceipt?     @relation(fields: [productReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   receiptAdjustment      ReceiptAdjustment[]
 
   @@map("inventory_report_detail")

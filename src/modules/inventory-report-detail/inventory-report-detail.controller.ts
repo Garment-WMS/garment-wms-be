@@ -21,6 +21,7 @@ import { CreateInventoryReportDetailDto } from './dto/create-inventory-report-de
 import { RecordInventoryReportDetail } from './dto/record-inventory-report-detail.dto';
 import { UpdateInventoryReportDetailDto } from './dto/update-inventory-report-detail.dto';
 import { InventoryReportDetailService } from './inventory-report-detail.service';
+import { WarehouseStaffQuantityReportDetails } from './dto/warehouse-staff-quantity-report.dto';
 
 @ApiTags('inventory-report-detail')
 @Controller('inventory-report-detail')
@@ -55,35 +56,50 @@ export class InventoryReportDetailController {
     );
   }
 
-  @Patch(':id/process')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(RoleCode.WAREHOUSE_STAFF)
-  processInventoryDetail(
-    @Param('id', CustomUUIDPipe) id: string,
-    @Body() updateInventoryReportDetailDto: RecordInventoryReportDetail,
-    @GetUser() user: AuthenUser,
-  ) {
-    return this.inventoryReportDetailService.handleRecordInventoryReportDetail(
-      id,
-      updateInventoryReportDetailDto,
-      user.warehouseStaffId,
-    );
-  }
+  // @Patch(':id/warehouse-staff/process')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles(RoleCode.WAREHOUSE_STAFF)
+  // processInventoryDetail(
+  //   @Param('id', CustomUUIDPipe) id: string,
+  //   @Body() updateInventoryReportDetailDto: WarehouseStaffQuantityReportDetails,
+  //   @GetUser() user: AuthenUser,
+  // ) {
+  //   return this.inventoryReportDetailService.handleRecordInventoryReportDetail(
+  //     id,
+  //     updateInventoryReportDetailDto,
+  //     user.warehouseStaffId,
+  //   );
+  // }
 
-  @Patch(':id/approve')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(RoleCode.WAREHOUSE_MANAGER)
-  processInventoryDetailApproval(
-    @Param('id', CustomUUIDPipe) id: string,
-    @Body() approvalInventoryReportDetailDto: ApprovalInventoryReportDetailDto,
-    @GetUser() user: AuthenUser,
-  ) {
-    return this.inventoryReportDetailService.handleInventoryReportDetailApproval(
-      id,
-      approvalInventoryReportDetailDto,
-      user.warehouseManagerId,
-    );
-  }
+  // @Patch(':id/process')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles(RoleCode.WAREHOUSE_STAFF)
+  // processInventoryDetail(
+  //   @Param('id', CustomUUIDPipe) id: string,
+  //   @Body() updateInventoryReportDetailDto: RecordInventoryReportDetail,
+  //   @GetUser() user: AuthenUser,
+  // ) {
+  //   return this.inventoryReportDetailService.handleRecordInventoryReportDetail(
+  //     id,
+  //     updateInventoryReportDetailDto,
+  //     user.warehouseStaffId,
+  //   );
+  // }
+
+  // @Patch(':id/approve')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles(RoleCode.WAREHOUSE_MANAGER)
+  // processInventoryDetailApproval(
+  //   @Param('id', CustomUUIDPipe) id: string,
+  //   @Body() approvalInventoryReportDetailDto: ApprovalInventoryReportDetailDto,
+  //   @GetUser() user: AuthenUser,
+  // ) {
+  //   return this.inventoryReportDetailService.handleInventoryReportDetailApproval(
+  //     id,
+  //     approvalInventoryReportDetailDto,
+  //     user.warehouseManagerId,
+  //   );
+  // }
 
   @Delete(':id')
   remove(@Param('id') id: string) {

@@ -1,15 +1,15 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import {
   BadRequestException,
-  ConflictException,
+  ForbiddenException,
   HttpStatus,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { $Enums, Prisma, PrismaClient } from '@prisma/client';
+import { $Enums, Prisma, PrismaClient, RoleCode } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isNotEmpty } from 'class-validator';
+import { importRequestInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed } from 'src/common/dto/api-response';
@@ -18,7 +18,6 @@ import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
-import { CreateInspectionRequestDto } from '../inspection-request/dto/create-inspection-request.dto';
 import { InspectionRequestService } from '../inspection-request/inspection-request.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
@@ -333,7 +332,11 @@ export class ImportRequestService {
 
   // REJECTED
   // APPROVED
-  async managerProcess(id: string, managerProcess: ManagerProcessDto) {
+  async managerProcess(
+    warehouseManagerId: string,
+    id: string,
+    managerProcess: ManagerProcessDto,
+  ) {
     const importRequest = await this.prismaService.importRequest.findUnique({
       where: { id },
       select: {
@@ -362,29 +365,16 @@ export class ImportRequestService {
             status: $Enums.ImportRequestStatus.APPROVED,
             managerNote: managerProcess.managerNote,
             warehouseStaffId: managerProcess.warehouseStaffId,
+            warehouseManagerId: warehouseManagerId,
           },
         });
-        Logger.debug(importRequest);
 
-        const createInspectionRequestDto: CreateInspectionRequestDto = {
-          importRequestId: importRequest.id,
-          inspectionDepartmentId: managerProcess.inspectionDepartmentId,
-          warehouseManagerId: importRequest.warehouseManagerId,
-          note: managerProcess.InspectionNote,
-        };
-
-        let inspectionRequest;
-        try {
-          inspectionRequest = await this.inspectionRequestService.create(
-            createInspectionRequestDto,
+        const inspectionRequest =
+          await this.inspectionRequestService.createInspectionRequestByImportRequest(
+            warehouseManagerId,
+            managerProcess,
+            importRequest,
           );
-        } catch (e) {
-          Logger.error(e);
-          throw new ConflictException(
-            'Can not create Inspection Request automatically',
-          );
-        }
-
         return { importRequest, inspectionRequest };
 
       case $Enums.ImportRequestStatus.REJECTED:
@@ -393,6 +383,7 @@ export class ImportRequestService {
           data: {
             status: $Enums.ImportRequestStatus.REJECTED,
             rejectAt: new Date(),
+            warehouseManagerId: warehouseManagerId,
             managerNote: managerProcess.managerNote,
           },
         });
@@ -465,55 +456,29 @@ export class ImportRequestService {
     );
     return productVariantIds.every((id) => productVariantsInDb.has(id));
   }
-}
 
-export const importRequestInclude: Prisma.ImportRequestInclude = {
-  importRequestDetail: {
-    include: {
-      materialPackage: {
-        include: {
-          materialVariant: {
-            include: {
-              material: {
-                include: {
-                  materialUom: true,
-                },
-              },
-              materialAttribute: true,
-              materialInspectionCriteria: true,
-            },
-          },
-        },
-      },
-    },
-  },
-  warehouseManager: {
-    include: {
-      account: true,
-    },
-  },
-  purchasingStaff: {
-    include: {
-      account: true,
-    },
-  },
-  warehouseStaff: {
-    include: {
-      account: true,
-    },
-  },
-  poDelivery: {
-    include: {
-      purchaseOrder: {
-        include: {
-          purchasingStaff: {
-            include: {
-              account: true,
-            },
-          },
-          supplier: true,
-        },
-      },
-    },
-  },
-};
+  async getByUserToken(
+    authenUser: AuthenUser,
+    findOptions: GeneratedFindOptions<Prisma.ImportRequestWhereInput>,
+  ) {
+    switch (authenUser.role) {
+      case RoleCode.WAREHOUSE_MANAGER:
+        findOptions.where = {
+          warehouseManagerId: authenUser.warehouseManagerId,
+        };
+        return this.search(findOptions);
+      case RoleCode.WAREHOUSE_STAFF:
+        findOptions.where = {
+          warehouseStaffId: authenUser.warehouseStaffId,
+        };
+        return this.search(findOptions);
+      case RoleCode.PURCHASING_STAFF:
+        findOptions.where = {
+          purchasingStaffId: authenUser.purchasingStaffId,
+        };
+        return this.search(findOptions);
+      default:
+        throw new ForbiddenException('This role is not allowed');
+    }
+  }
+}

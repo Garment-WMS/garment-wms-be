@@ -1,24 +1,23 @@
 model ProductSize {
-    id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-    productVariantId       String                   @map("product_variant_id") @db.Uuid
-    name                   String                   @map("name") @db.VarChar
-    code                   String                   @unique @map("code") @db.VarChar
-    width                  Float                    @map("width")
-    height                 Float                    @map("height")
-    length                 Float                    @map("length")
-    weight                 Float                    @map("weight")
-    size                   String                   @map("size")
-    createdAt              DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)
-    updatedAt              DateTime?                @updatedAt @map("updated_at") @db.Timestamptz(6)
-    deletedAt              DateTime?                @map("deleted_at") @db.Timestamptz(6)
-    productVariant         ProductVariant           @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-    productFormula         ProductFormula[]
-    importRequestDetail    ImportRequestDetail[]
-    inspectionReportDetail InspectionReportDetail[]
-    productReceipt         ProductReceipt[]
-    productionPlanDetail   ProductionPlanDetail[]
-    inventoryStock         InventoryStock?
+    id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+    productVariantId          String                      @map("product_variant_id") @db.Uuid
+    name                      String                      @map("name") @db.VarChar
+    code                      String                      @unique @map("code") @db.VarChar
+    width                     Float                       @map("width")
+    height                    Float                       @map("height")
+    length                    Float                       @map("length")
+    weight                    Float                       @map("weight")
+    size                      String                      @map("size")
+    createdAt                 DateTime?                   @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt                 DateTime?                   @updatedAt @map("updated_at") @db.Timestamptz(6)
+    deletedAt                 DateTime?                   @map("deleted_at") @db.Timestamptz(6)
+    productVariant            ProductVariant              @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    productFormula            ProductFormula[]
+    importRequestDetail       ImportRequestDetail[]
+    inspectionReportDetail    InspectionReportDetail[]
+    productReceipt            ProductReceipt[]
+    productionPlanDetail      ProductionPlanDetail[]
+    inventoryStock            InventoryStock?
 
     @@map("product_size")
-    InventoryReportPlanDetail InventoryReportPlanDetail[]
 }

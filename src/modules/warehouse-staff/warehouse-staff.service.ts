@@ -1,12 +1,12 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable } from '@nestjs/common';
-import { $Enums, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { warehouseStaffInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { NotFoundError } from 'rxjs';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
-import { accountSelect } from '../inspection-department/inspection-department.service';
 
 @Injectable()
 export class WarehouseStaffService {
@@ -23,7 +23,7 @@ export class WarehouseStaffService {
         where: findOptions?.where,
         skip: offset,
         take: limit,
-        include: WarehouseStaffInclude,
+        include: warehouseStaffInclude,
       }),
       this.prismaService.warehouseStaff.count({
         where: findOptions?.where,
@@ -64,31 +64,3 @@ export class WarehouseStaffService {
     });
   }
 }
-
-export const WarehouseStaffInclude: Prisma.WarehouseStaffInclude = {
-  account: {
-    select: accountSelect,
-  },
-  _count: {
-    select: {
-      importRequest: {
-        where: {
-          inspectionRequest: {
-            some: {
-              inspectionReport: {
-                importReceipt: {
-                  status: $Enums.ImportReceiptStatus.IMPORTING,
-                },
-              },
-            },
-          },
-        },
-      },
-      importReceipt: {
-        where: {
-          status: $Enums.ImportReceiptStatus.IMPORTING,
-        },
-      },
-    },
-  },
-};

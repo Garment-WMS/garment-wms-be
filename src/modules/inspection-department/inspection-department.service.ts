@@ -1,6 +1,7 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable } from '@nestjs/common';
-import { $Enums, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { inspectionDepartmentInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { NotFoundError } from 'rxjs';
 import { Constant } from 'src/common/constant/constant';
@@ -63,43 +64,3 @@ export class InspectionDepartmentService {
     });
   }
 }
-
-export const accountSelect: Prisma.AccountSelect = {
-  id: true,
-  email: true,
-  password: false,
-  username: true,
-  avatarUrl: true,
-  cidId: true,
-  dateOfBirth: true,
-  firstName: true,
-  gender: true,
-  isDeleted: true,
-  isVerified: true,
-  lastName: true,
-  phoneNumber: true,
-  status: true,
-  createdAt: true,
-  deletedAt: true,
-  updatedAt: true,
-};
-
-export const inspectionDepartmentInclude: Prisma.InspectionDepartmentInclude = {
-  account: {
-    select: accountSelect,
-  },
-  _count: {
-    select: {
-      inspectionRequest: {
-        where: {
-          status: {
-            equals: $Enums.InspectionRequestStatus.INSPECTING,
-          },
-          deletedAt: {
-            equals: null,
-          },
-        },
-      },
-    },
-  },
-};

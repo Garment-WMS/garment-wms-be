@@ -53,6 +53,7 @@ import { QuarterlyProductDetailModule } from './modules/quarterly-product-detail
 import { QuarterlyProductPlanModule } from './modules/quarterly-product-plan/quarterly-product-plan.module';
 import { ReceiptAdjustmentModule } from './modules/receipt-adjustment/receipt-adjustment.module';
 import { SupplierModule } from './modules/supplier/supplier.module';
+import { TaskModule } from './modules/task/task.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
@@ -140,6 +141,7 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
     ReceiptAdjustmentModule,
     InventoryUpdateStatusModule,
     ProductionBatchModule,
+    TaskModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

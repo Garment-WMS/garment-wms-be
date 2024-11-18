@@ -59,6 +59,11 @@ export class InventoryReportPlanController {
     return this.inventoryReportPlanService.findAll(filterOptions.findOptions);
   }
 
+  // @Get(':id')
+  // findById(@Param('id', CustomUUIDPipe) id: string) {
+  //   return this.inventoryReportPlanService.findById(id);
+  // }
+
   @Get('warehouse-staff')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.WAREHOUSE_STAFF)
@@ -83,7 +88,7 @@ export class InventoryReportPlanController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.inventoryReportPlanService.findOne(+id);
+    return this.inventoryReportPlanService.findOne(id);
   }
 
   @Patch(':id')
@@ -99,6 +104,6 @@ export class InventoryReportPlanController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.inventoryReportPlanService.remove(+id);
+    return this.inventoryReportPlanService.remove(id);
   }
 }

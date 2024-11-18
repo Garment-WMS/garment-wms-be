@@ -11,8 +11,8 @@ export class IsInspectionReportDetailInImportRequestDetail
 {
   constructor(private readonly importRequestService: ImportRequestService) {}
 
-  readonly materialVariantIdPropertyName = 'materialVariantId';
-  readonly productVariantIdPropertyName = 'productVariantId';
+  readonly materialPackageIdPropertyName = 'materialPackageId';
+  readonly productSizeIdPropertyName = 'productSizeId';
 
   async validate(
     value: any,
@@ -26,44 +26,42 @@ export class IsInspectionReportDetailInImportRequestDetail
     }
 
     switch (validationArguments.property) {
-      case this.materialVariantIdPropertyName:
-        const materialVariantIds =
+      case this.materialPackageIdPropertyName:
+        const materialPackageIds =
           createInspectionReportDto.inspectionReportDetail.map(
-            (materialVariant) => materialVariant.materialVariantId,
+            (materialVariant) => materialVariant.materialPackageId,
           );
         const isMaterialEveryVariantInImportRequest =
           await this.importRequestService.isInspectReportMaterialVariantInImportRequest(
             createInspectionReportDto.inspectionRequestId,
-            materialVariantIds,
+            materialPackageIds,
           );
         return isMaterialEveryVariantInImportRequest;
 
-      case this.productVariantIdPropertyName:
-        const productVariantIds =
+      case this.productSizeIdPropertyName:
+        const productPackageIds =
           createInspectionReportDto.inspectionReportDetail.map(
-            (productVariant) => productVariant.productVariantId,
+            (productVariant) => productVariant.productSizeId,
           );
         const isProductEveryVariantInImportRequest =
           await this.importRequestService.isInspectReportProductVariantInImportRequest(
             createInspectionReportDto.inspectionRequestId,
-            productVariantIds,
+            productPackageIds,
           );
         return isProductEveryVariantInImportRequest;
 
       default:
-        throw new Error(
-          'Only materialVariantIds and productVariantIds are allowed',
-        );
+        throw new Error('Only material package and product size are allowed');
     }
   }
   defaultMessage?(validationArguments?: ValidationArguments): string {
     switch (validationArguments.property) {
-      case this.materialVariantIdPropertyName:
-        return 'Material variant ids must be in import request';
-      case this.productVariantIdPropertyName:
-        return 'Product variant ids must be in import request';
+      case this.materialPackageIdPropertyName:
+        return 'Material package ids must be in import request';
+      case this.productSizeIdPropertyName:
+        return 'Product size ids must be in import request';
       default:
-        return 'Internal server error: Only materialVariantIds and productVariantIds are allowed to use this validator';
+        return 'Internal server error: Only material package ids and product size ids are allowed to use this validator';
     }
   }
 }

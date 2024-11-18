@@ -12,6 +12,7 @@ model MaterialExportReceipt {
   deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
   warehouseStaff              WarehouseStaff?               @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialExportReceiptDetail MaterialExportReceiptDetail[]
+  task                        Task[]
 
   @@map("material_export_receipt")
 }

@@ -1,9 +1,20 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { $Enums, Prisma } from '@prisma/client';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { $Enums, Prisma, PrismaClient } from '@prisma/client';
+import { DefaultArgs } from '@prisma/client/runtime/library';
+import {
+  importRequestInclude,
+  inspectionReportInclude,
+} from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
+import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta } from 'src/common/utils/utils';
 import { CreateInspectionReportDto } from './dto/inspection-report/create-inspection-report.dto';
 import { UpdateInspectionReportDto } from './dto/inspection-report/update-inspection-report.dto';
@@ -18,6 +29,9 @@ export class InspectionReportService {
         where: {
           importRequestId: importRequestId,
         },
+        include: {
+          importRequest: true,
+        },
       });
 
     if (!inspectionRequest) {
@@ -28,7 +42,16 @@ export class InspectionReportService {
       where: {
         inspectionRequestId: inspectionRequest.id,
       },
-      include: inspectionReportInclude,
+      include: {
+        inspectionRequest: {
+          include: {
+            importRequest: true,
+            inspectionDepartment: true,
+            purchasingStaff: true,
+          },
+        },
+        inspectionReportDetail: true,
+      },
     });
 
     return result;
@@ -81,71 +104,171 @@ export class InspectionReportService {
     });
   }
 
-  async create(dto: CreateInspectionReportDto) {
-    const inspectionReportCreateInput: Prisma.InspectionReportCreateInput = {
-      code: dto.code,
-      inspectionRequest: dto.inspectionRequestId
-        ? {
-            connect: {
-              id: dto.inspectionRequestId,
-            },
-          }
-        : undefined,
-      // inspectionDepartment: dto.inspectionDepartmentId
-      //   ? {
-      //       connect: {
-      //         id: dto.inspectionDepartmentId,
-      //       },
-      //     }
-      //   : undefined,
-      inspectionReportDetail: {
-        createMany: {
-          data: dto.inspectionReportDetail,
+  private mapInspectionReportDetail(
+    dto: CreateInspectionReportDto,
+    importRequest: Prisma.ImportRequestGetPayload<{
+      include: typeof importRequestInclude;
+    }>,
+  ) {
+    let errorInspectionReportDetail = [];
+    dto.inspectionReportDetail.forEach((inspectionReportDetail) => {
+      importRequest.importRequestDetail.forEach((importRequestDetail) => {
+        if (
+          importRequestDetail.materialPackageId ===
+            inspectionReportDetail.materialPackageId ||
+          importRequestDetail.productSizeId ===
+            inspectionReportDetail.productSizeId
+        ) {
+          inspectionReportDetail.quantityByPack =
+            importRequestDetail.quantityByPack;
+        }
+        if (
+          inspectionReportDetail.approvedQuantityByPack +
+            inspectionReportDetail.defectQuantityByPack !==
+          importRequestDetail.quantityByPack
+        ) {
+          errorInspectionReportDetail.push(inspectionReportDetail);
+        }
+      });
+    });
+    //log all inspection report details
+    Logger.log(
+      `Inspection report details: ${JSON.stringify(
+        dto.inspectionReportDetail,
+      )}`,
+    );
+    if (errorInspectionReportDetail.length > 0) {
+      throw new CustomValidationException(
+        400,
+        'Approved + defect quantity must equal to quantity by pack ',
+        errorInspectionReportDetail,
+      );
+    }
+  }
+
+  async getImportRequestOfInspectionRequestOrThrow(
+    inspectionRequestId: string,
+  ) {
+    const importRequest = await this.prismaService.importRequest.findFirst({
+      where: {
+        inspectionRequest: {
+          some: {
+            id: inspectionRequestId,
+            deletedAt: null,
+          },
         },
       },
-    };
+      include: importRequestInclude,
+    });
 
-    const importRequestId =
-      await this.prismaService.inspectionRequest.findFirst({
-        where: {
-          id: dto.inspectionRequestId,
-        },
-      });
-
-    let importRequestPromise = undefined;
-    if (importRequestId) {
-      importRequestPromise = this.prismaService.importRequest.update({
-        where: {
-          id: importRequestId.importRequestId,
-        },
-        data: {
-          status: $Enums.ImportRequestStatus.INSPECTED,
-        },
-      });
+    if (!importRequest) {
+      Logger.error(`Import request of inspection request not found`);
+      throw new NotFoundException(
+        'Import request of inspection request not found',
+      );
     }
+    return importRequest;
+  }
 
-    const [data, inspectionRequest, importRequest] =
-      await this.prismaService.$transaction([
-        this.prismaService.inspectionReport.create({
+  async isInspectionRequestHasInspectionReport(inspectionRequestId: string) {
+    const inspectionReport =
+      await this.prismaService.inspectionReport.findFirst({
+        where: {
+          inspectionRequestId,
+        },
+      });
+
+    return inspectionReport ? true : false;
+  }
+
+  async create(dto: CreateInspectionReportDto) {
+    //check inspection request valid
+    if (
+      await this.isInspectionRequestHasInspectionReport(dto.inspectionRequestId)
+    ) {
+      throw new ConflictException(
+        'Inspection report for this inspection request already exists',
+      );
+    }
+    const importRequest = await this.getImportRequestOfInspectionRequestOrThrow(
+      dto.inspectionRequestId,
+    );
+    this.mapInspectionReportDetail(dto, importRequest);
+    const inspectionReportCreateInput: Prisma.InspectionReportUncheckedCreateInput =
+      {
+        code: dto.code,
+        inspectionRequestId: dto.inspectionRequestId,
+      };
+    const result = await this.prismaService.$transaction(
+      async (
+        prismaInstance: Omit<
+          PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+          | '$connect'
+          | '$disconnect'
+          | '$on'
+          | '$transaction'
+          | '$use'
+          | '$extends'
+        >,
+      ) => {
+        const inspectionReport = await prismaInstance.inspectionReport.create({
           data: inspectionReportCreateInput,
           include: inspectionReportInclude,
-        }),
-        this.prismaService.inspectionRequest.update({
-          where: {
-            id: dto.inspectionRequestId,
-          },
-          data: {
-            status: $Enums.InspectionRequestStatus.INSPECTED,
-          },
-        }),
-        importRequestPromise,
-      ]);
+        });
+        const inspectionRequestStatusUpdated =
+          await this.updateInspectionRequestStatusByInspectionRequestIdToInspected(
+            inspectionReport.inspectionRequestId,
+            prismaInstance,
+          );
+        const importRequestStatusUpdated =
+          await this.updateImportRequestStatusByImportRequestIdToInspected(
+            importRequest.id,
+            prismaInstance,
+          );
+        return {
+          inspectionReport,
+          'inspectionRequest.status': inspectionRequestStatusUpdated.status,
+          'importRequest.status': importRequestStatusUpdated.status,
+        };
+      },
+    );
+    return result;
+  }
 
-    return {
-      ...data,
-      inspectionRequestStatus: inspectionRequest?.status,
-      importRequestStatus: importRequest?.status,
-    };
+  async updateInspectionRequestStatusByInspectionRequestIdToInspected(
+    inspectionRequestId: string,
+    prismaInstance: Omit<
+      PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+    >,
+  ) {
+    const prisma = prismaInstance || this.prismaService;
+    return await prisma.inspectionRequest.update({
+      where: {
+        id: inspectionRequestId,
+      },
+      data: {
+        status: $Enums.InspectionRequestStatus.INSPECTED,
+      },
+    });
+  }
+
+  async updateImportRequestStatusByImportRequestIdToInspected(
+    importRequestId: string,
+    prismaInstance: Omit<
+      PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+    >,
+  ) {
+    const prisma = prismaInstance || this.prismaService;
+    return await prisma.importRequest.update({
+      where: {
+        id: importRequestId,
+      },
+      data: {
+        status: $Enums.ImportRequestStatus.INSPECTED,
+      },
+    });
   }
 
   async update(id: string, dto: UpdateInspectionReportDto) {
@@ -183,15 +306,15 @@ export class InspectionReportService {
                 approvedQuantityByPack: detail.approvedQuantityByPack,
                 defectQuantityByPack: detail.defectQuantityByPack,
                 quantityByPack: detail.quantityByPack,
-                materialPackageId: detail.materialVariantId,
-                productVariantId: detail.productVariantId,
+                materialPackageId: detail.materialPackageId,
+                productSizeId: detail.productSizeId,
               },
               create: {
                 approvedQuantityByPack: detail.approvedQuantityByPack,
                 defectQuantityByPack: detail.defectQuantityByPack,
                 quantityByPack: detail.quantityByPack,
-                materialPackageId: detail.materialVariantId,
-                productVariantId: detail.productVariantId,
+                materialPackageId: detail.materialPackageId,
+                productSizeId: detail.productSizeId,
               },
             })),
           }
@@ -211,44 +334,3 @@ export class InspectionReportService {
     });
   }
 }
-
-export const inspectionReportInclude: Prisma.InspectionReportInclude = {
-  inspectionRequest: {
-    include: {
-      importRequest: true,
-      inspectionDepartment: true,
-      purchasingStaff: true,
-    },
-  },
-  
-  inspectionReportDetail: {
-    include: {
-      materialPackage: {
-        include: {
-          materialVariant: {
-            include: {
-              material: {
-                include: {
-                  materialUom: true,
-                },
-              },
-            },
-          },
-        },
-      },
-      productSize: {
-        include: {
-          productVariant: {
-            include: {
-              product: {
-                include: {
-                  productUom: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-};

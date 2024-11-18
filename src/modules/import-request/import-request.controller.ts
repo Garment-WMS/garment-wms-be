@@ -54,7 +54,12 @@ export class ImportRequestController {
   async search(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.ImportRequestWhereInput>(
-        ['inspectionRequest.code', 'inspectionRequest.inspectionReport.code'],
+        [
+          'inspectionRequest.id',
+          'inspectionRequest.code',
+          'inspectionRequest.inspectionReport.id',
+          'inspectionRequest.inspectionReport.code',
+        ],
         [{ createdAt: 'desc' }, { id: 'asc' }],
       ),
     )
@@ -63,6 +68,38 @@ export class ImportRequestController {
     return apiSuccess(
       HttpStatus.OK,
       await this.importRequestService.search(filterDto.findOptions),
+      'Get import requests successfully',
+    );
+  }
+
+  @Get('/my')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(
+    RoleCode.WAREHOUSE_MANAGER,
+    RoleCode.PURCHASING_STAFF,
+    RoleCode.WAREHOUSE_STAFF,
+  )
+  async getByUserToken(
+    @GetUser() authenUser: AuthenUser,
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ImportRequestWhereInput>(
+        [
+          'inspectionRequest.id',
+          'inspectionRequest.code',
+          'inspectionRequest.inspectionReport.id',
+          'inspectionRequest.inspectionReport.code',
+        ],
+        [{ createdAt: 'desc' }, { id: 'asc' }],
+      ),
+    )
+    filterDto: FilterDto<Prisma.ImportRequestWhereInput>,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.importRequestService.getByUserToken(
+        authenUser,
+        filterDto.findOptions,
+      ),
       'Get import requests successfully',
     );
   }
@@ -122,10 +159,15 @@ export class ImportRequestController {
     @Param('id', IsImportRequestExistPipe)
     id: string,
     @Body() managerProcessDto: ManagerProcessDto,
+    @GetUser() warehouseManager: AuthenUser,
   ) {
     return apiSuccess(
       HttpStatus.OK,
-      await this.importRequestService.managerProcess(id, managerProcessDto),
+      await this.importRequestService.managerProcess(
+        warehouseManager.warehouseManagerId,
+        id,
+        managerProcessDto,
+      ),
       'Manager process import request successfully',
     );
   }

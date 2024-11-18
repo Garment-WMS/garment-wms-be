@@ -4,6 +4,8 @@ import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
+import { MaterialPackageService } from '../material-package/material-package.service';
+import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { CreateMaterialReceiptDto } from './dto/create-material-receipt.dto';
 import { UpdateMaterialReceiptDto } from './dto/update-material-receipt.dto';
 
@@ -11,7 +13,9 @@ import { UpdateMaterialReceiptDto } from './dto/update-material-receipt.dto';
 export class MaterialReceiptService {
   constructor(
     private readonly prismaService: PrismaService,
+    private readonly poDeliveryService: PoDeliveryService,
     private readonly inventoryStockService: InventoryStockService,
+    private readonly materialPackagesService: MaterialPackageService,
   ) {}
 
   includeQuery: Prisma.MaterialReceiptInclude = {
@@ -31,18 +35,32 @@ export class MaterialReceiptService {
     },
   };
 
+  async recountMaterialInventoryStock() {
+    const allMaterialPackage = await this.materialPackagesService.findAllRaw();
+
+    for (let materialPackage of allMaterialPackage) {
+      const remainQuantityByPack = await this.getRemainQuantityByPack(
+        materialPackage.id,
+      );
+      await this.inventoryStockService.updateMaterialStockQuantity(
+        materialPackage.id,
+        remainQuantityByPack,
+      );
+    }
+    return null;
+  }
+
   async getAllMaterialReceiptOfMaterialPackage(
-    materialPackageId: string,
+    materialVariantId: string,
     prismaInstance: PrismaService = this.prismaService,
   ) {
     const materialReceipts = await prismaInstance.materialReceipt.findMany({
       where: {
-        materialPackageId,
+        materialPackage: {
+          materialVariantId: materialVariantId,
+        },
         status: {
-          in: [
-            MaterialReceiptStatus.AVAILABLE,
-            MaterialReceiptStatus.PARTIAL_USED,
-          ],
+          in: [MaterialReceiptStatus.AVAILABLE],
         },
       },
       include: this.includeQuery,
@@ -65,6 +83,7 @@ export class MaterialReceiptService {
         id,
       },
       data: {
+        importDate: new Date(),
         status,
       },
     });
@@ -84,22 +103,39 @@ export class MaterialReceiptService {
       inspectionReportId: string;
       quantityByPack: number | null;
     }[],
+    poDeliveryId: string,
     prismaInstance: PrismaClient = this.prismaService,
     // materialReceipts: CreateMaterialReceiptDto[],
   ) {
-    const materialReceiptsInput: Prisma.MaterialReceiptCreateManyInput[] =
-      inspectionReportDetail.map((detail) => {
-        return {
-          importReceiptId: id,
-          materialPackageId: detail.materialPackageId,
-          remainQuantityByPack: detail.quantityByPack,
-          quantityByPack: detail.approvedQuantityByPack,
-        };
+    let createdMaterialReceipts = [];
+    let materialReceipts: Prisma.MaterialReceiptCreateManyInput[] = [];
+    for (let i = 0; i < inspectionReportDetail.length; i++) {
+      const result = await this.poDeliveryService.getExpiredDate(
+        poDeliveryId,
+        inspectionReportDetail[0].materialPackageId,
+        prismaInstance,
+      );
+      materialReceipts.push({
+        importReceiptId: id,
+        materialPackageId: inspectionReportDetail[i].materialPackageId,
+        remainQuantityByPack: inspectionReportDetail[i].approvedQuantityByPack,
+        quantityByPack: inspectionReportDetail[i].approvedQuantityByPack,
+        expireDate: result.expiredDate,
       });
+    }
 
-    return prismaInstance.materialReceipt.createMany({
-      data: materialReceiptsInput,
+    await prismaInstance.materialReceipt.createMany({
+      data: materialReceipts,
     });
+
+    createdMaterialReceipts = await prismaInstance.materialReceipt.findMany({
+      where: {
+        importReceiptId: id,
+      },
+      include: this.includeQuery,
+    });
+
+    return createdMaterialReceipts;
   }
 
   async updateMaterialReceiptQuantity(

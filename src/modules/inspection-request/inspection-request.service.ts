@@ -1,23 +1,31 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { $Enums, Prisma, PrismaClient } from '@prisma/client';
+import { $Enums, Prisma, PrismaClient, RoleCode } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
+import { inspectionRequestInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
-import { importRequestInclude } from '../import-request/import-request.service';
-import { inspectionReportInclude } from '../inspection-report/inspection-report.service';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { ManagerProcessDto } from '../import-request/dto/import-request/manager-process.dto';
+import { CreateTaskDto } from '../task/dto/create-task.dto';
+import { TaskService } from '../task/task.service';
 import { CreateInspectionRequestDto } from './dto/create-inspection-request.dto';
 import { UpdateInspectionRequestDto } from './dto/update-inspection-request.dto';
 
 @Injectable()
 export class InspectionRequestService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly taskService: TaskService,
+  ) {}
 
   async search(
     findOptions: GeneratedFindOptions<Prisma.InspectionRequestWhereInput>,
@@ -150,6 +158,46 @@ export class InspectionRequestService {
     return inspectionRequest;
   }
 
+  async createInspectionRequestByImportRequest(
+    warehouseManagerId: string,
+    managerProcess: ManagerProcessDto,
+    importRequest: Prisma.ImportRequestWhereUniqueInput,
+  ) {
+    const createInspectionRequestDto: CreateInspectionRequestDto = {
+      importRequestId: importRequest.id,
+      inspectionDepartmentId: managerProcess.inspectionDepartmentId,
+      warehouseManagerId: warehouseManagerId,
+      note: managerProcess.InspectionNote,
+    };
+    try {
+      let inspectionRequest = await this.create(createInspectionRequestDto);
+      await this.createTaskByInspectionRequest(
+        inspectionRequest.inspectionDepartmentId,
+        inspectionRequest.id,
+      );
+      return inspectionRequest;
+    } catch (e) {
+      Logger.error(e);
+      throw new ConflictException(
+        'Can not create Inspection Request automatically',
+      );
+    }
+  }
+
+  async createTaskByInspectionRequest(
+    inspectionDepartmentId: string,
+    inspectionRequestId: string,
+  ) {
+    const createTaskDto: CreateTaskDto = {
+      taskType: 'INSPECTION',
+      inspectionDepartmentId: inspectionDepartmentId,
+      inspectionRequestId: inspectionRequestId,
+      status: 'OPEN',
+    };
+    const task = await this.taskService.create(createTaskDto);
+    return task;
+  }
+
   async findAll() {
     return this.prismaService.inspectionRequest.findMany();
   }
@@ -168,12 +216,13 @@ export class InspectionRequestService {
   }
 
   async findFirst(id: string) {
-    const inspectionRequest = this.prismaService.inspectionRequest.findFirst({
-      where: {
-        id: id,
-      },
-      include: inspectionRequestInclude,
-    });
+    const inspectionRequest =
+      await this.prismaService.inspectionRequest.findFirst({
+        where: {
+          id: id,
+        },
+        include: inspectionRequestInclude,
+      });
     return inspectionRequest;
   }
 
@@ -236,23 +285,29 @@ export class InspectionRequestService {
       },
     });
   }
-}
 
-export const inspectionRequestInclude: Prisma.InspectionRequestInclude = {
-  importRequest: {
-    include: importRequestInclude,
-  },
-  inspectionDepartment: {
-    include: {
-      account: true,
-    },
-  },
-  purchasingStaff: {
-    include: {
-      account: true,
-    },
-  },
-  inspectionReport: {
-    include: inspectionReportInclude,
-  },
-};
+  async getByUserToken(
+    authenUser: AuthenUser,
+    findOptions: GeneratedFindOptions<Prisma.InspectionRequestWhereInput>,
+  ) {
+    switch (authenUser.role) {
+      case RoleCode.WAREHOUSE_MANAGER:
+        findOptions.where = {
+          warehouseManagerId: authenUser.warehouseManagerId,
+        };
+        return this.search(findOptions);
+      case RoleCode.PURCHASING_STAFF:
+        findOptions.where = {
+          purchasingStaffId: authenUser.purchasingStaffId,
+        };
+        return this.search(findOptions);
+      case RoleCode.INSPECTION_DEPARTMENT:
+        findOptions.where = {
+          inspectionDepartmentId: authenUser.inspectionDepartmentId,
+        };
+        return this.search(findOptions);
+      default:
+        throw new ForbiddenException('This role is not allowed');
+    }
+  }
+}

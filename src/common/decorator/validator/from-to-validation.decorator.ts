@@ -1,6 +1,13 @@
-import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationArguments,
+  ValidationOptions,
+} from 'class-validator';
 
-export function FromToValidation(property: string, validationOptions?: ValidationOptions) {
+export function FromToValidation(
+  property: string,
+  validationOptions?: ValidationOptions,
+) {
   return function (object: Object, propertyName: string) {
     registerDecorator({
       name: 'fromToValidation',
@@ -15,7 +22,15 @@ export function FromToValidation(property: string, validationOptions?: Validatio
           if (!value || !relatedValue) {
             return true;
           }
-          return new Date(value) >= new Date(relatedValue);
+
+          const fromDate = new Date(relatedValue);
+          const toDate = new Date(value);
+
+          if (toDate < fromDate) {
+            console.log('fromDate');
+            return false;
+          }
+          return true;
         },
         defaultMessage(args: ValidationArguments) {
           const [relatedPropertyName] = args.constraints;

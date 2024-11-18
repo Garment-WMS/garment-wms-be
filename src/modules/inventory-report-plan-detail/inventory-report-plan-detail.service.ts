@@ -16,28 +16,20 @@ export class InventoryReportPlanDetailService {
 
   includeQuery: Prisma.InventoryReportPlanDetailInclude = {
     inventoryReportPlan: true,
-    materialPackage: {
+    materialVariant: {
       include: {
-        materialVariant: {
+        material: {
           include: {
-            material: {
-              include: {
-                materialUom: true,
-              },
-            },
+            materialUom: true,
           },
         },
       },
     },
-    productSize: {
+    productVariant: {
       include: {
-        productVariant: {
+        product: {
           include: {
-            product: {
-              include: {
-                productUom: true,
-              },
-            },
+            productUom: true,
           },
         },
       },
@@ -55,10 +47,7 @@ export class InventoryReportPlanDetailService {
       inventoryReportPlanDetail[0].inventoryReportPlanId,
     );
     const hasPendingOrExecuting = inventoryReportPlanDetail.some((el) => {
-      return (
-        el.inventoryReport.status === InventoryReportStatus.PENDING ||
-        el.inventoryReport.status === InventoryReportStatus.EXECUTING
-      );
+      return el.inventoryReport.status === InventoryReportStatus.IN_PROGRESS;
     });
 
     if (hasPendingOrExecuting) {
@@ -132,6 +121,7 @@ export class InventoryReportPlanDetailService {
     createInventoryReportPlanDetailDto: Prisma.InventoryReportPlanDetailCreateManyInput[],
     prismaInstace: PrismaService = this.prismaService,
   ) {
+    console.log(createInventoryReportPlanDetailDto);
     return prismaInstace.inventoryReportPlanDetail.createMany({
       data: createInventoryReportPlanDetailDto,
     });
