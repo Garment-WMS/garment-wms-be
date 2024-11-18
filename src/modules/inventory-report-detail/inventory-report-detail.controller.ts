@@ -56,20 +56,20 @@ export class InventoryReportDetailController {
     );
   }
 
-  @Patch(':id/warehouse-staff/process')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(RoleCode.WAREHOUSE_STAFF)
-  processInventoryDetail(
-    @Param('id', CustomUUIDPipe) id: string,
-    @Body() updateInventoryReportDetailDto: WarehouseStaffQuantityReportDetails,
-    @GetUser() user: AuthenUser,
-  ) {
-    return this.inventoryReportDetailService.handleRecordInventoryReportDetail(
-      id,
-      updateInventoryReportDetailDto,
-      user.warehouseStaffId,
-    );
-  }
+  // @Patch(':id/warehouse-staff/process')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles(RoleCode.WAREHOUSE_STAFF)
+  // processInventoryDetail(
+  //   @Param('id', CustomUUIDPipe) id: string,
+  //   @Body() updateInventoryReportDetailDto: WarehouseStaffQuantityReportDetails,
+  //   @GetUser() user: AuthenUser,
+  // ) {
+  //   return this.inventoryReportDetailService.handleRecordInventoryReportDetail(
+  //     id,
+  //     updateInventoryReportDetailDto,
+  //     user.warehouseStaffId,
+  //   );
+  // }
 
   // @Patch(':id/process')
   // @UseGuards(JwtAuthGuard, RolesGuard)

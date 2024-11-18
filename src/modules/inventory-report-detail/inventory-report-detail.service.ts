@@ -11,6 +11,7 @@ import { CreateInventoryReportDetailDto } from './dto/create-inventory-report-de
 import { RecordInventoryReportDetail } from './dto/record-inventory-report-detail.dto';
 import { UpdateInventoryReportDetailDto } from './dto/update-inventory-report-detail.dto';
 import { WarehouseStaffQuantityReportDetails } from './dto/warehouse-staff-quantity-report.dto';
+import { WarehouseStaffApprovalInventoryReportDetailDto } from './dto/warehouse-staff-approval-inventory-report-detail.dto';
 
 @Injectable()
 export class InventoryReportDetailService {
@@ -40,8 +41,9 @@ export class InventoryReportDetailService {
 
   async handleRecordInventoryReportDetail(
     id: string,
-    recordInventoryReportDetail: WarehouseStaffQuantityReportDetails,
+    recordInventoryReportDetail: WarehouseStaffApprovalInventoryReportDetailDto,
     warehouseStaffId: string,
+    prismaInstance: PrismaService = this.prismaService,
   ) {
     const inventoryReportDetail = await this.findById(id);
     if (!inventoryReportDetail) {
@@ -63,12 +65,12 @@ export class InventoryReportDetailService {
     ) {
       throw new BadRequestException('Inventory Report Detail already recorded');
     }
-    const result = await this.prismaService.inventoryReportDetail.updateMany({
+    const result = await this.prismaService.inventoryReportDetail.update({
       where: {
         id,
       },
       data: {
-        
+        actualQuantity: recordInventoryReportDetail.actualQuantity,
         recoredAt: new Date(),
       },
     });
@@ -76,11 +78,7 @@ export class InventoryReportDetailService {
     if (!result) {
       throw new Error('Record Inventory Report Detail failed');
     }
-    return apiSuccess(
-      HttpStatus.OK,
-      result,
-      'Record Inventory Report Detail successfully',
-    );
+    return result
   }
 
   async findAll() {

@@ -7,6 +7,7 @@ import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { CreateInventoryReportDetailDto } from '../inventory-report-detail/dto/create-inventory-report-detail.dto';
+import { WarehouseStaffQuantityReportDetails } from '../inventory-report-detail/dto/warehouse-staff-quantity-report.dto';
 import { InventoryReportDetailService } from '../inventory-report-detail/inventory-report-detail.service';
 import { InventoryReportPlanDto } from '../inventory-report-plan/dto/inventory-report-plan.dto';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
@@ -31,6 +32,28 @@ export class InventoryReportService {
       },
     },
   };
+
+  async handleRecordInventoryReport(
+    id: string,
+    updateInventoryReportDetailDto: WarehouseStaffQuantityReportDetails,
+    warehouseStaffId: string,
+  ) {
+    let result = [];
+    for (const inventoryRecordDetail of updateInventoryReportDetailDto.details) {
+      const updateResult =
+        await this.inventoryReportDetailService.handleRecordInventoryReportDetail(
+          inventoryRecordDetail.inventoryReportDetailId,
+          inventoryRecordDetail,
+          warehouseStaffId,
+        );
+      result.push(updateResult);
+    }
+    return apiSuccess(
+      HttpStatus.OK,
+      result,
+      'Update inventory report detail successfully',
+    );
+  }
 
   async findAllByWarehouseStaff(
     findOptions: GeneratedFindOptions<Prisma.InventoryReportWhereInput>,

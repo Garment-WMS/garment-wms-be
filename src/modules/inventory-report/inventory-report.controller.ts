@@ -23,6 +23,8 @@ import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateInventoryReportDto } from './dto/create-inventory-report.dto';
 import { UpdateInventoryReportDto } from './dto/update-inventory-report.dto';
 import { InventoryReportService } from './inventory-report.service';
+import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
+import { WarehouseStaffQuantityReportDetails } from '../inventory-report-detail/dto/warehouse-staff-quantity-report.dto';
 
 @Controller('inventory-report')
 @ApiTags('Inventory Report')
@@ -77,6 +79,21 @@ export class InventoryReportController {
     filterDto: FilterDto<Prisma.InventoryReportWhereInput>,
   ) {
     return this.inventoryReportService.findAll(filterDto.findOptions);
+  }
+
+  @Patch(':id/record')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_STAFF)
+  processInventoryDetail(
+    @Param('id', CustomUUIDPipe) id: string,
+    @Body() updateInventoryReportDetailDto: WarehouseStaffQuantityReportDetails,
+    @GetUser() user: AuthenUser,
+  ) {
+    return this.inventoryReportService.handleRecordInventoryReport(
+      id,
+      updateInventoryReportDetailDto,
+      user.warehouseStaffId,
+    );
   }
 
   @Get('warehouse-staff')
