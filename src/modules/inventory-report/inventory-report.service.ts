@@ -490,10 +490,170 @@ export class InventoryReportService {
   }
 
   async findOne(id: string) {
-    const result = await this.prismaService.inventoryReport.findUnique({
+    const result: any = await this.prismaService.inventoryReport.findUnique({
       where: { id },
-      include: this.includeQuery,
+      include: {
+        inventoryReportDetail: {
+          include: {
+            productReceipt: {
+              include: {
+                productSize: {
+                  include: {
+                    productVariant: {
+                      include: {
+                        productAttribute: true,
+                        product: {
+                          include: {
+                            productUom: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            materialReceipt: {
+              include: {
+                materialPackage: {
+                  include: {
+                    materialVariant: {
+                      include: {
+                        material: true,
+                        // materialAttribute: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        inventoryReportPlanDetail: {
+          include: {
+            inventoryReportPlan: true,
+          },
+        },
+      },
     });
+
+    const groupByMaterialVariant = result.inventoryReportDetail.reduce(
+      (acc, current) => {
+        const materialVariantId =
+          current.materialReceipt?.materialPackage?.materialVariant?.id;
+        if (materialVariantId) {
+          if (!acc[materialVariantId]) {
+            acc[materialVariantId] = {
+              materialVariant:
+                current.materialReceipt?.materialPackage.materialVariant,
+              materialPackages: {},
+              totalExpectedQuantity: 0,
+              totalActualQuantity: 0,
+              totalManagerQuantityConfirm: 0,
+            };
+          }
+          const materialPackageId =
+            current.materialReceipt?.materialPackage?.id;
+          if (materialPackageId) {
+            if (!acc[materialVariantId].materialPackages[materialPackageId]) {
+              //Exclude materialVariant from materialPackage
+              const { materialVariant, ...materialPackageWithoutVariant } =
+                current.materialReceipt?.materialPackage;
+              acc[materialVariantId].materialPackages[materialPackageId] = {
+                materialPackage: materialPackageWithoutVariant,
+                inventoryReportDetails: [],
+                totalExpectedQuantity: 0,
+                totalActualQuantity: 0,
+                totalManagerQuantityConfirm: 0,
+              };
+            }
+
+            const { materialPackage, ...currentWithoutMaterialPackage } =
+              current.materialReceipt;
+
+            acc[materialVariantId].materialPackages[
+              materialPackageId
+            ].inventoryReportDetails.push({
+              id: current.id,
+              expectedQuantity: current.expectedQuantity,
+              actualQuantity: current.actualQuantity,
+              managerQuantityConfirm: current.managerQuantityConfirm,
+              materialReceipt: currentWithoutMaterialPackage,
+            });
+            acc[materialVariantId].materialPackages[
+              materialPackageId
+            ].totalExpectedQuantity += current.expectedQuantity || 0;
+            acc[materialVariantId].materialPackages[
+              materialPackageId
+            ].totalActualQuantity += current.actualQuantity || 0;
+            acc[materialVariantId].materialPackages[
+              materialPackageId
+            ].totalManagerQuantityConfirm +=
+              current.managerQuantityConfirm || 0;
+          }
+
+          acc[materialVariantId].totalExpectedQuantity +=
+            current.expectedQuantity || 0;
+          acc[materialVariantId].totalActualQuantity +=
+            current.actualQuantity || 0;
+          acc[materialVariantId].totalManagerQuantityConfirm +=
+            current.managerQuantityConfirm || 0;
+        }
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          materialVariant: any;
+          totalExpectedQuantity: 0;
+          totalActualQuantity: 0;
+          totalManagerQuantityConfirm: 0;
+          materialPackages: Record<
+            string,
+            {
+              materialPackage: any;
+              totalExpectedQuantity: 0;
+              totalActualQuantity: 0;
+              totalManagerQuantityConfirm: 0;
+              inventoryReportDetails: Array<{
+                id: string;
+                expectedQuantity: number;
+                actualQuantity: number;
+                managerQuantityConfirm: number;
+                materialReceipt: any;
+              }>;
+            }
+          >;
+        }
+      >,
+    );
+
+    const totalQuantities: any = Object.values(groupByMaterialVariant).reduce(
+      (totals: any, variant: any) => {
+        totals.totalExpectedQuantity += variant.totalExpectedQuantity;
+        totals.totalActualQuantity += variant.totalActualQuantity;
+        totals.totalManagerQuantityConfirm +=
+          variant.totalManagerQuantityConfirm;
+        return totals;
+      },
+      {
+        totalExpectedQuantity: 0,
+        totalActualQuantity: 0,
+        totalManagerQuantityConfirm: 0,
+      },
+    );
+
+    result.totalExpectedQuantity = totalQuantities.totalExpectedQuantity;
+    result.totalActualQuantity = totalQuantities.totalActualQuantity;
+    result.totalManagerQuantityConfirm =
+      totalQuantities.totalManagerQuantityConfirm;
+
+    result.inventoryReportDetail = Object.values(groupByMaterialVariant).map(
+      (variant: any) => ({
+        ...variant,
+        materialPackages: Object.values(variant.materialPackages),
+      }),
+    );
 
     return apiSuccess(
       HttpStatus.OK,
