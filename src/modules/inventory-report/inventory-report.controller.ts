@@ -18,13 +18,14 @@ import { GetUser } from 'src/common/decorator/get_user.decorator';
 import { Roles } from 'src/common/decorator/roles.decorator';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { RolesGuard } from 'src/common/guard/roles.guard';
+import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
+import { WarehouseManagerQuantityReportDetails } from '../inventory-report-detail/dto/warehouse-manager-quantity-report.dto';
+import { WarehouseStaffQuantityReportDetails } from '../inventory-report-detail/dto/warehouse-staff-quantity-report.dto';
 import { CreateInventoryReportDto } from './dto/create-inventory-report.dto';
 import { UpdateInventoryReportDto } from './dto/update-inventory-report.dto';
 import { InventoryReportService } from './inventory-report.service';
-import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
-import { WarehouseStaffQuantityReportDetails } from '../inventory-report-detail/dto/warehouse-staff-quantity-report.dto';
 
 @Controller('inventory-report')
 @ApiTags('Inventory Report')
@@ -80,6 +81,10 @@ export class InventoryReportController {
   ) {
     return this.inventoryReportService.findAll(filterDto.findOptions);
   }
+  @Get(':id/test')
+  test(@Param('id') id: string) {
+    return this.inventoryReportService.test(id);
+  }
 
   @Patch(':id/record')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -93,6 +98,22 @@ export class InventoryReportController {
       id,
       updateInventoryReportDetailDto,
       user.warehouseStaffId,
+    );
+  }
+
+  @Patch(':id/approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER)
+  processInventoryDetailApproval(
+    @Param('id', CustomUUIDPipe) id: string,
+    @Body()
+    updateInventoryReportDetailDto: WarehouseManagerQuantityReportDetails,
+    @GetUser() user: AuthenUser,
+  ) {
+    return this.inventoryReportService.handleApprovalInventoryReport(
+      id,
+      updateInventoryReportDetailDto,
+      user.warehouseManagerId,
     );
   }
 

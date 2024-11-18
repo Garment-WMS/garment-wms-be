@@ -84,7 +84,6 @@ export class InventoryReportPlanService {
         if (!inventoryReport) {
           return null;
         }
-        console.log(inventoryReport);
         await prismaInstance.inventoryReportPlanDetail.updateMany({
           where: {
             id: {
@@ -395,7 +394,6 @@ export class InventoryReportPlanService {
           const groupedByMaterialOrProduct =
             staffGroup.staffInventoryReportPlanDetails.reduce(
               (acc, detail) => {
-                console.log(detail);
                 // Check for materialVariant grouping
                 if (detail.materialVariant) {
                   const materialVariantId = detail.materialVariant.id;

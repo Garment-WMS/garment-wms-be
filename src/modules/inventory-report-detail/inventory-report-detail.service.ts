@@ -8,14 +8,12 @@ import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { CreateInventoryReportDetailDto } from './dto/create-inventory-report-detail.dto';
-import { RecordInventoryReportDetail } from './dto/record-inventory-report-detail.dto';
 import { UpdateInventoryReportDetailDto } from './dto/update-inventory-report-detail.dto';
-import { WarehouseStaffQuantityReportDetails } from './dto/warehouse-staff-quantity-report.dto';
+import { WarehouseManagerApprovalInventoryReportDetailDto } from './dto/warehouse-manager-approval-inventory-report-detail.dto';
 import { WarehouseStaffApprovalInventoryReportDetailDto } from './dto/warehouse-staff-approval-inventory-report-detail.dto';
 
 @Injectable()
 export class InventoryReportDetailService {
-
   constructor(
     private readonly prismaService: PrismaService,
     @InjectQueue('receipt-adjustment')
@@ -23,7 +21,6 @@ export class InventoryReportDetailService {
     private readonly eventEmitter: EventEmitter2,
     private readonly materialReceiptService: MaterialReceiptService,
   ) {}
-
 
   isInventoryReportDetailExist(value: string) {
     return this.findById(value);
@@ -36,6 +33,44 @@ export class InventoryReportDetailService {
     const result = await prismaInstance.inventoryReportDetail.createMany({
       data: createInventoryReportDetailDto,
     });
+    return result;
+  }
+
+  async handleApprovalInventoryReportDetail(
+    inventoryReportDetailId: string,
+    inventoryRecordDetail: WarehouseManagerApprovalInventoryReportDetailDto,
+    warehouseManagerId: string,
+  ) {
+    const inventoryReportDetail = await this.findById(inventoryReportDetailId);
+    if (!inventoryReportDetail) {
+      throw new BadRequestException('Inventory Report Detail not found');
+    }
+
+    if (
+      inventoryReportDetail.inventoryReport.warehouseManagerId !==
+      warehouseManagerId
+    ) {
+      throw new BadRequestException(
+        'You are not allowed to record this inventory report detail',
+      );
+    }
+
+    if (inventoryReportDetail.managerQuantityConfirm) {
+      throw new BadRequestException('Inventory Report Detail already recorded');
+    }
+    const result = await this.prismaService.inventoryReportDetail.update({
+      where: {
+        id: inventoryReportDetailId,
+      },
+      data: {
+        managerQuantityConfirm: inventoryRecordDetail.managerConfirmQuantity,
+        warehouseManagerNote: inventoryRecordDetail?.note,
+      },
+    });
+
+    if (!result) {
+      throw new Error('Record Inventory Report Detail failed');
+    }
     return result;
   }
 
@@ -71,6 +106,7 @@ export class InventoryReportDetailService {
       },
       data: {
         actualQuantity: recordInventoryReportDetail.actualQuantity,
+        warehouseStaffNote: recordInventoryReportDetail?.note,
         recoredAt: new Date(),
       },
     });
@@ -78,7 +114,7 @@ export class InventoryReportDetailService {
     if (!result) {
       throw new Error('Record Inventory Report Detail failed');
     }
-    return result
+    return result;
   }
 
   async findAll() {
@@ -234,26 +270,35 @@ export class InventoryReportDetailService {
     return `This action removes a #${id} inventoryReportDetail`;
   }
 
-  // async checkLastInventoryReport(inventoryReportId: string) {
-  //   const isAllInventoryReportDetailRecorded =
-  //     await this.prismaService.inventoryReportDetail.findMany({
-  //       where: {
-  //         inventoryReportId,
-  //         status: {
-  //           notIn: [
-  //             InventoryReportDetailStatus.APPROVED,
-  //             InventoryReportDetailStatus.PENDING_APPROVAL,
-  //           ],
-  //         },
-  //       },
-  //     });
-  //   if (isAllInventoryReportDetailRecorded.length > 0) {
-  //     return;
-  //   }
-  //   await this.eventEmitter.emitAsync(
-  //     'inventory-report.status',
-  //     inventoryReportId,
-  //   );
-  //   return;
-  // }
+  async checkLastInventoryReport(inventoryReportId: string) {
+    const isAllInventoryReportDetailRecorded =
+      await this.prismaService.inventoryReportDetail.findMany({
+        where: {
+          inventoryReportId,
+          recoredAt: null,
+        },
+      });
+    if (isAllInventoryReportDetailRecorded.length > 0) {
+      return false;
+    }
+    // await this.eventEmitter.emitAsync(
+    //   'inventory-report.status',
+    //   inventoryReportId,
+    // );
+    return true;
+  }
+
+  async checkLastApprovalInventoryReport(inventoryReportId: string) {
+    const isAllInventoryReportDetailRecorded =
+      await this.prismaService.inventoryReportDetail.findMany({
+        where: {
+          inventoryReportId,
+          managerQuantityConfirm: null,
+        },
+      });
+    if (isAllInventoryReportDetailRecorded.length > 0) {
+      return false;
+    }
+    return true;
+  }
 }
