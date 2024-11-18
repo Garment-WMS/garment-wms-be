@@ -2,6 +2,7 @@ model ProductFormula {
   id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   productSizeId          String                   @map("product_size_id") @db.Uuid
   name                   String                   @map("name") @db.VarChar
+  code                   String?                  @map("code") @db.VarChar
   quantityRangeStart     Float                    @map("quantity_range_start")
   quantityRangeEnd       Float                    @map("quantity_range_end")
   createdAt              DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)

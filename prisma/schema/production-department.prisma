@@ -5,9 +5,9 @@ model ProductionDepartment {
   updatedAt             DateTime?               @updatedAt @map("updated_at") @db.Timestamp(6)
   deletedAt             DateTime?               @map("deleted_at") @db.Timestamp(6)
   account               Account                 @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  MaterialExportRequest MaterialExportRequest[]
+  materialExportRequest MaterialExportRequest[]
+  importRequest         ImportRequest[]
+  inspectionRequest     InspectionRequest[]
 
   @@map("production_department")
-  ImportRequest ImportRequest[]
-  InspectionRequest InspectionRequest[]
 }

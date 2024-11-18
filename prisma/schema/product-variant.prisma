@@ -3,7 +3,7 @@ model ProductVariant {
   productId                 String                      @map("product_type") @db.Uuid
   image                     String?                     @map("image") @db.VarChar
   name                      String                      @map("name") @db.VarChar
-  code                      String                      @unique @map("code") @db.VarChar
+  code                      String?                     @map("code") @db.VarChar
   createdAt                 DateTime?                   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime?                   @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                 DateTime?                   @map("deleted_at") @db.Timestamptz(6)

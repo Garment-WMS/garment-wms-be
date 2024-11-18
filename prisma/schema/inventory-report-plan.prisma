@@ -3,7 +3,7 @@ model InventoryReportPlan {
     warehouseManagerId        String                      @map("warehouse_manager_id") @db.Uuid
     type                      InventoryReportPlanType?    @default(ALL) @map("type")
     title                     String                      @map("title") @db.VarChar()
-    code                      String                      @unique @map("code") @db.VarChar()
+    code                      String?                     @map("code") @db.VarChar()
     status                    InventoryReportPlanStatus   @default(NOT_YET) @map("status")
     note                      String?                     @map("note") @db.VarChar()
     from                      DateTime?                   @map("from") @db.Timestamptz(6)
