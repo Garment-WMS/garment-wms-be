@@ -9,14 +9,23 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Prisma } from '@prisma/client';
+import { Prisma, RoleCode } from '@prisma/client';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CreateProductionBatchDto } from './dto/create-production-batch.dto';
 import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
 import { ProductionBatchService } from './production-batch.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { GetUser } from 'src/common/decorator/get_user.decorator';
+import { Roles } from 'src/common/decorator/roles.decorator';
+import { RolesGuard } from 'src/common/guard/roles.guard';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 
 @ApiTags('production-batch')
 @Controller('production-batch')
@@ -26,14 +35,17 @@ export class ProductionBatchController {
   ) {}
 
   @Post()
-  async create(@Body() createProductionBatchDto: CreateProductionBatchDto) {
-    return apiSuccess(
-      HttpStatus.CREATED,
-      await this.productionBatchService.create(createProductionBatchDto),
-      'Production batch created successfully',
-    );
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.PRODUCTION_DEPARTMENT)
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(@UploadedFile() file, @GetUser() user: AuthenUser) {
+    const fileResult: any =
+      await this.productionBatchService.createProductionBatchWithExcelFile(
+        file,
+        user.productionDepartmentId,
+      );
+    return fileResult;
   }
-
   @Get()
   async search(
     @Query(

@@ -181,7 +181,10 @@ export class ImportReceiptService {
     );
     if (result) {
       try {
-        await this.createTaskByImportReceipt(result.id);
+        await this.createTaskByImportReceipt(
+          result.id,
+          inspectionReport.inspectionRequest.importRequest.warehouseStaffId,
+        );
       } catch (e) {
         Logger.error(e);
         throw new ConflictException('Can not create Task automatically');
@@ -199,10 +202,14 @@ export class ImportReceiptService {
     );
   }
 
-  async createTaskByImportReceipt(importReceiptId: string) {
+  async createTaskByImportReceipt(
+    importReceiptId: string,
+    warehouseId: string,
+  ) {
     const createTaskDto: CreateTaskDto = {
       taskType: 'IMPORT',
       importReceiptId: importReceiptId,
+      warehouseStaffId: warehouseId,
       status: $Enums.TaskStatus.OPEN,
     };
     const task = await this.taskService.create(createTaskDto);
@@ -358,14 +365,85 @@ export class ImportReceiptService {
     return this.prismaService.importReceipt.findUnique({
       where: { id },
       include: {
-        materialReceipt: true,
-        productReceipt: true,
+        warehouseManager: {
+          include: {
+            account: true,
+          },
+        },
+        task: {
+          include: {
+            todo: true,
+          },
+        },
+        warehouseStaff: {
+          include: {
+            account: true,
+          },
+        },
+        materialReceipt: {
+          include: {
+            materialPackage: {
+              include: {
+                materialVariant: {
+                  include: {
+                    material: {
+                      include: {
+                        materialUom: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        productReceipt: {
+          include: {
+            productSize: {
+              include: {
+                productVariant: {
+                  include: {
+                    product: {
+                      include: {
+                        productUom: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         inspectionReport: {
           include: {
             inspectionRequest: {
               include: {
+                inspectionDepartment: {
+                  include: {
+                    account: true,
+                  },
+                },
+                productionDeparment: {
+                  include: {
+                    account: true,
+                  },
+                },
+                purchasingStaff: {
+                  include: {
+                    account: true,
+                  },
+                },
                 importRequest: {
                   include: {
+                    poDelivery: {
+                      include: {
+                        purchaseOrder: {
+                          include: {
+                            supplier: true,
+                          },
+                        },
+                      },
+                    },
                     warehouseStaff: {
                       include: {
                         account: true,

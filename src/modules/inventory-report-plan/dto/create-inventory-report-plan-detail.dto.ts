@@ -2,24 +2,24 @@ import { ApiProperty } from '@nestjs/swagger';
 import { RoleCode } from '@prisma/client';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { AtLeastOneExists } from 'src/common/pipe/at-least-one-exist.pipe';
-import { IsMaterialPackageExist } from 'src/modules/material-package/validator/is-material-package-exist.validator';
-import { IsProductSizeExist } from 'src/modules/product-size/validator/is-product-size-exist.validator';
+import { IsMaterialExist } from 'src/modules/material-variant/validation/is-material-exist.validation';
+import { IsProductExist } from 'src/modules/product/validator/is-product-exist.validator';
 import { IsUserRoleExist } from 'src/modules/user/validator/is-user-of-role-exist.validator';
 
 export class CreateInventoryReportPlanDetailDto {
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  @IsProductSizeExist()
-  productSizeId?: string;
+  @IsProductExist()
+  productVariantId?: string;
 
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  @IsMaterialPackageExist()
-  materialPackageId?: string;
+  @IsMaterialExist()
+  materialVariantId?: string;
 
-  @AtLeastOneExists('productSizeId', 'materialPackageId', {})
+  @AtLeastOneExists('productVariantId', 'materialVariantId', {})
   dummyField?: string;
 
   @ApiProperty()

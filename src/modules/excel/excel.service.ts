@@ -82,6 +82,9 @@ interface itemElement {
 }
 @Injectable()
 export class ExcelService {
+  readProductionBatchExcel(file: any) {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     private readonly prismaService: PrismaService,
     private readonly firebaseService: FirebaseService,

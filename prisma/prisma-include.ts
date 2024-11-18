@@ -116,6 +116,7 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
       poDeliveryDetail: true,
       purchaseOrder: {
         include: {
+          supplier: true,
           purchasingStaff: {
             include: {
               account: true,
@@ -254,24 +255,24 @@ export const inventoryReportPlan: Prisma.InventoryReportPlanInclude = {
           account: true,
         },
       },
-      materialPackage: {
+      materialVariant: {
         include: {
-          materialVariant: {
+          materialPackage: true,
+          material: {
             include: {
-              material: {
-                include: {
-                  materialUom: true,
-                },
-              },
+              materialUom: true,
             },
           },
-          inventoryStock: true,
         },
       },
-      productSize: {
+      productVariant: {
         include: {
-          productVariant: true,
-          inventoryStock: true,
+          productSize: true,
+          product: {
+            include: {
+              productUom: true,
+            },
+          },
         },
       },
       inventoryReport: {
@@ -284,7 +285,24 @@ export const inventoryReportPlan: Prisma.InventoryReportPlanInclude = {
 };
 
 export const importReceipt: Prisma.ImportReceiptInclude = {
-  materialReceipt: true,
+  materialReceipt: {
+    include: {
+      materialPackage: {
+        include: {
+          materialVariant: {
+            include: {
+              material: {
+                include: {
+                  materialUom: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+
   productReceipt: true,
   inspectionReport: {
     include: {
@@ -292,6 +310,15 @@ export const importReceipt: Prisma.ImportReceiptInclude = {
         include: {
           importRequest: {
             include: {
+              poDelivery: {
+                include: {
+                  purchaseOrder: {
+                    include: {
+                      supplier: true,
+                    },
+                  },
+                },
+              },
               warehouseStaff: {
                 include: {
                   account: true,

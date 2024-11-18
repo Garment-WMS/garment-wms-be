@@ -7,6 +7,8 @@ import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { CreateInventoryReportDetailDto } from '../inventory-report-detail/dto/create-inventory-report-detail.dto';
+import { WarehouseManagerQuantityReportDetails } from '../inventory-report-detail/dto/warehouse-manager-quantity-report.dto';
+import { WarehouseStaffQuantityReportDetails } from '../inventory-report-detail/dto/warehouse-staff-quantity-report.dto';
 import { InventoryReportDetailService } from '../inventory-report-detail/inventory-report-detail.service';
 import { InventoryReportPlanDto } from '../inventory-report-plan/dto/inventory-report-plan.dto';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
@@ -24,13 +26,198 @@ export class InventoryReportService {
   ) {}
 
   includeQuery: Prisma.InventoryReportInclude = {
-    inventoryReportDetail: true,
+    inventoryReportDetail: {
+      include: {
+        productReceipt: {
+          include: {
+            productSize: {
+              include: {
+                productVariant: {
+                  include: {
+                    productAttribute: true,
+                    product: {
+                      include: {
+                        productUom: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        materialReceipt: {
+          include: {
+            materialPackage: {
+              include: {
+                materialVariant: {
+                  include: {
+                    material: {
+                      include: {
+                        materialUom: true,
+                      },
+                    },
+                    materialAttribute: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     inventoryReportPlanDetail: {
       include: {
         inventoryReportPlan: true,
       },
     },
   };
+
+  async handleApprovalInventoryReport(
+    id: string,
+    updateInventoryReportDetailDto: WarehouseManagerQuantityReportDetails,
+    warehouseManagerId: string,
+  ) {
+    const inventoryReport = await this.findById(id);
+    if (!inventoryReport) {
+      throw new BadRequestException('Inventory report not found');
+    }
+    if (inventoryReport.status !== InventoryReportStatus.REPORTED) {
+      throw new BadRequestException(
+        'Inventory report has not been recorded yet',
+      );
+    }
+
+    let result = [];
+    for (const inventoryRecordDetail of updateInventoryReportDetailDto.details) {
+      const updateResult =
+        await this.inventoryReportDetailService.handleApprovalInventoryReportDetail(
+          inventoryRecordDetail.inventoryReportDetailId,
+          inventoryRecordDetail,
+          warehouseManagerId,
+        );
+      result.push(updateResult);
+    }
+
+    const isInventoryReportDetailDone =
+      await this.inventoryReportDetailService.checkLastApprovalInventoryReport(
+        id,
+      );
+
+    if (isInventoryReportDetailDone) {
+      await this.updateInventoryReportStatus(
+        id,
+        InventoryReportStatus.FINISHED,
+      );
+    }
+
+    const isInventoryPlanDone =
+      await this.inventoryReportDetailService.checkLastInventoryReport(
+        inventoryReport.inventoryReportPlanDetail[0].inventoryReportPlanId,
+      );
+
+    if (isInventoryPlanDone) {
+      await this.prismaService.inventoryReportPlan.update({
+        where: {
+          id: inventoryReport.inventoryReportPlanDetail[0]
+            .inventoryReportPlanId,
+        },
+        data: {
+          status: InventoryReportStatus.FINISHED,
+          to: new Date(),
+        },
+      });
+    }
+
+    return apiSuccess(
+      HttpStatus.OK,
+      result,
+      'Update inventory report detail successfully',
+    );
+  }
+
+  async test(inventoryReportPlanId: string) {
+    const isInventoryPlanDone =
+      await this.inventoryReportDetailService.checkLastInventoryReport(
+        inventoryReportPlanId,
+      );
+    if (isInventoryPlanDone) {
+      await this.prismaService.inventoryReportPlan.update({
+        where: {
+          id: inventoryReportPlanId,
+        },
+        data: {
+          status: InventoryReportStatus.FINISHED,
+          to: new Date(),
+        },
+      });
+    }
+
+    return isInventoryPlanDone;
+  }
+
+  async handleRecordInventoryReport(
+    id: string,
+    updateInventoryReportDetailDto: WarehouseStaffQuantityReportDetails,
+    warehouseStaffId: string,
+  ) {
+    const inventoryReport = await this.findById(id);
+    if (!inventoryReport) {
+      throw new BadRequestException('Inventory report not found');
+    }
+
+    let result = [];
+    for (const inventoryRecordDetail of updateInventoryReportDetailDto.details) {
+      const updateResult =
+        await this.inventoryReportDetailService.handleRecordInventoryReportDetail(
+          inventoryRecordDetail.inventoryReportDetailId,
+          inventoryRecordDetail,
+          warehouseStaffId,
+        );
+      result.push(updateResult);
+    }
+
+    const isInventoryReportDetailDone =
+      await this.inventoryReportDetailService.checkLastInventoryReport(id);
+
+    if (isInventoryReportDetailDone) {
+      await this.updateInventoryReportStatus(
+        id,
+        InventoryReportStatus.REPORTED,
+      );
+    }
+
+    // const isInventoryPlanDone =
+    //   await this.inventoryReportDetailService.checkLastInventoryReport(
+    //     inventoryReport.inventoryReportPlanDetail[0].inventoryReportPlanId,
+    //   );
+
+    // if (isInventoryPlanDone) {
+    //   await this.prismaService.inventoryReportPlan.update({
+    //     where: {
+    //       id: inventoryReport.inventoryReportPlanDetail[0]
+    //         .inventoryReportPlanId,
+    //     },
+    //     data: {
+    //       status: InventoryReportStatus.FINISHED,
+    //     },
+    //   });
+    // }
+
+    return apiSuccess(
+      HttpStatus.OK,
+      result,
+      'Update inventory report detail successfully',
+    );
+  }
+  updateInventoryReportStatus(id: string, status: InventoryReportStatus) {
+    return this.prismaService.inventoryReport.update({
+      where: { id },
+      data: {
+        status: status,
+      },
+    });
+  }
 
   async findAllByWarehouseStaff(
     findOptions: GeneratedFindOptions<Prisma.InventoryReportWhereInput>,
@@ -111,16 +298,16 @@ export class InventoryReportService {
 
     await Promise.all(
       inventoryReportParam.inventoryReportPlanDetail.map(async (el) => {
-        if (el.materialPackageId) {
+        if (el.materialVariantId) {
           const materialReceipt =
             await this.materialReceiptService.getAllMaterialReceiptOfMaterialPackage(
-              el.materialPackageId,
+              el.materialVariantId,
             );
           if (materialReceipt.length > 0) {
             receipt.materialReceipt.push(...materialReceipt);
           }
         }
-        if (el.productSizeId) {
+        if (el.productVariantId) {
           //DO LATER
         }
       }),
@@ -133,7 +320,6 @@ export class InventoryReportService {
         actualQuantity: undefined,
       });
     });
-    console.log(receipt.productReceipt);
     // receipt.productReceipt.forEach((productReceip) => {
     //   createInventoryReportDetailDto.push({
     //     productReceiptId: productReceip.id,
@@ -142,8 +328,6 @@ export class InventoryReportService {
     //     storageQuantity: 0,
     //   });
     // });
-
-    console.log(createInventoryReportDetailDto);
 
     await this.inventoryReportDetailService.create(
       createInventoryReportDetailDto,
@@ -306,10 +490,180 @@ export class InventoryReportService {
   }
 
   async findOne(id: string) {
-    const result = await this.prismaService.inventoryReport.findUnique({
+    const result: any = await this.prismaService.inventoryReport.findUnique({
       where: { id },
-      include: this.includeQuery,
+      include: {
+        warehouseManager: {
+          include: {
+            account: true,
+          },
+        },
+        warehouseStaff: {
+          include: {
+            account: true,
+          },
+        },
+        inventoryReportDetail: {
+          include: {
+            productReceipt: {
+              include: {
+                productSize: {
+                  include: {
+                    productVariant: {
+                      include: {
+                        productAttribute: true,
+                        product: {
+                          include: {
+                            productUom: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            materialReceipt: {
+              include: {
+                materialPackage: {
+                  include: {
+                    materialVariant: {
+                      include: {
+                        material: true,
+                        // materialAttribute: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        inventoryReportPlanDetail: {
+          include: {
+            inventoryReportPlan: true,
+          },
+        },
+      },
     });
+
+    const groupByMaterialVariant = result.inventoryReportDetail.reduce(
+      (acc, current) => {
+        const materialVariantId =
+          current.materialReceipt?.materialPackage?.materialVariant?.id;
+        if (materialVariantId) {
+          if (!acc[materialVariantId]) {
+            acc[materialVariantId] = {
+              materialVariant:
+                current.materialReceipt?.materialPackage.materialVariant,
+              materialPackages: {},
+              totalExpectedQuantity: 0,
+              totalActualQuantity: 0,
+              totalManagerQuantityConfirm: 0,
+            };
+          }
+          const materialPackageId =
+            current.materialReceipt?.materialPackage?.id;
+          if (materialPackageId) {
+            if (!acc[materialVariantId].materialPackages[materialPackageId]) {
+              //Exclude materialVariant from materialPackage
+              const { materialVariant, ...materialPackageWithoutVariant } =
+                current.materialReceipt?.materialPackage;
+              acc[materialVariantId].materialPackages[materialPackageId] = {
+                materialPackage: materialPackageWithoutVariant,
+                inventoryReportDetails: [],
+                totalExpectedQuantity: 0,
+                totalActualQuantity: 0,
+                totalManagerQuantityConfirm: 0,
+              };
+            }
+
+            const { materialPackage, ...currentWithoutMaterialPackage } =
+              current.materialReceipt;
+
+            acc[materialVariantId].materialPackages[
+              materialPackageId
+            ].inventoryReportDetails.push({
+              id: current.id,
+              expectedQuantity: current.expectedQuantity,
+              actualQuantity: current.actualQuantity,
+              managerQuantityConfirm: current.managerQuantityConfirm,
+              materialReceipt: currentWithoutMaterialPackage,
+            });
+            acc[materialVariantId].materialPackages[
+              materialPackageId
+            ].totalExpectedQuantity += current.expectedQuantity || 0;
+            acc[materialVariantId].materialPackages[
+              materialPackageId
+            ].totalActualQuantity += current.actualQuantity || 0;
+            acc[materialVariantId].materialPackages[
+              materialPackageId
+            ].totalManagerQuantityConfirm +=
+              current.managerQuantityConfirm || 0;
+          }
+
+          acc[materialVariantId].totalExpectedQuantity +=
+            current.expectedQuantity || 0;
+          acc[materialVariantId].totalActualQuantity +=
+            current.actualQuantity || 0;
+          acc[materialVariantId].totalManagerQuantityConfirm +=
+            current.managerQuantityConfirm || 0;
+        }
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          materialVariant: any;
+          totalExpectedQuantity: 0;
+          totalActualQuantity: 0;
+          totalManagerQuantityConfirm: 0;
+          materialPackages: Record<
+            string,
+            {
+              materialPackage: any;
+              totalExpectedQuantity: 0;
+              totalActualQuantity: 0;
+              totalManagerQuantityConfirm: 0;
+              inventoryReportDetails: Array<{
+                id: string;
+                expectedQuantity: number;
+                actualQuantity: number;
+                managerQuantityConfirm: number;
+                materialReceipt: any;
+              }>;
+            }
+          >;
+        }
+      >,
+    );
+
+    const totalQuantities: any = Object.values(groupByMaterialVariant).reduce(
+      (totals: any, variant: any) => {
+        totals.totalExpectedQuantity += variant.totalExpectedQuantity;
+        totals.totalActualQuantity += variant.totalActualQuantity;
+        totals.totalManagerQuantityConfirm +=
+          variant.totalManagerQuantityConfirm;
+        return totals;
+      },
+      {
+        totalExpectedQuantity: 0,
+        totalActualQuantity: 0,
+        totalManagerQuantityConfirm: 0,
+      },
+    );
+
+    result.totalExpectedQuantity = totalQuantities.totalExpectedQuantity;
+    result.totalActualQuantity = totalQuantities.totalActualQuantity;
+    result.totalManagerQuantityConfirm =
+      totalQuantities.totalManagerQuantityConfirm;
+
+    result.inventoryReportDetail = Object.values(groupByMaterialVariant).map(
+      (variant: any) => ({
+        ...variant,
+        materialPackages: Object.values(variant.materialPackages),
+      }),
+    );
 
     return apiSuccess(
       HttpStatus.OK,
@@ -347,23 +701,24 @@ export class InventoryReportService {
     });
   }
 
-  // async checkLastInventoryReport(inventoryReportPlanId: string) {
-  //   const inventoryReport = await this.prismaService.inventoryReport.findMany({
-  //     where: {
-  //       : inventoryId,
-  //       status: {
-  //         notIn: [
-  //           InventoryReportStatus.EXECUTING,
-  //           InventoryReportStatus.PENDING,
-  //         ],
-  //       },
-  //     },
-  //   });
-  //   if (inventoryReport.length > 0) {
-  //     return false;
-  //   }
-  //   return true;
-  // }
+  async checkLastInventoryReport(inventoryReportPlanId: string) {
+    const inventoryReport = await this.prismaService.inventoryReport.findMany({
+      where: {
+        inventoryReportPlanDetail: {
+          some: {
+            inventoryReportPlanId,
+          },
+        },
+        status: {
+          notIn: [InventoryReportStatus.FINISHED],
+        },
+      },
+    });
+    if (inventoryReport.length > 0) {
+      return false;
+    }
+    return true;
+  }
 
   remove(id: number) {
     return `This action removes a #${id} inventoryReport`;

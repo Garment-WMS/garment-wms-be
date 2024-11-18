@@ -104,6 +104,6 @@ export class InventoryReportPlanController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.inventoryReportPlanService.remove(+id);
+    return this.inventoryReportPlanService.remove(id);
   }
 }

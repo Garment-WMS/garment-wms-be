@@ -68,7 +68,6 @@ export class InventoryReportPlanService {
         'All inventory report plan detail already processed',
       );
     }
-    console.log(inventoryReportPlanDetailBelongToWarehouseStaff);
     const inventoryReportInput: InventoryReportPlanDto = {
       ...inventoryReportPlan,
       inventoryReportPlanDetail:
@@ -85,7 +84,6 @@ export class InventoryReportPlanService {
         if (!inventoryReport) {
           return null;
         }
-        console.log(inventoryReport);
         await prismaInstance.inventoryReportPlanDetail.updateMany({
           where: {
             id: {
@@ -99,7 +97,7 @@ export class InventoryReportPlanService {
           },
         });
 
-        if (inventoryReport.status === InventoryReportPlanStatus.PENDING) {
+        if (inventoryReportPlan.status === InventoryReportPlanStatus.NOT_YET) {
           await prismaInstance.inventoryReportPlan.update({
             where: { id },
             data: {
@@ -153,6 +151,7 @@ export class InventoryReportPlanService {
   ) {
     const inventoryPlanInput: Prisma.InventoryReportPlanCreateInput = {
       code: undefined,
+      type: createInventoryReportPlanDto.inventoryReportPlanType,
       title: createInventoryReportPlanDto.title,
       from: createInventoryReportPlanDto.from,
       to: createInventoryReportPlanDto.to,
@@ -185,8 +184,8 @@ export class InventoryReportPlanService {
             return {
               code: undefined,
               inventoryReportPlanId: inventoryPlanResult.id,
-              materialPackageId: el.materialPackageId,
-              productSizeId: el.productSizeId,
+              materialVariantId: el.materialVariantId,
+              productVariantId: el.productVariantId,
               warehouseStaffId: el.warehouseStaffId,
             };
           });
@@ -368,7 +367,6 @@ export class InventoryReportPlanService {
                 staffInventoryReportPlanDetails: [],
               };
             }
-
             acc[staffId].staffInventoryReportPlanDetails.push(detail);
             return acc;
           },
@@ -382,7 +380,6 @@ export class InventoryReportPlanService {
             }
           >,
         );
-
       // Replace with grouped data
       inventoryReportPlan.inventoryReportPlanDetail =
         Object.values(groupedByStaff);
@@ -396,36 +393,33 @@ export class InventoryReportPlanService {
             staffGroup.staffInventoryReportPlanDetails.reduce(
               (acc, detail) => {
                 // Check for materialVariant grouping
-                if (detail.materialPackage?.materialVariant) {
-                  const materialVariantId =
-                    detail.materialPackage.materialVariant.id;
+                if (detail.materialVariant) {
+                  const materialVariantId = detail.materialVariant.id;
 
                   if (!acc[materialVariantId]) {
                     acc[materialVariantId] = {
-                      materialVariant: detail.materialPackage.materialVariant,
+                      materialVariant: detail.materialVariant,
                       packagePlanDetails: [],
                     };
                   }
 
-                  acc[materialVariantId].packagePlanDetails.push(
-                    detail.materialPackage,
-                  );
+                  acc[materialVariantId].packagePlanDetails =
+                    detail.materialVariant.materialPackage;
                 }
 
                 // Check for productVariant grouping
-                else if (detail.productSize?.productVariant) {
-                  const productVariantId = detail.productSize.productVariant.id;
+                else if (detail.productVariant) {
+                  const productVariantId = detail.productVariant.id;
 
                   if (!acc[productVariantId]) {
                     acc[productVariantId] = {
-                      productVariant: detail.productSize.productVariant,
+                      productVariant: detail.productVariant,
                       sizePlanDetails: [],
                     };
                   }
 
-                  acc[productVariantId].sizePlanDetails.push(
-                    detail.productSize,
-                  );
+                  acc[productVariantId].sizePlanDetails =
+                    detail.productVariant.productSize;
                 }
 
                 return acc;
@@ -466,7 +460,23 @@ export class InventoryReportPlanService {
     return `This action updates a #${id} inventoryReportPlan`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} inventoryReportPlan`;
+  async remove(id: string) {
+    const result = await this.prismaService.inventoryReportPlan.delete({
+      where: { id },
+    });
+
+    await this.prismaService.inventoryReportPlanDetail.deleteMany({
+      where: {
+        inventoryReportPlanId: id,
+      },
+    });
+
+    if (result) {
+      return apiSuccess(
+        200,
+        result,
+        'Inventory report plan deleted successfully',
+      );
+    }
   }
 }

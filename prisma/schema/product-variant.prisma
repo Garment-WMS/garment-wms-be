@@ -11,6 +11,7 @@ model ProductVariant {
   productAttribute          ProductAttribute[]
   productInspectionCriteria ProductInspectionCriteria[]
   productSize               ProductSize[]
+  InventoryReportPlanDetail InventoryReportPlanDetail[]
 
   @@map("product_variant")
 }
