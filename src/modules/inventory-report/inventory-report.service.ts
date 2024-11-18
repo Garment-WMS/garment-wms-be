@@ -493,6 +493,16 @@ export class InventoryReportService {
     const result: any = await this.prismaService.inventoryReport.findUnique({
       where: { id },
       include: {
+        warehouseManager: {
+          include: {
+            account: true,
+          },
+        },
+        warehouseStaff: {
+          include: {
+            account: true,
+          },
+        },
         inventoryReportDetail: {
           include: {
             productReceipt: {
