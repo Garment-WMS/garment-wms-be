@@ -325,7 +325,8 @@ export class ImportReceiptService {
               prismaInstance,
             );
             if (
-              !importReceipt.inspectionReport.inspectionRequest.importRequestId
+              !importReceipt?.inspectionReport?.inspectionRequest
+                .importRequestId
             ) {
               throw new Error('Import Request not found');
             }

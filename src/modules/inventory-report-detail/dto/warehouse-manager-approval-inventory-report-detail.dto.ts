@@ -13,7 +13,7 @@ export class WarehouseManagerApprovalInventoryReportDetailDto {
   @IsNumber()
   @IsNotEmpty()
   @Min(0)
-  managerConfirmQuantity: number;
+  managerQuantityConfirm: number;
 
   @ApiProperty()
   @IsOptional()

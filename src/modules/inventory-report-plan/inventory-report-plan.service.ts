@@ -228,14 +228,21 @@ export class InventoryReportPlanService {
   }
 
   async getAllReportPlanInTimeRange(from: Date, to?: Date) {
-    return await this.prismaService.inventoryReportPlan.findMany({
+    console.log(from, to);
+
+    const result = await this.prismaService.inventoryReportPlan.findMany({
       where: {
-        from: {
-          gte: from,
-        },
-        ...(to && { to: { lte: to } }),
+        AND: [
+          {
+            from: to ? { lte: to } : undefined,
+          },
+          {
+            to: from ? { gte: from } : undefined, 
+          },
+        ].filter(Boolean), // Remove empty conditions
       },
     });
+    return result;
   }
 
   async findAll(

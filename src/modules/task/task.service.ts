@@ -1,5 +1,5 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { $Enums, Prisma } from '@prisma/client';
 import { taskInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
@@ -171,7 +171,14 @@ export class TaskService {
     return task;
   }
 
-  async findOne(id: number) {
-    return `This action returns a #${id} task`;
+  async findUnique(id: string) {
+    const task = await this.prismaService.task.findUnique({
+      where: {
+        id: id,
+      },
+      include: taskInclude,
+    });
+    if (!task) throw new NotFoundException(`Task with id ${id} not found`);
+    return task;
   }
 }
