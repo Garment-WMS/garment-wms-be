@@ -3,7 +3,7 @@ model MaterialPackage {
   materialVariantId      String                   @map("material_variant_id") @db.Uuid
   SKU                    String                   @default("") @map("sku") @db.VarChar
   name                   String                   @map("name") @db.VarChar
-  code                   String?                  @map("code") @db.VarChar
+  code                   String?                  @unique @map("code") @db.VarChar
   packUnit               String                   @map("pack_unit") @db.VarChar
   uomPerPack             Float                    @map("uom_per_pack_unit")
   packedWidth            Float                    @map("packed_width")

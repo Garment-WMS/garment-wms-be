@@ -64,7 +64,7 @@ export class InventoryReportDetailService {
         id: inventoryReportDetailId,
       },
       data: {
-        managerQuantityConfirm: inventoryRecordDetail.managerConfirmQuantity,
+        managerQuantityConfirm: inventoryRecordDetail.managerQuantityConfirm,
         warehouseManagerNote: inventoryRecordDetail?.note,
       },
     });
