@@ -5,8 +5,7 @@ import {
 } from 'class-validator';
 
 export function AtLeastOneExists(
-  property1: string,
-  property2: string,
+  properties: string[],
   validationOptions?: ValidationOptions,
 ) {
   return function (object: Object, propertyName: string) {
@@ -14,29 +13,22 @@ export function AtLeastOneExists(
       name: 'atLeastOneExists',
       target: object.constructor,
       propertyName: propertyName,
+      constraints: [properties],
       options: validationOptions,
-      constraints: [property1, property2], // Ensure constraints are passed here
       validator: {
         validate(value: any, args: ValidationArguments) {
-          const [relatedPropertyName1, relatedPropertyName2] = args.constraints;
-          const relatedValue1 = (args.object as any)[relatedPropertyName1];
-          const relatedValue2 = (args.object as any)[relatedPropertyName2];
-          if (relatedValue1 !== undefined && relatedValue2 !== undefined) {
-            return false; // Both values are defined, return false
-          }
-          return (
-            (relatedValue1 !== undefined && relatedValue1 !== null) ||
-            (relatedValue2 !== undefined && relatedValue2 !== null)
-          );
+          const [relatedPropertyNames] = args.constraints;
+          const object = args.object as any;
+          return relatedPropertyNames.some((propertyName) => {
+            return (
+              object[propertyName] !== undefined &&
+              object[propertyName] !== null
+            );
+          });
         },
         defaultMessage(args: ValidationArguments) {
-          const [relatedPropertyName1, relatedPropertyName2] = args.constraints;
-          const relatedValue1 = (args.object as any)[relatedPropertyName1];
-          const relatedValue2 = (args.object as any)[relatedPropertyName2];
-          if (relatedValue1 !== undefined && relatedValue2 !== undefined) {
-            return `Both ${relatedPropertyName1} and ${relatedPropertyName2} cannot be provided together.`;
-          }
-          return `Either ${relatedPropertyName1} or ${relatedPropertyName2} must be provided.`;
+          const [relatedPropertyNames] = args.constraints;
+          return `At least one of ${relatedPropertyNames.join(', ')} must exist`;
         },
       },
     });
