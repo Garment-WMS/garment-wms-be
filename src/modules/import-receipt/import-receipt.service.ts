@@ -344,6 +344,9 @@ export class ImportReceiptService {
           importReceiptId,
           $Enums.ImportReceiptStatus.IMPORTED,
         );
+        await this.taskService.updateTaskStatusToDone({
+          importReceiptId: importReceiptId,
+        });
         return result;
       },
     );
