@@ -5,6 +5,7 @@ import {
   Get,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
   UseGuards,
@@ -62,7 +63,11 @@ export class TaskController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.taskService.findOne(+id);
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.taskService.findUnique(id),
+      'Task has been retrieved successfully',
+    );
   }
 }
