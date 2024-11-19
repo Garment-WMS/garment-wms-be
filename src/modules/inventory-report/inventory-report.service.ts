@@ -28,6 +28,16 @@ export class InventoryReportService {
   ) {}
 
   includeQuery: Prisma.InventoryReportInclude = {
+    warehouseManager: {
+      include: {
+        account: true,
+      },
+    },
+    warehouseStaff: {
+      include: {
+        account: true,
+      },
+    },
     inventoryReportDetail: {
       include: {
         productReceipt: {
@@ -302,7 +312,7 @@ export class InventoryReportService {
       inventoryReportParam.inventoryReportPlanDetail.map(async (el) => {
         if (el.materialVariantId) {
           const materialReceipt =
-            await this.materialReceiptService.getAllMaterialReceiptOfMaterialPackage(
+            await this.materialReceiptService.getAllMaterialReceiptOfMaterialVariant(
               el.materialVariantId,
             );
           if (materialReceipt.length > 0) {
@@ -311,7 +321,10 @@ export class InventoryReportService {
         }
         if (el.productVariantId) {
           //DO LATER
-          // const productReceipt =
+          const productReceipt =
+            await this.productReceiptService.getAllProductReceiptOfProductVariant(
+              el.productVariantId,
+            );
         }
       }),
     );

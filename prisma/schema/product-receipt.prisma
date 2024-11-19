@@ -3,6 +3,7 @@ model ProductReceipt {
   productSizeId         String                  @map("product_size_id") @db.Uuid
   importReceiptId       String                  @map("import_receipt_id") @db.Uuid
   code                  String?                 @map("code") @db.VarChar(255)
+  status                ProductReceiptStatus    @default(AVAILABLE) @map("status")
   expireDate            DateTime?               @map("expire_date") @db.Timestamptz(6)
   createdAt             DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -15,4 +16,10 @@ model ProductReceipt {
   receiptAdjustment     ReceiptAdjustment[]
 
   @@map("product_receipt")
+}
+
+enum ProductReceiptStatus {
+  IMPORTING
+  AVAILABLE
+  USED
 }
