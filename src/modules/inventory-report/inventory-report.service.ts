@@ -13,6 +13,7 @@ import { InventoryReportDetailService } from '../inventory-report-detail/invento
 import { InventoryReportPlanDto } from '../inventory-report-plan/dto/inventory-report-plan.dto';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { MaterialVariantService } from '../material-variant/material-variant.service';
+import { ProductReceiptService } from '../product-receipt/product-receipt.service';
 import { CreateInventoryReportDto } from './dto/create-inventory-report.dto';
 import { UpdateInventoryReportDto } from './dto/update-inventory-report.dto';
 
@@ -23,6 +24,7 @@ export class InventoryReportService {
     private readonly materialVariantService: MaterialVariantService,
     private readonly inventoryReportDetailService: InventoryReportDetailService,
     private readonly materialReceiptService: MaterialReceiptService,
+    private readonly productReceiptService: ProductReceiptService,
   ) {}
 
   includeQuery: Prisma.InventoryReportInclude = {
@@ -309,6 +311,7 @@ export class InventoryReportService {
         }
         if (el.productVariantId) {
           //DO LATER
+          // const productReceipt =
         }
       }),
     );
@@ -473,11 +476,26 @@ export class InventoryReportService {
         include: this.includeQuery,
         skip: page,
         take: limit,
-      }),
+      }) as any,
       this.prismaService.inventoryReport.count({
         where: rest?.where,
       }),
     ]);
+
+    result.forEach((item) => {
+      item.totalExpectedQuantity = item.inventoryReportDetail.reduce(
+        (sum, detail) => sum + detail.expectedQuantity,
+        0,
+      );
+      item.totalActualQuantity = item.inventoryReportDetail.reduce(
+        (sum, detail) => sum + detail.actualQuantity,
+        0,
+      );
+      item.totalManagerQuantityConfirm = item.inventoryReportDetail.reduce(
+        (sum, detail) => sum + detail.managerQuantityConfirm,
+        0,
+      );
+    });
 
     return apiSuccess(
       HttpStatus.OK,

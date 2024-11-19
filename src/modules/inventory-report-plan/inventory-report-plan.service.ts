@@ -224,6 +224,8 @@ export class InventoryReportPlanService {
       createInventoryReportPlanDto.from,
       createInventoryReportPlanDto.to,
     );
+
+    console.log(inventoryPlanInTimeRange);
     return !!inventoryPlanInTimeRange.length;
   }
 

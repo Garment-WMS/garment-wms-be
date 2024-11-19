@@ -3,15 +3,16 @@ import { PrismaModule } from 'prisma/prisma.module';
 import { InventoryReportDetailModule } from '../inventory-report-detail/inventory-report-detail.module';
 import { MaterialReceiptModule } from '../material-receipt/material-receipt.module';
 import { MaterialVariantModule } from '../material-variant/material-variant.module';
+import { ProductReceiptModule } from '../product-receipt/product-receipt.module';
 import { ProductVariantModule } from '../product-variant/product-variant.module';
 import { InventoryReportController } from './inventory-report.controller';
 import { InventoryReportService } from './inventory-report.service';
-import { InventoryReportPlanDetailModule } from '../inventory-report-plan-detail/inventory-report-plan-detail.module';
 
 @Module({
   controllers: [InventoryReportController],
   imports: [
     MaterialVariantModule,
+    ProductReceiptModule,
     MaterialReceiptModule,
     ProductVariantModule,
     InventoryReportDetailModule,
