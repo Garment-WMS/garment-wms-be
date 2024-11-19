@@ -40,7 +40,7 @@ export class ProductionBatchController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(@UploadedFile() file, @GetUser() user: AuthenUser) {
     const fileResult: any =
-      await this.productionBatchService.createProductionBatchWithExcelFile(
+      await this.productionBatchService.createProductBatchWithExcelFile(
         file,
         user.productionDepartmentId,
       );

@@ -60,9 +60,21 @@ export const PRODUCTION_PLAN_INFO_HEADER = [
   'Expected End Date',
 ];
 export const PRODUCTION_PLAN_DETAIL_TABLE = 'productionPlanDetail';
+export const PRODUCTION_BATCH_DETAIL_TABLE = 'productionBatchDetail';
+
 export const PRODUCTION_PLAN_DETAIL_HEADER = [
   'Product Code',
   'Quantity To Produce',
   'Note',
 ];
+export const PRODUCTION_BATCH_DETAIL_HEADER = [
+  'Production Plan Code',
+  'Name',
+  'Quantity To Produce',
+  'Description',
+];
 export const PRODUCTION_PLAN_NOTE_TABLE = 'productionPlanNote';
+
+export const PRODUCTION_BATCH_SHEET_NAME = 'ProductionBatch';
+export const PRODUCTION_BATCH_INFO = 'productionBatchInfo';
+

@@ -19,6 +19,13 @@ export class ProductPlanDetailService {
     return result;
   }
 
+  async findQuery(query: any) {
+    const result = await this.prismaService.productionPlanDetail.findFirst({
+      where: query,
+    });
+    return result;
+  }
+
   create(createProductPlanDetailDto: CreateProductPlanDetailDto) {
     return 'This action adds a new productPlanDetail';
   }
