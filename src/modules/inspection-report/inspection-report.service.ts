@@ -16,6 +16,7 @@ import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta } from 'src/common/utils/utils';
+import { CreateInspectionReportDetailDto } from './dto/inspection-report-detail/create-inspection-report-detail.dto';
 import { CreateInspectionReportDto } from './dto/inspection-report/create-inspection-report.dto';
 import { UpdateInspectionReportDto } from './dto/inspection-report/update-inspection-report.dto';
 
@@ -215,6 +216,17 @@ export class InspectionReportService {
       {
         code: dto.code,
         inspectionRequestId: dto.inspectionRequestId,
+        inspectionReportDetail: {
+          createMany: {
+            data: dto.inspectionReportDetail.map((detail) => ({
+              materialPackageId: detail.materialPackageId,
+              productSizeId: detail.productSizeId,
+              quantityByPack: detail.quantityByPack,
+              approvedQuantityByPack: detail.approvedQuantityByPack,
+              defectQuantityByPack: detail.defectQuantityByPack,
+            })),
+          },
+        },
       };
     const result = await this.prismaService.$transaction(
       async (
@@ -250,6 +262,31 @@ export class InspectionReportService {
       },
     );
     return result;
+  }
+
+  async createInspectionReportDetails(
+    dto: CreateInspectionReportDetailDto[],
+    inspectionReportId: string,
+    prismaInstance: Omit<
+      PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+    >,
+  ) {
+    const input: Prisma.InspectionReportDetailUncheckedCreateInput[] = dto.map(
+      (detail) => ({
+        approvedQuantityByPack: detail.approvedQuantityByPack,
+        defectQuantityByPack: detail.defectQuantityByPack,
+        quantityByPack: detail.quantityByPack,
+        materialPackageId: detail.materialPackageId,
+        productSizeId: detail.productSizeId,
+        inspectionReportId: inspectionReportId,
+      }),
+    );
+    const prisma = prismaInstance || this.prismaService;
+    return await prisma.inspectionReportDetail.createManyAndReturn({
+      data: input,
+      skipDuplicates: true,
+    });
   }
 
   async updateInspectionRequestStatusByInspectionRequestIdToInspected(
