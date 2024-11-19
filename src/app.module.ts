@@ -57,6 +57,7 @@ import { TaskModule } from './modules/task/task.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
+import { ProductReceiptModule } from './modules/product-receipt/product-receipt.module';
 
 @Module({
   imports: [
@@ -142,6 +143,7 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
     InventoryUpdateStatusModule,
     ProductionBatchModule,
     TaskModule,
+    ProductReceiptModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

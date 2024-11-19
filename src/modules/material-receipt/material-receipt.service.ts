@@ -51,6 +51,23 @@ export class MaterialReceiptService {
   }
 
   async getAllMaterialReceiptOfMaterialPackage(
+    materialPackageId: string,
+    prismaInstance: PrismaService = this.prismaService,
+  ) {
+    const materialReceipts = await prismaInstance.materialReceipt.findMany({
+      where: {
+        materialPackage: { id: materialPackageId},
+        status: {
+          in: [MaterialReceiptStatus.AVAILABLE],
+        },
+      },
+      include: this.includeQuery,
+    });
+
+    return materialReceipts;
+  }
+
+  async getAllMaterialReceiptOfMaterialVariant(
     materialVariantId: string,
     prismaInstance: PrismaService = this.prismaService,
   ) {
