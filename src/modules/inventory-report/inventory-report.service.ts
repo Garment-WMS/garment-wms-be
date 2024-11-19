@@ -549,79 +549,143 @@ export class InventoryReportService {
 
     const groupByMaterialVariant = result.inventoryReportDetail.reduce(
       (acc, current) => {
-        const materialVariantId =
-          current.materialReceipt?.materialPackage?.materialVariant?.id;
-        if (materialVariantId) {
-          if (!acc[materialVariantId]) {
-            acc[materialVariantId] = {
-              materialVariant:
-                current.materialReceipt?.materialPackage.materialVariant,
-              materialPackages: {},
-              totalExpectedQuantity: 0,
-              totalActualQuantity: 0,
-              totalManagerQuantityConfirm: 0,
-            };
-          }
-          const materialPackageId =
-            current.materialReceipt?.materialPackage?.id;
-          if (materialPackageId) {
-            if (!acc[materialVariantId].materialPackages[materialPackageId]) {
-              //Exclude materialVariant from materialPackage
-              const { materialVariant, ...materialPackageWithoutVariant } =
-                current.materialReceipt?.materialPackage;
-              acc[materialVariantId].materialPackages[materialPackageId] = {
-                materialPackage: materialPackageWithoutVariant,
-                inventoryReportDetails: [],
+        if (current.materialReceipt) {
+          const materialVariantId =
+            current.materialReceipt?.materialPackage?.materialVariant?.id;
+          if (materialVariantId) {
+            if (!acc[materialVariantId]) {
+              acc[materialVariantId] = {
+                materialVariant:
+                  current.materialReceipt?.materialPackage.materialVariant,
+                materialPackages: {},
                 totalExpectedQuantity: 0,
                 totalActualQuantity: 0,
                 totalManagerQuantityConfirm: 0,
               };
             }
+            const materialPackageId =
+              current.materialReceipt?.materialPackage?.id;
+            if (materialPackageId) {
+              if (!acc[materialVariantId].materialPackages[materialPackageId]) {
+                //Exclude materialVariant from materialPackage
+                const { materialVariant, ...materialPackageWithoutVariant } =
+                  current.materialReceipt?.materialPackage;
+                acc[materialVariantId].materialPackages[materialPackageId] = {
+                  materialPackage: materialPackageWithoutVariant,
+                  inventoryReportDetails: [],
+                  totalExpectedQuantity: 0,
+                  totalActualQuantity: 0,
+                  totalManagerQuantityConfirm: 0,
+                };
+              }
 
-            const { materialPackage, ...currentWithoutMaterialPackage } =
-              current.materialReceipt;
+              const { materialPackage, ...currentWithoutMaterialPackage } =
+                current.materialReceipt;
 
-            acc[materialVariantId].materialPackages[
-              materialPackageId
-            ].inventoryReportDetails.push({
-              id: current.id,
-              expectedQuantity: current.expectedQuantity,
-              actualQuantity: current.actualQuantity,
-              managerQuantityConfirm: current.managerQuantityConfirm,
-              materialReceipt: currentWithoutMaterialPackage,
-            });
-            acc[materialVariantId].materialPackages[
-              materialPackageId
-            ].totalExpectedQuantity += current.expectedQuantity || 0;
-            acc[materialVariantId].materialPackages[
-              materialPackageId
-            ].totalActualQuantity += current.actualQuantity || 0;
-            acc[materialVariantId].materialPackages[
-              materialPackageId
-            ].totalManagerQuantityConfirm +=
+              acc[materialVariantId].materialPackages[
+                materialPackageId
+              ].inventoryReportDetails.push({
+                id: current.id,
+                expectedQuantity: current.expectedQuantity,
+                actualQuantity: current.actualQuantity,
+                managerQuantityConfirm: current.managerQuantityConfirm,
+                materialReceipt: currentWithoutMaterialPackage,
+              });
+              acc[materialVariantId].materialPackages[
+                materialPackageId
+              ].totalExpectedQuantity += current.expectedQuantity || 0;
+              acc[materialVariantId].materialPackages[
+                materialPackageId
+              ].totalActualQuantity += current.actualQuantity || 0;
+              acc[materialVariantId].materialPackages[
+                materialPackageId
+              ].totalManagerQuantityConfirm +=
+                current.managerQuantityConfirm || 0;
+            }
+
+            acc[materialVariantId].totalExpectedQuantity +=
+              current.expectedQuantity || 0;
+            acc[materialVariantId].totalActualQuantity +=
+              current.actualQuantity || 0;
+            acc[materialVariantId].totalManagerQuantityConfirm +=
               current.managerQuantityConfirm || 0;
           }
-
-          acc[materialVariantId].totalExpectedQuantity +=
-            current.expectedQuantity || 0;
-          acc[materialVariantId].totalActualQuantity +=
-            current.actualQuantity || 0;
-          acc[materialVariantId].totalManagerQuantityConfirm +=
-            current.managerQuantityConfirm || 0;
+          return acc;
         }
-        return acc;
+        if (current.productReceipt) {
+          const productVariantId =
+            current.productReceipt.productSize.productVariant.id;
+          if (productVariantId) {
+            if (!acc[productVariantId]) {
+              acc[productVariantId] = {
+                productVariant:
+                  current.productReceipt.productSize.productVariant,
+                productSizes: {},
+                totalExpectedQuantity: 0,
+                totalActualQuantity: 0,
+                totalManagerQuantityConfirm: 0,
+              };
+            }
+            const productSizeId = current.productReceipt.productSize.id;
+            if (productSizeId) {
+              if (!acc[productVariantId].productSizes[productSizeId]) {
+                //Exclude materialVariant from materialPackage
+                const { productVariant, ...productPackageWithoutVariant } =
+                  current.productReceipt.productSize;
+                acc[productVariantId].productSizes[productSizeId] = {
+                  productSize: productPackageWithoutVariant,
+                  inventoryReportDetails: [],
+                  totalExpectedQuantity: 0,
+                  totalActualQuantity: 0,
+                  totalManagerQuantityConfirm: 0,
+                };
+              }
+              const { productSize, ...currentWithoutProductPackage } =
+                current.productReceipt;
+              acc[productVariantId].productSizes[
+                productSizeId
+              ].inventoryReportDetails.push({
+                id: current.id,
+                expectedQuantity: current.expectedQuantity,
+                actualQuantity: current.actualQuantity,
+                managerQuantityConfirm: current.managerQuantityConfirm,
+                productReceipt: currentWithoutProductPackage,
+              });
+              acc[productVariantId].productSizes[
+                productSizeId
+              ].totalExpectedQuantity += current.expectedQuantity || 0;
+              acc[productVariantId].productSizes[
+                productSizeId
+              ].totalActualQuantity += current.actualQuantity || 0;
+              acc[productVariantId].productSizes[
+                productSizeId
+              ].totalManagerQuantityConfirm +=
+                current.managerQuantityConfirm || 0;
+            }
+
+            acc[productVariantId].totalExpectedQuantity +=
+              current.expectedQuantity || 0;
+            acc[productVariantId].totalActualQuantity +=
+              current.actualQuantity || 0;
+            acc[productVariantId].totalManagerQuantityConfirm +=
+              current.managerQuantityConfirm || 0;
+          }
+          return acc;
+        }
       },
       {} as Record<
         string,
         {
-          materialVariant: any;
+          materialVariant?: any;
+          productVariant?: any;
           totalExpectedQuantity: 0;
           totalActualQuantity: 0;
           totalManagerQuantityConfirm: 0;
           materialPackages: Record<
             string,
             {
-              materialPackage: any;
+              materialPackage?: any;
+              productSizes?: any;
               totalExpectedQuantity: 0;
               totalActualQuantity: 0;
               totalManagerQuantityConfirm: 0;
