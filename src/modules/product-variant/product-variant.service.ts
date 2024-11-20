@@ -99,6 +99,13 @@ export class ProductVariantService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product');
   }
 
+  async findAllWithoutResponse() {
+    const data = await this.prismaService.productVariant.findMany({
+      include: this.includeQueryAny,
+    });
+    return data;
+  }
+
   async findAll(
     filterOption?: GeneratedFindOptions<Prisma.ProductVariantWhereInput>,
   ) {
