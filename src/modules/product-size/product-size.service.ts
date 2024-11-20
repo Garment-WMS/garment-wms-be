@@ -15,6 +15,7 @@ export class ProductSizeService {
   ) {}
 
   includeQuery: Prisma.ProductSizeInclude = {
+    inventoryStock: true,
     productVariant: {
       include: {
         product: {

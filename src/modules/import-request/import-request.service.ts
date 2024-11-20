@@ -6,13 +6,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { $Enums, Prisma, PrismaClient, RoleCode } from '@prisma/client';
+import {
+  $Enums,
+  Prisma,
+  PrismaClient,
+  ProductionBatchStatus,
+  RoleCode,
+} from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isNotEmpty } from 'class-validator';
 import { importRequestInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
-import { apiFailed } from 'src/common/dto/api-response';
+import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
@@ -20,7 +26,9 @@ import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { InspectionRequestService } from '../inspection-request/inspection-request.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
+import { ProductionBatchService } from '../production-batch/production-batch.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
+import { CreateProductImportRequestDto } from './dto/import-request/create-product-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
 import { PurchasingStaffProcessDto } from './dto/import-request/purchasing-staff-process.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
@@ -31,6 +39,7 @@ export class ImportRequestService {
     private readonly prismaService: PrismaService,
     private readonly poDeliveryService: PoDeliveryService,
     private readonly inspectionRequestService: InspectionRequestService,
+    private readonly productionBatchService: ProductionBatchService,
   ) {}
 
   async search(
@@ -152,6 +161,20 @@ export class ImportRequestService {
     return this.prismaService.importRequest.findFirst({
       where: {
         poDeliveryId,
+        status: {
+          notIn: [
+            $Enums.ImportRequestStatus.CANCELED,
+            $Enums.ImportRequestStatus.REJECTED,
+          ],
+        },
+      },
+    });
+  }
+
+  async getActiveImportReqOfProductionBach(productionBatchId: string) {
+    return this.prismaService.importRequest.findFirst({
+      where: {
+        productionBatchId,
         status: {
           notIn: [
             $Enums.ImportRequestStatus.CANCELED,
@@ -480,5 +503,93 @@ export class ImportRequestService {
       default:
         throw new ForbiddenException('This role is not allowed');
     }
+  }
+
+  //Product import request
+  async createProductImportRequest(
+    productionDepartmentId: string,
+    createImportRequestDto: CreateProductImportRequestDto,
+  ) {
+    const activeImportReq = await this.getActiveImportReqOfProductionBach(
+      createImportRequestDto.productionBatchId,
+    );
+    if (activeImportReq)
+      throw new CustomHttpException(
+        HttpStatus.BAD_REQUEST,
+        apiFailed(
+          HttpStatus.BAD_REQUEST,
+          'Production batch has active import request',
+          { activeImportRequest: activeImportReq },
+        ),
+      );
+
+    const createImportRequestInput: Prisma.ImportRequestCreateInput = {
+      warehouseManager: createImportRequestDto.warehouseManagerId
+        ? { connect: { id: createImportRequestDto.warehouseManagerId } }
+        : undefined,
+      productionDepartment: productionDepartmentId
+        ? { connect: { id: productionDepartmentId } }
+        : undefined,
+      warehouseStaff: createImportRequestDto.warehouseStaffId
+        ? { connect: { id: createImportRequestDto.warehouseStaffId } }
+        : undefined,
+      productionBatch: createImportRequestDto.productionBatchId
+        ? { connect: { id: createImportRequestDto.productionBatchId } }
+        : undefined,
+      status: createImportRequestDto.status,
+      description: createImportRequestDto.description,
+      cancelReason: createImportRequestDto.cancelReason,
+      startedAt: createImportRequestDto.startAt,
+      finishedAt: createImportRequestDto.finishAt,
+      type: createImportRequestDto.type,
+      code: undefined,
+      importRequestDetail: {
+        createMany: {
+          data: createImportRequestDto.importRequestDetail,
+        },
+      },
+    };
+
+    const productionBatch =
+      await this.productionBatchService.chekIsProductionBatchStatus(
+        createImportRequestDto.productionBatchId,
+      );
+
+    // const errorResponse =
+    //   await this.productionBatchService.checkIsProductionBatchValid(
+    //     productionBatch,
+    //     createImportRequestDto.importRequestDetail,
+    //   );
+    // if (isNotEmpty(errorResponse)) {
+    //   throw new CustomValidationException(
+    //     HttpStatus.BAD_REQUEST,
+    //     'Invalid data',
+    //     errorResponse,
+    //   );
+    // }
+
+    const [result, updateProductionBatch] =
+      await this.prismaService.$transaction([
+        this.prismaService.importRequest.create({
+          data: createImportRequestInput,
+          include: importRequestInclude,
+        }),
+        this.productionBatchService.updateStatus(
+          createImportRequestDto.productionBatchId,
+          ProductionBatchStatus.IMPORTING,
+        ),
+      ]);
+
+    if (result) {
+      return apiSuccess(
+        HttpStatus.CREATED,
+        result,
+        'Product Import Request created successfully',
+      );
+    }
+    return apiFailed(
+      HttpStatus.BAD_REQUEST,
+      'Failed to create Product Import Request',
+    );
   }
 }
