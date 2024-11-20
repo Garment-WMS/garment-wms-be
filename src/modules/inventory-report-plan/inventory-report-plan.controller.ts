@@ -24,6 +24,7 @@ import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateInventoryReportPlanDto } from './dto/create-inventory-report-plan.dto';
 import { UpdateInventoryReportPlanDto } from './dto/update-inventory-report-plan.dto';
 import { InventoryReportPlanService } from './inventory-report-plan.service';
+import { CreateOverAllInventoryReportPlanDto } from './dto/over-all-report-plan.dto';
 
 @ApiTags('inventory-report-plan')
 @Controller('inventory-report-plan')
@@ -41,6 +42,20 @@ export class InventoryReportPlanController {
     @GetUser() user: AuthenUser,
   ) {
     return this.inventoryReportPlanService.create(
+      createInventoryReportPlanDto,
+      user.warehouseManagerId,
+    );
+  }
+
+  @Post('/overall')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER)
+  @UsePipes(new ValidationPipe())
+  createOverAll(
+    @Body() createInventoryReportPlanDto: CreateOverAllInventoryReportPlanDto,
+    @GetUser() user: AuthenUser,
+  ) {
+    return this.inventoryReportPlanService.createOverAllInventoryPlan(
       createInventoryReportPlanDto,
       user.warehouseManagerId,
     );
