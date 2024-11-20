@@ -9,6 +9,31 @@ import { UpdateProductReceiptDto } from './dto/update-product-receipt.dto';
 export class ProductReceiptService {
   constructor(private prismaService: PrismaService) {}
 
+  productReceiptIncludeQuery: Prisma.ProductReceiptInclude = {
+    importReceipt: true,
+    receiptAdjustment: true,
+    productSize: {
+      include: {
+        productVariant: {
+          include: {
+            product: {
+              include: {
+                productUom: true,
+              },
+            },
+            productAttribute: true,
+          },
+        },
+      },
+    },
+  };
+
+  findByQuery(query: any) {
+    return this.prismaService.productReceipt.findFirst({
+      where: query,
+      include: this.productReceiptIncludeQuery,
+    });
+  }
   async createProductReceipts(
     importReceiptId: string,
     inspectionReportDetail: {

@@ -49,6 +49,13 @@ export class ProductVariantService {
     },
   };
 
+  findByQuery(query: any) {
+    return this.prismaService.productVariant.findFirst({
+      where: query,
+      include: this.includeQueryAny,
+    });
+  }
+
   async addImage(file: Express.Multer.File, id: string) {
     const productVariant = await this.findById(id);
     let oldImageUrl = '';
