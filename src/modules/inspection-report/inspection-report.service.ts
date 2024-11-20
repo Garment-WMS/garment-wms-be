@@ -1,5 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
@@ -14,15 +15,21 @@ import {
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
+import { ApiResponse } from 'src/common/dto/response.dto';
+import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta } from 'src/common/utils/utils';
+import { TaskService } from '../task/task.service';
 import { CreateInspectionReportDetailDto } from './dto/inspection-report-detail/create-inspection-report-detail.dto';
 import { CreateInspectionReportDto } from './dto/inspection-report/create-inspection-report.dto';
 import { UpdateInspectionReportDto } from './dto/inspection-report/update-inspection-report.dto';
 
 @Injectable()
 export class InspectionReportService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly taskService: TaskService,
+  ) {}
 
   async findUniqueInspectedByRequestId(importRequestId: string) {
     Logger.debug('importRequestId: ' + importRequestId);
@@ -122,6 +129,74 @@ export class InspectionReportService {
     });
   }
 
+  private checkImportRequestDetailAreInInspectionReportDetail(
+    dto: CreateInspectionReportDto,
+    importRequest: Prisma.ImportRequestGetPayload<{
+      include: typeof importRequestInclude;
+    }>,
+  ) {
+    let importRequestDetailItemIdSet: Set<string>;
+    let inspectionReportDetailItemSet: Set<string>;
+
+    // Initialize sets based on the type of inspection report
+    switch (dto.type) {
+      case $Enums.InspectionReportType.MATERIAL:
+        importRequestDetailItemIdSet = new Set(
+          importRequest.importRequestDetail.map(
+            (detail) => detail.materialPackageId,
+          ),
+        );
+        inspectionReportDetailItemSet = new Set(
+          dto.inspectionReportDetail.map((detail) => detail.materialPackageId),
+        );
+        break;
+
+      case $Enums.InspectionReportType.PRODUCT:
+        importRequestDetailItemIdSet = new Set(
+          importRequest.importRequestDetail.map(
+            (detail) => detail.productSizeId,
+          ),
+        );
+        inspectionReportDetailItemSet = new Set(
+          dto.inspectionReportDetail.map((detail) => detail.productSizeId),
+        );
+        break;
+
+      default:
+        throw new BadRequestException('Invalid inspection report type');
+    }
+
+    // Find redundant and missing IDs
+    const redundantIds: string[] = [];
+    const missingIds: string[] = [];
+
+    importRequestDetailItemIdSet.forEach((id) => {
+      if (!inspectionReportDetailItemSet.has(id)) {
+        redundantIds.push(id);
+      }
+    });
+
+    inspectionReportDetailItemSet.forEach((id) => {
+      if (!importRequestDetailItemIdSet.has(id)) {
+        missingIds.push(id);
+      }
+    });
+
+    // Throw an exception if there are any redundant or missing IDs
+    if (missingIds.length > 0 || redundantIds.length > 0) {
+      throw new CustomHttpException(
+        400,
+        new ApiResponse(400, null, 'Import request details must be inspected', {
+          redundantIds,
+          missingIds,
+          importRequestDetail: importRequest.importRequestDetail,
+        }),
+      );
+    }
+
+    return dto;
+  }
+
   private mapInspectionReportDetail(
     dto: CreateInspectionReportDto,
     importRequest: Prisma.ImportRequestGetPayload<{
@@ -211,7 +286,19 @@ export class InspectionReportService {
     const importRequest = await this.getImportRequestOfInspectionRequestOrThrow(
       dto.inspectionRequestId,
     );
+
+    this.checkImportRequestDetailAreInInspectionReportDetail(
+      dto,
+      importRequest,
+    );
     this.mapInspectionReportDetail(dto, importRequest);
+
+    //log inspection report detail
+    dto.inspectionReportDetail.forEach((inspectionReportDetail) => {
+      Logger.log(
+        `Inspection report detail: ${JSON.stringify(inspectionReportDetail)}`,
+      );
+    });
     const inspectionReportCreateInput: Prisma.InspectionReportUncheckedCreateInput =
       {
         code: dto.code,
@@ -297,6 +384,9 @@ export class InspectionReportService {
     >,
   ) {
     const prisma = prismaInstance || this.prismaService;
+    await this.taskService.updateTaskStatusToDone({
+      inspectionRequestId: inspectionRequestId,
+    });
     return await prisma.inspectionRequest.update({
       where: {
         id: inspectionRequestId,
@@ -315,6 +405,7 @@ export class InspectionReportService {
     >,
   ) {
     const prisma = prismaInstance || this.prismaService;
+
     return await prisma.importRequest.update({
       where: {
         id: importRequestId,

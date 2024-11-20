@@ -8,6 +8,7 @@ import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Injectable()
 export class TaskService {
@@ -180,5 +181,28 @@ export class TaskService {
     });
     if (!task) throw new NotFoundException(`Task with id ${id} not found`);
     return task;
+  }
+
+  async update(id: string, updateTaskDto: UpdateTaskDto) {
+    const task = await this.findUnique(id);
+    return await this.prismaService.task.update({
+      where: { id: task.id },
+      data: updateTaskDto,
+    });
+  }
+
+  async updateTaskStatusToDone(taskWhereInput: Prisma.TaskWhereInput) {
+    const task = await this.prismaService.task.findFirst({
+      where: taskWhereInput,
+    });
+    if (!task) {
+      Logger.error(
+        `Cannot auto finish Task with ${JSON.stringify(taskWhereInput)} because of not found`,
+      );
+    }
+    return await this.prismaService.task.update({
+      where: { id: task.id },
+      data: { status: $Enums.TaskStatus.DONE },
+    });
   }
 }

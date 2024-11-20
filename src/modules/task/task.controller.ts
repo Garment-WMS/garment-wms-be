@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -68,6 +69,18 @@ export class TaskController {
       HttpStatus.OK,
       await this.taskService.findUnique(id),
       'Task has been retrieved successfully',
+    );
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateTaskDto: CreateTaskDto,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.taskService.update(id, updateTaskDto),
+      'Task has been updated successfully',
     );
   }
 }

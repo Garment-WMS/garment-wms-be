@@ -67,9 +67,19 @@ export class InventoryReportPlanController {
   @Get('warehouse-staff')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.WAREHOUSE_STAFF)
-  getAllInventoryReportPlanByWarehouseStaff(@GetUser() user: AuthenUser) {
+  getAllInventoryReportPlanByWarehouseStaff(
+    @GetUser() user: AuthenUser,
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.InventoryReportPlanWhereInput>(
+        [],
+        [{ createdAt: 'desc' }, { id: 'asc' }, { updatedAt: 'asc' }],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.InventoryReportPlanWhereInput>,
+  ) {
     return this.inventoryReportPlanService.getAllInventoryReportPlanByWarehouseStaff(
       user.warehouseStaffId,
+      filterOptions.findOptions,
     );
   }
 

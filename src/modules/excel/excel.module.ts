@@ -6,12 +6,14 @@ import { MaterialVariantModule } from '../material-variant/material-variant.modu
 import { ProductSizeModule } from '../product-size/product-size.module';
 import { ExcelController } from './excel.controller';
 import { ExcelService } from './excel.service';
+import { ProductPlanDetailModule } from '../product-plan-detail/product-plan-detail.module';
 
 @Module({
   controllers: [ExcelController],
   imports: [
     PrismaModule,
     FirebaseModule,
+    ProductPlanDetailModule,
     MaterialVariantModule,
     MaterialPackageModule,
     ProductSizeModule,

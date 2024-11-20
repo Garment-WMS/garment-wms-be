@@ -1,10 +1,12 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { productionBatchInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
+import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
+import { ApiResponse } from 'src/common/dto/response.dto';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ExcelService } from '../excel/excel.service';
 import { CreateProductionBatchDto } from './dto/create-production-batch.dto';
@@ -12,12 +14,6 @@ import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
 
 @Injectable()
 export class ProductionBatchService {
-  createProductionBatchWithExcelFile( // async createProductPlanWithExcelFile(
-    file: any,
-    productionDepartmentId: string,
-  ): any {
-    throw new Error('Method not implemented.');
-  }
   constructor(
     readonly prismaService: PrismaService,
     private readonly excelService: ExcelService,
@@ -31,74 +27,45 @@ export class ProductionBatchService {
     });
   }
 
-  // async createProductionBatchWithExcelFile(
-  //   file: any,
-  //   productionDepartmentId: string,
-  // ) {
-  //   const excelData = await this.excelService.readProductionBatchExcel(file);
-  //   if (excelData instanceof ApiResponse) {
-  //     return excelData;
-  //   }
+  async createProductBatchWithExcelFile(
+    file: Express.Multer.File,
+    productionDepartmentId: string,
+  ) {
+    const excelData = await this.excelService.readProductionBatchExcel(file);
+    if (excelData instanceof ApiResponse) {
+      return excelData;
+    }
 
-  //   const createProductPlanData = excelData as CreateProductPlanDto;
-  // }
+    const createProductBatchData = excelData as CreateProductionBatchDto[];
 
-  // async createProductPlanWithExcelFile(
-  //   file: Express.Multer.File,
-  //   factoryDirectorId: string,
-  // ) {
-  //   const excelData = await this.excelService.readProductionPlanExcel(file);
-  //   if (excelData instanceof ApiResponse) {
-  //     return excelData;
-  //   }
+    const createProductionBatchInput: Prisma.ProductionBatchCreateManyInput[] =
+      createProductBatchData.map((item) => {
+        return {
+          ...item,
+          productionDepartmentId,
+          
+        };
+      });
+    console.log(createProductionBatchInput);
+    const result = await this.prismaService.$transaction(
+      async (prismaInstance: PrismaService) => {
+        const productionBatchResult: any =
+          await prismaInstance.productionBatch.createManyAndReturn({
+            data: createProductBatchData,
+          });
+        return productionBatchResult;
+      },
+    );
 
-  //   const createProductPlanData = excelData as CreateProductPlanDto;
-  //   const productPlanInput: Prisma.ProductionPlanCreateInput = {
-  //     factoryDirector: {
-  //       connect: { id: factoryDirectorId },
-  //     },
-  //     name: createProductPlanData.name,
-  //     note: createProductPlanData.note,
-  //     expectedStartDate: createProductPlanData.expectedStartDate,
-  //     expectedEndDate: createProductPlanData.expectedEndDate,
-  //     code: undefined,
-  //   };
-  //   const result = await this.prismaService.$transaction(
-  //     async (prismaInstance: PrismaClient) => {
-  //       const productionPlanResult: any =
-  //         await prismaInstance.productionPlan.create({
-  //           data: productPlanInput,
-  //         });
-
-  //       const productPlanItems =
-  //         createProductPlanData.productionPlanDetails.map((item) => {
-  //           const { code, ...rest } = item; // Remove the 'code' field
-  //           return {
-  //             ...rest,
-  //             productionPlanId: productionPlanResult.id,
-  //           };
-  //         });
-  //       const productionPlanDetail =
-  //         await this.productPlanDetailService.createMany(
-  //           productPlanItems,
-  //           prismaInstance,
-  //         );
-
-  //       productionPlanResult.productionPlanDetails = productionPlanDetail;
-
-  //       return productionPlanResult;
-  //     },
-  //   );
-
-  //   if (result) {
-  //     return apiSuccess(
-  //       HttpStatus.CREATED,
-  //       result,
-  //       'Product Plan created successfully',
-  //     );
-  //   }
-  //   return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product Plan');
-  // }
+    if (result) {
+      return apiSuccess(
+        HttpStatus.CREATED,
+        result,
+        'Product Plan created successfully',
+      );
+    }
+    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product Plan');
+  }
 
   async search(
     findOptions: GeneratedFindOptions<Prisma.ProductionBatchWhereInput>,

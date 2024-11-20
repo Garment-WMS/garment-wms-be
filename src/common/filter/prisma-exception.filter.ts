@@ -6,16 +6,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
-import {
-  PrismaClientKnownRequestError,
-  PrismaClientValidationError,
-} from '@prisma/client/runtime/library';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { ValidationError } from 'class-validator';
 import { apiFailed } from '../dto/api-response';
 import { ApiResponse } from '../dto/response.dto';
 import { PrismaErrorEnum } from '../enum/prisma-error.enum';
 
-@Catch(PrismaClientKnownRequestError, PrismaClientValidationError)
+@Catch(PrismaClientKnownRequestError)
 export class PrismaExceptionFilter implements ExceptionFilter {
   constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
   catch(exception: PrismaClientKnownRequestError, host: ArgumentsHost) {
@@ -48,7 +45,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
         break;
       case PrismaErrorEnum.ForeignKeyConstraintFailed:
         message = 'A foreign key constraint was violated on a record';
-        if (exception.meta?.field_name) {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+        if (exception.meta?.field_name) {
           error.property = exception.meta.target as string;
         }
         responseBody = apiFailed(HttpStatus.CONFLICT, message, [error]);
