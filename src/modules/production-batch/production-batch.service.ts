@@ -1,6 +1,11 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Prisma, ProductionBatch, ProductionBatchStatus } from '@prisma/client';
 import { productionBatchInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -9,6 +14,7 @@ import { DataResponse } from 'src/common/dto/data-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ExcelService } from '../excel/excel.service';
+import { CreateImportRequestDetailDto } from '../import-request/dto/import-request-detail/create-import-request-detail.dto';
 import { CreateProductionBatchDto } from './dto/create-production-batch.dto';
 import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
 
@@ -18,6 +24,24 @@ export class ProductionBatchService {
     readonly prismaService: PrismaService,
     private readonly excelService: ExcelService,
   ) {}
+
+  updateStatus(productionBatchId: string, status: ProductionBatchStatus,prismaInstance: PrismaService = this.prismaService) {
+    const productionBatchInput: Prisma.ProductionBatchUpdateInput = {
+      status: status,
+    };
+    return prismaInstance.productionBatch.update({
+      where: { id: productionBatchId },
+      data: productionBatchInput,
+    });
+  }
+
+  async checkIsProductionBatchValid(
+    productionBatch: ProductionBatch,
+    importRequestDetails: CreateImportRequestDetailDto,
+  ) {
+    throw new Error('Method not implemented.');
+  }
+
   async create(createProductionBatchDto: CreateProductionBatchDto) {
     const productionBatchInput: Prisma.ProductionBatchCreateInput = {
       ...createProductionBatchDto,
@@ -25,6 +49,23 @@ export class ProductionBatchService {
     return this.prismaService.productionBatch.create({
       data: productionBatchInput,
     });
+  }
+
+  async chekIsProductionBatchStatus(productionBatchId: string) {
+    const productionBatch = await this.findUnique(productionBatchId);
+    if (productionBatch.status === 'IMPORTING') {
+      throw new BadRequestException('Production Batch is importing');
+    }
+    if (productionBatch.status === 'IMPORTED') {
+      throw new BadRequestException('Production Batch is imported');
+    }
+    if (productionBatch.status === 'FINISHED') {
+      throw new BadRequestException('Production Batch is finished');
+    }
+    if (productionBatch.status === 'CANCELED') {
+      throw new BadRequestException('Production Batch is finished');
+    }
+    return productionBatch;
   }
 
   async createProductBatchWithExcelFile(
@@ -43,7 +84,6 @@ export class ProductionBatchService {
         return {
           ...item,
           productionDepartmentId,
-          
         };
       });
     console.log(createProductionBatchInput);

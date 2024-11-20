@@ -9,7 +9,6 @@ import { UpdateInventoryStockDto } from './dto/update-inventory-stock.dto';
 
 @Injectable()
 export class InventoryStockService {
-  
   constructor(
     private readonly prismaService: PrismaService,
     private readonly materialVariantService: MaterialVariantService,
@@ -17,6 +16,27 @@ export class InventoryStockService {
 
   create(createInventoryStockDto: CreateInventoryStockDto) {
     return 'This action adds a new inventoryStock';
+  }
+  async updateProductStock(
+    productSizeId: string,
+    quantityByUom: number,
+    prismaInstance: PrismaService = this.prismaService,
+  ) {
+    return prismaInstance.inventoryStock.upsert({
+      where: {
+        productSizeId: productSizeId,
+      },
+      update: {
+        quantityByUom:
+          quantityByUom >= 0
+            ? { increment: quantityByUom }
+            : { decrement: Math.abs(quantityByUom) },
+      },
+      create: {
+        productSizeId,
+        quantityByUom: quantityByUom,
+      },
+    });
   }
 
   async findAll() {
@@ -88,8 +108,6 @@ export class InventoryStockService {
   reCount() {
     throw new Error('Method not implemented.');
   }
-
-  recountMaterialStock(materialPackageId: String) {}
 
   findOne(id: number) {
     return `This action returns a #${id} inventoryStock`;
