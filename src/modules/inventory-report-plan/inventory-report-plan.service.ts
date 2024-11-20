@@ -171,6 +171,95 @@ export class InventoryReportPlanService {
       }),
     ]);
 
+    result.forEach((inventoryReportPlan: any) => {
+      const groupedByStaff =
+        inventoryReportPlan.inventoryReportPlanDetail.reduce(
+          (acc, detail) => {
+            const staffId = detail.warehouseStaffId;
+
+            if (!acc[staffId]) {
+              acc[staffId] = {
+                warehouseStaff: detail.warehouseStaff,
+                inventoryReport: detail.inventoryReport,
+                staffInventoryReportPlanDetails: [],
+              };
+            }
+            acc[staffId].staffInventoryReportPlanDetails.push(detail);
+            return acc;
+          },
+          {} as Record<
+            string,
+            {
+              // warehouseStaffId: string;
+              inventoryReport?: string;
+              warehouseStaff: any;
+              staffInventoryReportPlanDetails: any[];
+            }
+          >,
+        );
+      // Replace with grouped data
+      inventoryReportPlan.inventoryReportPlanDetail =
+        Object.values(groupedByStaff);
+    });
+
+    // Step 2: Group each warehouseStaff's details by materialVariantId or productVariantId
+    result.forEach((inventoryReportPlan: any) => {
+      inventoryReportPlan.inventoryReportPlanDetail.forEach(
+        (staffGroup: any) => {
+          const groupedByMaterialOrProduct =
+            staffGroup.staffInventoryReportPlanDetails.reduce(
+              (acc, detail) => {
+                // Check for materialVariant grouping
+                if (detail.materialVariant) {
+                  const materialVariantId = detail.materialVariant.id;
+
+                  if (!acc[materialVariantId]) {
+                    acc[materialVariantId] = {
+                      materialVariant: detail.materialVariant,
+                      packagePlanDetails: [],
+                    };
+                  }
+
+                  acc[materialVariantId].packagePlanDetails =
+                    detail.materialVariant.materialPackage;
+                }
+
+                // Check for productVariant grouping
+                else if (detail.productVariant) {
+                  const productVariantId = detail.productVariant.id;
+
+                  if (!acc[productVariantId]) {
+                    acc[productVariantId] = {
+                      productVariant: detail.productVariant,
+                      sizePlanDetails: [],
+                    };
+                  }
+
+                  acc[productVariantId].sizePlanDetails =
+                    detail.productVariant.productSize;
+                }
+
+                return acc;
+              },
+              {} as Record<
+                string,
+                {
+                  materialVariant?: any;
+                  productVariant?: any;
+                  packagePlanDetails?: any[];
+                  sizePlanDetails?: any[];
+                }
+              >,
+            );
+
+          // Replace staffGroup details with grouped data
+          staffGroup.staffInventoryReportPlanDetails = Object.values(
+            groupedByMaterialOrProduct,
+          );
+        },
+      );
+    });
+
     return apiSuccess(
       HttpStatus.OK,
       {
