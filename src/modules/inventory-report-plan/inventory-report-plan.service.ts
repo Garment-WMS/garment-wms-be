@@ -4,7 +4,9 @@ import { InventoryReportPlanStatus, Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { inventoryReportPlan } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { getPageMeta } from 'src/common/utils/utils';
 import { InventoryReportPlanDetailService } from '../inventory-report-plan-detail/inventory-report-plan-detail.service';
 import { InventoryReportService } from '../inventory-report/inventory-report.service';
 import { CreateInventoryReportPlanDto } from './dto/create-inventory-report-plan.dto';
@@ -127,20 +129,54 @@ export class InventoryReportPlanService {
     });
   }
 
-  async getAllInventoryReportPlanByWarehouseStaff(warehouseStaffId: string) {
-    const reportPlan = await this.prismaService.inventoryReportPlan.findMany({
-      where: {
-        inventoryReportPlanDetail: {
-          some: {
-            warehouseStaffId,
-          },
+  async getAllInventoryReportPlanByWarehouseStaff(
+    warehouseStaffId: string,
+    findOptions: GeneratedFindOptions<Prisma.InventoryReportPlanWhereInput>,
+  ) {
+    const { skip, take, ...rest } = findOptions;
+    const page = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+
+    const [result, total] = await this.prismaService.$transaction([
+      this.prismaService.inventoryReportPlan.findMany({
+        where: {
+          AND: [
+            {
+              inventoryReportPlanDetail: {
+                some: {
+                  warehouseStaffId,
+                },
+              },
+            },
+            rest.where,
+          ].filter(Boolean),
         },
-      },
-      include: inventoryReportPlan,
-    });
+        include: inventoryReportPlan,
+        skip: page,
+        take: limit,
+      }),
+      this.prismaService.inventoryReportPlan.count({
+        where: {
+          AND: [
+            {
+              inventoryReportPlanDetail: {
+                some: {
+                  warehouseStaffId,
+                },
+              },
+            },
+            rest?.where,
+          ].filter(Boolean),
+        },
+      }),
+    ]);
+
     return apiSuccess(
       HttpStatus.OK,
-      reportPlan,
+      {
+        data: result,
+        pageMeta: getPageMeta(total, page, limit),
+      },
       'Get all inventory report plan by warehouse staff successfully',
     );
   }
@@ -237,7 +273,7 @@ export class InventoryReportPlanService {
             from: to ? { lte: to } : undefined,
           },
           {
-            to: from ? { gte: from } : undefined, 
+            to: from ? { gte: from } : undefined,
           },
         ].filter(Boolean), // Remove empty conditions
       },
