@@ -207,7 +207,23 @@ export const productionBatchInclude: Prisma.ProductionBatchInclude = {
     include: importRequestInclude,
   },
   materialExportRequest: true,
-  productionPlanDetail: true,
+  productionPlanDetail: {
+    include: {
+      productSize: {
+        include: {
+          productVariant: {
+            include: {
+              product: {
+                include: {
+                  productUom: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
 };
 
 export const userInclude: Prisma.AccountInclude = {

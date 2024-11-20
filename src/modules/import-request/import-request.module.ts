@@ -8,9 +8,10 @@ import { IsImportRequestExistPipe } from './pipe/is-import-request-exist.pipe';
 import { IsImportReqStatusCanCreateInspectionReqValidator } from './validator/is-import-req-can-create-inspetion-req';
 import { IsImportRequestExistValidator } from './validator/is-import-request-exist.validator';
 import { IsPoDeliveryDoesNotHaveActiveImportRequestValidator } from './validator/is-po-delivery-has-active-import-request';
+import { ProductionBatchModule } from '../production-batch/production-batch.module';
 
 @Module({
-  imports: [PrismaModule, PoDeliveryModule, InspectionRequestModule],
+  imports: [PrismaModule, PoDeliveryModule, InspectionRequestModule,ProductionBatchModule],
   controllers: [ImportRequestController],
   providers: [
     ImportRequestService,

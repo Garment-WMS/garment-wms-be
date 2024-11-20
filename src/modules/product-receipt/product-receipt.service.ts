@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ProductReceiptStatus } from '@prisma/client';
+import { Prisma, PrismaClient, ProductReceiptStatus } from '@prisma/client';
+import { DefaultArgs } from '@prisma/client/runtime/library';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateProductReceiptDto } from './dto/create-product-receipt.dto';
 import { UpdateProductReceiptDto } from './dto/update-product-receipt.dto';
@@ -7,6 +8,64 @@ import { UpdateProductReceiptDto } from './dto/update-product-receipt.dto';
 @Injectable()
 export class ProductReceiptService {
   constructor(private prismaService: PrismaService) {}
+
+  async createProductReceipts(
+    importReceiptId: string,
+    inspectionReportDetail: {
+      id: string;
+      createdAt: Date | null;
+      updatedAt: Date | null;
+      deletedAt: Date | null;
+      inspectionReportId: string;
+      materialPackageId: string | null;
+      productSizeId: string | null;
+      approvedQuantityByPack: number;
+      defectQuantityByPack: number;
+      quantityByPack: number | null;
+    }[],
+    productionBatchId: string,
+    prismaInstance: PrismaService,
+  ) {
+    const productReceipts: Prisma.ProductReceiptCreateManyInput[] = [];
+
+    for (const inspectionReportDetailItem of inspectionReportDetail) {
+      const productReceipt: Prisma.ProductReceiptCreateManyInput = {
+        importReceiptId: importReceiptId,
+        productSizeId: inspectionReportDetailItem.productSizeId,
+        quantityByUom: inspectionReportDetailItem.quantityByPack,
+        remainQuantityByUom: inspectionReportDetailItem.quantityByPack,
+        status: ProductReceiptStatus.IMPORTING,
+        code: undefined,
+      };
+
+      productReceipts.push(productReceipt);
+    }
+
+    const result = await prismaInstance.productReceipt.createManyAndReturn({
+      data: productReceipts,
+    });
+    return result;
+  }
+
+  async updateProductReceiptStatus(
+    id: string,
+    status: ProductReceiptStatus,
+    prismaInstance: PrismaClient<
+      Prisma.PrismaClientOptions,
+      never,
+      DefaultArgs
+    >,
+  ) {
+    return prismaInstance.productReceipt.update({
+      where: {
+        id,
+      },
+      data: {
+        importDate: new Date(),
+        status,
+      },
+    });
+  }
 
   async getAllProductReceiptOfProductVariant(productVariantId: string) {
     return await this.prismaService.productReceipt.findMany({

@@ -11,7 +11,7 @@ import {
   $Enums,
   PoDeliveryStatus,
   Prisma,
-  PrismaClient,
+  ProductionBatchStatus,
   RoleCode,
 } from '@prisma/client';
 import { isUUID } from 'class-validator';
@@ -28,6 +28,8 @@ import { InventoryStockService } from '../inventory-stock/inventory-stock.servic
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
+import { ProductReceiptService } from '../product-receipt/product-receipt.service';
+import { ProductionBatchService } from '../production-batch/production-batch.service';
 import { CreateTaskDto } from '../task/dto/create-task.dto';
 import { TaskService } from '../task/task.service';
 import { CreateImportReceiptDto } from './dto/create-import-receipt.dto';
@@ -38,13 +40,115 @@ export class ImportReceiptService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly materialReceiptService: MaterialReceiptService,
+    private readonly productReceiptService: ProductReceiptService,
     private readonly inspectionReportService: InspectionReportService,
     private readonly poDeliveryService: PoDeliveryService,
     private readonly inventoryStockService: InventoryStockService,
     private readonly importRequestService: ImportRequestService,
     private readonly poDeliveryDetailsService: PoDeliveryMaterialService,
+    private readonly productionBatchService: ProductionBatchService,
     private readonly taskService: TaskService,
   ) {}
+
+  async createProductReceipt(
+    createImportReceiptDto: CreateImportReceiptDto,
+    managerId: string,
+  ) {
+    const importRequest = await this.validateImportRequest(
+      createImportReceiptDto.importRequestId,
+    );
+    const inspectionReport =
+      await this.inspectionReportService.findUniqueInspectedByRequestId(
+        importRequest.id,
+      );
+
+    if (!inspectionReport) {
+      return apiFailed(
+        HttpStatus.NOT_FOUND,
+        'Inspection report of this import request not found',
+      );
+    }
+    const importReceiptInput: Prisma.ImportReceiptCreateInput = {
+      inspectionReport: {
+        connect: {
+          id: inspectionReport.id,
+        },
+      },
+      warehouseManager: {
+        connect: {
+          id: managerId,
+        },
+      },
+      warehouseStaff: {
+        connect: {
+          id: inspectionReport.inspectionRequest.importRequest.warehouseStaffId,
+        },
+      },
+      code: createImportReceiptDto.code,
+      status: $Enums.ImportReceiptStatus.IMPORTING,
+      type: 'PRODUCT',
+      note: createImportReceiptDto.note,
+      startedAt: createImportReceiptDto.startAt,
+      finishedAt: createImportReceiptDto.finishAt,
+    };
+
+    // this.validateMaterialReceipt(
+    //   inspectionReport.inspectionReportDetail,
+    //   createImportReceiptDto.materialReceipts,
+    // );
+
+    const result = await this.prismaService.$transaction(
+      async (prismaInstance: PrismaService) => {
+        const importReceipt = await prismaInstance.importReceipt.create({
+          data: importReceiptInput,
+        });
+        if (importReceipt) {
+          const result = await this.productReceiptService.createProductReceipts(
+            importReceipt.id,
+            inspectionReport.inspectionReportDetail,
+            importRequest.productionBatchId,
+            prismaInstance,
+            // createImportReceiptDto.materialReceipts,
+          );
+
+          await this.productionBatchService.updateStatus(
+            importRequest.productionBatchId,
+            ProductionBatchStatus.IMPORTING,
+            prismaInstance,
+          );
+
+          //Update import request status to Approved
+          await this.importRequestService.updateImportRequestStatus(
+            inspectionReport.inspectionRequest.importRequestId,
+            $Enums.ImportRequestStatus.IMPORTING,
+            prismaInstance,
+          );
+        }
+        return importReceipt;
+      },
+    );
+    if (result) {
+      try {
+        await this.createTaskByImportReceipt(
+          result.id,
+          inspectionReport.inspectionRequest.importRequest.warehouseStaffId,
+        );
+      } catch (e) {
+        Logger.error(e);
+        throw new ConflictException('Can not create Task automatically');
+      }
+
+      return apiSuccess(
+        HttpStatus.CREATED,
+        result,
+        'Create import receipt successfully',
+      );
+    }
+    return apiFailed(
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      'Create import receipt failed',
+    );
+  }
 
   async createMaterialReceipt(
     createImportReceiptDto: CreateImportReceiptDto,
@@ -309,10 +413,12 @@ export class ImportReceiptService {
         'Cannot finish import receipt, Import Receipt status is not valid',
       );
     }
+    console.log('importReceipt', importReceipt);
 
     const result = await this.prismaService.$transaction(
-      async (prismaInstance: PrismaClient) => {
-        if (importReceipt.materialReceipt) {
+      async (prismaInstance: PrismaService) => {
+        if (importReceipt?.materialReceipt.length > 0) {
+          console.log('materialReceipt', importReceipt.materialReceipt);
           for (const detail of importReceipt.materialReceipt) {
             await this.materialReceiptService.updateMaterialReceiptStatus(
               detail.id,
@@ -336,10 +442,35 @@ export class ImportReceiptService {
               prismaInstance,
             );
           }
+        } else if (importReceipt?.productReceipt.length > 0) {
+          console.log('productReceipt', importReceipt.productReceipt);
+          for (const detail of importReceipt.productReceipt) {
+            await this.productReceiptService.updateProductReceiptStatus(
+              detail.id,
+              $Enums.ProductReceiptStatus.AVAILABLE,
+              prismaInstance,
+            );
+            await this.inventoryStockService.updateProductStock(
+              detail.productSizeId,
+              detail.quantityByUom,
+              prismaInstance,
+            );
+
+            if (
+              !importReceipt?.inspectionReport?.inspectionRequest
+                .importRequestId
+            ) {
+              throw new Error('Import Request not found');
+            }
+            await this.importRequestService.updateImportRequestStatus(
+              importReceipt.inspectionReport.inspectionRequest.importRequestId,
+              $Enums.ImportRequestStatus.IMPORTED,
+              prismaInstance,
+            );
+          }
         } else {
           throw new Error('Material Receipt not found');
         }
-
         const result = await this.updateImportReceiptStatus(
           importReceiptId,
           $Enums.ImportReceiptStatus.IMPORTED,

@@ -44,6 +44,20 @@ export class ImportReceiptController {
     );
   }
 
+  @Post('/product')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER)
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  createProductImportReceipt(
+    @Body() createImportReceiptDto: CreateImportReceiptDto,
+    @GetUser() user: AuthenUser,
+  ) {
+    return this.importReceiptService.createProductReceipt(
+      createImportReceiptDto,
+      user.warehouseManagerId,
+    );
+  }
+
   @Get()
   search(
     @Query(

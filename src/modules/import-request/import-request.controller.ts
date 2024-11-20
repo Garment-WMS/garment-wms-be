@@ -27,6 +27,7 @@ import { PurchasingStaffProcessDto } from './dto/import-request/purchasing-staff
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 import { ImportRequestService } from './import-request.service';
 import { IsImportRequestExistPipe } from './pipe/is-import-request-exist.pipe';
+import { CreateProductImportRequestDto } from './dto/import-request/create-product-import-request.dto';
 
 @Controller('import-request')
 @ApiTags('import-request')
@@ -44,6 +45,23 @@ export class ImportRequestController {
       HttpStatus.CREATED,
       await this.importRequestService.create(
         purchasingStaff,
+        createImportRequestDto,
+      ),
+      'Import request created successfully',
+    );
+  }
+
+  @Post('/product')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.PRODUCTION_DEPARTMENT)
+  async createProductImport(
+    @GetUser() user: AuthenUser,
+    @Body() createImportRequestDto: CreateProductImportRequestDto,
+  ) {
+    return apiSuccess(
+      HttpStatus.CREATED,
+      await this.importRequestService.createProductImportRequest(
+        user.productionDepartmentId,
         createImportRequestDto,
       ),
       'Import request created successfully',
