@@ -23,6 +23,10 @@ import {
   PO_INFO_HEADER,
   PO_INFO_TABLE,
   PO_SHEET_NAME,
+  PRODUCTION_BATCH_DETAIL_HEADER,
+  PRODUCTION_BATCH_DETAIL_TABLE,
+  PRODUCTION_BATCH_INFO,
+  PRODUCTION_BATCH_SHEET_NAME,
   PRODUCTION_PLAN_DETAIL_HEADER,
   PRODUCTION_PLAN_DETAIL_TABLE,
   PRODUCTION_PLAN_INFO,
@@ -48,7 +52,9 @@ import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
 import { CreateProductPlanDetailDto } from '../product-plan-detail/dto/create-product-plan-detail.dto';
 import { CreateProductPlanDto } from '../product-plan/dto/create-product-plan.dto';
 import { ProductSizeService } from '../product-size/product-size.service';
+import { CreateProductionBatchDto } from '../production-batch/dto/create-production-batch.dto';
 import { CreatePurchaseOrderDto } from '../purchase-order/dto/create-purchase-order.dto';
+import { ProductPlanDetailService } from '../product-plan-detail/product-plan-detail.service';
 
 interface itemType {
   materialVariantId: {
@@ -82,14 +88,12 @@ interface itemElement {
 }
 @Injectable()
 export class ExcelService {
-  readProductionBatchExcel(file: any) {
-    throw new Error('Method not implemented.');
-  }
   constructor(
     private readonly prismaService: PrismaService,
     private readonly firebaseService: FirebaseService,
     private readonly materialPackageService: MaterialPackageService,
     private readonly productSizeService: ProductSizeService,
+    private readonly productPlanDetailService: ProductPlanDetailService
   ) {}
 
   //TODO : Validate item in table general which item in each table
@@ -2252,6 +2256,273 @@ export class ExcelService {
             quantityToProduce: itemCell.quantityToProduceCell.value as number,
             note: itemCell.note.value
               ? (itemCell.note.value as string)
+              : undefined,
+          });
+        }
+      }
+    }
+  }
+
+  //Production batch
+  async readProductionBatchExcel(file: any) {
+    if (!file) {
+      return apiFailed(HttpStatus.BAD_REQUEST, 'No file uploaded');
+    }
+    if (
+      file.mimetype !==
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ) {
+      return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid file format');
+    }
+
+    const workbook = new Workbook();
+    await workbook.xlsx.load(file.buffer);
+    const worksheet = workbook.getWorksheet(PRODUCTION_BATCH_SHEET_NAME);
+    if (!worksheet) {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Invalid file format, worksheet not found',
+      );
+    }
+    let productionBatch: CreateProductionBatchDto[] = [];
+      new CreateProductionBatchDto();
+    let productionBatchError: Map<
+      string,
+      {
+        fieldName: string;
+        value: string;
+        text?: any;
+      }
+    > = new Map();
+    let errorResponse;
+
+    await this.validateProductionBatchSheet(
+      worksheet,
+      productionBatch,
+      productionBatchError,
+      errorResponse,
+    );
+
+    if (errorResponse) {
+      return errorResponse;
+    }
+
+    if (productionBatchError.size > 0) {
+      productionBatchError.forEach((value, key) => {
+        const cell = worksheet.getCell(key);
+
+        // Set the cell value to the error message
+        cell.value = { richText: [] };
+        cell.value.richText = [
+          //Use to add - between text
+          ...value?.text.reduce((acc, curr, index) => {
+            if (index > 0) {
+              acc.push({ text: ' - ', font: { color: { argb: 'FF0000' } } });
+            }
+            acc.push(curr);
+            return acc;
+          }, []),
+        ];
+      });
+      const timestamp = Date.now();
+      const fileName = `${timestamp}-${file.originalname}`;
+      const bufferResult = await workbook.xlsx.writeBuffer();
+      const nodeBuffer = Buffer.from(bufferResult);
+      const downloadUrl = await this.firebaseService.uploadBufferToStorage(
+        nodeBuffer,
+        fileName,
+      );
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'There is error in the file',
+        downloadUrl,
+      );
+    }
+
+    return productionBatch;
+  }
+
+  async validateProductionBatchSheet(
+    worksheet: Worksheet,
+    productionBatch: CreateProductionBatchDto[],
+    productionBatchError: Map<
+      string,
+      {
+        fieldName: string;
+        value: string;
+        text?: any;
+      }
+    > = new Map(),
+    errorResponse,
+  ) {
+    // const productionPlanInfo = worksheet.getTable(PRODUCTION_BATCH_INFO);
+
+    // if (!productionPlanInfo) {
+    //   errorResponse = apiFailed(
+    //     HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+    //     'Invalid format, production batch info table not found',
+    //   );
+    //   return;
+    // }
+
+    const productionBatchDetail = worksheet.getTable(
+      PRODUCTION_BATCH_DETAIL_TABLE,
+    );
+
+    if (!productionBatchDetail) {
+      errorResponse = apiFailed(
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        'Invalid format, production batch detail table not found',
+      );
+      return;
+    }
+
+    await this.validateProductionBatchDetailTable(
+      worksheet,
+      productionBatchError,
+      productionBatchDetail,
+      productionBatch,
+    );
+  }
+
+
+  async validateProductionBatchDetailTable(
+    worksheet: Worksheet,
+    listItemError: Map<
+      string,
+      {
+        fieldName: string;
+        value: string;
+        text?: any;
+      }
+    >,
+    itemTable: any,
+    itemListResult: CreateProductionBatchDto[],
+  ) {
+    const header = itemTable.table.columns.map((column: any) => column.name);
+
+    //Check if header is valid
+    const isHeaderValid = compareArray(header, PRODUCTION_BATCH_DETAIL_HEADER);
+    if (!isHeaderValid) {
+      return apiFailed(
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        'Invalid format, production batch detail header is not valid',
+      );
+    }
+
+    const [startCell, endCell] = itemTable.table.tableRef.split(':');
+    const startRow = parseInt(startCell.replace(/\D/g, ''), 10);
+    const endRow = parseInt(endCell.replace(/\D/g, ''), 10);
+    //Check item validation
+    for (let i = startRow + 1; i <= endRow; i++) {
+      let productionPlanDetailCode;
+      let productionPlanDetail: any;
+      let isError = false;
+      let errorFlag = false;
+      const row = worksheet.getRow(i);
+      const itemCell = {
+        productionPlanCodeCell: row.getCell(1),
+        nameCell: row.getCell(2),
+        quantityToProduceCell: row.getCell(3),
+        descriptionCell: row.getCell(4),
+      };
+
+      if (
+        isEmpty(itemCell.productionPlanCodeCell.value) &&
+        isEmpty(itemCell.nameCell.value) &&
+        isEmpty(itemCell.quantityToProduceCell.value) &&
+        isEmpty(itemCell.descriptionCell.value)
+      ) {
+        continue;
+      } else {
+        if (
+          this.validateRequired(
+            itemCell.productionPlanCodeCell.value as string,
+            'Production Plan Code',
+            itemCell.productionPlanCodeCell.address,
+            listItemError,
+          )
+        ) {
+          productionPlanDetail = await this.productPlanDetailService.findQuery({
+            code: this.extractValueFromCellValue(itemCell.productionPlanCodeCell),
+          });
+          productionPlanDetailCode = productionPlanDetail?.code;
+          if (isEmpty(productionPlanDetail)) {
+            const text = [
+              { text: `${itemCell.productionPlanCodeCell.value}` },
+              {
+                text: `[Production Plan Detail found]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              itemCell.productionPlanCodeCell.address,
+              'Production Plan Detail',
+              itemCell.productionPlanCodeCell.value,
+              text,
+            );
+            errorFlag = true;
+            isError = true;
+          }
+        }
+        if (
+          this.validateRequired(
+            itemCell.quantityToProduceCell.value as string,
+            'Quantity To Produce',
+            itemCell.quantityToProduceCell.address,
+            listItemError,
+          )
+        ) {
+          if (!isInt(itemCell.quantityToProduceCell.value) && !errorFlag) {
+            const text = [
+              { text: `${itemCell.quantityToProduceCell.value}` },
+              {
+                text: `[Quantity must be a number]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              itemCell.quantityToProduceCell.address,
+              'Quantity To Produce',
+              itemCell.quantityToProduceCell.value,
+              text,
+            );
+            isError = true;
+            errorFlag = true;
+          }
+          if (!min(itemCell.quantityToProduceCell.value, 0) && !errorFlag) {
+            const text = [
+              { text: `${itemCell.quantityToProduceCell.value}` },
+              {
+                text: `[Quantity must be greater than 0]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              listItemError,
+              itemCell.quantityToProduceCell.address,
+              'Quantity To Produce',
+              itemCell.quantityToProduceCell.value,
+              text,
+            );
+            isError = true;
+            errorFlag = false;
+          }
+        } else {
+          isError = true;
+          errorFlag = true;
+        }
+
+        if (!isError) {
+          itemListResult.push({
+            productionPlanDetailId: productionPlanDetail?.id,
+            code: undefined,
+            name: itemCell.nameCell.value as string,
+            quantityToProduce: itemCell.quantityToProduceCell.value as number,
+            description: itemCell.descriptionCell.value
+              ? (itemCell.descriptionCell.value as string)
               : undefined,
           });
         }
