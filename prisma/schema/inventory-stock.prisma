@@ -2,7 +2,8 @@ model InventoryStock {
   id                String           @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   productSizeId     String?          @unique @map("product_size_id") @db.Uuid
   materialPackageId String?          @unique @map("material_package_id") @db.Uuid
-  quantityByPack    Float            @map("quantity_by_pack")
+  quantityByPack    Float?           @map("quantity_by_pack")
+  quantityByUom     Float?           @map("quantity_by_uom")
   createdAt         DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime?        @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt         DateTime?        @map("deleted_at") @db.Timestamptz(6)
