@@ -24,6 +24,8 @@ model ProductionBatch {
 
 enum ProductionBatchStatus {
   EXECUTING
+  IMPORTING
+  IMPORTED
   FINISHED
   CANCELED
 
