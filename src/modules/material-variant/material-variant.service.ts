@@ -51,6 +51,13 @@ export class MaterialVariantService {
     },
   };
 
+  findByQuery(query: any) {
+    return this.prismaService.materialVariant.findFirst({
+      where: query,
+      include: this.materialInclude,
+    });
+  }
+
   async findMaterialExportReceipt(
     id: string,
     findOptions: GeneratedFindOptions<Prisma.MaterialExportReceiptDetailScalarWhereInput>,

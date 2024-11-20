@@ -35,6 +35,13 @@ export class MaterialReceiptService {
     },
   };
 
+  findByQuery(query: any) {
+    return this.prismaService.materialReceipt.findFirst({
+      where: query,
+      include: this.includeQuery,
+    });
+  }
+
   async recountMaterialInventoryStock() {
     const allMaterialPackage = await this.materialPackagesService.findAllRaw();
 
@@ -56,7 +63,7 @@ export class MaterialReceiptService {
   ) {
     const materialReceipts = await prismaInstance.materialReceipt.findMany({
       where: {
-        materialPackage: { id: materialPackageId},
+        materialPackage: { id: materialPackageId },
         status: {
           in: [MaterialReceiptStatus.AVAILABLE],
         },

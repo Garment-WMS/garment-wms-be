@@ -58,6 +58,7 @@ import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
 import { ProductReceiptModule } from './modules/product-receipt/product-receipt.module';
+import { GeneralSearchModule } from './modules/general-search/general-search.module';
 
 @Module({
   imports: [
@@ -144,6 +145,7 @@ import { ProductReceiptModule } from './modules/product-receipt/product-receipt.
     ProductionBatchModule,
     TaskModule,
     ProductReceiptModule,
+    GeneralSearchModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],
