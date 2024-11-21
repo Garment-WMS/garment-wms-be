@@ -3,6 +3,7 @@ model ProductFormula {
   productSizeId          String                   @map("product_size_id") @db.Uuid
   name                   String                   @map("name") @db.VarChar
   code                   String?                  @map("code") @db.VarChar
+  isBaseFormula          Boolean?                 @default(false) @map("is_base_formula") @db.Boolean
   quantityRangeStart     Float                    @map("quantity_range_start")
   quantityRangeEnd       Float                    @map("quantity_range_end")
   createdAt              DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)

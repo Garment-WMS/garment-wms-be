@@ -1,3 +1,4 @@
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
@@ -6,10 +7,13 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Prisma } from '@prisma/client';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { IsProductFormulaExistPipe } from './decorator/is-product-formula-exist.decorator';
 import { CreateNestedProductFormulaMaterial } from './dto/create-nested-product-formula-material.dto';
@@ -42,8 +46,19 @@ export class ProductFormulaController {
   }
 
   @Get()
-  findAll() {
-    return this.productFormulaService.findAll();
+  search(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ProductFormulaWhereInput>(
+        [
+          'productSize.productVariantId',
+          'productSize.productVariant.productId',
+        ],
+        [{ createdAt: 'desc' }, { id: 'asc' }],
+      ),
+    )
+    filterDto: FilterDto<Prisma.ProductFormulaWhereInput>,
+  ) {
+    return this.productFormulaService.search(filterDto.findOptions);
   }
 
   @Get(':id')

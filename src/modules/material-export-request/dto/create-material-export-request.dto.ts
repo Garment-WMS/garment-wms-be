@@ -1,22 +1,39 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { $Enums, Prisma, RoleCode } from '@prisma/client';
-import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { $Enums, RoleCode } from '@prisma/client';
+import {
+  IsArray,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
+import { CreateNestedMaterialExportRequestDetailDto } from 'src/modules/material-export-request-detail/dto/create-nested-material-export-request-detail.dto';
+import { IsProductFormulaExist } from 'src/modules/product-formula/validator/is-product-formula-exist.validator';
+import { IsProductionBatchExist } from 'src/modules/production-batch/validator/is-production-batch-exist.validator';
 import { IsUserRoleExist } from 'src/modules/user/validator/is-user-of-role-exist.validator';
 
-export class CreateMaterialExportRequestDto
-  implements Prisma.MaterialExportRequestUncheckedCreateInput
-{
+export class CreateMaterialExportRequestDto {
+  // implements Prisma.MaterialExportRequestUncheckedCreateInput
+  @ApiProperty({ required: true, type: 'string', format: 'uuid' })
+  @IsOptional()
+  @IsProductFormulaExist()
+  productFormulaId: string;
+
   @ApiProperty({ required: true, type: 'string', format: 'uuid' })
   @IsUUID()
-  // @IsProductionBatchExist()
+  @IsProductionBatchExist()
   productionBatchId: string;
 
   @ApiProperty({ required: true, type: 'string', format: 'uuid' })
   @IsUserRoleExist(RoleCode.WAREHOUSE_MANAGER)
   @IsUUID()
+  @IsOptional()
   warehouseManagerId: string;
 
   @ApiProperty({ required: true, type: 'string', format: 'uuid' })
+  @IsUserRoleExist(RoleCode.PRODUCTION_DEPARTMENT)
+  @IsUUID()
   productionDepartmentId: string;
 
   @ApiProperty({ required: false, type: 'string' })
@@ -28,4 +45,22 @@ export class CreateMaterialExportRequestDto
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiProperty({
+    required: true,
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        materialId: { type: 'string', format: 'uuid' },
+        quantityByUom: { type: 'number' },
+      },
+      required: ['materialId', 'quantityByUom'],
+    },
+  })
+  @ValidateNested({
+    each: true,
+  })
+  @IsArray()
+  materialExportRequestDetail?: CreateNestedMaterialExportRequestDetailDto[];
 }

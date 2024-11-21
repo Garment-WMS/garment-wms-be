@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -14,11 +15,12 @@ import { NestedCreateProductFormulaMaterialDto } from 'src/modules/product-formu
 import { IsProductSizeExist } from 'src/modules/product-size/validator/is-product-size-exist.validator';
 
 export class CreateProductFormulaDto {
+  // implements Prisma.ProductFormulaCreateInput
   @ApiProperty()
   @IsNotEmpty()
   @IsUUID()
   @IsProductSizeExist()
-  productVariantId: string;
+  productSizeId: string;
 
   @ApiProperty()
   @IsNotEmpty()
@@ -37,10 +39,15 @@ export class CreateProductFormulaDto {
   @Min(1)
   quantityRangeEnd: number;
 
+  @ApiProperty()
+  @IsOptional()
+  @IsBoolean()
+  isBaseFormula: boolean;
+
   @ApiProperty({ type: [NestedCreateProductFormulaMaterialDto] })
   @IsOptional()
   @IsArray()
-  @ValidateNested({ each: true })
   @Type(() => NestedCreateProductFormulaMaterialDto)
+  @ValidateNested({ each: true })
   productFormulaMaterials: NestedCreateProductFormulaMaterialDto[];
 }
