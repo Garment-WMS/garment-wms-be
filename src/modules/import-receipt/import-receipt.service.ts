@@ -681,4 +681,23 @@ export class ImportReceiptService {
         throw new ForbiddenException('This role is not allowed');
     }
   }
+
+  async getByImportRequestId(importRequestId: string) {
+    const data = await this.prismaService.importReceipt.findMany({
+      where: {
+        inspectionReport: {
+          inspectionRequest: {
+            importRequestId: importRequestId,
+          },
+        },
+      },
+      include: importReceiptInclude,
+    });
+
+    return apiSuccess(
+      HttpStatus.OK,
+      data,
+      'Get import receipt by import request id successfully',
+    );
+  }
 }
