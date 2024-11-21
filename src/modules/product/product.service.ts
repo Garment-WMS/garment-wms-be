@@ -37,14 +37,25 @@ export class ProductService {
         where: rest?.where,
         include: {
           productUom: true,
+          _count: {
+            select: {
+              productVariant: true,
+            },
+          },
         },
         skip: page,
         take: limit,
-      }),
+      }) as any,
       this.prismaService.product.count({
         where: rest?.where,
       }),
     ]);
+
+    result.forEach((element) => {
+      element.numberOfProductVariants = element._count.productVariant;
+      delete element._count;
+    });
+
     return apiSuccess(
       HttpStatus.OK,
       {
