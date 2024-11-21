@@ -25,7 +25,11 @@ export class ProductionBatchService {
     private readonly excelService: ExcelService,
   ) {}
 
-  updateStatus(productionBatchId: string, status: ProductionBatchStatus,prismaInstance: PrismaService = this.prismaService) {
+  updateStatus(
+    productionBatchId: string,
+    status: ProductionBatchStatus,
+    prismaInstance: PrismaService = this.prismaService,
+  ) {
     const productionBatchInput: Prisma.ProductionBatchUpdateInput = {
       status: status,
     };
@@ -92,6 +96,7 @@ export class ProductionBatchService {
         const productionBatchResult: any =
           await prismaInstance.productionBatch.createManyAndReturn({
             data: createProductBatchData,
+            include: productionBatchInclude,
           });
         return productionBatchResult;
       },
@@ -133,12 +138,15 @@ export class ProductionBatchService {
   }
 
   async findAll() {
-    return this.prismaService.productionBatch.findMany();
+    return this.prismaService.productionBatch.findMany({
+      include: productionBatchInclude,
+    });
   }
 
   async findUnique(id: string) {
     const data = await this.prismaService.productionBatch.findFirst({
       where: { id },
+      include: productionBatchInclude,
     });
     if (!data) {
       throw new NotFoundException('Production batch not found');
@@ -149,6 +157,7 @@ export class ProductionBatchService {
   async findFirst(id: string) {
     return this.prismaService.productionBatch.findFirst({
       where: { id },
+      include: productionBatchInclude,
     });
   }
 
@@ -161,6 +170,7 @@ export class ProductionBatchService {
         id: id,
       },
       data: updateProductionBatchInput,
+      include: productionBatchInclude,
     });
     return result;
   }

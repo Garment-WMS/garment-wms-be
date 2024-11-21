@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { $Enums, RoleCode } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
+  ArrayUnique,
   IsArray,
   IsEnum,
   IsOptional,
@@ -34,6 +37,7 @@ export class CreateMaterialExportRequestDto {
   @ApiProperty({ required: true, type: 'string', format: 'uuid' })
   @IsUserRoleExist(RoleCode.PRODUCTION_DEPARTMENT)
   @IsUUID()
+  @IsOptional()
   productionDepartmentId: string;
 
   @ApiProperty({ required: false, type: 'string' })
@@ -61,6 +65,9 @@ export class CreateMaterialExportRequestDto {
   @ValidateNested({
     each: true,
   })
+  @Type(() => CreateNestedMaterialExportRequestDetailDto)
+  @ArrayUnique((o) => o.materialVariantId)
+  @ArrayNotEmpty()
   @IsArray()
   materialExportRequestDetail?: CreateNestedMaterialExportRequestDetailDto[];
 }
