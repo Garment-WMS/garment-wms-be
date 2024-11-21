@@ -30,6 +30,23 @@ export class ProductVariantService {
     },
     productSize: {
       include: {
+        productFormula: {
+          include: {
+            productFormulaMaterial: {
+              include: {
+                materialVariant: {
+                  include: {
+                    material: {
+                      include: {
+                        materialUom: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         productReceipt: true,
         inventoryStock: true,
       },
