@@ -192,4 +192,25 @@ export class ProductFormulaService {
       'Failed to delete Product Formula',
     );
   }
+
+  async getByProductBatchId(productBatchId: string) {
+    const productFormula = await this.prismaService.productFormula.findFirst({
+      where: {
+        productSize: {
+          productionPlanDetail: {
+            some: {
+              productionBatch: {
+                some: {
+                  id: productBatchId,
+                },
+              },
+            },
+          },
+        },
+      },
+      include: this.queryInclude,
+    });
+
+    return productFormula;
+  }
 }

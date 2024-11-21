@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -13,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
+import { apiSuccess } from 'src/common/dto/api-response';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { IsProductFormulaExistPipe } from './decorator/is-product-formula-exist.decorator';
@@ -59,6 +61,17 @@ export class ProductFormulaController {
     filterDto: FilterDto<Prisma.ProductFormulaWhereInput>,
   ) {
     return this.productFormulaService.search(filterDto.findOptions);
+  }
+
+  @Get('/by-product-batch/:productBatchId')
+  async getByProductBatchId(
+    @Param('productBatchId', ParseUUIDPipe) productBatchId: string,
+  ) {
+    return apiSuccess(
+      200,
+      await this.productFormulaService.getByProductBatchId(productBatchId),
+      'Product Formula fetched successfully',
+    );
   }
 
   @Get(':id')
