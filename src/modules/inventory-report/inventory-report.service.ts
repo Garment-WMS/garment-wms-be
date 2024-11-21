@@ -714,7 +714,23 @@ export class InventoryReportService {
           totalExpectedQuantity: 0;
           totalActualQuantity: 0;
           totalManagerQuantityConfirm: 0;
-          materialPackages: Record<
+          productSizes?: Record<
+            string,
+            {
+              productSize?: any;
+              totalExpectedQuantity: 0;
+              totalActualQuantity: 0;
+              totalManagerQuantityConfirm: 0;
+              inventoryReportDetails?: Array<{
+                id: string;
+                expectedQuantity: number;
+                actualQuantity: number;
+                managerQuantityConfirm: number;
+                productReceipt: any;
+              }>;
+            }
+          >;
+          materialPackages?: Record<
             string,
             {
               materialPackage?: any;
@@ -758,7 +774,12 @@ export class InventoryReportService {
     result.inventoryReportDetail = Object.values(groupByMaterialVariant).map(
       (variant: any) => ({
         ...variant,
-        materialPackages: Object.values(variant.materialPackages),
+        materialPackages: variant?.materialPackages
+          ? Object.values(variant.materialPackages)
+          : undefined,
+        productSizes: variant?.productSizes
+          ? Object.values(variant.productSizes)
+          : undefined,
       }),
     );
 
