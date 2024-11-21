@@ -85,8 +85,6 @@ export class InventoryReportService {
     },
   };
 
-
-
   async handleApprovalInventoryReport(
     id: string,
     updateInventoryReportDetailDto: WarehouseManagerQuantityReportDetails,
@@ -343,7 +341,7 @@ export class InventoryReportService {
     receipt.productReceipt.forEach((productReceip) => {
       createInventoryReportDetailDto.push({
         productReceiptId: productReceip.id,
-        expectedQuantity: productReceip.remainQuantityByPack,
+        expectedQuantity: productReceip.remainQuantityByUom,
         inventoryReportId: inventoryReport.id,
         actualQuantity: undefined,
       });
