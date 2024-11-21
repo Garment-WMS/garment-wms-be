@@ -18,6 +18,23 @@ export class ProductSizeService {
 
   includeQuery: Prisma.ProductSizeInclude = {
     inventoryStock: true,
+    productFormula: {
+      include: {
+        productFormulaMaterial: {
+          include: {
+            materialVariant: {
+              include: {
+                material: {
+                  include: {
+                    materialUom: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     productVariant: {
       include: {
         product: {

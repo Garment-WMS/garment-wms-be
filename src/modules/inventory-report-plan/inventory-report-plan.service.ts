@@ -164,7 +164,7 @@ export class InventoryReportPlanService {
             prismaInstance,
           );
         if (!inventoryReport) {
-          return null;
+          throw new BadRequestException('Create inventory report failed');
         }
         await prismaInstance.inventoryReportPlanDetail.updateMany({
           where: {
@@ -360,6 +360,7 @@ export class InventoryReportPlanService {
       title: createInventoryReportPlanDto.title,
       from: createInventoryReportPlanDto.from,
       to: createInventoryReportPlanDto.to,
+      note: createInventoryReportPlanDto.note,
       warehouseManager: {
         connect: { id: warehouseManagerId },
       },
