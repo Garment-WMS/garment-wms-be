@@ -50,6 +50,13 @@ export class ImportReceiptService {
     private readonly taskService: TaskService,
   ) {}
 
+  findByQuery(query: any) {
+    return this.prismaService.importReceipt.findFirst({
+      where: query,
+      include: importReceiptInclude,
+    });
+  }
+
   async createProductReceipt(
     createImportReceiptDto: CreateImportReceiptDto,
     managerId: string,

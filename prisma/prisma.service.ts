@@ -145,6 +145,7 @@ export class PrismaService
     'Task',
     'Todo',
     'ProductFormula',
+    'ProductReceipt',
   ];
 
   getPrefix(modelName: string, delimiter: string): string {

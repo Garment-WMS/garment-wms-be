@@ -1,7 +1,9 @@
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { ProductVariantService } from '../product-variant/product-variant.service';
 import { CreateProductVariantDto } from './dto/create-product-variant.dto';
@@ -16,6 +18,23 @@ export class ProductSizeService {
 
   includeQuery: Prisma.ProductSizeInclude = {
     inventoryStock: true,
+    productFormula: {
+      include: {
+        productFormulaMaterial: {
+          include: {
+            materialVariant: {
+              include: {
+                material: {
+                  include: {
+                    materialUom: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     productVariant: {
       include: {
         product: {
@@ -63,13 +82,39 @@ export class ProductSizeService {
     );
   }
 
-  async findAll() {
-    const result = await this.prismaService.productSize.findMany({
-      include: this.includeQuery,
-    });
+  async findAll(
+    filterOption?: GeneratedFindOptions<Prisma.ProductSizeWhereInput>,
+  ) {
+    const { skip, take, ...rest } = filterOption;
+    const page = filterOption?.skip || Constant.DEFAULT_OFFSET;
+    const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
+
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.productSize.findMany({
+        skip: page,
+        take: limit,
+        where: {
+          ...rest?.where,
+        },
+        orderBy: filterOption?.orderBy,
+        include: this.includeQuery,
+      }),
+      this.prismaService.productSize.count({
+        where: {
+          ...rest?.where,
+        },
+      }),
+    ]);
     return apiSuccess(
       HttpStatus.OK,
-      result,
+      {
+        data,
+        pageMeta: {
+          total: total,
+          page: page,
+          limit: limit,
+        },
+      },
       'Get all product variants successfully',
     );
   }

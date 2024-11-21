@@ -17,6 +17,26 @@ export class InventoryStockService {
   create(createInventoryStockDto: CreateInventoryStockDto) {
     return 'This action adds a new inventoryStock';
   }
+
+  async updateProductStockQuantity(
+    productSizeId: string,
+    remainQuantityByUom: number,
+    prismaInstance: PrismaService,
+  ) {
+    return prismaInstance.inventoryStock.upsert({
+      where: {
+        productSizeId: productSizeId,
+      },
+      update: {
+        quantityByUom: remainQuantityByUom,
+      },
+      create: {
+        productSizeId,
+        quantityByUom: remainQuantityByUom,
+      },
+    });
+  }
+
   async updateProductStock(
     productSizeId: string,
     quantityByUom: number,

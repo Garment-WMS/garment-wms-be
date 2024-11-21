@@ -320,11 +320,13 @@ export class InventoryReportService {
           }
         }
         if (el.productVariantId) {
-          //DO LATER
           const productReceipt =
             await this.productReceiptService.getAllProductReceiptOfProductVariant(
               el.productVariantId,
             );
+          if (productReceipt.length > 0) {
+            receipt.productReceipt.push(...productReceipt);
+          }
         }
       }),
     );
@@ -336,14 +338,14 @@ export class InventoryReportService {
         actualQuantity: undefined,
       });
     });
-    // receipt.productReceipt.forEach((productReceip) => {
-    //   createInventoryReportDetailDto.push({
-    //     productReceiptId: productReceip.id,
-    //     recordedQuantity: productReceip.remainQuantityByPack,
-    //     inventoryReportId: inventoryReport.id,
-    //     storageQuantity: 0,
-    //   });
-    // });
+    receipt.productReceipt.forEach((productReceip) => {
+      createInventoryReportDetailDto.push({
+        productReceiptId: productReceip.id,
+        expectedQuantity: productReceip.remainQuantityByUom,
+        inventoryReportId: inventoryReport.id,
+        actualQuantity: undefined,
+      });
+    });
 
     await this.inventoryReportDetailService.create(
       createInventoryReportDetailDto,
@@ -712,7 +714,23 @@ export class InventoryReportService {
           totalExpectedQuantity: 0;
           totalActualQuantity: 0;
           totalManagerQuantityConfirm: 0;
-          materialPackages: Record<
+          productSizes?: Record<
+            string,
+            {
+              productSize?: any;
+              totalExpectedQuantity: 0;
+              totalActualQuantity: 0;
+              totalManagerQuantityConfirm: 0;
+              inventoryReportDetails?: Array<{
+                id: string;
+                expectedQuantity: number;
+                actualQuantity: number;
+                managerQuantityConfirm: number;
+                productReceipt: any;
+              }>;
+            }
+          >;
+          materialPackages?: Record<
             string,
             {
               materialPackage?: any;
@@ -756,7 +774,12 @@ export class InventoryReportService {
     result.inventoryReportDetail = Object.values(groupByMaterialVariant).map(
       (variant: any) => ({
         ...variant,
-        materialPackages: Object.values(variant.materialPackages),
+        materialPackages: variant?.materialPackages
+          ? Object.values(variant.materialPackages)
+          : undefined,
+        productSizes: variant?.productSizes
+          ? Object.values(variant.productSizes)
+          : undefined,
       }),
     );
 

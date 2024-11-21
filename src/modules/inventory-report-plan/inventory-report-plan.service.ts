@@ -1,6 +1,10 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
-import { InventoryReportPlanStatus, Prisma } from '@prisma/client';
+import {
+  InventoryReportPlanStatus,
+  InventoryReportPlanType,
+  Prisma,
+} from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { inventoryReportPlan } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
@@ -9,8 +13,11 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { InventoryReportPlanDetailService } from '../inventory-report-plan-detail/inventory-report-plan-detail.service';
 import { InventoryReportService } from '../inventory-report/inventory-report.service';
+import { MaterialVariantService } from '../material-variant/material-variant.service';
+import { ProductVariantService } from '../product-variant/product-variant.service';
 import { CreateInventoryReportPlanDto } from './dto/create-inventory-report-plan.dto';
 import { InventoryReportPlanDto } from './dto/inventory-report-plan.dto';
+import { CreateOverAllInventoryReportPlanDto } from './dto/over-all-report-plan.dto';
 import { UpdateInventoryReportPlanDto } from './dto/update-inventory-report-plan.dto';
 
 @Injectable()
@@ -18,8 +25,81 @@ export class InventoryReportPlanService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly inventoryReportPlanDetailService: InventoryReportPlanDetailService,
+    private readonly productVariantService: ProductVariantService,
+    private readonly materialVariantService: MaterialVariantService,
     private readonly inventoryReportService: InventoryReportService,
   ) {}
+
+  async createOverAllInventoryPlan(
+    createInventoryReportPlanDto: CreateOverAllInventoryReportPlanDto,
+    warehouseManagerId: string,
+  ) {
+    const allVariants = [
+      ...(await this.materialVariantService.findAllWithoutResponse()),
+      ...(await this.productVariantService.findAllWithoutResponse()),
+    ];
+
+    const inventoryPlanInputs: Prisma.InventoryReportPlanCreateInput = {
+      title: createInventoryReportPlanDto.title,
+      warehouseManager: {
+        connect: { id: warehouseManagerId },
+      },
+      from: createInventoryReportPlanDto.from,
+      to: createInventoryReportPlanDto.to,
+      type: InventoryReportPlanType.OVERALL,
+      note: createInventoryReportPlanDto.note,
+      status: InventoryReportPlanStatus.NOT_YET,
+    };
+
+    const result = await this.prismaService.$transaction(
+      async (prismaInstance: PrismaService) => {
+        const inventoryPlanResult =
+          await prismaInstance.inventoryReportPlan.create({
+            data: inventoryPlanInputs,
+            include: {
+              inventoryReportPlanDetail: true,
+            },
+          });
+        console.log(inventoryPlanResult);
+
+        const staffList = createInventoryReportPlanDto.staffList;
+        const inventoryReportPlanDetails: Prisma.InventoryReportPlanDetailCreateManyInput[] =
+          [];
+
+        // Round-robin assignment of variants to staff
+        allVariants.forEach((variant: any, index) => {
+          const staffIndex = index % staffList.length;
+          const staffId = staffList[staffIndex] as any;
+          inventoryReportPlanDetails.push({
+            materialVariantId: variant.materialId ? variant.id : undefined,
+            productVariantId: variant.productId ? variant.id : undefined,
+            code: undefined,
+            inventoryReportPlanId: inventoryPlanResult.id,
+            warehouseStaffId: staffId.warehouseStaffId as string,
+          });
+        });
+        await this.inventoryReportPlanDetailService.createMany(
+          inventoryReportPlanDetails,
+          prismaInstance,
+        );
+        console.log(inventoryPlanResult.id);
+
+        const inventoryPlanDetailResult =
+          await prismaInstance.inventoryReportPlanDetail.findMany({
+            where: { inventoryReportPlanId: inventoryPlanResult.id },
+          });
+
+        inventoryPlanResult.inventoryReportPlanDetail =
+          inventoryPlanDetailResult;
+        return inventoryPlanResult;
+      },
+    );
+    return apiSuccess(
+      HttpStatus.CREATED,
+      result,
+      'Inventory report plan created successfully',
+    );
+  }
 
   async checkLastInventoryReportInPlan(inventoryReportId: string) {
     throw new Error('Method not implemented.');
@@ -84,7 +164,7 @@ export class InventoryReportPlanService {
             prismaInstance,
           );
         if (!inventoryReport) {
-          return null;
+          throw new BadRequestException('Create inventory report failed');
         }
         await prismaInstance.inventoryReportPlanDetail.updateMany({
           where: {
@@ -280,6 +360,7 @@ export class InventoryReportPlanService {
       title: createInventoryReportPlanDto.title,
       from: createInventoryReportPlanDto.from,
       to: createInventoryReportPlanDto.to,
+      note: createInventoryReportPlanDto.note,
       warehouseManager: {
         connect: { id: warehouseManagerId },
       },

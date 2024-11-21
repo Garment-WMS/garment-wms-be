@@ -27,5 +27,6 @@ import { ProductionBatchModule } from '../production-batch/production-batch.modu
     TaskModule,
   ],
   providers: [ImportReceiptService],
+  exports: [ImportReceiptService],
 })
 export class ImportReceiptModule {}

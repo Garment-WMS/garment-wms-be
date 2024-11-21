@@ -12,6 +12,7 @@ import { CreateInventoryReportDetailDto } from './dto/create-inventory-report-de
 import { UpdateInventoryReportDetailDto } from './dto/update-inventory-report-detail.dto';
 import { WarehouseManagerApprovalInventoryReportDetailDto } from './dto/warehouse-manager-approval-inventory-report-detail.dto';
 import { WarehouseStaffApprovalInventoryReportDetailDto } from './dto/warehouse-staff-approval-inventory-report-detail.dto';
+import { ProductReceiptService } from '../product-receipt/product-receipt.service';
 
 @Injectable()
 export class InventoryReportDetailService {
@@ -21,6 +22,7 @@ export class InventoryReportDetailService {
     private readonly receiptAdjustQueue: Queue,
     private readonly eventEmitter: EventEmitter2,
     private readonly materialReceiptService: MaterialReceiptService,
+    private readonly productReceiptService: ProductReceiptService,
   ) {}
 
   isInventoryReportDetailExist(value: string) {
@@ -83,14 +85,12 @@ export class InventoryReportDetailService {
         );
       }
 
-      //TODO: Call productReceiptService.updateQuantity
-      // if (result.productReceiptId) {
-      //   await this.productReceiptService.updateProductReceiptQuantity(
-      //     result.productReceiptId,
-      //     result.managerQuantityConfirm,
-      //     result.managerQuantityConfirm - result.expectedQuantity,
-      //   );
-      // }
+      if (result.productReceiptId) {
+        await this.productReceiptService.updateProductReceiptQuantity(
+          result.productReceiptId,
+          result.managerQuantityConfirm,
+        );
+      }
 
       const createReceiptAdjustmentDto: CreateReceiptAdjustmentDto = {
         warehouseManagerId: warehouseManagerId,

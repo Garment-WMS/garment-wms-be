@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -13,6 +14,9 @@ import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateProductVariantDto } from './dto/create-product-variant.dto';
 import { UpdateProductVariantDto } from './dto/update-product-variant.dto';
 import { ProductSizeService } from './product-size.service';
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
+import { Prisma } from '@prisma/client';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 
 @Controller('product-size')
 export class ProductSizeController {
@@ -25,8 +29,16 @@ export class ProductSizeController {
   }
 
   @Get()
-  findAll() {
-    return this.productSizeService.findAll();
+  findAll(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ProductSizeScalarWhereInput>(
+        [],
+        [],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.ProductSizeScalarWhereInput>,
+  ) {
+    return this.productSizeService.findAll(filterOptions.findOptions);
   }
 
   @Get(':id')

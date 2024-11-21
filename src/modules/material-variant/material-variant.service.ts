@@ -51,6 +51,13 @@ export class MaterialVariantService {
     },
   };
 
+  findByQuery(query: any) {
+    return this.prismaService.materialVariant.findFirst({
+      where: query,
+      include: this.materialInclude,
+    });
+  }
+
   async findMaterialExportReceipt(
     id: string,
     findOptions: GeneratedFindOptions<Prisma.MaterialExportReceiptDetailScalarWhereInput>,
@@ -102,7 +109,6 @@ export class MaterialVariantService {
     id: string,
     findOptions: GeneratedFindOptions<Prisma.MaterialReceiptScalarWhereInput>,
   ) {
-    console.log(findOptions.orderBy);
     const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
     const [data, total] = await this.prismaService.$transaction([

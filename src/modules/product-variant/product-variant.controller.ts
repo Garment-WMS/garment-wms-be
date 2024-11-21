@@ -22,6 +22,7 @@ import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductVariantService } from './product-variant.service';
+import { ChartDto } from './dto/chart-dto.dto';
 
 @ApiTags('Product')
 @Controller('product-variant')
@@ -48,6 +49,11 @@ export class ProductVariantController {
     return this.productVariantService.findAll(filterOptions.findOptions);
   }
 
+  @Post('chart')
+  getChart(@Body() chartDto: ChartDto) {
+    return this.productVariantService.getChart(chartDto);
+  }
+
   @Get(':id')
   findOne(@Param('id', CustomUUIDPipe) id: string) {
     return this.productVariantService.findByIdWithResponse(id);
@@ -69,6 +75,33 @@ export class ProductVariantController {
     @Body() updateProductDto: UpdateProductDto,
   ) {
     return this.productVariantService.update(id, updateProductDto);
+  }
+
+  @Post(':id/image')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.productVariantService.addImage(file, id);
+  }
+
+  @Get(':id/import-receipt')
+  getMaterialImportReceipt(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ProductReceiptScalarWhereInput>(
+        [],
+        [{ code: 'asc' }, { createdAt: 'desc' }],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.ProductReceiptScalarWhereInput>,
+
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.productVariantService.findProductImportReceipt(
+      id,
+      filterOptions.findOptions,
+    );
   }
 
   @Delete(':id')

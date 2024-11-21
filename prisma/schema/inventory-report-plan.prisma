@@ -1,7 +1,7 @@
 model InventoryReportPlan {
     id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
     warehouseManagerId        String                      @map("warehouse_manager_id") @db.Uuid
-    type                      InventoryReportPlanType?    @default(ALL) @map("type")
+    type                      InventoryReportPlanType?    @default(OVERALL) @map("type")
     title                     String                      @map("title") @db.VarChar()
     code                      String?                     @map("code") @db.VarChar()
     status                    InventoryReportPlanStatus   @default(NOT_YET) @map("status")
@@ -18,7 +18,7 @@ model InventoryReportPlan {
 }
 
 enum InventoryReportPlanType {
-    ALL
+    OVERALL
     PARTIAL
 }
 
