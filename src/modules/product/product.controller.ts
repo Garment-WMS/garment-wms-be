@@ -6,13 +6,17 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { CreateProductTypeDto } from './dto/create-product-type.dto';
 import { UpdateProductTypeDto } from './dto/update-product-type.dto';
 import { ProductService } from './product.service';
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 
 @Controller('product')
 export class ProductController {
@@ -26,8 +30,11 @@ export class ProductController {
   }
 
   @Get()
-  findAll() {
-    return this.productService.findAll();
+  findAll(
+    @Query(new AllFilterPipeUnsafe<any, Prisma.ProductWhereInput>([]))
+    filterOptions: FilterDto<Prisma.ProductWhereInput>,
+  ) {
+    return this.productService.findAll(filterOptions.findOptions);
   }
 
   @Get(':id')
