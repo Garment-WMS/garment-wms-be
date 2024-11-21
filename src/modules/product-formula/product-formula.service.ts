@@ -194,7 +194,7 @@ export class ProductFormulaService {
   }
 
   async getByProductBatchId(productBatchId: string) {
-    const productFormula = await this.prismaService.productFormula.findFirst({
+    const productFormula = await this.prismaService.productFormula.findMany({
       where: {
         productSize: {
           productionPlanDetail: {
