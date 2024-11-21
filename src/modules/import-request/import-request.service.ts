@@ -592,4 +592,21 @@ export class ImportRequestService {
       'Failed to create Product Import Request',
     );
   }
+
+  async getByImportReceiptId(importReceiptId: string) {
+    return this.prismaService.importRequest.findFirst({
+      where: {
+        inspectionRequest: {
+          some: {
+            inspectionReport: {
+              importReceipt: {
+                id: importReceiptId,
+              },
+            },
+          },
+        },
+      },
+      include: importRequestInclude,
+    });
+  }
 }

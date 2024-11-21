@@ -62,7 +62,7 @@ export class ImportReceiptController {
   search(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.ImportReceiptWhereInput>(
-        [],
+        ['inspectionReport.inspectionRequest.importRequestId'],
         [{ createdAt: 'desc' }, { id: 'asc' }, { updatedAt: 'asc' }],
       ),
     )
@@ -77,7 +77,7 @@ export class ImportReceiptController {
   getByUser(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.ImportReceiptWhereInput>(
-        [],
+        ['inspectionReport.inspectionRequest.importRequestId'],
         [{ createdAt: 'desc' }, { id: 'asc' }, { updatedAt: 'asc' }],
       ),
     )
@@ -111,5 +111,10 @@ export class ImportReceiptController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.importReceiptService.remove(+id);
+  }
+
+  @Get('by-import-request/:importRequestId')
+  getByImportRequest(@Param('importRequestId') importRequestId: string) {
+    return this.importReceiptService.getByImportRequestId(importRequestId);
   }
 }

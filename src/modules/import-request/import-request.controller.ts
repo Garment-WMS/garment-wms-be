@@ -22,12 +22,12 @@ import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
+import { CreateProductImportRequestDto } from './dto/import-request/create-product-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
 import { PurchasingStaffProcessDto } from './dto/import-request/purchasing-staff-process.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 import { ImportRequestService } from './import-request.service';
 import { IsImportRequestExistPipe } from './pipe/is-import-request-exist.pipe';
-import { CreateProductImportRequestDto } from './dto/import-request/create-product-import-request.dto';
 
 @Controller('import-request')
 @ApiTags('import-request')
@@ -77,6 +77,7 @@ export class ImportRequestController {
           'inspectionRequest.code',
           'inspectionRequest.inspectionReport.id',
           'inspectionRequest.inspectionReport.code',
+          'inspectionRequest.inspectionReport.importReceipt.id',
         ],
         [{ createdAt: 'desc' }, { id: 'asc' }],
       ),
@@ -106,6 +107,7 @@ export class ImportRequestController {
           'inspectionRequest.code',
           'inspectionRequest.inspectionReport.id',
           'inspectionRequest.inspectionReport.code',
+          'inspectionRequest.inspectionReport.importReceipt.id',
         ],
         [{ createdAt: 'desc' }, { id: 'asc' }],
       ),
@@ -205,6 +207,18 @@ export class ImportRequestController {
         purchasingStaffProcessDto,
       ),
       'Import request purchasing staff process successfully',
+    );
+  }
+
+  @Get('by-import-receipt/:importReceiptId')
+  async getByImportReceiptId(
+    @Param('importReceiptId')
+    importReceiptId: string,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.importRequestService.getByImportReceiptId(importReceiptId),
+      'Get import request by import receipt successfully',
     );
   }
 }
