@@ -9,15 +9,13 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ImageService } from '../image/image.service';
+import { ChartDto } from './dto/chart-dto.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductStock } from './dto/product-stock.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { ChartDto } from './dto/chart-dto.dto';
-import { ProductReceipt } from '../product-receipt/entities/product-receipt.entity';
 
 @Injectable()
 export class ProductVariantService {
- 
   constructor(
     private prismaService: PrismaService,
     private readonly imageService: ImageService,
@@ -52,7 +50,6 @@ export class ProductVariantService {
       },
     },
   };
-
 
   async getChart(chartDto: ChartDto) {
     const productVariantIds = chartDto.productVariantId || [];
@@ -109,32 +106,32 @@ export class ProductVariantService {
         });
 
       //TODO: If have productExportReceipt
-      const exportProductReceipt =[]
-        // await this.prismaService.materialExportReceipt.findMany({
-        //   where: {
-        //     AND: {
-        //       createdAt: {
-        //         gte: from,
-        //         lte: to,
-        //       },
-        //     },
-        //   },
-          //TODO
-          // include: {
-          //   materialReceipt: {
-          //     include: {
-          //       materialPackage: {
-          //         include: {
-          //           materialVariant: true,
-          //         },
-          //       },
-          //     },
-          //   },
-          // },
-        // });
+      const exportProductReceipt = [];
+      // await this.prismaService.materialExportReceipt.findMany({
+      //   where: {
+      //     AND: {
+      //       createdAt: {
+      //         gte: from,
+      //         lte: to,
+      //       },
+      //     },
+      //   },
+      //TODO
+      // include: {
+      //   materialReceipt: {
+      //     include: {
+      //       materialPackage: {
+      //         include: {
+      //           materialVariant: true,
+      //         },
+      //       },
+      //     },
+      //   },
+      // },
+      // });
 
       const totalQuantities = this.calculateTotalQuantities(
-        importProductReceipt, 
+        importProductReceipt,
         exportProductReceipt,
       );
 
@@ -171,7 +168,7 @@ export class ProductVariantService {
     productImportReceipt.reduce((acc, el) => {
       const productVariant = el.productSize.productVariant;
       const productVariantId = productVariant.id;
-      const importQuantity = el.quantityByUom
+      const importQuantity = el.quantityByUom;
       if (acc[productVariantId]) {
         acc[productVariantId].totalImportQuantityByUom += importQuantity;
       } else {
@@ -214,7 +211,6 @@ export class ProductVariantService {
 
     return result;
   }
-
 
   async findProductImportReceipt(
     id: string,
@@ -386,12 +382,30 @@ export class ProductVariantService {
     if (!isUUID(id)) {
       return null;
     }
-    const result = await this.prismaService.productVariant.findUnique({
+    const result: any = await this.prismaService.productVariant.findUnique({
       where: {
         id: id,
       },
       include: this.includeQuery,
     });
+
+    if (result.productSize) {
+      result.numberOfProductSize = result.productSize
+        ? result.productSize.length
+        : 0;
+
+      result.onHand = result?.productSize?.reduce((totalAcc, productSizeEl) => {
+        let variantTotal = 0;
+        //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+        if (productSizeEl.inventoryStock) {
+          variantTotal = productSizeEl.inventoryStock.quantityByUom;
+        }
+        return totalAcc + variantTotal;
+      }, 0);
+    } else {
+      result.numberOfProductSize = 0;
+      result.onHand = 0;
+    }
     return result;
   }
 
