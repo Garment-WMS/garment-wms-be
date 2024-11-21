@@ -46,7 +46,7 @@ export class InventoryReportPlanService {
       },
       from: createInventoryReportPlanDto.from,
       to: createInventoryReportPlanDto.to,
-      type: InventoryReportPlanType.ALL,
+      type: InventoryReportPlanType.OVERALL,
       note: createInventoryReportPlanDto.note,
       status: InventoryReportPlanStatus.NOT_YET,
     };
