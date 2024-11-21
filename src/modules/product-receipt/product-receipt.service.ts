@@ -1,13 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma, PrismaClient, ProductReceiptStatus } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
+import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
+import { InventoryReportService } from '../inventory-report/inventory-report.service';
 import { CreateProductReceiptDto } from './dto/create-product-receipt.dto';
 import { UpdateProductReceiptDto } from './dto/update-product-receipt.dto';
+import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 
 @Injectable()
 export class ProductReceiptService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private readonly inventoryStockService: InventoryStockService,
+  ) {}
 
   productReceiptIncludeQuery: Prisma.ProductReceiptInclude = {
     importReceipt: true,
@@ -27,6 +33,81 @@ export class ProductReceiptService {
       },
     },
   };
+
+  async updateProductReceiptQuantity(
+    id: string,
+    quantityByUom: number,
+    prismaInstance: PrismaClient = this.prismaService,
+  ) {
+    const productReceipt = await this.findById(id);
+    if (!productReceipt) {
+      throw new BadRequestException('Material Receipt not found');
+    }
+    return prismaInstance.$transaction(
+      async (prismaInstance: PrismaService) => {
+        await prismaInstance.productReceipt.update({
+          where: {
+            id,
+          },
+          data: {
+            remainQuantityByUom: quantityByUom,
+          },
+        });
+
+        const remainQuantityByUom = await this.getRemainQuantityByProductSize(
+          productReceipt.productSizeId,
+          prismaInstance,
+        );
+
+        await this.inventoryStockService.updateProductStockQuantity(
+          productReceipt.productSizeId,
+          remainQuantityByUom,
+          prismaInstance,
+        );
+        return null;
+      },
+    );
+  }
+  async getRemainQuantityByProductSize(
+    productSizeId: string,
+    prismaInstance: PrismaService,
+  ) {
+    const productReceipts = await this.getAllProductReceiptOfProductSize(
+      productSizeId,
+      prismaInstance,
+    );
+
+    return productReceipts.reduce((acc, el) => {
+      return acc + el.remainQuantityByUom;
+    }, 0);
+  }
+  async getAllProductReceiptOfProductSize(
+    productSizeId: string,
+    prismaInstance: PrismaService,
+  ) {
+    const productReceipts = await prismaInstance.productReceipt.findMany({
+      where: {
+        productSizeId: productSizeId,
+        status: {
+          in: [ProductReceiptStatus.AVAILABLE],
+        },
+      },
+      include: this.productReceiptIncludeQuery,
+    });
+
+    return productReceipts;
+  }
+  findById(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid id');
+    }
+    return this.prismaService.productReceipt.findUnique({
+      where: {
+        id,
+      },
+      include: this.productReceiptIncludeQuery,
+    });
+  }
 
   findByQuery(query: any) {
     return this.prismaService.productReceipt.findFirst({

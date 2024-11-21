@@ -85,6 +85,8 @@ export class InventoryReportService {
     },
   };
 
+
+
   async handleApprovalInventoryReport(
     id: string,
     updateInventoryReportDetailDto: WarehouseManagerQuantityReportDetails,
@@ -320,11 +322,13 @@ export class InventoryReportService {
           }
         }
         if (el.productVariantId) {
-          //DO LATER
           const productReceipt =
             await this.productReceiptService.getAllProductReceiptOfProductVariant(
               el.productVariantId,
             );
+          if (productReceipt.length > 0) {
+            receipt.productReceipt.push(...productReceipt);
+          }
         }
       }),
     );
@@ -336,14 +340,14 @@ export class InventoryReportService {
         actualQuantity: undefined,
       });
     });
-    // receipt.productReceipt.forEach((productReceip) => {
-    //   createInventoryReportDetailDto.push({
-    //     productReceiptId: productReceip.id,
-    //     recordedQuantity: productReceip.remainQuantityByPack,
-    //     inventoryReportId: inventoryReport.id,
-    //     storageQuantity: 0,
-    //   });
-    // });
+    receipt.productReceipt.forEach((productReceip) => {
+      createInventoryReportDetailDto.push({
+        productReceiptId: productReceip.id,
+        expectedQuantity: productReceip.remainQuantityByPack,
+        inventoryReportId: inventoryReport.id,
+        actualQuantity: undefined,
+      });
+    });
 
     await this.inventoryReportDetailService.create(
       createInventoryReportDetailDto,
