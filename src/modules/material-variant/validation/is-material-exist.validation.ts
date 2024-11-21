@@ -6,13 +6,16 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import { MaterialService } from 'src/modules/material/material.service';
 import { MaterialVariantService } from '../material-variant.service';
 
 @Injectable()
 @ValidatorConstraint({ async: true })
-export class IsMaterialExistValidator implements ValidatorConstraintInterface {
-  constructor(private readonly materialVariantService: MaterialVariantService) {}
+export class IsMaterialVariantExistValidator
+  implements ValidatorConstraintInterface
+{
+  constructor(
+    private readonly materialVariantService: MaterialVariantService,
+  ) {}
   async validate(
     value: string,
     validationArguments?: ValidationArguments,
@@ -26,14 +29,14 @@ export class IsMaterialExistValidator implements ValidatorConstraintInterface {
   }
 }
 
-export function IsMaterialExist(validationOptions?: ValidationOptions) {
+export function IsMaterialVariantExist(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: IsMaterialExistValidator,
+      validator: IsMaterialVariantExistValidator,
       async: true,
     });
   };

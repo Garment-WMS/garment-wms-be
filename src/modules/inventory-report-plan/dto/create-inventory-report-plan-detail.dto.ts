@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { RoleCode } from '@prisma/client';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { IsMaterialExist } from 'src/modules/material-variant/validation/is-material-exist.validation';
+import { IsMaterialVariantExist } from 'src/modules/material-variant/validation/is-material-exist.validation';
 import { IsProductExist } from 'src/modules/product-variant/validator/is-product-exist.validator';
 import { IsUserRoleExist } from 'src/modules/user/validator/is-user-of-role-exist.validator';
 
@@ -15,7 +15,7 @@ export class CreateInventoryReportPlanDetailDto {
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  @IsMaterialExist()
+  @IsMaterialVariantExist()
   materialVariantId?: string;
 
   @ApiProperty()

@@ -9,13 +9,13 @@ import {
   Min,
   NotEquals,
 } from 'class-validator';
-import { IsMaterialExist } from 'src/modules/material-variant/validation/is-material-exist.validation';
+import { IsMaterialVariantExist } from 'src/modules/material-variant/validation/is-material-exist.validation';
 
 export class CreateMaterialVariantDto {
   @ApiProperty({})
   @IsNotEmpty()
   @IsUUID()
-  @IsMaterialExist()
+  @IsMaterialVariantExist()
   materialVariantId: string;
 
   @ApiProperty({})

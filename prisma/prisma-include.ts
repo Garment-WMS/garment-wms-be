@@ -385,7 +385,11 @@ export const productFormulaInclude: Prisma.ProductFormulaInclude = {
     },
   },
   productFormulaMaterial: {
-    include: {},
+    include: {
+      materialVariant: {
+        include: MaterialVariantInclude,
+      },
+    },
   },
 };
 
@@ -441,3 +445,30 @@ export const taskInclude: Prisma.TaskInclude = {
   },
   todo: true,
 };
+
+export const materialExportRequestDetailInclude: Prisma.MaterialExportRequestDetailInclude =
+  {
+    materialVariant: { include: MaterialVariantInclude },
+  };
+
+export const materialExportRequestInclude: Prisma.MaterialExportRequestInclude =
+  {
+    materialExportRequestDetail: {
+      include: materialExportRequestDetailInclude,
+    },
+    productFormula: {
+      include: productFormulaInclude,
+    },
+    productionBatch: {
+      include: productionBatchInclude,
+    },
+    productionDepartment: {
+      include: productionDepartmentInclude,
+    },
+    warehouseManager: {
+      include: warehouseManagerInclude,
+    },
+    warehouseStaff: {
+      include: warehouseStaffInclude,
+    },
+  };
