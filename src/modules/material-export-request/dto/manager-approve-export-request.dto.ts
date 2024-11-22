@@ -29,6 +29,11 @@ export class ManagerApproveExportRequestDto {
 
   @ApiProperty({ required: false })
   @IsString()
+  @IsNotEmpty()
+  rejectionReason: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
   managerNote: string;
 
   @ApiProperty({ required: false })

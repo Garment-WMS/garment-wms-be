@@ -5,12 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { $Enums, Prisma } from '@prisma/client';
-import { materialExportRequestInclude } from 'prisma/prisma-include';
+import {
+  materialExportRequestInclude,
+  productFormulaInclude,
+} from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ManagerAction } from '../import-request/dto/import-request/manager-process.dto';
+import { CreateNestedMaterialExportRequestDetailDto } from '../material-export-request-detail/dto/create-nested-material-export-request-detail.dto';
 import { CreateMaterialExportRequestDto } from './dto/create-material-export-request.dto';
 import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-request.dto';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
@@ -19,6 +23,12 @@ import { UpdateMaterialExportRequestDto } from './dto/update-material-export-req
 export class MaterialExportRequestService {
   constructor(private readonly prismaService: PrismaService) {}
   async create(dto: CreateMaterialExportRequestDto) {
+    if (!dto.materialExportRequestDetail) {
+      this.mapMaterialExportRequestDetailByFormula(
+        dto.productFormulaId,
+        dto.materialExportRequestDetail,
+      );
+    }
     const materialExportRequestInput: Prisma.MaterialExportRequestUncheckedCreateInput =
       {
         productionBatchId: dto.productionBatchId,
@@ -40,6 +50,32 @@ export class MaterialExportRequestService {
       data: materialExportRequestInput,
       include: materialExportRequestInclude,
     });
+  }
+
+  async mapMaterialExportRequestDetailByFormula(
+    productFormulaId: string,
+    materialExportRequestDetail: CreateNestedMaterialExportRequestDetailDto[],
+  ) {
+    const productFormula = await this.prismaService.productFormula.findUnique({
+      where: {
+        id: productFormulaId,
+      },
+      include: productFormulaInclude,
+    });
+    if (!productFormula) {
+      throw new NotFoundException('Product formula not found');
+    }
+    materialExportRequestDetail = productFormula.productFormulaMaterial.map(
+      (productFormulaMaterial) => {
+        const materialExportRequestDetail: CreateNestedMaterialExportRequestDetailDto =
+          {
+            materialVariantId: productFormulaMaterial.materialVariantId,
+            quantityByUom: productFormulaMaterial.quantityByUom,
+          };
+        return materialExportRequestDetail;
+      },
+    );
+    return materialExportRequestDetail;
   }
 
   async search(
