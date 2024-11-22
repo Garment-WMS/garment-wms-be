@@ -8,7 +8,7 @@ import { UpdateReceiptAdjustmentDto } from './dto/update-receipt-adjustment.dto'
 export class ReceiptAdjustmentService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create(createReceiptAdjustmentDto: CreateReceiptAdjustmentDto) {
+  async create(createReceiptAdjustmentDto: CreateReceiptAdjustmentDto) {
     const createReceiptAdjustmentInput: Prisma.ReceiptAdjustmentCreateInput = {
       warehouseManager: {
         connect: { id: createReceiptAdjustmentDto.warehouseManagerId },
@@ -27,9 +27,13 @@ export class ReceiptAdjustmentService {
       },
     };
 
-    return this.prismaService.receiptAdjustment.create({
+    console.log(CreateReceiptAdjustmentDto);
+
+    const result = await this.prismaService.receiptAdjustment.create({
       data: createReceiptAdjustmentInput,
     });
+
+    return result;
   }
 
   findAll() {

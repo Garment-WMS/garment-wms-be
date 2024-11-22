@@ -95,12 +95,17 @@ export class UserService {
     if (!result) {
       return apiFailed(404, 'Role not found');
     }
+    console.log('Role');
     await this.testQueue.add(
       'create-receipt-adjustment',
       {
         data: {
-          id: '1',
-          name: 'test',
+          warehouseManagerId: '01d7815f-9e07-4cf6-8b93-d9d734873eb6',
+          materialReceiptId: '9991fe8e-b235-43c2-a963-551fe6657ddd',
+          productReceiptId: null,
+          inventoryReportDetailId: '1931230b-3674-4acc-bd29-3f31b20ae2b5',
+          beforeAdjustQuantity: 2,
+          afterAdjustQuantity: 12,
         },
       },
       {

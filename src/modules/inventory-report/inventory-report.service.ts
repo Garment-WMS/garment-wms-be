@@ -111,6 +111,8 @@ export class InventoryReportService {
       result.push(updateResult);
     }
 
+
+
     const isInventoryReportDetailDone =
       await this.inventoryReportDetailService.checkLastApprovalInventoryReport(
         id,

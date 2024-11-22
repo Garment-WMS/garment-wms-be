@@ -22,7 +22,7 @@ export class MaterialReceiptService {
     receiptAdjustment: true,
     materialExportReceiptDetail: {
       include: {
-        
+        materialExportReceipt: true,
       },
     },
     materialPackage: {

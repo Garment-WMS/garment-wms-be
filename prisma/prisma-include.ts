@@ -94,6 +94,9 @@ export const importRequestDetailInclude: Prisma.ImportRequestDetailInclude = {
   materialPackage: {
     include: materialPackageInclude,
   },
+  productSize: {
+    include: productSizeInclude,
+  },
 };
 
 export const inspectionDepartmentInclude: Prisma.InspectionDepartmentInclude = {
