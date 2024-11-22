@@ -99,6 +99,10 @@ export class ImportReceiptService {
       finishedAt: createImportReceiptDto.finishAt,
     };
 
+    
+
+
+
     // this.validateMaterialReceipt(
     //   inspectionReport.inspectionReportDetail,
     //   createImportReceiptDto.materialReceipts,

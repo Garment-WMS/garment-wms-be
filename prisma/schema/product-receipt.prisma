@@ -4,6 +4,7 @@ model ProductReceipt {
   importReceiptId       String                  @map("import_receipt_id") @db.Uuid
   code                  String?                 @map("code") @db.VarChar(255)
   status                ProductReceiptStatus    @default(AVAILABLE) @map("status")
+  isDefect              Boolean                 @default(false) @map("is_defect") @db.Boolean
   expireDate            DateTime?               @map("expire_date") @db.Timestamptz(6)
   createdAt             DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)

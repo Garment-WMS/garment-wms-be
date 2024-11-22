@@ -3,10 +3,9 @@ import { Prisma, PrismaClient, ProductReceiptStatus } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
-import { InventoryReportService } from '../inventory-report/inventory-report.service';
+import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { CreateProductReceiptDto } from './dto/create-product-receipt.dto';
 import { UpdateProductReceiptDto } from './dto/update-product-receipt.dto';
-import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 
 @Injectable()
 export class ProductReceiptService {
@@ -143,8 +142,19 @@ export class ProductReceiptService {
         status: ProductReceiptStatus.IMPORTING,
         code: undefined,
       };
-
       productReceipts.push(productReceipt);
+
+      if (inspectionReportDetailItem.defectQuantityByPack > 0) {
+        const defectProductReceipt: Prisma.ProductReceiptCreateManyInput = {
+          importReceiptId: importReceiptId,
+          productSizeId: inspectionReportDetailItem.productSizeId,
+          quantityByUom: inspectionReportDetailItem.defectQuantityByPack,
+          remainQuantityByUom: inspectionReportDetailItem.defectQuantityByPack,
+          status: ProductReceiptStatus.IMPORTING,
+          code: undefined,
+        };
+        productReceipts.push(defectProductReceipt);
+      }
     }
 
     const result = await prismaInstance.productReceipt.createManyAndReturn({
