@@ -1,12 +1,14 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { $Enums, Prisma } from '@prisma/client';
 import { materialExportRequestInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { ManagerAction } from '../import-request/dto/import-request/manager-process.dto';
 import { CreateMaterialExportRequestDto } from './dto/create-material-export-request.dto';
+import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-request.dto';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
 
 @Injectable()
@@ -71,11 +73,21 @@ export class MaterialExportRequestService {
         where: {
           id: id,
         },
+        include: materialExportRequestInclude,
       });
     if (!materialExportRequest) {
       throw new NotFoundException('Material Export Request not found');
     }
     return materialExportRequest;
+  }
+
+  async findFirst(materialExportRequestId: string) {
+    return await this.prismaService.materialExportRequest.findFirst({
+      where: {
+        id: materialExportRequestId,
+      },
+      include: materialExportRequestInclude,
+    });
   }
 
   async update(id: string, dto: UpdateMaterialExportRequestDto) {
@@ -116,5 +128,39 @@ export class MaterialExportRequestService {
         id: id,
       },
     });
+  }
+
+  async managerApprove(dto: ManagerApproveExportRequestDto) {
+    switch (dto.action) {
+      case ManagerAction.APPROVED:
+        const materialExportRequest =
+          await this.prismaService.materialExportRequest.update({
+            where: {
+              id: dto.id,
+            },
+            data: {
+              status: $Enums.MaterialExportRequestStatus.APPROVED,
+              managerNote: dto.managerNote,
+              warehouseStaffId: dto.warehouseStaffId,
+              updatedAt: new Date(),
+            },
+          });
+        return materialExportRequest;
+      case ManagerAction.REJECTED:
+        const rejectedMaterialExportRequest =
+          await this.prismaService.materialExportRequest.update({
+            where: {
+              id: dto.id,
+            },
+            data: {
+              status: $Enums.MaterialExportRequestStatus.REJECTED,
+              managerNote: dto.managerNote,
+              rejectAt: new Date(),
+              updatedAt: new Date(),
+            },
+          });
+        return rejectedMaterialExportRequest;
+      default:
+    }
   }
 }

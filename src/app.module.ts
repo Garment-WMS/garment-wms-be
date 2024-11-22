@@ -19,6 +19,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import * as redisStore from 'cache-manager-redis-store';
+import { GeneralSearchModule } from './modules/general-search/general-search.module';
 import { ImportReceiptModule } from './modules/import-receipt/import-receipt.module';
 import { ImportRequestModule } from './modules/import-request/import-request.module';
 import { InspectionDepartmentModule } from './modules/inspection-department/inspection-department.module';
@@ -31,6 +32,8 @@ import { InventoryReportModule } from './modules/inventory-report/inventory-repo
 import { InventoryStockModule } from './modules/inventory-stock/inventory-stock.module';
 import { InventoryUpdateStatusModule } from './modules/inventory-update-status/inventory-update-status.module';
 import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
+import { MaterialExportReceiptDetailModule } from './modules/material-export-receipt-detail/material-export-receipt-detail.module';
+import { MaterialExportReceiptModule } from './modules/material-export-receipt/material-export-receipt.module';
 import { MaterialExportRequestModule } from './modules/material-export-request/material-export-request.module';
 import { MaterialPackageModule } from './modules/material-package/material-package.module';
 import { MaterialReceiptModule } from './modules/material-receipt/material-receipt.module';
@@ -43,6 +46,7 @@ import { ProductFormulaMaterialModule } from './modules/product-formula-material
 import { ProductFormulaModule } from './modules/product-formula/product-formula.module';
 import { ProductPlanDetailModule } from './modules/product-plan-detail/product-plan-detail.module';
 import { ProductPlanModule } from './modules/product-plan/product-plan.module';
+import { ProductReceiptModule } from './modules/product-receipt/product-receipt.module';
 import { ProductSizeModule } from './modules/product-size/product-size.module';
 import { ProductUomModule } from './modules/product-uom/product-uom.module';
 import { ProductVariantModule } from './modules/product-variant/product-variant.module';
@@ -57,8 +61,6 @@ import { TaskModule } from './modules/task/task.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
-import { ProductReceiptModule } from './modules/product-receipt/product-receipt.module';
-import { GeneralSearchModule } from './modules/general-search/general-search.module';
 
 @Module({
   imports: [
@@ -146,6 +148,8 @@ import { GeneralSearchModule } from './modules/general-search/general-search.mod
     TaskModule,
     ProductReceiptModule,
     GeneralSearchModule,
+    MaterialExportReceiptModule,
+    MaterialExportReceiptDetailModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],
