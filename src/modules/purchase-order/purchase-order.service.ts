@@ -186,6 +186,7 @@ export class PurchaseOrderService {
         where: filterOption?.where ? filterOption.where : undefined,
       }),
     ]);
+
     return apiSuccess(
       HttpStatus.OK,
       {
@@ -202,7 +203,26 @@ export class PurchaseOrderService {
     });
   }
   async findByIdWithResponse(id: string) {
-    const purchaseOrder = await this.findById(id);
+    const purchaseOrder: any = await this.findById(id);
+    if (!purchaseOrder) {
+      return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');
+    }
+    console.log(purchaseOrder);
+    let totalImportQuantity = null;
+    let totalQuantityToImport = null;
+    let totalFailImportQuantity = null;
+    purchaseOrder.poDelivery.forEach((poDelivery) => {
+      poDelivery.poDeliveryDetail.forEach((poDeliveryDetail) => {
+        totalImportQuantity += poDeliveryDetail.actualImportQuantity;
+        totalQuantityToImport += poDeliveryDetail.quantityByPack;
+      });
+    });
+
+    purchaseOrder.totalImportQuantity = totalImportQuantity;
+    purchaseOrder.totalFailImportQuantity =
+      totalQuantityToImport - totalImportQuantity;
+    purchaseOrder.totalQuantityToImport = totalQuantityToImport;
+
     if (!purchaseOrder) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');
     }
@@ -220,7 +240,30 @@ export class PurchaseOrderService {
     }
     return this.prismaService.purchaseOrder.findUnique({
       where: { id },
-      include: this.queryInclude,
+      include: {
+        supplier: true,
+        poDelivery: {
+          include: {
+            poDeliveryDetail: {
+              include: {
+                materialPackage: {
+                  include: {
+                    materialVariant: {
+                      include: {
+                        material: {
+                          include: {
+                            materialUom: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
   }
 

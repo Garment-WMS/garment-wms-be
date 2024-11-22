@@ -226,10 +226,37 @@ export class ProductPlanService {
 
     result.forEach((productionPlan) => {
       let totalQuantityToProduce = 0;
+      let totalProducedQuantity = 0;
+      let totalDefectQuantity = 0;
       productionPlan.productionPlanDetail.forEach((detail) => {
         totalQuantityToProduce += detail.quantityToProduce;
       });
       productionPlan.totalQuantityToProduce = totalQuantityToProduce;
+      productionPlan.productionPlanDetail.forEach((detail) => {
+        if (detail.productionBatch.length > 0) {
+          detail.productionBatch.forEach((batch) => {
+            // if (batch.status === ProductionStatus.FINISHED) {
+            batch.importRequest.forEach((request) => {
+              request.inspectionRequest.forEach((inspection) => {
+                inspection.inspectionReport.importReceipt.productReceipt.forEach(
+                  (productReceipt) => {
+                    if (productReceipt.isDefect) {
+                      totalDefectQuantity += productReceipt.quantityByUom;
+                    } else {
+                      totalProducedQuantity += productReceipt.quantityByUom;
+                    }
+                  },
+                );
+              });
+            });
+            // }
+          });
+        }
+      });
+
+      productionPlan.totalQuantityToProduce = totalQuantityToProduce;
+      productionPlan.totalProducedQuantity = totalProducedQuantity;
+      productionPlan.totalDefectQuantity = totalDefectQuantity;
     });
 
     return apiSuccess(
@@ -333,7 +360,7 @@ export class ProductPlanService {
     });
     productPlan.totalQuantityToProduce = totalQuantityToProduce;
     productPlan.productionPlanDetail.forEach((detail) => {
-      if (detail.productionBatch.length > 0) {
+      if (detail?.productionBatch) {
         detail.productionBatch.forEach((batch) => {
           // if (batch.status === ProductionStatus.FINISHED) {
           batch.importRequest.forEach((request) => {

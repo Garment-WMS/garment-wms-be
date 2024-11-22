@@ -1,6 +1,6 @@
 model ProductionBatch {
   id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  productionPlanDetailId String?                 @unique @map("production_plan_detail_id") @db.Uuid
+  productionPlanDetailId String?                 @map("production_plan_detail_id") @db.Uuid
   code                   String?                 @map("code") @db.VarChar
   name                   String                  @map("name") @db.VarChar
   description            String?                 @map("description") @db.VarChar

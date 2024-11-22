@@ -52,6 +52,11 @@ export class MaterialPackageController {
     return this.materialPackageService.findByIdWithResponse(id);
   }
 
+  @Get(':id/code')
+  getMaterialReceiptChart(@Param('id') id: string) {
+    return this.materialPackageService.findByMaterialCode(id);
+  }
+
   @Patch('/:id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   update(
