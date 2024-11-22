@@ -105,16 +105,15 @@ export class MaterialExportRequestController {
   @Roles(RoleCode.WAREHOUSE_MANAGER)
   async managerApprove(
     @Param('id') id: string,
-    @Body() managerApproveExportRequestDto: ManagerApproveExportRequestDto,
+    @Body() dto: ManagerApproveExportRequestDto,
     @GetUser() warehouseManager: AuthenUser,
   ) {
-    managerApproveExportRequestDto.warehouseManagerId =
-      warehouseManager.warehouseManagerId;
     return apiSuccess(
       HttpStatus.OK,
       await this.materialExportRequestService.managerApprove(
         id,
-        managerApproveExportRequestDto,
+        dto,
+        warehouseManager.warehouseManagerId,
       ),
       'Manager approve material export request successfully',
     );
