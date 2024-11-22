@@ -180,12 +180,56 @@ export class PurchaseOrderService {
           ...rest?.where,
         },
         orderBy: filterOption?.orderBy,
-        include: this.queryInclude,
-      }),
+        include: {
+          supplier: true,
+          poDelivery: {
+            include: {
+              poDeliveryDetail: {
+                include: {
+                  materialPackage: {
+                    include: {
+                      materialVariant: {
+                        include: {
+                          material: {
+                            include: {
+                              materialUom: true,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }) as any,
       this.prismaService.purchaseOrder.count({
         where: filterOption?.where ? filterOption.where : undefined,
       }),
     ]);
+
+    result.forEach((purchaseOrder) => {
+      let totalImportQuantity = null;
+      let totalQuantityToImport = null;
+      let totalFailImportQuantity = null;
+      purchaseOrder.poDelivery.forEach((poDelivery) => {
+        poDelivery.poDeliveryDetail.forEach((poDeliveryDetail) => {
+          if (poDelivery.status === PoDeliveryStatus.FINISHED) {
+            totalFailImportQuantity +=
+              poDeliveryDetail.quantityByPack -
+              poDeliveryDetail.actualImportQuantity;
+          }
+          totalImportQuantity += poDeliveryDetail.actualImportQuantity;
+          totalQuantityToImport += poDeliveryDetail.quantityByPack;
+        });
+      });
+
+      purchaseOrder.totalImportQuantity = totalImportQuantity;
+      purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
+      purchaseOrder.totalQuantityToImport = totalQuantityToImport;
+    });
 
     return apiSuccess(
       HttpStatus.OK,
@@ -207,7 +251,6 @@ export class PurchaseOrderService {
     if (!purchaseOrder) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');
     }
-    console.log(purchaseOrder);
     let totalImportQuantity = null;
     let totalQuantityToImport = null;
     let totalFailImportQuantity = null;

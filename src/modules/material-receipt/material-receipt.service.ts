@@ -19,6 +19,12 @@ export class MaterialReceiptService {
   ) {}
 
   includeQuery: Prisma.MaterialReceiptInclude = {
+    receiptAdjustment: true,
+    materialExportReceiptDetail: {
+      include: {
+        
+      },
+    },
     materialPackage: {
       include: {
         inventoryStock: true,
