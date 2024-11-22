@@ -1,6 +1,7 @@
 model PurchaseOrder {
   id                 String              @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   poNumber           String              @unique @map("PO_number") @db.VarChar
+  code               String?             @map("code") @db.VarChar
   productionPlanId   String?             @map("production_plan_id") @db.Uuid
   purchasingStaffId  String?             @map("purchasing_staff_id") @db.Uuid
   supplierId         String              @map("supplier_id") @db.Uuid
@@ -24,7 +25,7 @@ model PurchaseOrder {
   purchasingStaff    PurchasingStaff?    @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productionPlan     ProductionPlan?     @relation(fields: [productionPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   supplier           Supplier            @relation(fields: [supplierId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  
+
   @@map("purchase_order")
 }
 
@@ -35,4 +36,3 @@ enum PurchaseOrderStatus {
 
   @@map("purchase_order_status")
 }
-

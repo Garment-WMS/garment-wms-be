@@ -17,6 +17,15 @@ export class PoDeliveryService {
     private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
   ) {}
 
+  async createPoDeliveryNotExtra(
+    poDeliveryCreateInput: Prisma.PoDeliveryCreateInput,
+    prismaInstance: PrismaService = this.pirsmaService,
+  ) {
+    return prismaInstance.poDelivery.create({
+      data: poDeliveryCreateInput,
+    });
+  }
+
   getExpiredDate(
     poDeliveryId: string,
     materialPackageId: string,
@@ -357,10 +366,7 @@ export class PoDeliveryService {
     console.log('poDeliveryCode', poDeliveryCode);
     let nextCodeNumber = 1 + index;
     if (poDeliveryCode) {
-      const currentCodeNumber = parseInt(
-        poDeliveryCode.replace(/^POD-?/, ''),
-        10,
-      );
+      const currentCodeNumber = extractNumberFromCode(poDeliveryCode);
       nextCodeNumber = currentCodeNumber + index;
     }
 
@@ -375,6 +381,15 @@ export class PoDeliveryService {
       console.log('nextCode', nextCode);
       return this.generateManyNextPoDeliveryCodes(index + 1);
     }
+
     return nextCode;
   }
 }
+
+const extractNumberFromCode = (code: string): number => {
+  const match = code.match(/-(\d+)$/);
+  if (match) {
+    return parseInt(match[1], 10);
+  }
+  throw new Error('Invalid code format');
+};

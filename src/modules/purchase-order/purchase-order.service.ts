@@ -405,7 +405,6 @@ export class PurchaseOrderService {
     >`SELECT "PO_number" FROM "purchase_order" ORDER BY CAST(SUBSTRING("PO_number", 4) AS INT) DESC LIMIT 1`;
 
     const poNumber = lastPo[0]?.PO_number;
-    console.log(poNumber);
     let nextCodeNumber = 1;
     if (poNumber) {
       const currentCodeNumber = parseInt(poNumber.replace(/^PO-?/, ''), 10);

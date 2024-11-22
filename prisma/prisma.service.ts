@@ -141,6 +141,7 @@ export class PrismaService
     'MaterialReceipt',
     'PoDelivery',
     'Supplier',
+    'PurchaseOrder',
     'ProductionPlanDetail',
     'Task',
     'Todo',
