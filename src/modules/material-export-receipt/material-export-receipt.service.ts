@@ -1,7 +1,10 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { materialExportReceiptInclude } from 'prisma/prisma-include';
+import {
+  materialExportReceiptInclude,
+  materialExportRequestInclude,
+} from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
@@ -67,6 +70,34 @@ export class MaterialExportReceiptService {
       throw new Error('Material export receipt not found');
     }
     return materialExportReceipt;
+  }
+
+  async getRecommendedMaterialExportReceipt(materialExportRequestId: string) {
+    const materialExportRequest =
+      await this.prismaService.materialExportRequest.findUnique({
+        where: {
+          id: materialExportRequestId,
+        },
+        include: materialExportRequestInclude,
+      });
+    if (!materialExportRequest) {
+      throw new Error('Material export request not found');
+    }
+    const materialVariantIds: string[] =
+      materialExportRequest.materialExportRequestDetail.map(
+        (detail) => detail.materialVariantId,
+      );
+
+    // Get all material receipts that have material variants in the material export request
+    const materialReceipts = await this.prismaService.materialReceipt.findMany({
+      where: {
+        materialPackage: {
+          materialVariantId: {
+            in: materialVariantIds,
+          },
+        },
+      },
+    });
   }
 
   update(

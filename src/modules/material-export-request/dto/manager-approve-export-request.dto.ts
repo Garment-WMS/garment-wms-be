@@ -1,13 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { RoleCode } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
+  ValidateNested,
 } from 'class-validator';
 import { ManagerAction } from 'src/modules/import-request/dto/import-request/manager-process.dto';
+import { CreateMaterialExportReceiptDto } from 'src/modules/material-export-receipt/dto/create-material-export-receipt.dto';
 import { IsUserRoleExist } from 'src/modules/user/validator/is-user-of-role-exist.validator';
 
 export class ManagerApproveExportRequestDto {
@@ -41,4 +44,9 @@ export class ManagerApproveExportRequestDto {
   @IsUUID()
   @IsNotEmpty()
   warehouseStaffId: string;
+
+  @ApiProperty({ required: false })
+  @Type(() => CreateMaterialExportReceiptDto)
+  @ValidateNested()
+  materialExportReceipt: CreateMaterialExportReceiptDto;
 }
