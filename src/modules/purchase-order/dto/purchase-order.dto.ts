@@ -2,6 +2,7 @@ import { $Enums, PurchaseOrder } from '@prisma/client';
 
 export class PurchaseOrderDto implements PurchaseOrder {
   productionPlanId: string;
+  code: string;
   note: string;
   cancelledBy: string;
   cancelledAt: Date;

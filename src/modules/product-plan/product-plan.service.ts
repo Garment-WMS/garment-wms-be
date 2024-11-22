@@ -55,7 +55,27 @@ export class ProductPlanService {
     },
     productionPlanDetail: {
       include: {
-        productionBatch: true,
+        productionBatch: {
+          include: {
+            importRequest: {
+              include: {
+                inspectionRequest: {
+                  include: {
+                    inspectionReport: {
+                      include: {
+                        importReceipt: {
+                          include: {
+                            productReceipt: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         productSize: {
           include: {
             productVariant: {
@@ -196,13 +216,21 @@ export class ProductPlanService {
           ...rest?.where,
         },
         include: this.includeQuery,
-      }),
+      }) as any,
       this.prismaService.productionPlan.count({
         where: {
           ...rest?.where,
         },
       }),
     ]);
+
+    result.forEach((productionPlan) => {
+      let totalQuantityToProduce = 0;
+      productionPlan.productionPlanDetail.forEach((detail) => {
+        totalQuantityToProduce += detail.quantityToProduce;
+      });
+      productionPlan.totalQuantityToProduce = totalQuantityToProduce;
+    });
 
     return apiSuccess(
       HttpStatus.OK,
@@ -219,10 +247,115 @@ export class ProductPlanService {
       throw new Error('Invalid UUID');
     }
 
-    const productPlan = await this.prismaService.productionPlan.findUnique({
-      where: { id },
-      include: this.includeQuery,
+    const productPlan: any = await this.prismaService.productionPlan.findUnique(
+      {
+        where: { id },
+        include: {
+          purchaseOrder: {
+            include: {
+              purchasingStaff: {
+                include: {
+                  account: true,
+                },
+              },
+              supplier: true,
+              poDelivery: {
+                include: {
+                  importRequest: true,
+                  poDeliveryDetail: {
+                    include: {
+                      materialPackage: {
+                        include: {
+                          materialVariant: {
+                            include: {
+                              material: {
+                                include: {
+                                  materialUom: true,
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          productionPlanDetail: {
+            include: {
+              productionBatch: {
+                include: {
+                  importRequest: {
+                    include: {
+                      inspectionRequest: {
+                        include: {
+                          inspectionReport: {
+                            include: {
+                              importReceipt: {
+                                include: {
+                                  productReceipt: true,
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              productSize: {
+                include: {
+                  productVariant: {
+                    include: {
+                      product: {
+                        include: {
+                          productUom: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    );
+
+    let totalQuantityToProduce = 0;
+    let totalProducedQuantity = 0;
+    let totalDefectQuantity = 0;
+    productPlan.productionPlanDetail.forEach((detail) => {
+      totalQuantityToProduce += detail.quantityToProduce;
     });
+    productPlan.totalQuantityToProduce = totalQuantityToProduce;
+    productPlan.productionPlanDetail.forEach((detail) => {
+      if (detail.productionBatch.length > 0) {
+        detail.productionBatch.forEach((batch) => {
+          // if (batch.status === ProductionStatus.FINISHED) {
+          batch.importRequest.forEach((request) => {
+            request.inspectionRequest.forEach((inspection) => {
+              inspection.inspectionReport.importReceipt.productReceipt.forEach(
+                (productReceipt) => {
+                  if (productReceipt.isDefect) {
+                    totalDefectQuantity += productReceipt.quantityByUom;
+                  } else {
+                    totalProducedQuantity += productReceipt.quantityByUom;
+                  }
+                },
+              );
+            });
+          });
+          // }
+        });
+      }
+    });
+
+    productPlan.totalProducedQuantity = totalProducedQuantity;
+    productPlan.totalDefectQuantity = totalDefectQuantity;
 
     return apiSuccess(
       HttpStatus.OK,

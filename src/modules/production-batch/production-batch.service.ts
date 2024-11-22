@@ -25,6 +25,19 @@ export class ProductionBatchService {
     private readonly excelService: ExcelService,
   ) {}
 
+  updateProductBatchStatus(
+    productionBatchId: string,
+    status: ProductionBatchStatus,
+    prismaInstance: PrismaService,
+  ) {
+    return prismaInstance.productionBatch.update({
+      where: { id: productionBatchId },
+      data: {
+        status: status,
+      },
+    });
+  }
+
   updateStatus(
     productionBatchId: string,
     status: ProductionBatchStatus,

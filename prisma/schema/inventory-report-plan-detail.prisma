@@ -15,6 +15,5 @@ model InventoryReportPlanDetail {
     inventoryReport       InventoryReport?    @relation(fields: [inventoryReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
     productVariant        ProductVariant?     @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
     materialVariant       MaterialVariant?    @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
     @@map("inventory_report_plan_detail")
 }

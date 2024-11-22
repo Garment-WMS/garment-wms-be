@@ -9,7 +9,10 @@ import { ApiResponse } from 'src/common/dto/response.dto';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ExcelService } from '../excel/excel.service';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
-import { PoDeliveryService } from '../po-delivery/po-delivery.service';
+import {
+  extractNumberFromCode,
+  PoDeliveryService,
+} from '../po-delivery/po-delivery.service';
 import { ProductPlanService } from '../product-plan/product-plan.service';
 import { CancelledPurchaseOrderDto } from './dto/cancelled-purchase-order.dto';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
@@ -275,19 +278,24 @@ export class PurchaseOrderService {
         const purchaseOrder = await prisma.purchaseOrder.create({
           data: createPurchaseOrder,
         });
+        let poDeliveryCode = null;
         for (let i = 0; i < excelData.poDelivery.length; i++) {
           const poDelivery: Partial<PoDeliveryDto> = excelData.poDelivery[i];
-          let codeNumber =
-            await this.poDeliveryService.generateManyNextPoDeliveryCodes(i + 1);
+          // let codeNumber =
+          //   await this.poDeliveryService.generateManyNextPoDeliveryCodes(i + 1);
           const poDeliveryCreateInput: Prisma.PoDeliveryCreateInput = {
             isExtra: poDelivery.isExtra,
             purchaseOrder: { connect: { id: purchaseOrder.id } },
             expectedDeliverDate: poDelivery.expectedDeliverDate,
-            code: codeNumber,
+            code: poDeliveryCode ? poDeliveryCode : undefined,
           };
           const poDeliveryResult = await prisma.poDelivery.create({
             data: poDeliveryCreateInput,
           });
+
+          const extractedNumber =
+            extractNumberFromCode(poDeliveryResult.code) + 1;
+          poDeliveryCode = `PO-DEL-${extractedNumber.toString().padStart(6, '0')}`;
           const poDeliveryDetails = poDelivery.poDeliveryDetail.map(
             (material) => {
               return {
@@ -405,7 +413,6 @@ export class PurchaseOrderService {
     >`SELECT "PO_number" FROM "purchase_order" ORDER BY CAST(SUBSTRING("PO_number", 4) AS INT) DESC LIMIT 1`;
 
     const poNumber = lastPo[0]?.PO_number;
-    console.log(poNumber);
     let nextCodeNumber = 1;
     if (poNumber) {
       const currentCodeNumber = parseInt(poNumber.replace(/^PO-?/, ''), 10);
