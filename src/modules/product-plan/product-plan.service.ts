@@ -1,6 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
+import { Prisma, PrismaClient, ProductionStatus } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -55,6 +55,7 @@ export class ProductPlanService {
     },
     productionPlanDetail: {
       include: {
+        productionBatch: true,
         productSize: {
           include: {
             productVariant: {
@@ -71,6 +72,57 @@ export class ProductPlanService {
       },
     },
   };
+
+  async startProductionPlan(id: string, status: ProductionStatus) {
+    const productionPlan = await this.findById(id);
+    if (!productionPlan) {
+      return apiFailed(HttpStatus.NOT_FOUND, 'Production Plan not found');
+    }
+    if (productionPlan.status === ProductionStatus.IN_PROGRESS) {
+      return apiFailed(
+        HttpStatus.CONFLICT,
+        'Production Plan is already in progress',
+      );
+    }
+    if (productionPlan.status === ProductionStatus.FINISHED) {
+      return apiFailed(
+        HttpStatus.CONFLICT,
+        'Production Plan is already completed',
+      );
+    }
+    const result = await this.prismaService.productionPlan.update({
+      where: { id },
+      data: { status },
+    });
+
+    return apiSuccess(
+      HttpStatus.OK,
+      result,
+      'Production Plan started successfully',
+    );
+  }
+
+  async findById(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid UUID');
+    }
+    const result = await this.prismaService.productionPlan.findUnique({
+      where: { id },
+      include: this.includeQuery,
+    });
+    return result;
+  }
+
+  findValidProductionPlan(productionPlanId: string) {
+    return this.prismaService.productionPlan.findFirst({
+      where: {
+        AND: {
+          id: productionPlanId,
+          status: ProductionStatus.IN_PROGRESS,
+        },
+      },
+    });
+  }
 
   async createProductPlanWithExcelFile(
     file: Express.Multer.File,

@@ -334,6 +334,72 @@ export class ProductVariantService {
     return data;
   }
 
+  async findAllHasReceipt(
+    filterOption?: GeneratedFindOptions<Prisma.ProductVariantWhereInput>,
+  ) {
+    const { skip, take, ...rest } = filterOption;
+    const page = filterOption?.skip || Constant.DEFAULT_OFFSET;
+    const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.productVariant.findMany({
+        skip: page,
+        take: limit,
+        where: {
+          productSize: {
+            some: {
+              productReceipt: {
+                some: {
+                  status: { in: [ProductReceiptStatus.AVAILABLE] },
+                },
+              },
+            },
+          },
+          ...rest?.where,
+        },
+        orderBy: filterOption?.orderBy,
+        include: this.includeQueryAny,
+      }),
+      this.prismaService.productVariant.count({
+        where: {
+          productSize: {
+            some: {
+              productReceipt: {
+                some: {
+                  status: { in: [ProductReceiptStatus.AVAILABLE] },
+                },
+              },
+            },
+          },
+          ...rest?.where,
+        },
+      }),
+    ]);
+
+    data.forEach((product: ProductStock) => {
+      product.numberOfProductSize = product.productSize.length;
+      product.onHand = product?.productSize?.reduce(
+        (totalAcc, productSizeEl) => {
+          let variantTotal = 0;
+          //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+          if (productSizeEl?.inventoryStock) {
+            variantTotal = productSizeEl.inventoryStock.quantityByUom;
+          }
+          return totalAcc + variantTotal;
+        },
+        0,
+      );
+    });
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: data,
+        pageMeta: getPageMeta(total, page, limit),
+      },
+      'List of Purchase Order',
+    );
+  }
+
   async findAll(
     filterOption?: GeneratedFindOptions<Prisma.ProductVariantWhereInput>,
   ) {
@@ -363,15 +429,14 @@ export class ProductVariantService {
         (totalAcc, productSizeEl) => {
           let variantTotal = 0;
           //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
-          if (productSizeEl.inventoryStock) {
-            variantTotal = productSizeEl.inventoryStock.quantityByPack;
+          if (productSizeEl?.inventoryStock) {
+            variantTotal = productSizeEl.inventoryStock.quantityByUom;
           }
           return totalAcc + variantTotal;
         },
         0,
       );
     });
-
     return apiSuccess(
       HttpStatus.OK,
       {

@@ -1,3 +1,4 @@
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
@@ -12,17 +13,16 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Prisma, RoleCode } from '@prisma/client';
+import { Prisma, ProductionStatus, RoleCode } from '@prisma/client';
 import { GetUser } from 'src/common/decorator/get_user.decorator';
 import { Roles } from 'src/common/decorator/roles.decorator';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { RolesGuard } from 'src/common/guard/roles.guard';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { UpdateProductPlanDto } from './dto/update-product-plan.dto';
 import { ProductPlanService } from './product-plan.service';
-import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
-import { FilterDto } from 'src/common/dto/filter-query.dto';
 
 @Controller('production-plan')
 export class ProductPlanController {
@@ -50,7 +50,7 @@ export class ProductPlanController {
     )
     filterDto: FilterDto<Prisma.ProductionPlanWhereInput>,
   ) {
-    return this.productPlanService.findAll(filterDto.findOptions);;
+    return this.productPlanService.findAll(filterDto.findOptions);
   }
 
   @Get(':id')
@@ -64,6 +64,21 @@ export class ProductPlanController {
     @Body() updateProductPlanDto: UpdateProductPlanDto,
   ) {
     return this.productPlanService.update(+id, updateProductPlanDto);
+  }
+  @Patch(':id/start')
+  startProductionplan(@Param('id', CustomUUIDPipe) id: string) {
+    return this.productPlanService.startProductionPlan(
+      id,
+      ProductionStatus.IN_PROGRESS,
+    );
+  }
+
+  @Patch(':id/finish')
+  finishProductionPlan(@Param('id', CustomUUIDPipe) id: string) {
+    return this.productPlanService.startProductionPlan(
+      id,
+      ProductionStatus.FINISHED,
+    );
   }
 
   @Delete(':id')

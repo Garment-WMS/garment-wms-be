@@ -58,6 +58,68 @@ export class MaterialVariantService {
     });
   }
 
+  async findMaterialHasReceipt(
+    findOptions: GeneratedFindOptions<Prisma.MaterialVariantScalarWhereInput>,
+  ) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.materialVariant.findMany({
+        skip: offset,
+        take: limit,
+        where: {
+          materialPackage: {
+            some: {
+              materialReceipt: {
+                some: {
+                  status: MaterialReceiptStatus.AVAILABLE,
+                },
+              },
+            },
+          },
+        },
+        include: this.materialInclude,
+      }),
+      this.prismaService.materialVariant.count({
+        where: {
+          materialPackage: {
+            some: {
+              materialReceipt: {
+                some: {
+                  status: MaterialReceiptStatus.AVAILABLE,
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    data.forEach((material: any) => {
+      material.numberOfMaterialPackage = material.materialPackage.length;
+      material.onHand = material?.materialPackage?.reduce(
+        (totalAcc, materialVariantEl) => {
+          let variantTotal = 0;
+          //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+          if (materialVariantEl.inventoryStock) {
+            variantTotal = materialVariantEl.inventoryStock.quantityByPack;
+          }
+          return totalAcc + variantTotal;
+        },
+        0,
+      );
+    });
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data,
+        pageMeta: getPageMeta(total, offset, limit),
+      },
+      'List of Material with Receipt',
+    );
+  }
+
   async findMaterialExportReceipt(
     id: string,
     findOptions: GeneratedFindOptions<Prisma.MaterialExportReceiptDetailScalarWhereInput>,

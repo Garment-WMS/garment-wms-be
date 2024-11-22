@@ -10,6 +10,7 @@ import { getPageMeta } from 'src/common/utils/utils';
 import { ExcelService } from '../excel/excel.service';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
+import { ProductPlanService } from '../product-plan/product-plan.service';
 import { CancelledPurchaseOrderDto } from './dto/cancelled-purchase-order.dto';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { PurchaseOrderDto } from './dto/purchase-order.dto';
@@ -22,6 +23,7 @@ export class PurchaseOrderService {
     private readonly prismaService: PrismaService,
     private readonly excelService: ExcelService,
     private readonly poDeliveryService: PoDeliveryService,
+    private readonly productionPlanservice: ProductPlanService,
   ) {}
 
   queryInclude: Prisma.PurchaseOrderInclude = {
@@ -222,7 +224,17 @@ export class PurchaseOrderService {
   async createPurchaseOrderWithExcelFile(
     file: Express.Multer.File,
     purchasingStaffId: string,
+    productionPlanId: string,
   ) {
+    const productionPlan =
+      await this.productionPlanservice.findValidProductionPlan(
+        productionPlanId,
+      );
+
+    if (!productionPlan) {
+      return apiFailed(HttpStatus.NOT_FOUND, 'Invalid Production Plan');
+    }
+
     const excelData = await this.excelService.readExcel(file);
     let purchaseOrder = null;
     if (excelData instanceof ApiResponse) {
@@ -239,6 +251,9 @@ export class PurchaseOrderService {
         excelData as Partial<CreatePurchaseOrderDto>;
       const createPurchaseOrder: Prisma.PurchaseOrderCreateInput = {
         subTotalAmount: subTotalAmount,
+        productionPlan: {
+          connect: { id: productionPlan.id },
+        },
         taxAmount: createPurchaseOrderData.taxAmount,
         expectedFinishDate: createPurchaseOrderData.expectedFinishDate,
         orderDate: createPurchaseOrderData.orderDate,

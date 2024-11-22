@@ -82,11 +82,16 @@ export class PurchaseOrderController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.PURCHASING_STAFF)
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file, @GetUser() user: AuthenUser) {
+  async uploadFile(
+    @UploadedFile() file,
+    @GetUser() user: AuthenUser,
+    @Body('productionPlanId') productionPlanId: string,
+  ) {
     const fileResult: any =
       await this.purchaseOrderService.createPurchaseOrderWithExcelFile(
         file,
         user.purchasingStaffId,
+        productionPlanId,
       );
     return fileResult;
   }

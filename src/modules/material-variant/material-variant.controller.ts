@@ -69,6 +69,27 @@ export class MaterialVariantController {
     return this.materialVariantService.findAll();
   }
 
+  @Get('has-receipt')
+  getMaterialHasReceipt(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialVariantScalarWhereInput>(
+        ['material.name', 'material.code', 'material.materialUom.name'],
+        [
+          { createdAt: 'desc' },
+          { id: 'asc' },
+          { name: 'asc' },
+          { materialId: 'asc' },
+          { code: 'asc' },
+          { reorderLevel: 'asc' },
+          { updatedAt: 'asc' },
+        ],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.MaterialVariantScalarWhereInput>,
+  ) {
+    return this.materialVariantService.findMaterialHasReceipt(filterOptions.findOptions);
+  }
+
   @Post(':id/image')
   @UseInterceptors(FileInterceptor('file'))
   uploadAvatar(
