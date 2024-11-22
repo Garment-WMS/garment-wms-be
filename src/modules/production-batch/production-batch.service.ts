@@ -96,11 +96,12 @@ export class ProductionBatchService {
 
     const createProductBatchData = excelData as CreateProductionBatchDto[];
 
+    // console.log(createProductBatchData);
     const createProductionBatchInput: Prisma.ProductionBatchCreateManyInput[] =
       createProductBatchData.map((item) => {
         return {
           ...item,
-          productionDepartmentId,
+          // productionDepartmentId,
         };
       });
     console.log(createProductionBatchInput);
@@ -108,9 +109,10 @@ export class ProductionBatchService {
       async (prismaInstance: PrismaService) => {
         const productionBatchResult: any =
           await prismaInstance.productionBatch.createManyAndReturn({
-            data: createProductBatchData,
-            include: productionBatchInclude,
+            data: createProductionBatchInput,
+            // include: productionBatchInclude,
           });
+        console.log(productionBatchResult);
         return productionBatchResult;
       },
     );

@@ -2438,7 +2438,7 @@ export class ExcelService {
         if (
           this.validateRequired(
             itemCell.productionPlanCodeCell.value as string,
-            'Production Plan Code',
+            'Production Plan Detail Code',
             itemCell.productionPlanCodeCell.address,
             listItemError,
           )

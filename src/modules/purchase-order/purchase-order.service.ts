@@ -1,6 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma, PurchaseOrderStatus } from '@prisma/client';
+import { PoDeliveryStatus, Prisma, PurchaseOrderStatus } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -213,14 +213,18 @@ export class PurchaseOrderService {
     let totalFailImportQuantity = null;
     purchaseOrder.poDelivery.forEach((poDelivery) => {
       poDelivery.poDeliveryDetail.forEach((poDeliveryDetail) => {
+        if (poDelivery.status === PoDeliveryStatus.FINISHED) {
+          totalFailImportQuantity +=
+            poDeliveryDetail.quantityByPack -
+            poDeliveryDetail.actualImportQuantity;
+        }
         totalImportQuantity += poDeliveryDetail.actualImportQuantity;
         totalQuantityToImport += poDeliveryDetail.quantityByPack;
       });
     });
 
     purchaseOrder.totalImportQuantity = totalImportQuantity;
-    purchaseOrder.totalFailImportQuantity =
-      totalQuantityToImport - totalImportQuantity;
+    purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
     purchaseOrder.totalQuantityToImport = totalQuantityToImport;
 
     if (!purchaseOrder) {
