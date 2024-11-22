@@ -69,5 +69,6 @@ export class CreateMaterialExportRequestDto {
   @ArrayUnique((o) => o.materialVariantId)
   @ArrayNotEmpty()
   @IsArray()
+  @IsOptional()
   materialExportRequestDetail?: CreateNestedMaterialExportRequestDetailDto[];
 }

@@ -1,3 +1,4 @@
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 import {
   Body,
   Controller,
@@ -7,8 +8,11 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { apiSuccess } from 'src/common/dto/api-response';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
 import { UpdateMaterialExportReceiptDto } from './dto/update-material-export-receipt.dto';
 import { MaterialExportReceiptService } from './material-export-receipt.service';
@@ -33,13 +37,21 @@ export class MaterialExportReceiptController {
   }
 
   @Get()
-  findAll() {
-    return this.materialExportReceiptService.search();
+  findAll(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialExportReceiptWhereInput>(
+        [],
+        [{ createdAt: 'desc' }, { id: 'asc' }],
+      ),
+    )
+    filterDto: FilterDto<Prisma.MaterialExportReceiptWhereInput>,
+  ) {
+    return this.materialExportReceiptService.search(filterDto.findOptions);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.materialExportReceiptService.findOne(+id);
+    return this.materialExportReceiptService.findUnique(id);
   }
 
   @Patch(':id')
@@ -48,13 +60,13 @@ export class MaterialExportReceiptController {
     @Body() updateMaterialExportReceiptDto: UpdateMaterialExportReceiptDto,
   ) {
     return this.materialExportReceiptService.update(
-      +id,
+      id,
       updateMaterialExportReceiptDto,
     );
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.materialExportReceiptService.remove(+id);
+    return this.materialExportReceiptService.remove(id);
   }
 }
