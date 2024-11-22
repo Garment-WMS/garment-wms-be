@@ -24,14 +24,25 @@ import { UpdateMaterialExportRequestDto } from './dto/update-material-export-req
 export class MaterialExportRequestService {
   constructor(private readonly prismaService: PrismaService) {}
   async create(dto: CreateMaterialExportRequestDto) {
+    const productionBatch =
+      await this.prismaService.productionBatch.findUniqueOrThrow({
+        where: {
+          id: dto.productionBatchId,
+        },
+        select: {
+          quantityToProduce: true,
+        },
+      });
+
+    const quantityToProduce = productionBatch.quantityToProduce;
+
     if (!dto.materialExportRequestDetail) {
-      Logger.debug(dto.materialExportRequestDetail);
       dto.materialExportRequestDetail =
         await this.mapMaterialExportRequestDetailByFormula(
           dto.productFormulaId,
+          quantityToProduce,
         );
       Logger.debug('mapped');
-      Logger.debug(dto.materialExportRequestDetail);
     }
     const materialExportRequestInput: Prisma.MaterialExportRequestUncheckedCreateInput =
       {
@@ -56,7 +67,10 @@ export class MaterialExportRequestService {
     });
   }
 
-  async mapMaterialExportRequestDetailByFormula(productFormulaId: string) {
+  async mapMaterialExportRequestDetailByFormula(
+    productFormulaId: string,
+    productQuantity: number,
+  ) {
     const productFormula = await this.prismaService.productFormula.findUnique({
       where: {
         id: productFormulaId,
@@ -74,7 +88,8 @@ export class MaterialExportRequestService {
         const materialExportRequestDetail: CreateNestedMaterialExportRequestDetailDto =
           {
             materialVariantId: productFormulaMaterial.materialVariantId,
-            quantityByUom: productFormulaMaterial.quantityByUom,
+            quantityByUom:
+              productFormulaMaterial.quantityByUom * productQuantity,
           };
         return materialExportRequestDetail;
       });
