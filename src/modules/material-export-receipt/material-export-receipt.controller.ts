@@ -20,7 +20,7 @@ export class MaterialExportReceiptController {
   ) {}
 
   @Post()
-  create(
+  async create(
     @Body() createMaterialExportReceiptDto: CreateMaterialExportReceiptDto,
   ) {
     return apiSuccess(
