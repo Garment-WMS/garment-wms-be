@@ -437,6 +437,14 @@ export class ProductVariantService {
         0,
       );
     });
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: data,
+        pageMeta: getPageMeta(total, page, limit),
+      },
+      'List of Purchase Order',
+    );
   }
 
   async findByIdWithResponse(id: string) {
