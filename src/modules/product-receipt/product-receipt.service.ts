@@ -6,6 +6,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { CreateProductReceiptDto } from './dto/create-product-receipt.dto';
 import { UpdateProductReceiptDto } from './dto/update-product-receipt.dto';
+import { productReceiptIncludeQuery } from 'prisma/prisma-include';
 
 @Injectable()
 export class ProductReceiptService {
@@ -14,24 +15,7 @@ export class ProductReceiptService {
     private readonly inventoryStockService: InventoryStockService,
   ) {}
 
-  productReceiptIncludeQuery: Prisma.ProductReceiptInclude = {
-    importReceipt: true,
-    receiptAdjustment: true,
-    productSize: {
-      include: {
-        productVariant: {
-          include: {
-            product: {
-              include: {
-                productUom: true,
-              },
-            },
-            productAttribute: true,
-          },
-        },
-      },
-    },
-  };
+  
 
   async updateProductReceiptQuantity(
     id: string,
@@ -91,7 +75,7 @@ export class ProductReceiptService {
           in: [ProductReceiptStatus.AVAILABLE],
         },
       },
-      include: this.productReceiptIncludeQuery,
+      include: productReceiptIncludeQuery,
     });
 
     return productReceipts;
@@ -104,14 +88,14 @@ export class ProductReceiptService {
       where: {
         id,
       },
-      include: this.productReceiptIncludeQuery,
+      include: productReceiptIncludeQuery,
     });
   }
 
   findByQuery(query: any) {
     return this.prismaService.productReceipt.findFirst({
       where: query,
-      include: this.productReceiptIncludeQuery,
+      include: productReceiptIncludeQuery,
     });
   }
   async createProductReceipts(

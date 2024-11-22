@@ -1,6 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma, PurchaseOrderStatus } from '@prisma/client';
+import { PoDeliveryStatus, Prisma, PurchaseOrderStatus } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -180,12 +180,56 @@ export class PurchaseOrderService {
           ...rest?.where,
         },
         orderBy: filterOption?.orderBy,
-        include: this.queryInclude,
-      }),
+        include: {
+          supplier: true,
+          poDelivery: {
+            include: {
+              poDeliveryDetail: {
+                include: {
+                  materialPackage: {
+                    include: {
+                      materialVariant: {
+                        include: {
+                          material: {
+                            include: {
+                              materialUom: true,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }) as any,
       this.prismaService.purchaseOrder.count({
         where: filterOption?.where ? filterOption.where : undefined,
       }),
     ]);
+
+    result.forEach((purchaseOrder) => {
+      let totalImportQuantity = null;
+      let totalQuantityToImport = null;
+      let totalFailImportQuantity = null;
+      purchaseOrder.poDelivery.forEach((poDelivery) => {
+        poDelivery.poDeliveryDetail.forEach((poDeliveryDetail) => {
+          if (poDelivery.status === PoDeliveryStatus.FINISHED) {
+            totalFailImportQuantity +=
+              poDeliveryDetail.quantityByPack -
+              poDeliveryDetail.actualImportQuantity;
+          }
+          totalImportQuantity += poDeliveryDetail.actualImportQuantity;
+          totalQuantityToImport += poDeliveryDetail.quantityByPack;
+        });
+      });
+
+      purchaseOrder.totalImportQuantity = totalImportQuantity;
+      purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
+      purchaseOrder.totalQuantityToImport = totalQuantityToImport;
+    });
 
     return apiSuccess(
       HttpStatus.OK,
@@ -207,20 +251,23 @@ export class PurchaseOrderService {
     if (!purchaseOrder) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');
     }
-    console.log(purchaseOrder);
     let totalImportQuantity = null;
     let totalQuantityToImport = null;
     let totalFailImportQuantity = null;
     purchaseOrder.poDelivery.forEach((poDelivery) => {
       poDelivery.poDeliveryDetail.forEach((poDeliveryDetail) => {
+        if (poDelivery.status === PoDeliveryStatus.FINISHED) {
+          totalFailImportQuantity +=
+            poDeliveryDetail.quantityByPack -
+            poDeliveryDetail.actualImportQuantity;
+        }
         totalImportQuantity += poDeliveryDetail.actualImportQuantity;
         totalQuantityToImport += poDeliveryDetail.quantityByPack;
       });
     });
 
     purchaseOrder.totalImportQuantity = totalImportQuantity;
-    purchaseOrder.totalFailImportQuantity =
-      totalQuantityToImport - totalImportQuantity;
+    purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
     purchaseOrder.totalQuantityToImport = totalQuantityToImport;
 
     if (!purchaseOrder) {
