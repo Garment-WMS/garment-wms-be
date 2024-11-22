@@ -99,10 +99,6 @@ export class ImportReceiptService {
       finishedAt: createImportReceiptDto.finishAt,
     };
 
-    
-
-
-
     // this.validateMaterialReceipt(
     //   inspectionReport.inspectionReportDetail,
     //   createImportReceiptDto.materialReceipts,
@@ -454,7 +450,6 @@ export class ImportReceiptService {
             );
           }
         } else if (importReceipt?.productReceipt.length > 0) {
-          console.log('productReceipt', importReceipt.productReceipt);
           for (const detail of importReceipt.productReceipt) {
             await this.productReceiptService.updateProductReceiptStatus(
               detail.id,
@@ -466,7 +461,6 @@ export class ImportReceiptService {
               detail.quantityByUom,
               prismaInstance,
             );
-
             if (
               !importReceipt?.inspectionReport?.inspectionRequest
                 .importRequestId
@@ -479,8 +473,14 @@ export class ImportReceiptService {
               prismaInstance,
             );
           }
+          await this.productionBatchService.updateProductBatchStatus(
+            importReceipt.inspectionReport.inspectionRequest.importRequest.productionBatchId,
+            $Enums.ProductionBatchStatus.IMPORTED,
+            prismaInstance,
+          );
+
         } else {
-          throw new Error('Material Receipt not found');
+          throw new Error('Receipt not found');
         }
         const result = await this.updateImportReceiptStatus(
           importReceiptId,

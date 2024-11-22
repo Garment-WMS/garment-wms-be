@@ -1,18 +1,18 @@
 model ProductionPlanDetail {
-  id                String            @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  productionPlanId  String            @map("production_plan_id") @db.Uuid
-  productSizeId     String            @map("product_size_id") @db.Uuid
-  quantityToProduce Float             @map("quantity_to_produce")
-  code              String?           @map("code") @db.VarChar
-  note              String?           @map("map") @db.VarChar
-  startDate         DateTime?         @map("start_date") @db.Date
-  finishDate        DateTime?         @map("finish_date") @db.Date
-  createdAt         DateTime?         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime?         @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt         DateTime?         @map("deleted_at") @db.Timestamptz(6)
-  productSize       ProductSize       @relation(fields: [productSizeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productionPlan    ProductionPlan    @relation(fields: [productionPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productionBatch   ProductionBatch[]
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  productionPlanId  String           @map("production_plan_id") @db.Uuid
+  productSizeId     String           @map("product_size_id") @db.Uuid
+  quantityToProduce Float            @map("quantity_to_produce")
+  code              String?          @map("code") @db.VarChar
+  note              String?          @map("map") @db.VarChar
+  startDate         DateTime?        @map("start_date") @db.Date
+  finishDate        DateTime?        @map("finish_date") @db.Date
+  createdAt         DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime?        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  productSize       ProductSize      @relation(fields: [productSizeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productionPlan    ProductionPlan   @relation(fields: [productionPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productionBatch   ProductionBatch?
 
   @@map("production_plan_detail")
 }
