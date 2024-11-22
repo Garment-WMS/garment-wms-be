@@ -2,6 +2,7 @@ import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { $Enums, Prisma } from '@prisma/client';
@@ -24,10 +25,13 @@ export class MaterialExportRequestService {
   constructor(private readonly prismaService: PrismaService) {}
   async create(dto: CreateMaterialExportRequestDto) {
     if (!dto.materialExportRequestDetail) {
-      this.mapMaterialExportRequestDetailByFormula(
-        dto.productFormulaId,
-        dto.materialExportRequestDetail,
-      );
+      Logger.debug(dto.materialExportRequestDetail);
+      dto.materialExportRequestDetail =
+        await this.mapMaterialExportRequestDetailByFormula(
+          dto.productFormulaId,
+        );
+      Logger.debug('mapped');
+      Logger.debug(dto.materialExportRequestDetail);
     }
     const materialExportRequestInput: Prisma.MaterialExportRequestUncheckedCreateInput =
       {
@@ -52,10 +56,7 @@ export class MaterialExportRequestService {
     });
   }
 
-  async mapMaterialExportRequestDetailByFormula(
-    productFormulaId: string,
-    materialExportRequestDetail: CreateNestedMaterialExportRequestDetailDto[],
-  ) {
+  async mapMaterialExportRequestDetailByFormula(productFormulaId: string) {
     const productFormula = await this.prismaService.productFormula.findUnique({
       where: {
         id: productFormulaId,
@@ -65,16 +66,18 @@ export class MaterialExportRequestService {
     if (!productFormula) {
       throw new NotFoundException('Product formula not found');
     }
-    materialExportRequestDetail = productFormula.productFormulaMaterial.map(
-      (productFormulaMaterial) => {
+    if (!productFormula.productFormulaMaterial) {
+      throw new BadRequestException('Product formula material not found');
+    }
+    const materialExportRequestDetail =
+      productFormula.productFormulaMaterial.map((productFormulaMaterial) => {
         const materialExportRequestDetail: CreateNestedMaterialExportRequestDetailDto =
           {
             materialVariantId: productFormulaMaterial.materialVariantId,
             quantityByUom: productFormulaMaterial.quantityByUom,
           };
         return materialExportRequestDetail;
-      },
-    );
+      });
     return materialExportRequestDetail;
   }
 
