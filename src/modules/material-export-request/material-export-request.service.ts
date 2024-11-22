@@ -1,5 +1,9 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { $Enums, Prisma } from '@prisma/client';
 import { materialExportRequestInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
@@ -130,7 +134,7 @@ export class MaterialExportRequestService {
     });
   }
 
-  async managerApprove(dto: ManagerApproveExportRequestDto) {
+  async managerApprove(id: string, dto: ManagerApproveExportRequestDto) {
     switch (dto.action) {
       case ManagerAction.APPROVED:
         const materialExportRequest =
@@ -139,6 +143,7 @@ export class MaterialExportRequestService {
               id: dto.id,
             },
             data: {
+              warehouseManagerId: dto.warehouseManagerId,
               status: $Enums.MaterialExportRequestStatus.APPROVED,
               managerNote: dto.managerNote,
               warehouseStaffId: dto.warehouseStaffId,
@@ -153,6 +158,7 @@ export class MaterialExportRequestService {
               id: dto.id,
             },
             data: {
+              warehouseManagerId: dto.warehouseManagerId,
               status: $Enums.MaterialExportRequestStatus.REJECTED,
               managerNote: dto.managerNote,
               rejectAt: new Date(),
@@ -161,6 +167,7 @@ export class MaterialExportRequestService {
           });
         return rejectedMaterialExportRequest;
       default:
+        throw new BadRequestException('Invalid manager action');
     }
   }
 }
