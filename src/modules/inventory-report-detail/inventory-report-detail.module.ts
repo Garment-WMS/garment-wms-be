@@ -14,6 +14,7 @@ import { IsInventoryReportDetailExistValidator } from './validator/is-inventory-
     ReceiptAdjustmentModule,
     MaterialReceiptModule,
     ProductReceiptModule,
+    ReceiptAdjustmentModule,
   ],
   providers: [
     InventoryReportDetailService,

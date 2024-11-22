@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { MaterialReceiptStatus, Prisma, PrismaClient } from '@prisma/client';
 import { isUUID } from 'class-validator';
+import { materialReceiptInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
@@ -18,33 +19,10 @@ export class MaterialReceiptService {
     private readonly materialPackagesService: MaterialPackageService,
   ) {}
 
-  includeQuery: Prisma.MaterialReceiptInclude = {
-    receiptAdjustment: true,
-    materialExportReceiptDetail: {
-      include: {
-        materialExportReceipt: true,
-      },
-    },
-    materialPackage: {
-      include: {
-        inventoryStock: true,
-        materialVariant: {
-          include: {
-            material: {
-              include: {
-                materialUom: true,
-              },
-            },
-          },
-        },
-      },
-    },
-  };
-
   findByQuery(query: any) {
     return this.prismaService.materialReceipt.findFirst({
       where: query,
-      include: this.includeQuery,
+      include: materialReceiptInclude,
     });
   }
 
@@ -74,7 +52,7 @@ export class MaterialReceiptService {
           in: [MaterialReceiptStatus.AVAILABLE],
         },
       },
-      include: this.includeQuery,
+      include: materialReceiptInclude,
     });
 
     return materialReceipts;
@@ -93,7 +71,7 @@ export class MaterialReceiptService {
           in: [MaterialReceiptStatus.AVAILABLE],
         },
       },
-      include: this.includeQuery,
+      include: materialReceiptInclude,
     });
 
     return materialReceipts;
@@ -162,7 +140,7 @@ export class MaterialReceiptService {
       where: {
         importReceiptId: id,
       },
-      include: this.includeQuery,
+      include: materialReceiptInclude,
     });
 
     return createdMaterialReceipts;
@@ -209,7 +187,7 @@ export class MaterialReceiptService {
 
   async findAll() {
     const materialReceipts = await this.prismaService.materialReceipt.findMany({
-      include: this.includeQuery,
+      include: materialReceiptInclude,
     });
 
     return apiSuccess(
@@ -262,7 +240,7 @@ export class MaterialReceiptService {
       where: {
         id,
       },
-      include: this.includeQuery,
+      include: materialReceiptInclude,
     });
   }
 

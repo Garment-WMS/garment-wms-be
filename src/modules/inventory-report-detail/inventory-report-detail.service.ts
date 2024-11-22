@@ -9,6 +9,7 @@ import { apiSuccess } from 'src/common/dto/api-response';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { ProductReceiptService } from '../product-receipt/product-receipt.service';
 import { CreateReceiptAdjustmentDto } from '../receipt-adjustment/dto/create-receipt-adjustment.dto';
+import { ReceiptAdjustmentService } from '../receipt-adjustment/receipt-adjustment.service';
 import { CreateInventoryReportDetailDto } from './dto/create-inventory-report-detail.dto';
 import { UpdateInventoryReportDetailDto } from './dto/update-inventory-report-detail.dto';
 import { WarehouseManagerApprovalInventoryReportDetailDto } from './dto/warehouse-manager-approval-inventory-report-detail.dto';
@@ -23,6 +24,7 @@ export class InventoryReportDetailService {
     private readonly eventEmitter: EventEmitter2,
     private readonly materialReceiptService: MaterialReceiptService,
     private readonly productReceiptService: ProductReceiptService,
+    private readonly receiptAdjustmentService: ReceiptAdjustmentService,
   ) {}
 
   isInventoryReportDetailExist(value: string) {
@@ -102,10 +104,14 @@ export class InventoryReportDetailService {
         reason: inventoryRecordDetail.note,
       };
       console.log(createReceiptAdjustmentDto);
-      await this.receiptAdjustQueue.add(
-        'create-receipt-adjustment',
-        createReceiptAdjustmentDto,
-      );
+
+      await this.receiptAdjustmentService.create(createReceiptAdjustmentDto);
+
+      // BUG: Not work
+      // await this.receiptAdjustQueue.add(
+      //   'create-receipt-adjustment',
+      //   createReceiptAdjustmentDto,
+      // );
     }
 
     return result;

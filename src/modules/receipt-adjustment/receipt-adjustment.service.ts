@@ -13,18 +13,23 @@ export class ReceiptAdjustmentService {
       warehouseManager: {
         connect: { id: createReceiptAdjustmentDto.warehouseManagerId },
       },
-      materialReceipt: {
-        connect: { id: createReceiptAdjustmentDto.materialReceiptId },
-      },
-      productReceipt: {
-        connect: { id: createReceiptAdjustmentDto.productReceiptId },
-      },
       beforeAdjustQuantity: createReceiptAdjustmentDto.beforeAdjustQuantity,
       afterAdjustQuantity: createReceiptAdjustmentDto.afterAdjustQuantity,
+      reason: createReceiptAdjustmentDto.reason,
       adjustedAt: new Date(),
       inventoryReportDetail: {
         connect: { id: createReceiptAdjustmentDto.inventoryReportDetailId },
       },
+      ...(createReceiptAdjustmentDto.materialReceiptId && {
+        materialReceipt: {
+          connect: { id: createReceiptAdjustmentDto.materialReceiptId },
+        },
+      }),
+      ...(createReceiptAdjustmentDto.productReceiptId && {
+        productReceipt: {
+          connect: { id: createReceiptAdjustmentDto.productReceiptId },
+        },
+      }),
     };
 
     console.log(CreateReceiptAdjustmentDto);
