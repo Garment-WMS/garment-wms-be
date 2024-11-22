@@ -363,7 +363,6 @@ export class PoDeliveryService {
       { poNumber: string }[]
     >`SELECT "code" FROM "po_delivery" ORDER BY CAST(SUBSTRING("code", 5) AS INT) DESC LIMIT 1`;
     const poDeliveryCode = lastPo_delivery[0]?.code;
-    console.log('poDeliveryCode', poDeliveryCode);
     let nextCodeNumber = 1 + index;
     if (poDeliveryCode) {
       const currentCodeNumber = extractNumberFromCode(poDeliveryCode);
@@ -372,6 +371,8 @@ export class PoDeliveryService {
 
     const nextCode = `${Constant.POD_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
     //Check is the next code is already exist
+    console.log(nextCode);
+
     const isExist = await this.pirsmaService.poDelivery.findFirst({
       where: {
         code: nextCode,
@@ -386,7 +387,7 @@ export class PoDeliveryService {
   }
 }
 
-const extractNumberFromCode = (code: string): number => {
+export const extractNumberFromCode = (code: string): number => {
   const match = code.match(/-(\d+)$/);
   if (match) {
     return parseInt(match[1], 10);
