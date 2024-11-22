@@ -220,6 +220,9 @@ export class InspectionReportService {
             inspectionReportDetail.defectQuantityByPack !==
           importRequestDetail.quantityByPack
         ) {
+          console.log(inspectionReportDetail.approvedQuantityByPack);
+          console.log(inspectionReportDetail.defectQuantityByPack);
+          console.log(importRequestDetail.quantityByPack);
           errorInspectionReportDetail.push(inspectionReportDetail);
         }
       });
@@ -230,6 +233,7 @@ export class InspectionReportService {
         dto.inspectionReportDetail,
       )}`,
     );
+    // console.log(errorInspectionReportDetail);
     if (errorInspectionReportDetail.length > 0) {
       throw new CustomValidationException(
         400,
@@ -291,7 +295,7 @@ export class InspectionReportService {
       dto,
       importRequest,
     );
-    this.mapInspectionReportDetail(dto, importRequest);
+    // this.mapInspectionReportDetail(dto, importRequest);
 
     //log inspection report detail
     dto.inspectionReportDetail.forEach((inspectionReportDetail) => {
