@@ -9,5 +9,6 @@ import { ExcelModule } from '../excel/excel.module';
   controllers: [ProductPlanController],
   imports: [PrismaModule, ProductPlanDetailModule,ExcelModule],
   providers: [ProductPlanService],
+  exports: [ProductPlanService],
 })
 export class ProductPlanModule {}

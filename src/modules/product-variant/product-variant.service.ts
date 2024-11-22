@@ -363,8 +363,8 @@ export class ProductVariantService {
         (totalAcc, productSizeEl) => {
           let variantTotal = 0;
           //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
-          if (productSizeEl.inventoryStock) {
-            variantTotal = productSizeEl.inventoryStock.quantityByPack;
+          if (productSizeEl?.inventoryStock) {
+            variantTotal = productSizeEl.inventoryStock.quantityByUom;
           }
           return totalAcc + variantTotal;
         },
