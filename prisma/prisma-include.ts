@@ -377,12 +377,10 @@ export const materialInclude: Prisma.MaterialInclude = {
   materialUom: true,
 };
 
-export const materialExportRequest: Prisma.MaterialExportRequestInclude = {
-  productFormula: {
-    include: productFormulaInclude,
-  },
-  materialExportRequestDetail: {
+export const materialReceiptInclude: Prisma.MaterialReceiptInclude = {
+  materialPackage: {
     include: {
+      inventoryStock: true,
       materialVariant: {
         include: materialVariantInclude,
       },

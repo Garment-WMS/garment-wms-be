@@ -188,13 +188,22 @@ export class MaterialExportRequestService {
     });
   }
 
-  async managerApprove(id: string, dto: ManagerApproveExportRequestDto) {
+  async managerApprove(
+    id: string,
+    dto: ManagerApproveExportRequestDto,
+    warehouseManagerId: string,
+  ) {
+    dto.warehouseManagerId = warehouseManagerId;
+    dto.materialExportReceipt.materialExportRequestId = id;
+    dto.materialExportReceipt.warehouseStaffId = dto.warehouseStaffId;
+    dto.materialExportReceipt.type =
+      $Enums.MaterialExportReceiptType.PRODUCTION;
     switch (dto.action) {
       case ManagerAction.APPROVED:
         const materialExportRequest =
           await this.prismaService.materialExportRequest.update({
             where: {
-              id: dto.id,
+              id: id,
             },
             data: {
               warehouseManagerId: dto.warehouseManagerId,
@@ -203,13 +212,14 @@ export class MaterialExportRequestService {
               warehouseStaffId: dto.warehouseStaffId,
               updatedAt: new Date(),
             },
+            include: materialExportRequestInclude,
           });
         return materialExportRequest;
       case ManagerAction.REJECTED:
         const rejectedMaterialExportRequest =
           await this.prismaService.materialExportRequest.update({
             where: {
-              id: dto.id,
+              id: id,
             },
             data: {
               warehouseManagerId: dto.warehouseManagerId,
@@ -218,6 +228,7 @@ export class MaterialExportRequestService {
               rejectAt: new Date(),
               updatedAt: new Date(),
             },
+            include: materialExportRequestInclude,
           });
         return rejectedMaterialExportRequest;
       default:

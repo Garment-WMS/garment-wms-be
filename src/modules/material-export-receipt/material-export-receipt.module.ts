@@ -1,12 +1,18 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from 'prisma/prisma.module';
+import { IsMaterialExportRequestExistValidator } from '../material-export-request/validator/is-material-export-request-exist.validator';
+import { ExportAlgorithmService } from './export-algorithm.service';
 import { MaterialExportReceiptController } from './material-export-receipt.controller';
 import { MaterialExportReceiptService } from './material-export-receipt.service';
 
 @Module({
   imports: [PrismaModule],
   controllers: [MaterialExportReceiptController],
-  providers: [MaterialExportReceiptService],
-  exports: [MaterialExportReceiptService],
+  providers: [
+    MaterialExportReceiptService,
+    ExportAlgorithmService,
+    IsMaterialExportRequestExistValidator,
+  ],
+  exports: [MaterialExportReceiptService, ExportAlgorithmService],
 })
 export class MaterialExportReceiptModule {}

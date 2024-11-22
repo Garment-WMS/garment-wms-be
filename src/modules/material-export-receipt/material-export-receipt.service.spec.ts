@@ -9,7 +9,9 @@ describe('MaterialExportReceiptService', () => {
       providers: [MaterialExportReceiptService],
     }).compile();
 
-    service = module.get<MaterialExportReceiptService>(MaterialExportReceiptService);
+    service = module.get<MaterialExportReceiptService>(
+      MaterialExportReceiptService,
+    );
   });
 
   it('should be defined', () => {

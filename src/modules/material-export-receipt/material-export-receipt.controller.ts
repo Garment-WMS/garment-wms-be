@@ -14,6 +14,10 @@ import { Prisma } from '@prisma/client';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
+import {
+  GetRecommendMaterialExportReceiptTestDto as GetRecommendMaterialExportReceiptByFormulaDto,
+  GetRecommendMaterialExportReceiptDto,
+} from './dto/get-recommend-material-export-receipt.dto';
 import { UpdateMaterialExportReceiptDto } from './dto/update-material-export-receipt.dto';
 import { MaterialExportReceiptService } from './material-export-receipt.service';
 
@@ -49,9 +53,45 @@ export class MaterialExportReceiptController {
     return this.materialExportReceiptService.search(filterDto.findOptions);
   }
 
+  @Post('/recommend')
+  async getExportAlgorithm(
+    @Body()
+    getRecommendMaterialExportReceiptDto: GetRecommendMaterialExportReceiptDto,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportReceiptService.getRecommendedMaterialExportReceipt(
+        getRecommendMaterialExportReceiptDto.materialExportRequestId,
+        getRecommendMaterialExportReceiptDto.algorithm,
+      ),
+      'Recommend material export receipt successfully',
+    );
+  }
+
+  @Post('/recommend-by-formula')
+  async handleAlgorithmTest(
+    @Param('id') id: string,
+    @Body()
+    dto: GetRecommendMaterialExportReceiptByFormulaDto,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportReceiptService.getRecommendedMaterialExportReceiptByFormula(
+        dto.productFormulaId,
+        dto.quantityToProduce,
+        dto.algorithm,
+      ),
+      'Recommend material export receipt by formula successfully',
+    );
+  }
+
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.materialExportReceiptService.findUnique(id);
+  async findUnique(@Param('id') id: string) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportReceiptService.findUnique(id),
+      'Get material export receipt successfully',
+    );
   }
 
   @Patch(':id')

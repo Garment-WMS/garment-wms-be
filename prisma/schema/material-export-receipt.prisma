@@ -1,6 +1,7 @@
 model MaterialExportReceipt {
   id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   code                        String?                       @map("code") @db.VarChar(255)
+  materialExportRequestId     String?                       @unique @map("material_export_request_id") @db.Uuid
   warehouseStaffId            String                        @map("warehouse_staff_id") @db.Uuid
   type                        MaterialExportReceiptType     @default(PRODUCTION) @map("type")
   status                      ExportReceiptStatus           @default(EXPORTING) @map("status")
@@ -13,6 +14,7 @@ model MaterialExportReceipt {
   warehouseStaff              WarehouseStaff                @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialExportReceiptDetail MaterialExportReceiptDetail[]
   task                        Task[]
+  materialExportRequest       MaterialExportRequest?        @relation(fields: [materialExportRequestId], references: [id])
 
   @@map("material_export_receipt")
 }

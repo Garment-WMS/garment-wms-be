@@ -1,5 +1,5 @@
-export enum ExportAlgorithm {
-  FIFO,
-  LIFO,
-  FEFO,
+export enum ExportAlgorithmEnum {
+  FIFO = 'FIFO',
+  LIFO = 'LIFO',
+  FEFO = 'FEFO',
 }

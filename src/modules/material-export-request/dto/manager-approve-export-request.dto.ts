@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { ManagerAction } from 'src/modules/import-request/dto/import-request/manager-process.dto';
@@ -14,11 +15,6 @@ import { CreateMaterialExportReceiptDto } from 'src/modules/material-export-rece
 import { IsUserRoleExist } from 'src/modules/user/validator/is-user-of-role-exist.validator';
 
 export class ManagerApproveExportRequestDto {
-  @ApiProperty({ required: true })
-  @IsUUID()
-  @IsNotEmpty()
-  id: string;
-
   @ApiProperty({ required: true })
   @IsUserRoleExist(RoleCode.WAREHOUSE_MANAGER)
   @IsUUID()
@@ -33,6 +29,7 @@ export class ManagerApproveExportRequestDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsNotEmpty()
+  @ValidateIf((o) => o.action === ManagerAction.REJECTED)
   rejectionReason: string;
 
   @ApiProperty({ required: false })

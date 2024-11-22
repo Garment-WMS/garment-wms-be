@@ -5,6 +5,7 @@ import {
   ArrayUnique,
   IsArray,
   IsEnum,
+  IsOptional,
   IsString,
   IsUUID,
   ValidateNested,
@@ -15,24 +16,34 @@ import { IsUserRoleExist } from 'src/modules/user/validator/is-user-of-role-exis
 export class CreateMaterialExportReceiptDto {
   // implements Prisma.MaterialExportReceiptCreateInput
   @ApiProperty()
+  @IsUUID()
+  @IsOptional()
+  materialExportRequestId: string;
+
+  @ApiProperty()
   @IsUserRoleExist(RoleCode.WAREHOUSE_STAFF)
   @IsUUID()
+  @IsOptional()
   warehouseStaffId: string;
 
   @ApiProperty()
   @IsString()
+  @IsOptional()
   note: string;
 
   @ApiProperty()
   @IsEnum($Enums.MaterialExportReceiptType)
+  @IsOptional()
   type: $Enums.MaterialExportReceiptType;
 
   @ApiProperty()
-  @Type(() => NestCreateMaterialExportReceipt)
   @ValidateNested({
     each: true,
   })
-  @ArrayUnique((o) => o.materialReceiptId)
+  @ArrayUnique((o) => o.materialReceiptId, {
+    message: 'Material receipt id must be unique in array',
+  })
+  @Type(() => NestCreateMaterialExportReceipt)
   @IsArray()
   materialExportReceiptDetail: NestCreateMaterialExportReceipt[];
 }
