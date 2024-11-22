@@ -1,14 +1,32 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from 'prisma/prisma.service';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
 import { UpdateMaterialExportReceiptDto } from './dto/update-material-export-receipt.dto';
 
 @Injectable()
 export class MaterialExportReceiptService {
-  create(createMaterialExportReceiptDto: CreateMaterialExportReceiptDto) {
-    return 'This action adds a new materialExportReceipt';
+  constructor(private readonly prismaService: PrismaService) {}
+  async create(createMaterialExportReceiptDto: CreateMaterialExportReceiptDto) {
+    const input: Prisma.MaterialExportReceiptUncheckedCreateInput = {
+      type: createMaterialExportReceiptDto.type,
+      note: createMaterialExportReceiptDto.note,
+      warehouseStaffId: createMaterialExportReceiptDto.warehouseStaffId,
+      materialExportReceiptDetail: {
+        createMany: {
+          data: createMaterialExportReceiptDto.materialExportReceiptDetail.map(
+            (detail) => ({
+              materialReceiptId: detail.materialReceiptId,
+              quantityByPack: detail.quantityByPack,
+            }),
+          ),
+          skipDuplicates: true,
+        },
+      },
+    };
   }
 
-  findAll() {
+  search() {
     return `This action returns all materialExportReceipt`;
   }
 
@@ -16,7 +34,10 @@ export class MaterialExportReceiptService {
     return `This action returns a #${id} materialExportReceipt`;
   }
 
-  update(id: number, updateMaterialExportReceiptDto: UpdateMaterialExportReceiptDto) {
+  update(
+    id: number,
+    updateMaterialExportReceiptDto: UpdateMaterialExportReceiptDto,
+  ) {
     return `This action updates a #${id} materialExportReceipt`;
   }
 

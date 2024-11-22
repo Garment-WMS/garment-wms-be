@@ -7,11 +7,9 @@ import {
 } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 
-@ValidatorConstraint({
-  async: true,
-})
+@ValidatorConstraint({ async: true })
 @Injectable()
-export class IsMaterialExportRequestExistValidator
+export class IsMaterialReceiptExportReceiptExistValidator
   implements ValidatorConstraintInterface
 {
   constructor(private readonly prismaService: PrismaService) {}
@@ -19,36 +17,36 @@ export class IsMaterialExportRequestExistValidator
     value: any,
     validationArguments?: ValidationArguments,
   ): Promise<boolean> {
-    let materialExportRequestId: string;
+    let materialReceiptId: string;
     try {
-      materialExportRequestId = value as string;
+      materialReceiptId = value as string;
     } catch (error) {
       return false;
     }
-    const materialExportRequest =
-      await this.prismaService.materialExportRequest.findFirst({
+    const materialReceipt =
+      await this.prismaService.materialExportReceipt.findFirst({
         where: {
-          id: materialExportRequestId,
+          id: materialReceiptId,
         },
         select: {
           id: true,
         },
       });
-    return !!materialExportRequest;
+    return !!materialReceipt;
   }
   defaultMessage?(validationArguments?: ValidationArguments): string {
-    return 'Material export request does not exist';
+    return 'Material export receipt does not exist';
   }
 }
 
-export function IsMaterialExportRequestExist() {
+export function IsMaterialExportReceiptExist() {
   return function (object: Object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
       options: {},
       constraints: [],
-      validator: IsMaterialExportRequestExistValidator,
+      validator: IsMaterialReceiptExportReceiptExistValidator,
     });
   };
 }

@@ -2,53 +2,57 @@ import { Injectable } from '@nestjs/common';
 import {
   registerDecorator,
   ValidationArguments,
+  ValidationOptions,
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 
-@ValidatorConstraint({
-  async: true,
-})
+@ValidatorConstraint({ async: true })
 @Injectable()
-export class IsMaterialExportRequestExistValidator
+export class IsMaterialReceiptExistValidator
   implements ValidatorConstraintInterface
 {
   constructor(private readonly prismaService: PrismaService) {}
+
   async validate(
     value: any,
     validationArguments?: ValidationArguments,
   ): Promise<boolean> {
-    let materialExportRequestId: string;
+    if (!value) {
+      return false;
+    }
+    let materialReceiptId: string;
     try {
-      materialExportRequestId = value as string;
+      materialReceiptId = value as string;
     } catch (error) {
       return false;
     }
-    const materialExportRequest =
-      await this.prismaService.materialExportRequest.findFirst({
+    return (
+      (await this.prismaService.materialReceipt.findFirst({
         where: {
-          id: materialExportRequestId,
+          id: materialReceiptId,
         },
         select: {
           id: true,
         },
-      });
-    return !!materialExportRequest;
+      })) !== null
+    );
   }
-  defaultMessage?(validationArguments?: ValidationArguments): string {
-    return 'Material export request does not exist';
+
+  defaultMessage(validationArguments?: ValidationArguments): string {
+    return `Material receipt with ID ${validationArguments?.value} does not exist.`;
   }
 }
 
-export function IsMaterialExportRequestExist() {
-  return function (object: Object, propertyName: string) {
+export function IsMaterialReceiptExist(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
-      options: {},
+      options: validationOptions,
       constraints: [],
-      validator: IsMaterialExportRequestExistValidator,
+      validator: IsMaterialReceiptExistValidator,
     });
   };
 }

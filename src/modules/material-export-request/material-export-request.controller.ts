@@ -21,6 +21,7 @@ import { RolesGuard } from 'src/common/guard/roles.guard';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateMaterialExportRequestDto } from './dto/create-material-export-request.dto';
+import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-request.dto';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
 import { MaterialExportRequestService } from './material-export-request.service';
 
@@ -96,6 +97,26 @@ export class MaterialExportRequestController {
       HttpStatus.OK,
       await this.materialExportRequestService.remove(id),
       'Material export request deleted successfully',
+    );
+  }
+
+  @Post(':id/manager-approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER)
+  async managerApprove(
+    @Param('id') id: string,
+    @Body() managerApproveExportRequestDto: ManagerApproveExportRequestDto,
+    @GetUser() warehouseManager: AuthenUser,
+  ) {
+    managerApproveExportRequestDto.warehouseManagerId =
+      warehouseManager.warehouseManagerId;
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportRequestService.managerApprove(
+        id,
+        managerApproveExportRequestDto,
+      ),
+      'Manager approve material export request successfully',
     );
   }
 }
