@@ -200,7 +200,9 @@ export class ProductFormulaService {
           productionPlanDetail: {
             some: {
               productionBatch: {
-                  id: productBatchId,
+                  some:{
+                    id: productBatchId,
+                  }
               },
             },
           },

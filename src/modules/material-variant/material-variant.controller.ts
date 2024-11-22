@@ -64,6 +64,9 @@ export class MaterialVariantController {
     return this.materialVariantService.getChart(chartDto);
   }
 
+
+ 
+
   @Get('all')
   getAllMaterial() {
     return this.materialVariantService.findAll();

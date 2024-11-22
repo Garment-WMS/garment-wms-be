@@ -12,7 +12,7 @@ model ProductionPlanDetail {
   deletedAt         DateTime?        @map("deleted_at") @db.Timestamptz(6)
   productSize       ProductSize      @relation(fields: [productSizeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productionPlan    ProductionPlan   @relation(fields: [productionPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productionBatch   ProductionBatch?
+  productionBatch   ProductionBatch[]
 
   @@map("production_plan_detail")
 }
