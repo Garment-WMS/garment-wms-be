@@ -19,10 +19,10 @@ import { Prisma } from '@prisma/client';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { HttpCacheInterceptor } from 'src/common/interceptor/cache.interceptor';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
+import { ChartDto } from './dto/chart-dto.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductVariantService } from './product-variant.service';
-import { ChartDto } from './dto/chart-dto.dto';
 
 @ApiTags('Product')
 @Controller('product-variant')
@@ -40,13 +40,29 @@ export class ProductVariantController {
   findAll(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.ProductVariantScalarWhereInput>(
-        [],
+        ['product.name'],
         [],
       ),
     )
     filterOptions: FilterDto<Prisma.ProductVariantScalarWhereInput>,
   ) {
     return this.productVariantService.findAll(filterOptions.findOptions);
+  }
+
+  @Get('has-receipt')
+  @UseInterceptors(HttpCacheInterceptor)
+  findAllHasReceipt(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ProductVariantScalarWhereInput>(
+        [],
+        [],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.ProductVariantScalarWhereInput>,
+  ) {
+    return this.productVariantService.findAllHasReceipt(
+      filterOptions.findOptions,
+    );
   }
 
   @Post('chart')
