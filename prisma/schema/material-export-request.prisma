@@ -25,6 +25,7 @@ model MaterialExportRequest {
 enum MaterialExportRequestStatus {
   PENDING
   APPROVED
+  REJECTED
   CANCELLED
   DELIVERED
   PRODUCTION_APPROVED
