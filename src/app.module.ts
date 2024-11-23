@@ -61,6 +61,8 @@ import { TaskModule } from './modules/task/task.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
+import { DiscussionModule } from './discussion/discussion.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -150,6 +152,8 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
     GeneralSearchModule,
     MaterialExportReceiptModule,
     MaterialExportReceiptDetailModule,
+    DiscussionModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],
