@@ -1,0 +1,13 @@
+model ProductionBatchMaterialVariant {
+    id                String          @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+    productionBatchId String          @map("production_batch_id") @db.Uuid
+    materialVariantId String          @map("material_variant_id") @db.Uuid
+    quantityByUom     Float           @map("quantity")
+    createdAt         DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt         DateTime?       @updatedAt @map("updated_at") @db.Timestamptz(6)
+    deletedAt         DateTime?       @map("deleted_at") @db.Timestamptz(6)
+    productionBatch   ProductionBatch @relation(fields: [productionBatchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    materialVariant   MaterialVariant @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    @@map("production_batch_material_variant")
+}
