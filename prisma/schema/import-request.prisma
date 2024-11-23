@@ -27,7 +27,7 @@ model ImportRequest {
   productionDepartment   ProductionDepartment? @relation(fields: [productionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   importRequestDetail    ImportRequestDetail[]
   inspectionRequest      InspectionRequest[]
-  Discussion             Discussion?
+  discussion             Discussion?
 
   @@map("import_request")
 }

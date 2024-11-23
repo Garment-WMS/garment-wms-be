@@ -8,7 +8,7 @@ model Discussion {
     deletedAt         DateTime?              @map("deleted_at") @db.Timestamptz(6)
     importRequest     ImportRequest?         @relation(fields: [importRequestId], references: [id])
     exportRequest     MaterialExportRequest? @relation(fields: [exportRequestId], references: [id])
-    Chat              Chat[]
+    chat              Chat[]
 
     @@map("discussion")
 }
