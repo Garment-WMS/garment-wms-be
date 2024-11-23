@@ -19,6 +19,7 @@ import { ApiResponse } from 'src/common/dto/response.dto';
 import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta } from 'src/common/utils/utils';
+import { ImportRequestService } from '../import-request/import-request.service';
 import { TaskService } from '../task/task.service';
 import { CreateInspectionReportDetailDto } from './dto/inspection-report-detail/create-inspection-report-detail.dto';
 import { CreateInspectionReportDto } from './dto/inspection-report/create-inspection-report.dto';
@@ -29,6 +30,7 @@ export class InspectionReportService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly taskService: TaskService,
+    // private readonly importRequestService: ImportRequestService,
   ) {}
 
   async findUniqueInspectedByRequestId(importRequestId: string) {
@@ -345,6 +347,7 @@ export class InspectionReportService {
             importRequest.id,
             prismaInstance,
           );
+
         return {
           inspectionReport,
           'inspectionRequest.status': inspectionRequestStatusUpdated.status,
@@ -415,7 +418,8 @@ export class InspectionReportService {
         id: importRequestId,
       },
       data: {
-        status: $Enums.ImportRequestStatus.INSPECTED,
+        // status: $Enums.ImportRequestStatus.INSPECTED,
+        status: $Enums.ImportRequestStatus.APPROVED,
       },
     });
   }

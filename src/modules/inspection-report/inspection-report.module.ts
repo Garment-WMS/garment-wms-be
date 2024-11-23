@@ -6,6 +6,7 @@ import { InspectionReportService } from './inspection-report.service';
 import { IsInspectionReportExistPipe } from './pipe/is-inspection-report-exist.pipe';
 import { IsInspectionReportExistValidator } from './validator/is-inspection-report-exist.validator';
 import { IsInspectionReportDetailInImportRequestDetail } from './validator/is-inspection-report-material-variant-in-import-request';
+import { ImportRequestModule } from '../import-request/import-request.module';
 
 @Module({
   imports: [PrismaModule, TaskModule],
@@ -15,6 +16,7 @@ import { IsInspectionReportDetailInImportRequestDetail } from './validator/is-in
     IsInspectionReportExistPipe,
     IsInspectionReportExistValidator,
     IsInspectionReportDetailInImportRequestDetail,
+    ImportRequestModule
   ],
   exports: [
     InspectionReportService,

@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import {
   $Enums,
+  ImportRequestStatus,
   Prisma,
   PrismaClient,
   ProductionBatchStatus,
@@ -41,6 +42,18 @@ export class ImportRequestService {
     private readonly inspectionRequestService: InspectionRequestService,
     private readonly productionBatchService: ProductionBatchService,
   ) {}
+
+  async isAnyImportingImportRequest() {
+    const result = await this.prismaService.importRequest.findMany({
+      where: {
+        OR: [{ status: ImportRequestStatus.IMPORTING }],
+      },
+    });
+    if (result.length === 0) {
+      return false;
+    }
+    return true;
+  }
 
   async search(
     findOptions: GeneratedFindOptions<Prisma.ImportRequestWhereInput>,
@@ -356,6 +369,68 @@ export class ImportRequestService {
   // REJECTED
   // APPROVED
   async managerProcess(
+    warehouseManagerId: string,
+    id: string,
+    managerProcess: ManagerProcessDto,
+  ) {
+    const importRequest = await this.prismaService.importRequest.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        warehouseManagerId: true,
+      },
+    });
+
+    const allowApproveAndReject: $Enums.ImportRequestStatus[] = [
+      $Enums.ImportRequestStatus.ARRIVED,
+      $Enums.ImportRequestStatus.INSPECTED,
+    ];
+
+    if (importRequest.status !== $Enums.ImportRequestStatus.ARRIVED) {
+      throw new BadRequestException(
+        `Manager only can approve/reject ${allowApproveAndReject.join(', ')} import request`,
+      );
+    }
+
+    switch (managerProcess.action) {
+      case $Enums.ImportRequestStatus.APPROVED:
+        const importRequest = await this.prismaService.importRequest.update({
+          where: { id: id },
+          data: {
+            status: $Enums.ImportRequestStatus.APPROVED,
+            managerNote: managerProcess.managerNote,
+            warehouseStaffId: managerProcess.warehouseStaffId,
+            warehouseManagerId: warehouseManagerId,
+          },
+        });
+
+        const inspectionRequest =
+          await this.inspectionRequestService.createInspectionRequestByImportRequest(
+            warehouseManagerId,
+            managerProcess,
+            importRequest,
+          );
+        return { importRequest, inspectionRequest };
+
+      case $Enums.ImportRequestStatus.REJECTED:
+        return await this.prismaService.importRequest.update({
+          where: { id },
+          data: {
+            status: $Enums.ImportRequestStatus.REJECTED,
+            rejectAt: new Date(),
+            warehouseManagerId: warehouseManagerId,
+            managerNote: managerProcess.managerNote,
+          },
+        });
+      default:
+        throw new BadRequestException(
+          `Allowed action is ${$Enums.ImportRequestStatus.APPROVED} or ${$Enums.ImportRequestStatus.REJECTED}`,
+        );
+    }
+  }
+
+  async managerProcess2(
     warehouseManagerId: string,
     id: string,
     managerProcess: ManagerProcessDto,

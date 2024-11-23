@@ -8,6 +8,7 @@ import { ProductSizeModule } from '../product-size/product-size.module';
 import { ProductVariantModule } from '../product-variant/product-variant.module';
 import { InventoryReportPlanController } from './inventory-report-plan.controller';
 import { InventoryReportPlanService } from './inventory-report-plan.service';
+import { ImportRequestModule } from '../import-request/import-request.module';
 
 @Module({
   controllers: [InventoryReportPlanController],
@@ -18,6 +19,7 @@ import { InventoryReportPlanService } from './inventory-report-plan.service';
     MaterialPackageModule,
     MaterialVariantModule,
     ProductVariantModule,
+    ImportRequestModule,
     ProductSizeModule,
   ],
   providers: [InventoryReportPlanService],

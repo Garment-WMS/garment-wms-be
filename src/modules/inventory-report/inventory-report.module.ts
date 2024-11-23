@@ -7,14 +7,18 @@ import { ProductReceiptModule } from '../product-receipt/product-receipt.module'
 import { ProductVariantModule } from '../product-variant/product-variant.module';
 import { InventoryReportController } from './inventory-report.controller';
 import { InventoryReportService } from './inventory-report.service';
+import { ImportReceiptModule } from '../import-receipt/import-receipt.module';
+import { ImportRequestModule } from '../import-request/import-request.module';
 
 @Module({
   controllers: [InventoryReportController],
   imports: [
     MaterialVariantModule,
-    ProductReceiptModule,
     MaterialReceiptModule,
+    ProductReceiptModule,
+    ImportReceiptModule,
     ProductVariantModule,
+    ImportRequestModule,
     InventoryReportDetailModule,
     PrismaModule,
   ],

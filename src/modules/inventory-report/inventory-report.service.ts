@@ -6,6 +6,8 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { ImportReceiptService } from '../import-receipt/import-receipt.service';
+import { ImportRequestService } from '../import-request/import-request.service';
 import { CreateInventoryReportDetailDto } from '../inventory-report-detail/dto/create-inventory-report-detail.dto';
 import { WarehouseManagerQuantityReportDetails } from '../inventory-report-detail/dto/warehouse-manager-quantity-report.dto';
 import { WarehouseStaffQuantityReportDetails } from '../inventory-report-detail/dto/warehouse-staff-quantity-report.dto';
@@ -22,9 +24,11 @@ export class InventoryReportService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly materialVariantService: MaterialVariantService,
+    private readonly importReceiptService: ImportReceiptService,
     private readonly inventoryReportDetailService: InventoryReportDetailService,
     private readonly materialReceiptService: MaterialReceiptService,
     private readonly productReceiptService: ProductReceiptService,
+    private readonly importRequestService: ImportRequestService,
   ) {}
 
   includeQuery: Prisma.InventoryReportInclude = {
@@ -85,6 +89,7 @@ export class InventoryReportService {
     },
   };
 
+ 
   async handleApprovalInventoryReport(
     id: string,
     updateInventoryReportDetailDto: WarehouseManagerQuantityReportDetails,
@@ -110,8 +115,6 @@ export class InventoryReportService {
         );
       result.push(updateResult);
     }
-
-
 
     const isInventoryReportDetailDone =
       await this.inventoryReportDetailService.checkLastApprovalInventoryReport(
@@ -142,6 +145,8 @@ export class InventoryReportService {
         },
       });
     }
+
+    // const
 
     return apiSuccess(
       HttpStatus.OK,

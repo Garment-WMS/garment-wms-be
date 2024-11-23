@@ -22,9 +22,9 @@ import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateInventoryReportPlanDto } from './dto/create-inventory-report-plan.dto';
+import { CreateOverAllInventoryReportPlanDto } from './dto/over-all-report-plan.dto';
 import { UpdateInventoryReportPlanDto } from './dto/update-inventory-report-plan.dto';
 import { InventoryReportPlanService } from './inventory-report-plan.service';
-import { CreateOverAllInventoryReportPlanDto } from './dto/over-all-report-plan.dto';
 
 @ApiTags('inventory-report-plan')
 @Controller('inventory-report-plan')
@@ -108,6 +108,19 @@ export class InventoryReportPlanController {
     return this.inventoryReportPlanService.processInventoryReportPlan(
       id,
       user.warehouseStaffId,
+    );
+  }
+
+  @Patch(':id/start')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER)
+  startInventoryDetail(
+    @Param('id', CustomUUIDPipe) id: string,
+    @GetUser() user: AuthenUser,
+  ) {
+    return this.inventoryReportPlanService.startRecordInventoryReportPlan(
+      id,
+      user.warehouseManagerId,
     );
   }
 

@@ -101,6 +101,7 @@ export class InventoryReportController {
     );
   }
 
+
   @Patch(':id/approve')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.WAREHOUSE_MANAGER)
