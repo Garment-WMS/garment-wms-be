@@ -16,13 +16,17 @@ import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ManagerAction } from '../import-request/dto/import-request/manager-process.dto';
 import { CreateNestedMaterialExportRequestDetailDto } from '../material-export-request-detail/dto/create-nested-material-export-request-detail.dto';
+import { TaskService } from '../task/task.service';
 import { CreateMaterialExportRequestDto } from './dto/create-material-export-request.dto';
 import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-request.dto';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
 
 @Injectable()
 export class MaterialExportRequestService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly taskService: TaskService,
+  ) {}
   async create(dto: CreateMaterialExportRequestDto) {
     const productionBatch =
       await this.prismaService.productionBatch.findUniqueOrThrow({
@@ -193,6 +197,15 @@ export class MaterialExportRequestService {
     dto: ManagerApproveExportRequestDto,
     warehouseManagerId: string,
   ) {
+    const allowApproveStatus: $Enums.MaterialExportRequestStatus[] = [
+      $Enums.MaterialExportRequestStatus.PENDING,
+    ];
+    const materialExportRequest = await this.findUnique(id);
+    if (!allowApproveStatus.includes(materialExportRequest.status)) {
+      throw new BadRequestException(
+        `Cannot approve material export request with status ${materialExportRequest.status}`,
+      );
+    }
     dto.warehouseManagerId = warehouseManagerId;
     dto.materialExportReceipt.materialExportRequestId = id;
     dto.materialExportReceipt.warehouseStaffId = dto.warehouseStaffId;
@@ -200,20 +213,50 @@ export class MaterialExportRequestService {
       $Enums.MaterialExportReceiptType.PRODUCTION;
     switch (dto.action) {
       case ManagerAction.APPROVED:
-        const materialExportRequest =
-          await this.prismaService.materialExportRequest.update({
-            where: {
-              id: id,
-            },
-            data: {
-              warehouseManagerId: dto.warehouseManagerId,
-              status: $Enums.MaterialExportRequestStatus.APPROVED,
-              managerNote: dto.managerNote,
-              warehouseStaffId: dto.warehouseStaffId,
-              updatedAt: new Date(),
-            },
-            include: materialExportRequestInclude,
+        const [materialExportRequest, materialExportReceipt] =
+          await this.prismaService.$transaction([
+            this.prismaService.materialExportRequest.update({
+              where: {
+                id: id,
+              },
+              data: {
+                warehouseManagerId: dto.warehouseManagerId,
+                status: $Enums.MaterialExportRequestStatus.APPROVED,
+                managerNote: dto.managerNote,
+                warehouseStaffId: dto.warehouseStaffId,
+                updatedAt: new Date(),
+              },
+              include: materialExportRequestInclude,
+            }),
+            this.prismaService.materialExportReceipt.create({
+              data: {
+                note: dto.materialExportReceipt.note,
+                type: dto.materialExportReceipt.type,
+                materialExportRequestId: id,
+                warehouseStaffId: dto.warehouseStaffId,
+                materialExportReceiptDetail: {
+                  createMany: {
+                    data: dto.materialExportReceipt.materialExportReceiptDetail.map(
+                      (detail) => ({
+                        materialReceiptId: detail.materialReceiptId,
+                        quantityByPack: detail.quantityByPack,
+                      }),
+                    ),
+                  },
+                },
+              },
+            }),
+          ]);
+        try {
+          const task = await this.taskService.create({
+            materialExportReceiptId: materialExportReceipt.id,
+            taskType: $Enums.TaskType.EXPORT,
+            status: $Enums.TaskStatus.OPEN,
+            warehouseStaffId: dto.warehouseStaffId,
           });
+        } catch (error) {
+          Logger.error('Cannot create task', error);
+        }
         return materialExportRequest;
       case ManagerAction.REJECTED:
         const rejectedMaterialExportRequest =
