@@ -470,14 +470,14 @@ export const productReceiptIncludeQuery: Prisma.ProductReceiptInclude = {
   },
 };
 
-// export const materialReceiptInclude: Prisma.MaterialReceiptInclude = {
-//   receiptAdjustment: true,
-//   materialExportReceiptDetail: {
-//     include: {
-//       materialExportReceipt: true,
-//     },
-//   },
-//   materialPackage: {
-//     include: materialPackageInclude,
-//   },
-// };
+export const materialReceiptInclude: Prisma.MaterialReceiptInclude = {
+  receiptAdjustment: true,
+  materialExportReceiptDetail: {
+    include: {
+      materialExportReceipt: true,
+    },
+  },
+  materialPackage: {
+    include: materialPackageInclude,
+  },
+};
