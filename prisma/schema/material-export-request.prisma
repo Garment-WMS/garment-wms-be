@@ -1,5 +1,6 @@
 model MaterialExportRequest {
   id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  code                        String?                       @map("code") @db.VarChar(255)
   productionBatchId           String                        @map("production_batch_id") @db.Uuid
   productFormulaId            String?                       @map("product_formula_id") @db.Uuid
   warehouseManagerId          String?                       @map("warehouse_manager_id") @db.Uuid
