@@ -736,6 +736,14 @@ export class MaterialVariantService {
     return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
   }
 
+  async findByMaterialCodeWithoutResponse(materialCode: string) {
+    const result = await this.prismaService.materialVariant.findFirst({
+      where: { code: materialCode },
+      include: this.materialInclude,
+    });
+    return result;
+  }
+
   async findByMaterialType(materialType: string) {
     const result = await this.prismaService.materialVariant.findMany({
       where: { material: { id: materialType } },

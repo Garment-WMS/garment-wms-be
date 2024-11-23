@@ -15,6 +15,7 @@ import { ApiResponse } from 'src/common/dto/response.dto';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ExcelService } from '../excel/excel.service';
 import { CreateImportRequestDetailDto } from '../import-request/dto/import-request-detail/create-import-request-detail.dto';
+import { ProductPlanDetailService } from '../product-plan-detail/product-plan-detail.service';
 import { CreateProductionBatchDto } from './dto/create-production-batch.dto';
 import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
 
@@ -23,6 +24,7 @@ export class ProductionBatchService {
   constructor(
     readonly prismaService: PrismaService,
     private readonly excelService: ExcelService,
+    private readonly productPlanDetailService: ProductPlanDetailService
   ) {}
 
   updateProductBatchStatus(
@@ -101,10 +103,10 @@ export class ProductionBatchService {
       createProductBatchData.map((item) => {
         return {
           ...item,
-          // productionDepartmentId,
         };
       });
-    console.log(createProductionBatchInput);
+
+
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const productionBatchResult: any =
@@ -112,11 +114,9 @@ export class ProductionBatchService {
             data: createProductionBatchInput,
             // include: productionBatchInclude,
           });
-        console.log(productionBatchResult);
         return productionBatchResult;
       },
     );
-
     if (result) {
       return apiSuccess(
         HttpStatus.CREATED,
