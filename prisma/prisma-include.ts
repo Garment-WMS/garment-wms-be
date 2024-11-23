@@ -460,8 +460,6 @@ export const materialExportRequestInclude: Prisma.MaterialExportRequestInclude =
     },
   };
 
-
-
 export const productReceiptIncludeQuery: Prisma.ProductReceiptInclude = {
   importReceipt: { include: importReceiptInclude },
   receiptAdjustment: true,
