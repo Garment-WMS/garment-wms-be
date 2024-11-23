@@ -393,17 +393,6 @@ export const materialInclude: Prisma.MaterialInclude = {
   materialUom: true,
 };
 
-export const materialReceiptInclude: Prisma.MaterialReceiptInclude = {
-  materialPackage: {
-    include: {
-      inventoryStock: true,
-      materialVariant: {
-        include: materialVariantInclude,
-      },
-    },
-  },
-};
-
 export const materialExportReceiptInclude: Prisma.MaterialExportReceiptInclude =
   {
     warehouseStaff: {
