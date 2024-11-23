@@ -210,26 +210,27 @@ export class PurchaseOrderService {
       }),
     ]);
 
-    result.forEach((purchaseOrder) => {
-      let totalImportQuantity = null;
-      let totalQuantityToImport = null;
-      let totalFailImportQuantity = null;
-      purchaseOrder.poDelivery.forEach((poDelivery) => {
-        poDelivery.poDeliveryDetail.forEach((poDeliveryDetail) => {
-          if (poDelivery.status === PoDeliveryStatus.FINISHED) {
-            totalFailImportQuantity +=
-              poDeliveryDetail.quantityByPack -
-              poDeliveryDetail.actualImportQuantity;
-          }
-          totalImportQuantity += poDeliveryDetail.actualImportQuantity;
-          totalQuantityToImport += poDeliveryDetail.quantityByPack;
-        });
-      });
+    for (const purchaseOrder of result) {
+      const [
+        totalImportQuantity,
+        totalFailImportQuantity,
+        totalQuantityToImport,
+        totalPoDelivery,
+        totalFinishedPoDelivery,
+        totalInProgressPoDelivery,
+        totalCancelledPoDelivery,
+        totalPendingPoDelivery,
+      ] = await this.getPurchaseOrderStatistic(purchaseOrder, purchaseOrder.id);
 
       purchaseOrder.totalImportQuantity = totalImportQuantity;
       purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
       purchaseOrder.totalQuantityToImport = totalQuantityToImport;
-    });
+      purchaseOrder.totalPoDelivery = totalPoDelivery;
+      purchaseOrder.totalFinishedPoDelivery = totalFinishedPoDelivery;
+      purchaseOrder.totalInProgressPoDelivery = totalInProgressPoDelivery;
+      purchaseOrder.totalCancelledPoDelivery = totalCancelledPoDelivery;
+      purchaseOrder.totalPendingPoDelivery = totalPendingPoDelivery;
+    }
 
     return apiSuccess(
       HttpStatus.OK,
@@ -251,24 +252,25 @@ export class PurchaseOrderService {
     if (!purchaseOrder) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');
     }
-    let totalImportQuantity = null;
-    let totalQuantityToImport = null;
-    let totalFailImportQuantity = null;
-    purchaseOrder.poDelivery.forEach((poDelivery) => {
-      poDelivery.poDeliveryDetail.forEach((poDeliveryDetail) => {
-        if (poDelivery.status === PoDeliveryStatus.FINISHED) {
-          totalFailImportQuantity +=
-            poDeliveryDetail.quantityByPack -
-            poDeliveryDetail.actualImportQuantity;
-        }
-        totalImportQuantity += poDeliveryDetail.actualImportQuantity;
-        totalQuantityToImport += poDeliveryDetail.quantityByPack;
-      });
-    });
+    const [
+      totalImportQuantity,
+      totalFailImportQuantity,
+      totalQuantityToImport,
+      totalPoDelivery,
+      totalFinishedPoDelivery,
+      totalInProgressPoDelivery,
+      totalCancelledPoDelivery,
+      totalPendingPoDelivery,
+    ] = await this.getPurchaseOrderStatistic(purchaseOrder, id);
 
     purchaseOrder.totalImportQuantity = totalImportQuantity;
     purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
     purchaseOrder.totalQuantityToImport = totalQuantityToImport;
+    purchaseOrder.totalPoDelivery = totalPoDelivery;
+    purchaseOrder.totalFinishedPoDelivery = totalFinishedPoDelivery;
+    purchaseOrder.totalInProgressPoDelivery = totalInProgressPoDelivery;
+    purchaseOrder.totalCancelledPoDelivery = totalCancelledPoDelivery;
+    purchaseOrder.totalPendingPoDelivery = totalPendingPoDelivery;
 
     if (!purchaseOrder) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');
@@ -281,6 +283,153 @@ export class PurchaseOrderService {
     );
   }
 
+  // async getPurchaseOrderStatistic(purchaseOrder, id: string) {
+  //   let totalImportQuantity = null;
+  //   let totalQuantityToImport = null;
+  //   let totalFailImportQuantity = null;
+
+  //   purchaseOrder.poDelivery.forEach((poDelivery) => {
+  //     poDelivery.poDeliveryDetail.forEach((poDeliveryDetail) => {
+  //       if (
+  //         poDelivery.status === PoDeliveryStatus.FINISHED &&
+  //         poDelivery.isExtra === false
+  //       ) {
+  //         totalFailImportQuantity +=
+  //           poDeliveryDetail.quantityByPack -
+  //           poDeliveryDetail.actualImportQuantity;
+  //       }
+  //       if (poDelivery.isExtra === false) {
+  //         totalImportQuantity += poDeliveryDetail.actualImportQuantity;
+  //         totalQuantityToImport += poDeliveryDetail.quantityByPack;
+  //       }
+  //     });
+  //   });
+
+  //   purchaseOrder.totalImportQuantity = totalImportQuantity;
+  //   purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
+  //   purchaseOrder.totalQuantityToImport = totalQuantityToImport;
+
+  //   const [
+  //     totalPoDelivery,
+  //     totalFinishedPoDelivery,
+  //     totalInProgressPoDelivery,
+  //     totalCancelledPoDelivery,
+  //     totalPendingPoDelivery,
+  //   ] = await this.prismaService.$transaction([
+  //     this.prismaService.poDelivery.count({
+  //       where: {
+  //         purchaseOrderId: id,
+  //       },
+  //     }),
+  //     this.prismaService.poDelivery.count({
+  //       where: {
+  //         purchaseOrderId: id,
+  //         status: PoDeliveryStatus.FINISHED,
+  //       },
+  //     }),
+  //     this.prismaService.poDelivery.count({
+  //       where: {
+  //         purchaseOrderId: id,
+  //         status: PoDeliveryStatus.IMPORTING,
+  //       },
+  //     }),
+  //     this.prismaService.poDelivery.count({
+  //       where: {
+  //         purchaseOrderId: id,
+  //         status: PoDeliveryStatus.CANCELLED,
+  //       },
+  //     }),
+  //     this.prismaService.poDelivery.count({
+  //       where: {
+  //         purchaseOrderId: id,
+  //         status: PoDeliveryStatus.PENDING,
+  //       },
+  //     }),
+  //   ]);
+
+  //   purchaseOrder.totalPoDelivery = totalPoDelivery;
+  //   purchaseOrder.totalFinishedPoDelivery = totalFinishedPoDelivery;
+  //   purchaseOrder.totalInProgressPoDelivery = totalInProgressPoDelivery;
+  //   purchaseOrder.totalPendingPoDelivery = totalPendingPoDelivery;
+  //   purchaseOrder.totalCancelledPoDelivery = totalCancelledPoDelivery;
+
+  //   return [
+  //     totalImportQuantity,
+  //     totalFailImportQuantity,
+  //     totalQuantityToImport,
+  //     totalPoDelivery,
+  //     totalFinishedPoDelivery,
+  //     totalInProgressPoDelivery,
+  //     totalCancelledPoDelivery,
+  //     totalPendingPoDelivery,
+  //   ];
+  // }
+
+  async getPurchaseOrderStatistic(purchaseOrder, id: string) {
+    let totalImportQuantity = 0;
+    let totalQuantityToImport = 0;
+    let totalFailImportQuantity = 0;
+  
+    const poDeliveryStats = purchaseOrder.poDelivery.reduce((acc, poDelivery) => {
+      acc.totalPoDelivery++;
+  
+      switch (poDelivery.status) {
+        case PoDeliveryStatus.FINISHED:
+          acc.totalFinishedPoDelivery++;
+          break;
+        case PoDeliveryStatus.IMPORTING:
+          acc.totalInProgressPoDelivery++;
+          break;
+        case PoDeliveryStatus.CANCELLED:
+          acc.totalCancelledPoDelivery++;
+          break;
+        case PoDeliveryStatus.PENDING:
+          acc.totalPendingPoDelivery++;
+          break;
+      }
+  
+      poDelivery.poDeliveryDetail.forEach((poDeliveryDetail) => {
+        if (poDelivery.status === PoDeliveryStatus.FINISHED && !poDelivery.isExtra) {
+          totalFailImportQuantity +=
+            poDeliveryDetail.quantityByPack - poDeliveryDetail.actualImportQuantity;
+        }
+        if (!poDelivery.isExtra) {
+          totalImportQuantity += poDeliveryDetail.actualImportQuantity;
+          totalQuantityToImport += poDeliveryDetail.quantityByPack;
+        }
+      });
+  
+      return acc;
+    }, {
+      totalPoDelivery: 0,
+      totalFinishedPoDelivery: 0,
+      totalInProgressPoDelivery: 0,
+      totalCancelledPoDelivery: 0,
+      totalPendingPoDelivery: 0
+    });
+  
+    purchaseOrder.totalImportQuantity = totalImportQuantity;
+    purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
+    purchaseOrder.totalQuantityToImport = totalQuantityToImport;
+  
+    purchaseOrder.totalPoDelivery = poDeliveryStats.totalPoDelivery;
+    purchaseOrder.totalFinishedPoDelivery = poDeliveryStats.totalFinishedPoDelivery;
+    purchaseOrder.totalInProgressPoDelivery = poDeliveryStats.totalInProgressPoDelivery;
+    purchaseOrder.totalPendingPoDelivery = poDeliveryStats.totalPendingPoDelivery;
+    purchaseOrder.totalCancelledPoDelivery = poDeliveryStats.totalCancelledPoDelivery;
+  
+    return [
+      totalImportQuantity,
+      totalFailImportQuantity,
+      totalQuantityToImport,
+      poDeliveryStats.totalPoDelivery,
+      poDeliveryStats.totalFinishedPoDelivery,
+      poDeliveryStats.totalInProgressPoDelivery,
+      poDeliveryStats.totalCancelledPoDelivery,
+      poDeliveryStats.totalPendingPoDelivery,
+    ];
+  }
+  
   async findById(id: string) {
     if (!isUUID(id)) {
       return null;
