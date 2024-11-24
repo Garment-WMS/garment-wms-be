@@ -428,6 +428,9 @@ export const materialExportRequestDetailInclude: Prisma.MaterialExportRequestDet
 
   export const materialExportRequestInclude: Prisma.MaterialExportRequestInclude =
   {
+    discussion: {
+      include: discussionInclude,
+    },
     materialExportRequestDetail: {
       include: materialExportRequestDetailInclude,
     },

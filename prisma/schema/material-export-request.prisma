@@ -20,7 +20,7 @@ model MaterialExportRequest {
   warehouseStaff              WarehouseStaff?               @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   materialExportRequestDetail MaterialExportRequestDetail[]
   materialExportReceipt       MaterialExportReceipt?
-  Discussion                  Discussion?
+  discussion                  Discussion?
 
   @@map("material_export_request")
 }
