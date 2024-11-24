@@ -83,15 +83,4 @@ export class TaskController {
       'Task has been updated successfully',
     );
   }
-
-  @Post('/gen-finish')
-  async genFinishTask() {
-    await this.taskService.genExpectedFinishedAt();
-    await this.taskService.genFinishAt();
-    return apiSuccess(
-      HttpStatus.CREATED,
-      null,
-      'Tasks have been generated successfully',
-    );
-  }
 }

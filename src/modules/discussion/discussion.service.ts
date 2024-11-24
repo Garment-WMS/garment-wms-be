@@ -8,7 +8,8 @@ export class DiscussionService {
   constructor(private readonly prismaService: PrismaService) {}
   async findAllImportRequestsAndCreateDiscussion(): Promise<any[]> {
     // Find all import requests
-    const importRequests = await this.prismaService.importRequest.findMany();
+    const importRequests =
+      await this.prismaService.materialExportRequest.findMany();
 
     // Array to store all created discussions
     const createdDiscussions = [];
@@ -17,7 +18,7 @@ export class DiscussionService {
     for (const importRequest of importRequests) {
       const newDiscussion = await this.prismaService.discussion.create({
         data: {
-          importRequestId: importRequest.id,
+          exportRequestId: importRequest.id,
           // Add more fields as needed, e.g.:
           // createdBy: 'system',
           // status: 'open',

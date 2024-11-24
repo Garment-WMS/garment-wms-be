@@ -154,6 +154,7 @@ import { ChatModule } from './modules/chat/chat.module';
     GeneralSearchModule,
     MaterialExportReceiptModule,
     MaterialExportReceiptDetailModule,
+    ProductionBatchMaterialVariantModule,
     DiscussionModule,
     ChatModule,
     DefectModule,

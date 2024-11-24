@@ -60,8 +60,16 @@ export const PRODUCTION_PLAN_INFO_HEADER = [
   'Expected Start Date',
   'Expected End Date',
 ];
+export const PRODUCTION_MATERIAL_VARIANT_HEADER = [
+  'Material Variant Code',
+  'Material Variant Name',
+  'Quantity By UOM',
+  'Unit of measurement',
+];
+
 export const PRODUCTION_PLAN_DETAIL_TABLE = 'productionPlanDetail';
 export const PRODUCTION_BATCH_DETAIL_TABLE = 'productionBatchDetail';
+export const PRODUCTION_MATERIAL_VARIANT_DETAIL_TABLE = 'materialRequirement';
 
 export const PRODUCTION_PLAN_DETAIL_HEADER = [
   'Product Code',
@@ -76,6 +84,6 @@ export const PRODUCTION_BATCH_DETAIL_HEADER = [
 ];
 export const PRODUCTION_PLAN_NOTE_TABLE = 'productionPlanNote';
 
-export const PRODUCTION_BATCH_SHEET_NAME = 'ProductionBatch';
+export const PRODUCTION_BATCH_SHEET_NAME = 'Production Batch';
+export const MATERIAL_REQUIREMENT_SHEET_NAME = 'Material Requirement';
 export const PRODUCTION_BATCH_INFO = 'productionBatchInfo';
-

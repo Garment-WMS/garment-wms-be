@@ -29,27 +29,4 @@ export class DefectService {
   remove(id: number) {
     return `This action removes a #${id} defect`;
   }
-
-  async genDefect() {
-    const inspectionReportDetailHasDefect =
-      await this.prismaService.inspectionReportDetail.findMany({
-        where: {
-          defectQuantityByPack: {
-            gt: 0,
-          },
-        },
-      });
-    const defects = await this.prismaService.defect.findMany();
-    const getRandomDefectId = () =>
-      defects[Math.floor(Math.random() * defects.length)].id;
-    const inspectionReportDetailDefect =
-      await this.prismaService.inspectionReportDetailDefect.createMany({
-        data: inspectionReportDetailHasDefect.map((item) => ({
-          defectId: getRandomDefectId(),
-          inspectionReportDetailId: item.id,
-          quantityByPack: item.defectQuantityByPack,
-        })),
-      });
-    return inspectionReportDetailDefect;
-  }
 }

@@ -6,7 +6,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
-import { getPageMeta } from 'src/common/utils/utils';
+import { getPageMeta, getPurchaseOrderStatistic } from 'src/common/utils/utils';
 import { ExcelService } from '../excel/excel.service';
 import { ProductPlanDetailService } from '../product-plan-detail/product-plan-detail.service';
 import { CreateProductPlanDto } from './dto/create-product-plan.dto';
@@ -253,6 +253,27 @@ export class ProductPlanService {
           });
         }
       });
+      productionPlan.purchaseOrder.forEach((purchaseOrder: any) => {
+        const [
+          totalImportQuantity,
+          totalFailImportQuantity,
+          totalQuantityToImport,
+          totalPoDelivery,
+          totalFinishedPoDelivery,
+          totalInProgressPoDelivery,
+          totalCancelledPoDelivery,
+          totalPendingPoDelivery,
+        ] = getPurchaseOrderStatistic(purchaseOrder);
+
+        purchaseOrder.totalImportQuantity = totalImportQuantity;
+        purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
+        purchaseOrder.totalQuantityToImport = totalQuantityToImport;
+        purchaseOrder.totalPoDelivery = totalPoDelivery;
+        purchaseOrder.totalFinishedPoDelivery = totalFinishedPoDelivery;
+        purchaseOrder.totalInProgressPoDelivery = totalInProgressPoDelivery;
+        purchaseOrder.totalCancelledPoDelivery = totalCancelledPoDelivery;
+        purchaseOrder.totalPendingPoDelivery = totalPendingPoDelivery;
+      });
 
       productionPlan.totalQuantityToProduce = totalQuantityToProduce;
       productionPlan.totalProducedQuantity = totalProducedQuantity;
@@ -355,6 +376,28 @@ export class ProductPlanService {
     let totalQuantityToProduce = 0;
     let totalProducedQuantity = 0;
     let totalDefectQuantity = 0;
+    productPlan.purchaseOrder.forEach((purchaseOrder: any) => {
+      const [
+        totalImportQuantity,
+        totalFailImportQuantity,
+        totalQuantityToImport,
+        totalPoDelivery,
+        totalFinishedPoDelivery,
+        totalInProgressPoDelivery,
+        totalCancelledPoDelivery,
+        totalPendingPoDelivery,
+      ] = getPurchaseOrderStatistic(purchaseOrder);
+
+      purchaseOrder.totalImportQuantity = totalImportQuantity;
+      purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
+      purchaseOrder.totalQuantityToImport = totalQuantityToImport;
+      purchaseOrder.totalPoDelivery = totalPoDelivery;
+      purchaseOrder.totalFinishedPoDelivery = totalFinishedPoDelivery;
+      purchaseOrder.totalInProgressPoDelivery = totalInProgressPoDelivery;
+      purchaseOrder.totalCancelledPoDelivery = totalCancelledPoDelivery;
+      purchaseOrder.totalPendingPoDelivery = totalPendingPoDelivery;
+    });
+    
     productPlan.productionPlanDetail.forEach((detail) => {
       totalQuantityToProduce += detail.quantityToProduce;
     });

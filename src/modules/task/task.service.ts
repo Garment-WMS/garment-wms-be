@@ -1,6 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { $Enums, Prisma, Task } from '@prisma/client';
+import { $Enums, Prisma } from '@prisma/client';
 import { taskInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -23,10 +23,10 @@ export class TaskService {
       data: taskCreateInput,
     });
 
-    this.mockExpectFinishAt(task);
     await this.createMockTodo(task);
     return task;
   }
+
   async createMany(createTaskDto: CreateTaskDto[]) {
     const taskCreateInput: Prisma.TaskCreateManyInput[] = createTaskDto.map(
       (task) => {
@@ -44,35 +44,7 @@ export class TaskService {
     return task;
   }
 
-  mockExpectFinishAt(task: Task) {
-    const expectFinishedAt = new Date(task.startedAt);
-    switch (task.taskType) {
-      case $Enums.TaskType.INSPECTION:
-        // const detailCount = await this.prismaService.importRequestDetail.count({
-        //   where: {
-        //     importRequest: {
-        //       inspectionRequest: {
-        //         some: {
-        //           task: {
-        //             some: {
-        //               id: task.id,
-        //             },
-        //           },
-        //         },
-        //       },
-        //     },
-        //   },
-        // });
-        expectFinishedAt.setHours(task.startedAt.getHours() + 1);
-        break;
-      case $Enums.TaskType.IMPORT:
-        expectFinishedAt.setHours(task.startedAt.getHours() + 1);
-        break;
-    }
-    return (task.expectFinishedAt = expectFinishedAt);
-  }
-
-  async createMockTodo(task: Task) {
+  async createMockTodo(task: Prisma.TaskWhereUniqueInput) {
     switch (task.taskType) {
       case $Enums.TaskType.INSPECTION:
         const mockTodoInspection: Prisma.TodoCreateManyInput[] = [
@@ -236,10 +208,7 @@ export class TaskService {
     });
   }
 
-  async updateTaskStatusToDone(
-    taskWhereInput: Prisma.TaskWhereInput,
-    finishedAt?: Date,
-  ) {
+  async updateTaskStatusToDone(taskWhereInput: Prisma.TaskWhereInput) {
     const task = await this.prismaService.task.findFirst({
       where: taskWhereInput,
     });
@@ -250,46 +219,7 @@ export class TaskService {
     }
     return await this.prismaService.task.update({
       where: { id: task.id },
-      data: {
-        status: $Enums.TaskStatus.DONE,
-        finishedAt: finishedAt || new Date(),
-      },
+      data: { status: $Enums.TaskStatus.DONE },
     });
-  }
-
-  async genFinishAt() {
-    const tasks = await this.prismaService.task.findMany({
-      where: {
-        status: $Enums.TaskStatus.DONE,
-      },
-    });
-    for (const task of tasks) {
-      const finishedAt = new Date(task.startedAt);
-      finishedAt.setHours(task.startedAt.getHours() + 1);
-      await this.updateTaskStatusToDone(
-        {
-          id: task.id,
-        },
-        finishedAt,
-      );
-    }
-  }
-
-  async genExpectedFinishedAt() {
-    const tasks = await this.prismaService.task.findMany({
-      where: {
-        expectFinishedAt: null,
-      },
-    });
-    for (const task of tasks) {
-      const finishedAt = new Date(task.startedAt);
-      finishedAt.setHours(task.startedAt.getHours() + 1);
-      await this.prismaService.task.update({
-        where: { id: task.id },
-        data: {
-          expectFinishedAt: finishedAt,
-        },
-      });
-    }
   }
 }

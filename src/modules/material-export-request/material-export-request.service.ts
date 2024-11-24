@@ -14,6 +14,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { DiscussionService } from '../discussion/discussion.service';
 import { ManagerAction } from '../import-request/dto/import-request/manager-process.dto';
 import { CreateNestedMaterialExportRequestDetailDto } from '../material-export-request-detail/dto/create-nested-material-export-request-detail.dto';
 import { TaskService } from '../task/task.service';
@@ -26,6 +27,7 @@ export class MaterialExportRequestService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly taskService: TaskService,
+    private readonly discussionService: DiscussionService,
   ) {}
 
   async isAnyExportingExportRequest() {
@@ -74,10 +76,24 @@ export class MaterialExportRequestService {
         },
       };
 
-    return await this.prismaService.materialExportRequest.create({
-      data: materialExportRequestInput,
-      include: materialExportRequestInclude,
-    });
+    const result = await this.prismaService.$transaction(
+      async (prismaInstance: PrismaService) => {
+        const result = await this.prismaService.materialExportRequest.create({
+          data: materialExportRequestInput,
+          include: materialExportRequestInclude,
+        });
+
+        const discussion = await this.discussionService.create(
+          {
+            exportRequestId: result.id,
+          },
+          prismaInstance,
+        );
+        result.discussion = discussion;
+        return result;
+      },
+    );
+    return result;
   }
 
   async mapMaterialExportRequestDetailByFormula(

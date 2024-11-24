@@ -63,6 +63,23 @@ export class MaterialVariantService {
     });
   }
 
+  async findAllMaterialHasReceipt() {
+    return this.prismaService.materialVariant.findMany({
+      where: {
+        materialPackage: {
+          some: {
+            materialReceipt: {
+              some: {
+                status: MaterialReceiptStatus.AVAILABLE,
+              },
+            },
+          },
+        },
+      },
+      include: this.materialInclude,
+    });
+  }
+
   async findMaterialHasReceipt(
     findOptions: GeneratedFindOptions<Prisma.MaterialVariantScalarWhereInput>,
   ) {
@@ -750,6 +767,14 @@ export class MaterialVariantService {
       return apiSuccess(HttpStatus.OK, result, 'Material found');
     }
     return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
+  }
+
+  async findByMaterialCodeWithoutResponse(materialCode: string) {
+    const result = await this.prismaService.materialVariant.findFirst({
+      where: { code: materialCode },
+      include: this.materialInclude,
+    });
+    return result;
   }
 
   async findByMaterialType(materialType: string) {
