@@ -334,6 +334,23 @@ export class ProductVariantService {
     return data;
   }
 
+  async findProductHasReceipt() {
+    return await this.prismaService.productVariant.findMany({
+      where: {
+        productSize: {
+          some: {
+            productReceipt: {
+              some: {
+                status: { in: [ProductReceiptStatus.AVAILABLE] },
+              },
+            },
+          },
+        },
+      },
+      include: this.includeQueryAny,
+    });
+  }
+
   async findAllHasReceipt(
     filterOption?: GeneratedFindOptions<Prisma.ProductVariantWhereInput>,
   ) {

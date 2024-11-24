@@ -25,6 +25,7 @@ import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { DiscussionService } from '../discussion/discussion.service';
 import { InspectionRequestService } from '../inspection-request/inspection-request.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { ProductionBatchService } from '../production-batch/production-batch.service';
@@ -41,18 +42,16 @@ export class ImportRequestService {
     private readonly poDeliveryService: PoDeliveryService,
     private readonly inspectionRequestService: InspectionRequestService,
     private readonly productionBatchService: ProductionBatchService,
+    private readonly discussionService: DiscussionService,
   ) {}
 
   async isAnyImportingImportRequest() {
     const result = await this.prismaService.importRequest.findMany({
       where: {
-        OR: [{ status: ImportRequestStatus.IMPORTING }],
+        status: ImportRequestStatus.IMPORTING,
       },
     });
-    if (result.length === 0) {
-      return false;
-    }
-    return true;
+    return result;
   }
 
   async search(
@@ -255,16 +254,38 @@ export class ImportRequestService {
       );
     }
 
-    const [result, updatePoDelivery] = await this.prismaService.$transaction([
-      this.prismaService.importRequest.create({
-        data: createImportRequestInput,
-        include: importRequestInclude,
-      }),
-      this.poDeliveryService.updateStatus(
-        dto.poDeliveryId,
-        $Enums.PoDeliveryStatus.IMPORTING,
-      ),
-    ]);
+    // const [result, updatePoDelivery] = await this.prismaService.$transaction([
+    //   this.prismaService.importRequest.create({
+    //     data: createImportRequestInput,
+    //     include: importRequestInclude,
+    //   }),
+    //   this.poDeliveryService.updateStatus(
+    //     dto.poDeliveryId,
+    //     $Enums.PoDeliveryStatus.IMPORTING,
+    //   ),
+    // ]);
+
+    const result = await this.prismaService.$transaction(
+      async (prismaInstance: PrismaService) => {
+        const resultOut = await prismaInstance.importRequest.create({
+          data: createImportRequestInput,
+          include: importRequestInclude,
+        });
+        await this.poDeliveryService.updateStatus(
+          dto.poDeliveryId,
+          $Enums.PoDeliveryStatus.IMPORTING,
+        );
+
+        const discussion = await this.discussionService.create(
+          {
+            importRequestId: resultOut.id,
+          },
+          prismaInstance,
+        );
+        resultOut.discussion = discussion;
+        return resultOut;
+      },
+    );
     return result;
   }
 
@@ -625,10 +646,11 @@ export class ImportRequestService {
       },
     };
 
-    const productionBatch =
-      await this.productionBatchService.chekIsProductionBatchStatus(
-        createImportRequestDto.productionBatchId,
-      );
+    //Enable later
+    // const productionBatch =
+    //   await this.productionBatchService.chekIsProductionBatchStatus(
+    //     createImportRequestDto.productionBatchId,
+    //   );
 
     // const errorResponse =
     //   await this.productionBatchService.checkIsProductionBatchValid(
@@ -643,17 +665,40 @@ export class ImportRequestService {
     //   );
     // }
 
-    const [result, updateProductionBatch] =
-      await this.prismaService.$transaction([
-        this.prismaService.importRequest.create({
+    // const [result, updateProductionBatch] =
+    //   await this.prismaService.$transaction([
+    //     this.prismaService.importRequest.create({
+    //       data: createImportRequestInput,
+    //       include: importRequestInclude,
+    //     }),
+    //     this.productionBatchService.updateStatus(
+    //       createImportRequestDto.productionBatchId,
+    //       ProductionBatchStatus.IMPORTING,
+    //     ),
+    //   ]);
+
+    const result = await this.prismaService.$transaction(
+      async (prismaInstance: PrismaService) => {
+        const result = await prismaInstance.importRequest.create({
           data: createImportRequestInput,
           include: importRequestInclude,
-        }),
-        this.productionBatchService.updateStatus(
+        });
+        await this.productionBatchService.updateStatus(
           createImportRequestDto.productionBatchId,
           ProductionBatchStatus.IMPORTING,
-        ),
-      ]);
+          prismaInstance,
+        );
+        console.log(result);
+        const discussion = await this.discussionService.create(
+          {
+            importRequestId: result.id,
+          },
+          prismaInstance,
+        );
+        result.discussion = discussion;
+        return result;
+      },
+    );
 
     if (result) {
       return apiSuccess(

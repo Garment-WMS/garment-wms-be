@@ -64,6 +64,9 @@ import { TaskModule } from './modules/task/task.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
+import { DiscussionModule } from './modules/discussion/discussion.module';
+import { ChatModule } from './modules/chat/chat.module';
+import { ProductionBatchMaterialVariantModule } from './modules/production-batch-material-variant/production-batch-material-variant.module';
 
 @Module({
   imports: [
@@ -153,6 +156,7 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
     GeneralSearchModule,
     MaterialExportReceiptModule,
     MaterialExportReceiptDetailModule,
+    ProductionBatchMaterialVariantModule,
     DiscussionModule,
     ChatModule,
     DefectModule,
