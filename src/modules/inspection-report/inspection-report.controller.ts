@@ -63,9 +63,10 @@ export class InspectionReportController {
 
   @Get('/quality-rate')
    getQualityRate(
-
+    @Param('from') from: Date,
+    @Param('to') to: Date,
   ) {
-    return this.inspectionReportService.getQualityRate();
+    return this.inspectionReportService.getQualityRate(from,to);
   }
 
   @Get(':id')

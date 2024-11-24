@@ -19,7 +19,10 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import * as redisStore from 'cache-manager-redis-store';
+import { ChatModule } from './modules/chat/chat.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DefectModule } from './modules/defect/defect.module';
+import { DiscussionModule } from './modules/discussion/discussion.module';
 import { GeneralSearchModule } from './modules/general-search/general-search.module';
 import { ImportReceiptModule } from './modules/import-receipt/import-receipt.module';
 import { ImportRequestModule } from './modules/import-request/import-request.module';
@@ -63,8 +66,6 @@ import { TaskModule } from './modules/task/task.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
-import { DiscussionModule } from './modules/discussion/discussion.module';
-import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -158,6 +159,7 @@ import { ChatModule } from './modules/chat/chat.module';
     DiscussionModule,
     ChatModule,
     DefectModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

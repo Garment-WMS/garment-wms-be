@@ -37,9 +37,16 @@ export class InspectionReportService {
     // private readonly importRequestService: ImportRequestService,
   ) {}
 
-  async getQualityRate() {
+  async getQualityRate(from: Date, to: Date) {
     const inspectedReportDetail =
-      await this.prismaService.inspectionReportDetail.findMany({});
+      await this.prismaService.inspectionReportDetail.findMany({
+        where: {
+          createdAt: {
+            ...(from ? { gte: from } : {}),
+            ...(to ? { lte: to } : {}),
+          },
+        },
+      });
     const [numberOfApproveQuantity, numberOfDefectQuantity] =
       inspectedReportDetail.reduce(
         (acc, item) => {
