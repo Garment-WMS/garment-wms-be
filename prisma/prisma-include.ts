@@ -421,11 +421,22 @@ export const importReceipt: Prisma.ImportReceiptInclude = {
 export const materialInclude: Prisma.MaterialInclude = {
   materialUom: true,
 };
+export const materialExportRequestDetailInclude: Prisma.MaterialExportRequestDetailInclude =
+  {
+    materialVariant: { include: materialVariantInclude },
+  };
 
 export const materialExportReceiptInclude: Prisma.MaterialExportReceiptInclude =
   {
     warehouseStaff: {
       include: warehouseStaffInclude,
+    },
+    materialExportRequest: {
+      include: {
+        materialExportRequestDetail: {
+          include: materialExportRequestDetailInclude,
+        },
+      },
     },
     materialExportReceiptDetail: {
       include: {
@@ -461,11 +472,6 @@ export const taskInclude: Prisma.TaskInclude = {
   },
   todo: true,
 };
-
-export const materialExportRequestDetailInclude: Prisma.MaterialExportRequestDetailInclude =
-  {
-    materialVariant: { include: materialVariantInclude },
-  };
 
 export const materialExportRequestInclude: Prisma.MaterialExportRequestInclude =
   {
