@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import {
   materialExportReceiptInclude,
   materialExportRequestInclude,
-  materialReceiptInclude,
+  materialReceiptIncludeWithoutImportReceipt,
   materialVariantInclude,
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
@@ -109,7 +109,7 @@ export class MaterialExportReceiptService {
           },
         },
       },
-      include: materialReceiptInclude,
+      include: materialReceiptIncludeWithoutImportReceipt,
     });
 
     // Handle the algorithm
@@ -160,7 +160,7 @@ export class MaterialExportReceiptService {
               materialVariantId: materialExportRequestDetail.materialVariantId,
             },
           },
-          include: materialReceiptInclude,
+          include: materialReceiptIncludeWithoutImportReceipt,
         });
       for (let i = 0; i < materialReceiptOfMaterialVariant.length; i++) {
         const materialReceipt = materialReceiptOfMaterialVariant[i];
@@ -280,7 +280,7 @@ export class MaterialExportReceiptService {
           },
         },
       },
-      include: materialReceiptInclude,
+      include: materialReceiptIncludeWithoutImportReceipt,
     });
 
     const recommendMaterialExportReceiptDetails: Prisma.MaterialExportReceiptDetailUncheckedCreateInput[] =

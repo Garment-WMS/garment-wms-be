@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { MaterialReceiptStatus, Prisma, PrismaClient } from '@prisma/client';
 import { isUUID } from 'class-validator';
-import { materialReceiptInclude } from 'prisma/prisma-include';
+import { materialReceiptIncludeWithoutImportReceipt } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
@@ -22,7 +22,7 @@ export class MaterialReceiptService {
   findByQuery(query: any) {
     return this.prismaService.materialReceipt.findFirst({
       where: query,
-      include: materialReceiptInclude,
+      include: materialReceiptIncludeWithoutImportReceipt,
     });
   }
 
@@ -52,7 +52,7 @@ export class MaterialReceiptService {
           in: [MaterialReceiptStatus.AVAILABLE],
         },
       },
-      include: materialReceiptInclude,
+      include: materialReceiptIncludeWithoutImportReceipt,
     });
 
     return materialReceipts;
@@ -71,7 +71,7 @@ export class MaterialReceiptService {
           in: [MaterialReceiptStatus.AVAILABLE],
         },
       },
-      include: materialReceiptInclude,
+      include: materialReceiptIncludeWithoutImportReceipt,
     });
 
     return materialReceipts;
@@ -140,7 +140,7 @@ export class MaterialReceiptService {
       where: {
         importReceiptId: id,
       },
-      include: materialReceiptInclude,
+      include: materialReceiptIncludeWithoutImportReceipt,
     });
 
     return createdMaterialReceipts;
@@ -187,7 +187,7 @@ export class MaterialReceiptService {
 
   async findAll() {
     const materialReceipts = await this.prismaService.materialReceipt.findMany({
-      include: materialReceiptInclude,
+      include: materialReceiptIncludeWithoutImportReceipt,
     });
 
     return apiSuccess(
@@ -240,7 +240,7 @@ export class MaterialReceiptService {
       where: {
         id,
       },
-      include: materialReceiptInclude,
+      include: materialReceiptIncludeWithoutImportReceipt,
     });
   }
 

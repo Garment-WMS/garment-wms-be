@@ -16,7 +16,12 @@ import {
   RoleCode,
 } from '@prisma/client';
 import { isUUID } from 'class-validator';
-import { importReceiptInclude } from 'prisma/prisma-include';
+import {
+  importReceiptInclude,
+  inspectionReportDetailDefectIncludeWithoutInspectionReportDetail,
+  materialPackageInclude,
+  productSizeInclude,
+} from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
@@ -610,6 +615,20 @@ export class ImportReceiptService {
         },
         inspectionReport: {
           include: {
+            inspectionReportDetail: {
+              include: {
+                materialPackage: {
+                  include: materialPackageInclude,
+                },
+                productSize: {
+                  include: productSizeInclude,
+                },
+                inspectionReportDetailDefect: {
+                  include:
+                    inspectionReportDetailDefectIncludeWithoutInspectionReportDetail,
+                },
+              },
+            },
             inspectionRequest: {
               include: {
                 inspectionDepartment: {
