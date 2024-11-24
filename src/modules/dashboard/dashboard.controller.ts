@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { CreateDashboardDto } from './dto/create-dashboard.dto';
@@ -21,7 +22,7 @@ export class DashboardController {
   }
 
   @Get()
-  findAll(@Param('from') from, @Param('to') to) {
+  findAll(@Query('from') from, @Query('to') to) {
     return this.dashboardService.findAll(from, to);
   }
 

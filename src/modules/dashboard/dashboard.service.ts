@@ -21,6 +21,7 @@ export class DashboardService {
   }
 
   async findAll(from: Date, to: Date) {
+    console.log(from, to);
     const materialVariant: any =
       await this.prismaService.materialVariant.findMany({
         include: {
@@ -30,8 +31,8 @@ export class DashboardService {
                 where: {
                   status: 'AVAILABLE',
                   createdAt: {
-                    ...(from ? { gte: from } : {}),
-                    ...(to ? { lte: to } : {}),
+                    ...(from ? { gte: new Date(from) } : {}),
+                    ...(to ? { lte: new Date(to) } : {}),
                   },
                 },
               },
@@ -41,6 +42,7 @@ export class DashboardService {
       });
     let quantity = 0;
     let numberOfMaterialStock = 0;
+    let materialQualityRate = 0;
 
     const productVariant: any =
       await this.prismaService.productVariant.findMany({
@@ -80,11 +82,10 @@ export class DashboardService {
           numberOfProductStock += productReceipt.quantityByUom;
         });
       });
-      console.log('quantity', quantityProduct);
       item.quantity = quantityProduct;
     });
 
-    materialVariant.forEach((item: any) => {
+    materialVariant.forEach((item) => {
       quantity = 0;
       item.materialPackage.forEach((materialPackage) => {
         materialPackage.materialReceipt.forEach((materialReceipt) => {
@@ -100,7 +101,6 @@ export class DashboardService {
       {
         materialVariant,
         productVariant,
-        inspectionReport,
         numberOfMaterialStock,
         numberOfProductStock,
       },
