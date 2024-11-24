@@ -19,6 +19,9 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import * as redisStore from 'cache-manager-redis-store';
+import { ChatModule } from './chat/chat.module';
+import { DiscussionModule } from './discussion/discussion.module';
+import { DefectModule } from './modules/defect/defect.module';
 import { GeneralSearchModule } from './modules/general-search/general-search.module';
 import { ImportReceiptModule } from './modules/import-receipt/import-receipt.module';
 import { ImportRequestModule } from './modules/import-request/import-request.module';
@@ -61,9 +64,6 @@ import { TaskModule } from './modules/task/task.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
-import { DiscussionModule } from './modules/discussion/discussion.module';
-import { ChatModule } from './modules/chat/chat.module';
-import { ProductionBatchMaterialVariantModule } from './modules/production-batch-material-variant/production-batch-material-variant.module';
 
 @Module({
   imports: [
@@ -153,9 +153,9 @@ import { ProductionBatchMaterialVariantModule } from './modules/production-batch
     GeneralSearchModule,
     MaterialExportReceiptModule,
     MaterialExportReceiptDetailModule,
-    ProductionBatchMaterialVariantModule,
     DiscussionModule,
     ChatModule,
+    DefectModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

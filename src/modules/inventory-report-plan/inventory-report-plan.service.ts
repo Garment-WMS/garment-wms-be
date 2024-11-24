@@ -36,11 +36,9 @@ export class InventoryReportPlanService {
     const isAnyImportingImportRequest =
       await this.importRequestService.isAnyImportingImportRequest();
 
-    if (isAnyImportingImportRequest.length > 0) {
-      return apiFailed(
-        HttpStatus.CONFLICT,
-        'Cannot start recording inventory report plan while there is importing import request',
-        isAnyImportingImportRequest,
+    if (isAnyImportingImportRequest) {
+      throw new BadRequestException(
+        'There is still importing request, you can not start this inventory report plan',
       );
     }
 
@@ -78,9 +76,6 @@ export class InventoryReportPlanService {
           'Inventory report plan started successfully',
         );
       },
-      {
-        timeout: 100000,
-      },
     );
 
     return apiSuccess(
@@ -95,8 +90,8 @@ export class InventoryReportPlanService {
     warehouseManagerId: string,
   ) {
     const allVariants = [
-      ...(await this.materialVariantService.findAllMaterialHasReceipt()),
-      ...(await this.productVariantService.findProductHasReceipt()),
+      ...(await this.materialVariantService.findAllWithoutResponse()),
+      ...(await this.productVariantService.findAllWithoutResponse()),
     ];
 
     const inventoryPlanInputs: Prisma.InventoryReportPlanCreateInput = {
@@ -149,9 +144,6 @@ export class InventoryReportPlanService {
         inventoryPlanResult.inventoryReportPlanDetail =
           inventoryPlanDetailResult;
         return inventoryPlanResult;
-      },
-      {
-        maxWait: 100000,
       },
     );
     return apiSuccess(
