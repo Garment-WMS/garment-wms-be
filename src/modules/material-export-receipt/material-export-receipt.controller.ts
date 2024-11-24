@@ -41,7 +41,7 @@ export class MaterialExportReceiptController {
   }
 
   @Get()
-  findAll(
+  async search(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.MaterialExportReceiptWhereInput>(
         [],
@@ -50,9 +50,13 @@ export class MaterialExportReceiptController {
     )
     filterDto: FilterDto<Prisma.MaterialExportReceiptWhereInput>,
   ) {
-    return this.materialExportReceiptService.search(filterDto.findOptions);
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportReceiptService.search(filterDto.findOptions),
+      'Get all material export receipt successfully',
+    );
   }
-  @Get()
+  @Get('/custom')
   findAllCustomResponse(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.MaterialExportReceiptWhereInput>(
