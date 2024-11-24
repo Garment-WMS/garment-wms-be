@@ -260,6 +260,7 @@ export class InspectionReportService {
       {
         code: dto.code,
         inspectionRequestId: dto.inspectionRequestId,
+        type: dto.type,
         // inspectionReportDetail: {
         //   createMany: {
         //     data: dto.inspectionReportDetail.map((detail) => ({
