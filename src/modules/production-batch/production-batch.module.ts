@@ -6,9 +6,10 @@ import { IsProductionBatchExistPipe } from './pipe/is-production-batch-exist.pip
 import { ProductionBatchController } from './production-batch.controller';
 import { ProductionBatchService } from './production-batch.service';
 import { IsProductionBatchExistValidator } from './validator/is-production-batch-exist.validator';
+import { ProductionBatchMaterialVariantModule } from '../production-batch-material-variant/production-batch-material-variant.module';
 
 @Module({
-  imports: [PrismaModule, ExcelModule, ProductPlanDetailModule],
+  imports: [PrismaModule, ExcelModule,ProductionBatchMaterialVariantModule, ProductPlanDetailModule],
   controllers: [ProductionBatchController],
   providers: [
     ProductionBatchService,

@@ -16,6 +16,7 @@ import { getPageMeta } from 'src/common/utils/utils';
 import { ExcelService } from '../excel/excel.service';
 import { CreateImportRequestDetailDto } from '../import-request/dto/import-request-detail/create-import-request-detail.dto';
 import { ProductPlanDetailService } from '../product-plan-detail/product-plan-detail.service';
+import { ProductionBatchMaterialVariantService } from '../production-batch-material-variant/production-batch-material-variant.service';
 import { CreateProductionBatchDto } from './dto/create-production-batch.dto';
 import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
 
@@ -24,7 +25,8 @@ export class ProductionBatchService {
   constructor(
     readonly prismaService: PrismaService,
     private readonly excelService: ExcelService,
-    private readonly productPlanDetailService: ProductPlanDetailService
+    private readonly productPlanDetailService: ProductPlanDetailService,
+    private readonly productionBatchMaterialVariantService: ProductionBatchMaterialVariantService,
   ) {}
 
   updateProductBatchStatus(
@@ -95,10 +97,7 @@ export class ProductionBatchService {
     if (excelData instanceof ApiResponse) {
       return excelData;
     }
-
     const createProductBatchData = excelData as CreateProductionBatchDto[];
-
-    // console.log(createProductBatchData);
     const createProductionBatchInput: Prisma.ProductionBatchCreateManyInput[] =
       createProductBatchData.map((item) => {
         return {
@@ -106,14 +105,47 @@ export class ProductionBatchService {
         };
       });
 
+    const isExceedQuantityPlanDetail =
+      await this.productPlanDetailService.IsExceedQuantityPlanDetail(
+        createProductionBatchInput[0].productionPlanDetailId,
+        createProductionBatchInput[0].quantityToProduce,
+      );
+    if (isExceedQuantityPlanDetail) {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Exceed quantity to produce in plan detail, you can not create this production batch',
+      );
+    }
+    console.log(createProductionBatchInput[0]);
 
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
-        const productionBatchResult: any =
-          await prismaInstance.productionBatch.createManyAndReturn({
-            data: createProductionBatchInput,
+        const productionBatchInput: Prisma.ProductionBatchCreateInput = {
+          productionPlanDetail: {
+            connect: {
+              id: createProductionBatchInput[0].productionPlanDetailId,
+            },
+          },
+          code: createProductionBatchInput[0].code,
+          name: createProductionBatchInput[0].name,
+          description: createProductionBatchInput[0].description,
+          quantityToProduce: createProductionBatchInput[0].quantityToProduce,
+          status: 'EXECUTING',
+        };
+        // throw new Error('Method not implemented.');
+
+        const productionBatchResult =
+          await prismaInstance.productionBatch.create({
+            data: productionBatchInput,
             // include: productionBatchInclude,
           });
+        if (productionBatchResult) {
+          await this.productionBatchMaterialVariantService.createMany(
+            productionBatchResult.id,
+            createProductBatchData[0].productionBatchMaterials,
+            prismaInstance,
+          );
+        }
         return productionBatchResult;
       },
     );
