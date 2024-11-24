@@ -21,7 +21,7 @@ export class CreatePurchaseOrderDto {
 
   @IsNotEmpty()
   @IsUUID()
-  quarterlyProductionPlanId: UUID;
+  productionPlanId: string;
 
   @IsNotEmpty()
   @IsUUID()

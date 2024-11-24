@@ -15,6 +15,7 @@ model InventoryReportPlan {
     inventoryReportPlanDetail InventoryReportPlanDetail[]
 
     @@map("inventory_report_plan")
+    Task Task[]
 }
 
 enum InventoryReportPlanType {

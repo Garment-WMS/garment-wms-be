@@ -91,7 +91,6 @@ export class PurchaseOrderController {
       await this.purchaseOrderService.createPurchaseOrderWithExcelFile(
         file,
         user.purchasingStaffId,
-        productionPlanId,
       );
     return fileResult;
   }

@@ -9,11 +9,15 @@ import { ProductVariantModule } from '../product-variant/product-variant.module'
 import { InventoryReportPlanController } from './inventory-report-plan.controller';
 import { InventoryReportPlanService } from './inventory-report-plan.service';
 import { ImportRequestModule } from '../import-request/import-request.module';
+import { MaterialExportRequestModule } from '../material-export-request/material-export-request.module';
+import { TaskModule } from '../task/task.module';
 
 @Module({
   controllers: [InventoryReportPlanController],
   imports: [
     PrismaModule,
+    TaskModule,
+    MaterialExportRequestModule,
     InventoryReportPlanDetailModule,
     InventoryReportModule,
     MaterialPackageModule,

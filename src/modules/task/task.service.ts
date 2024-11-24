@@ -27,6 +27,23 @@ export class TaskService {
     return task;
   }
 
+  async createMany(createTaskDto: CreateTaskDto[]) {
+    const taskCreateInput: Prisma.TaskCreateManyInput[] = createTaskDto.map(
+      (task) => {
+        return {
+          ...task,
+        };
+      },
+    );
+
+    const task = await this.prismaService.task.createMany({
+      data: taskCreateInput,
+    });
+
+    // await this.createMockTodo(task);
+    return task;
+  }
+
   async createMockTodo(task: Prisma.TaskWhereUniqueInput) {
     switch (task.taskType) {
       case $Enums.TaskType.INSPECTION:

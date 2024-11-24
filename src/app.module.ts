@@ -19,8 +19,6 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import * as redisStore from 'cache-manager-redis-store';
-import { ChatModule } from './chat/chat.module';
-import { DiscussionModule } from './discussion/discussion.module';
 import { DefectModule } from './modules/defect/defect.module';
 import { GeneralSearchModule } from './modules/general-search/general-search.module';
 import { ImportReceiptModule } from './modules/import-receipt/import-receipt.module';
@@ -54,6 +52,7 @@ import { ProductSizeModule } from './modules/product-size/product-size.module';
 import { ProductUomModule } from './modules/product-uom/product-uom.module';
 import { ProductVariantModule } from './modules/product-variant/product-variant.module';
 import { ProductModule } from './modules/product/product.module';
+import { ProductionBatchMaterialVariantModule } from './modules/production-batch-material-variant/production-batch-material-variant.module';
 import { ProductionBatchModule } from './modules/production-batch/production-batch.module';
 import { PurchaseOrderModule } from './modules/purchase-order/purchase-order.module';
 import { QuarterlyProductDetailModule } from './modules/quarterly-product-detail/quarterly-product-detail.module';
@@ -66,7 +65,6 @@ import { UserModule } from './modules/user/user.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
 import { DiscussionModule } from './modules/discussion/discussion.module';
 import { ChatModule } from './modules/chat/chat.module';
-import { ProductionBatchMaterialVariantModule } from './modules/production-batch-material-variant/production-batch-material-variant.module';
 
 @Module({
   imports: [

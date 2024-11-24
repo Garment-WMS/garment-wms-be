@@ -7,6 +7,7 @@ import { ProductSizeModule } from '../product-size/product-size.module';
 import { ExcelController } from './excel.controller';
 import { ExcelService } from './excel.service';
 import { ProductPlanDetailModule } from '../product-plan-detail/product-plan-detail.module';
+import { ProductPlanModule } from '../product-plan/product-plan.module';
 
 @Module({
   controllers: [ExcelController],

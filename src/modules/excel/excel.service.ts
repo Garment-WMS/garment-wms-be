@@ -166,6 +166,8 @@ export class ExcelService {
       return errorResponse;
     }
 
+    console.log(supplierError, listItemError);
+
     if (supplierError.size > 0 || listItemError.size > 0) {
       const timestamp = Date.now();
       const fileName = `${timestamp}-${file.originalname}`;
@@ -193,7 +195,8 @@ export class ExcelService {
     if (errorResponseDeliveryBatch) {
       return errorResponseDeliveryBatch;
     }
-    console.log('deliveryBatchError', deliveryBatchItemError);
+    console.log(deliveryBatchError, deliveryBatchItemError);
+
     if (deliveryBatchError.size > 0 || deliveryBatchItemError.size > 0) {
       const timestamp = Date.now();
       const fileName = `${timestamp}-${file.originalname}`;
@@ -480,60 +483,6 @@ export class ExcelService {
             }
           }
           break;
-
-        // case 'Delivery Date':
-        //   errorFlag = false;
-        //   if (
-        //     this.validateRequired(
-        //       value,
-        //       deliveryTableInfo[i][0].value.split(':')[0].trim(),
-        //       deliveryTableInfo[i][1].address,
-        //       deliveryBatchError,
-        //       `${DATE_FORMAT}`,
-        //     )
-        //   ) {
-        //     if (!validateDate(value) && !errorFlag) {
-        //       const text = [
-        //         { text: `${value}` },
-        //         {
-        //           text: `[Invalid date format, must be ${DATE_FORMAT}]`,
-        //           font: { color: { argb: 'FF0000' } },
-        //         },
-        //       ];
-        //       this.addError(
-        //         deliveryBatchError,
-        //         deliveryTableInfo[i][1].address,
-        //         'Delivery Date',
-        //         value,
-        //         text,
-        //       );
-        //       errorFlag = true;
-        //     }
-
-        //     if (new Date(value) < new Date() && !errorFlag) {
-        //       const text = [
-        //         { text: `${value.toISOString().split('T')[0]}` },
-        //         {
-        //           text: `[Delivery Date must be after current date]`,
-        //           font: { color: { argb: 'FF0000' } },
-        //         },
-        //       ];
-        //       this.addError(
-        //         deliveryBatchError,
-        //         deliveryTableInfo[i][1].address,
-        //         'Delivery Date',
-        //         value,
-        //         text,
-        //       );
-        //       errorFlag = true;
-        //     }
-
-        //     if (!errorFlag) {
-        //       deliveryBatchInfo.deliverDate = value;
-        //     }
-        //   }
-        //   break;
-
         case 'Is extra':
           errorFlag = false;
           if (
@@ -594,6 +543,13 @@ export class ExcelService {
     // Check supplier table header
     let supplierValue: any[][] = [];
     supplierValue = this.extractVerticalTable(supplierTable, worksheet);
+    const supplierHeader = this.extractHeader(supplierValue);
+    if (!compareArray(supplierHeader, SUPPLIER_HEADER)) {
+      return apiFailed(
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        'Invalid format, Supplier table header is invalid',
+      );
+    }
     //Find supplier company through company code
     for (let i = 0; i < supplierValue.length; i++) {
       if (supplierValue[i][0].value.includes('Company Code')) {
@@ -636,14 +592,6 @@ export class ExcelService {
           purchaseOrderObject.Supplier.id = supplier.id;
         }
       }
-    }
-
-    const supplierHeader = this.extractHeader(supplierValue);
-    if (!compareArray(supplierHeader, SUPPLIER_HEADER)) {
-      return apiFailed(
-        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
-        'Invalid format, Supplier table header is invalid',
-      );
     }
 
     //Check POinfo table header
@@ -919,41 +867,43 @@ export class ExcelService {
 
       //Po Number
       switch (POInfoTableValue[i][0].value.split(':')[0].trim()) {
-        // case 'PO #': {
-        //   errorSet = false;
-        //   if (
-        //     this.validateRequired(
-        //       value,
-        //       POInfoTableValue[i][0].value.split(':')[0].trim(),
-        //       POInfoTableValue[i][1].address,
-        //       supplierError,
-        //     )
-        //   ) {
-        //     if (
-        //       await this.prismaService.purchaseOrder.findUnique({
-        //         where: { poNumber: value },
-        //       })
-        //     ) {
-        //       const text = [
-        //         { text: `${value}` },
-        //         {
-        //           text: `[PO number is already exist]`,
-        //           font: { color: { argb: 'FF0000' } },
-        //         },
-        //       ];
-        //       this.addError(
-        //         supplierError,
-        //         POInfoTableValue[i][1].address,
-        //         'PO #',
-        //         value,
-        //         text,
-        //       );
-        //       errorSet = true;
-        //     }
-        //     purchaseOrderObject.PONumber = value;
-        //   }
-        //   break;
-        // }
+        case 'Production Plan Code': {
+          errorSet = false;
+          if (
+            this.validateRequired(
+              value,
+              POInfoTableValue[i][0].value.split(':')[0].trim(),
+              POInfoTableValue[i][1].address,
+              supplierError,
+            )
+          ) {
+            const productPlan =
+              await this.prismaService.productionPlan.findFirst({
+                where: {
+                  code: value,
+                },
+              });
+            if (!productPlan) {
+              const text = [
+                { text: `${value}` },
+                {
+                  text: `[Product Plan does not exist]`,
+                  font: { color: { argb: 'FF0000' } },
+                },
+              ];
+              this.addError(
+                supplierError,
+                POInfoTableValue[i][1].address,
+                'Production Plan Code',
+                value,
+                text,
+              );
+              errorSet = true;
+            }
+            purchaseOrderObject.productionPlanId = productPlan.id as string;
+          }
+          break;
+        }
 
         case 'Ordered Date':
           errorSet = false;

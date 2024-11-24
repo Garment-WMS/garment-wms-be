@@ -477,17 +477,8 @@ export class PurchaseOrderService {
   async createPurchaseOrderWithExcelFile(
     file: Express.Multer.File,
     purchasingStaffId: string,
-    productionPlanId: string,
+    // productionPlanId: string,
   ) {
-    const productionPlan =
-      await this.productionPlanservice.findValidProductionPlan(
-        productionPlanId,
-      );
-
-    if (!productionPlan) {
-      return apiFailed(HttpStatus.NOT_FOUND, 'Invalid Production Plan');
-    }
-
     const excelData = await this.excelService.readExcel(file);
     let purchaseOrder = null;
     if (excelData instanceof ApiResponse) {
@@ -499,13 +490,27 @@ export class PurchaseOrderService {
           subTotalAmount += material.totalAmount;
         });
       });
+
       const PoNumber = await this.generateNextPoNumber();
       const createPurchaseOrderData =
         excelData as Partial<CreatePurchaseOrderDto>;
+
+      const productionPlan =
+        await this.productionPlanservice.findValidProductionPlan(
+          createPurchaseOrderData.productionPlanId,
+        );
+
+      if (!productionPlan) {
+        return apiFailed(
+          HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+          'Invalid Production Plan, the production plan is not available',
+        );
+      }
+
       const createPurchaseOrder: Prisma.PurchaseOrderCreateInput = {
         subTotalAmount: subTotalAmount,
         productionPlan: {
-          connect: { id: productionPlan.id },
+          connect: { id: createPurchaseOrderData.productionPlanId },
         },
         taxAmount: createPurchaseOrderData.taxAmount,
         expectedFinishDate: createPurchaseOrderData.expectedFinishDate,

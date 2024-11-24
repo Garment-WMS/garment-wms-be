@@ -4,6 +4,7 @@ import {
   InventoryReportPlanStatus,
   InventoryReportPlanType,
   Prisma,
+  TaskType,
 } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { inventoryReportPlan } from 'prisma/prisma-include';
@@ -14,8 +15,11 @@ import { getPageMeta } from 'src/common/utils/utils';
 import { ImportRequestService } from '../import-request/import-request.service';
 import { InventoryReportPlanDetailService } from '../inventory-report-plan-detail/inventory-report-plan-detail.service';
 import { InventoryReportService } from '../inventory-report/inventory-report.service';
+import { MaterialExportRequestService } from '../material-export-request/material-export-request.service';
 import { MaterialVariantService } from '../material-variant/material-variant.service';
 import { ProductVariantService } from '../product-variant/product-variant.service';
+import { CreateTaskDto } from '../task/dto/create-task.dto';
+import { TaskService } from '../task/task.service';
 import { CreateInventoryReportPlanDto } from './dto/create-inventory-report-plan.dto';
 import { InventoryReportPlanDto } from './dto/inventory-report-plan.dto';
 import { CreateOverAllInventoryReportPlanDto } from './dto/over-all-report-plan.dto';
@@ -30,17 +34,24 @@ export class InventoryReportPlanService {
     private readonly materialVariantService: MaterialVariantService,
     private readonly inventoryReportService: InventoryReportService,
     private readonly importRequestService: ImportRequestService,
+    private readonly materialExportRequestService: MaterialExportRequestService,
+    private readonly taskService: TaskService,
   ) {}
 
   async startRecordInventoryReportPlan(id: string, warehouseManager: string) {
     const isAnyImportingImportRequest =
       await this.importRequestService.isAnyImportingImportRequest();
+    const isAnyExportingExportRequest =
+      await this.materialExportRequestService.isAnyExportingExportRequest();
 
-    if (isAnyImportingImportRequest.length > 0) {
+    if (
+      isAnyImportingImportRequest.length > 0 ||
+      isAnyExportingExportRequest.length > 0
+    ) {
       return apiFailed(
         HttpStatus.CONFLICT,
         'Cannot start recording inventory report plan while there is importing import request',
-        isAnyImportingImportRequest,
+        { isAnyImportingImportRequest, isAnyExportingExportRequest },
       );
     }
 
@@ -148,6 +159,19 @@ export class InventoryReportPlanService {
 
         inventoryPlanResult.inventoryReportPlanDetail =
           inventoryPlanDetailResult;
+
+        const createTaskDto: Prisma.TaskCreateManyInput []=[];
+
+        staffList.forEach((staff: any) => {
+          createTaskDto.push({
+            status: 'OPEN',
+            taskType: TaskType.INVENTORY,
+            warehouseStaffId: staff.warehouseStaffId,
+            inventoryReportPlanId: inventoryPlanResult.id,
+          });
+        });
+
+        await this.taskService.createMany(createTaskDto);
         return inventoryPlanResult;
       },
       {
@@ -471,6 +495,22 @@ export class InventoryReportPlanService {
         inventoryPlanResult.inventoryReportPlanDetail =
           inventoryPlanDetailResult;
 
+        const createTaskDto: CreateTaskDto[] = [];
+
+        const staffList = inventoryPlanDetailResult.reduce(
+          (acc, plan) => acc.concat(plan.warehouseStaffId),
+          [] as string[],
+        );
+
+        staffList.forEach((staff: any) => {
+          createTaskDto.push({
+            status: 'OPEN',
+            taskType: TaskType.INVENTORY,
+            warehouseStaffId: staff.warehouseStaffId,
+            inventoryReportPlanId: inventoryPlanResult.id,
+          });
+        });
+        await this.taskService.createMany(createTaskDto);
         return inventoryPlanResult;
       },
     );

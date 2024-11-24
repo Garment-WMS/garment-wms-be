@@ -21,6 +21,7 @@ export const ITEM_HEADER = [
 ];
 export const PO_INFO_TABLE = 'POInfo';
 export const PO_INFO_HEADER = [
+  'Production Plan Code',
   'Expected Finished Date',
   'Ordered Date',
   // 'PO #',

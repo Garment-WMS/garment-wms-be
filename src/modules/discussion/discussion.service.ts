@@ -34,7 +34,6 @@ export class DiscussionService {
     createDiscussionDto: CreateDiscussionDto,
     prismaInstance: PrismaService,
   ) {
-    console.log('createDiscussionDto', createDiscussionDto);
     return await prismaInstance.discussion.create({
       data: { ...createDiscussionDto },
     });

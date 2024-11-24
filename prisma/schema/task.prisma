@@ -10,6 +10,8 @@ model Task {
   inspectionRequest       InspectionRequest?     @relation(fields: [inspectionRequestId], references: [id])
   inventoryReportId       String?                @map("inventory_report_id") @db.Uuid
   inventoryReport         InventoryReport?       @relation(fields: [inventoryReportId], references: [id])
+  inventoryReportPlanId   String?                @map("inventory_report_plan_id") @db.Uuid
+  inventoryReportPlan     InventoryReportPlan?   @relation(fields: [inventoryReportPlanId], references: [id])
   warehouseStaffId        String?                @map("warehouse_staff_id") @db.Uuid
   warehouseStaff          WarehouseStaff?        @relation(fields: [warehouseStaffId], references: [id])
   inspectionDepartmentId  String?                @map("inspection_department_id") @db.Uuid

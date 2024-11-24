@@ -5,7 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { $Enums, Prisma } from '@prisma/client';
+import { $Enums, MaterialExportRequestStatus, Prisma } from '@prisma/client';
 import {
   materialExportRequestInclude,
   productFormulaInclude,
@@ -29,6 +29,15 @@ export class MaterialExportRequestService {
     private readonly taskService: TaskService,
     private readonly discussionService: DiscussionService,
   ) {}
+
+  async isAnyExportingExportRequest() {
+    const result = await this.prismaService.materialExportRequest.findMany({
+      where: {
+        status: MaterialExportRequestStatus.DELIVERING,
+      },
+    });
+    return result;
+  }
   async create(dto: CreateMaterialExportRequestDto) {
     const productionBatch =
       await this.prismaService.productionBatch.findUniqueOrThrow({

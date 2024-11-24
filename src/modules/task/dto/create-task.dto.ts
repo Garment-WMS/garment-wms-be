@@ -41,6 +41,11 @@ export class CreateTaskDto {
   @ApiProperty()
   @IsOptional()
   @IsUUID()
+  inventoryReportPlanId?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsUUID()
   warehouseStaffId?: string;
 
   @ApiProperty()
