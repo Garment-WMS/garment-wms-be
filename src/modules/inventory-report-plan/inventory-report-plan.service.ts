@@ -89,9 +89,6 @@ export class InventoryReportPlanService {
           'Inventory report plan started successfully',
         );
       },
-      {
-        timeout: 100000,
-      },
     );
 
     return apiSuccess(
@@ -106,8 +103,8 @@ export class InventoryReportPlanService {
     warehouseManagerId: string,
   ) {
     const allVariants = [
-      ...(await this.materialVariantService.findAllMaterialHasReceipt()),
-      ...(await this.productVariantService.findProductHasReceipt()),
+      ...(await this.materialVariantService.findAllWithoutResponse()),
+      ...(await this.productVariantService.findAllWithoutResponse()),
     ];
 
     const inventoryPlanInputs: Prisma.InventoryReportPlanCreateInput = {
@@ -173,9 +170,6 @@ export class InventoryReportPlanService {
 
         await this.taskService.createMany(createTaskDto);
         return inventoryPlanResult;
-      },
-      {
-        maxWait: 100000,
       },
     );
     return apiSuccess(

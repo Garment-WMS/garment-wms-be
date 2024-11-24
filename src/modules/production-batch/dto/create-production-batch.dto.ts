@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 import {
-  IsArray,
   IsDateString,
   IsInt,
   IsOptional,
@@ -10,7 +9,6 @@ import {
   Min,
 } from 'class-validator';
 import { IsProductionPlanDetailExist } from 'src/modules/product-plan-detail/validator/is-production-plan-detail-exist.validator';
-import { CreateProductionBatchMaterialVariantDto } from 'src/modules/production-batch-material-variant/dto/create-production-batch-material-variant.dto';
 
 export class CreateProductionBatchDto
   implements Prisma.ProductionBatchUncheckedCreateInput
@@ -44,11 +42,4 @@ export class CreateProductionBatchDto
   @ApiProperty({ required: false })
   @IsDateString()
   expectedFinishDate?: string | Date;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  productionBatchMaterials?: CreateProductionBatchMaterialVariantDto[]
-
 }

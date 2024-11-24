@@ -53,4 +53,13 @@ export class DefectController {
   remove(@Param('id') id: string) {
     return this.defectService.remove(+id);
   }
+
+  @Post('/gen-defect')
+  async genDefect() {
+    return apiSuccess(
+      HttpStatus.CREATED,
+      await this.defectService.genDefect(),
+      'Defect created successfully',
+    );
+  }
 }
