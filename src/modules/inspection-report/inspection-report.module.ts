@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from 'prisma/prisma.module';
 import { ImportReceiptModule } from '../import-receipt/import-receipt.module';
-import { ImportRequestModule } from '../import-request/import-request.module';
 import { TaskModule } from '../task/task.module';
 import { InspectionReportController } from './inspection-report.controller';
 import { InspectionReportService } from './inspection-report.service';
@@ -17,7 +16,7 @@ import { IsInspectionReportDetailInImportRequestDetail } from './validator/is-in
     IsInspectionReportExistPipe,
     IsInspectionReportExistValidator,
     IsInspectionReportDetailInImportRequestDetail,
-    ImportRequestModule,
+    // ImportRequestModule,
   ],
   exports: [
     InspectionReportService,
