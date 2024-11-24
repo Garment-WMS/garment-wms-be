@@ -74,6 +74,24 @@ export class ProductionBatchService {
 
   async chekIsProductionBatchStatus(productionBatchId: string) {
     const productionBatch = await this.findUnique(productionBatchId);
+
+    if (!productionBatch) {
+      throw new NotFoundException('Production Batch not found');
+    }
+    if (productionBatch.status === 'MANUFACTURING') {
+      return;
+    }
+    // if (productionBatch.status === 'WAITING_FOR_EXPORTING_MATERIAL') {
+    //   throw new BadRequestException(
+    //     'Production Batch is waiting for exported material',
+    //   );
+    // }
+    if (productionBatch.status === 'WAITING_FOR_EXPORTING_MATERIAL') {
+      throw new BadRequestException(
+        'Production Batch is waiting for imported material',
+      );
+    }
+
     if (productionBatch.status === 'IMPORTING') {
       throw new BadRequestException('Production Batch is importing');
     }

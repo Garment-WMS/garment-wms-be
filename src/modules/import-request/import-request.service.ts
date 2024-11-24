@@ -625,10 +625,11 @@ export class ImportRequestService {
       },
     };
 
-    const productionBatch =
-      await this.productionBatchService.chekIsProductionBatchStatus(
-        createImportRequestDto.productionBatchId,
-      );
+    //Enable later
+    // const productionBatch =
+    //   await this.productionBatchService.chekIsProductionBatchStatus(
+    //     createImportRequestDto.productionBatchId,
+    //   );
 
     // const errorResponse =
     //   await this.productionBatchService.checkIsProductionBatchValid(
