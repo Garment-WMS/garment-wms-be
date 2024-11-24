@@ -23,6 +23,8 @@ enum ExportReceiptStatus {
   AWAIT_TO_EXPORT
   EXPORTING
   EXPORTED
+  DELIVERING
+  DELIVERED
   CANCELLED
 
   @@map("export_receipt_status")
