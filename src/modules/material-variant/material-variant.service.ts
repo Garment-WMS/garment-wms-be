@@ -63,6 +63,23 @@ export class MaterialVariantService {
     });
   }
 
+  async findAllMaterialHasReceipt() {
+    return this.prismaService.materialVariant.findMany({
+      where: {
+        materialPackage: {
+          some: {
+            materialReceipt: {
+              some: {
+                status: MaterialReceiptStatus.AVAILABLE,
+              },
+            },
+          },
+        },
+      },
+      include: this.materialInclude,
+    });
+  }
+
   async findMaterialHasReceipt(
     findOptions: GeneratedFindOptions<Prisma.MaterialVariantScalarWhereInput>,
   ) {

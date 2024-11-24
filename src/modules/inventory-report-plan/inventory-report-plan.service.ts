@@ -90,8 +90,8 @@ export class InventoryReportPlanService {
     warehouseManagerId: string,
   ) {
     const allVariants = [
-      ...(await this.materialVariantService.findAllWithoutResponse()),
-      ...(await this.productVariantService.findAllWithoutResponse()),
+      ...(await this.materialVariantService.findAllMaterialHasReceipt()),
+      ...(await this.productVariantService.findProductHasReceipt()),
     ];
 
     const inventoryPlanInputs: Prisma.InventoryReportPlanCreateInput = {
