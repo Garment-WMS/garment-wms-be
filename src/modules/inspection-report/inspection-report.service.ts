@@ -167,16 +167,16 @@ export class InspectionReportService {
         ) {
           inspectionReportDetail.quantityByPack =
             importRequestDetail.quantityByPack;
-        }
-        if (
-          inspectionReportDetail.approvedQuantityByPack +
-            inspectionReportDetail.defectQuantityByPack !==
-          importRequestDetail.quantityByPack
-        ) {
-          console.log(inspectionReportDetail.approvedQuantityByPack);
-          console.log(inspectionReportDetail.defectQuantityByPack);
-          console.log(importRequestDetail.quantityByPack);
-          errorInspectionReportDetail.push(inspectionReportDetail);
+          if (
+            inspectionReportDetail.approvedQuantityByPack +
+              inspectionReportDetail.defectQuantityByPack !==
+            importRequestDetail.quantityByPack
+          ) {
+            console.log(inspectionReportDetail.approvedQuantityByPack);
+            console.log(inspectionReportDetail.defectQuantityByPack);
+            console.log(importRequestDetail.quantityByPack);
+            errorInspectionReportDetail.push(inspectionReportDetail);
+          }
         }
       });
     });
