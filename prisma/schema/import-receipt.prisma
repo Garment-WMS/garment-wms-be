@@ -28,6 +28,7 @@ enum ReceiptType {
 }
 
 enum ImportReceiptStatus {
+  AWAIT_TO_IMPORT
   IMPORTING
   REJECTED
   IMPORTED

@@ -18,7 +18,9 @@ import {
   GetRecommendMaterialExportReceiptTestDto as GetRecommendMaterialExportReceiptByFormulaDto,
   GetRecommendMaterialExportReceiptDto,
 } from './dto/get-recommend-material-export-receipt.dto';
+import { ProductionStaffApproveDto } from './dto/production-staff-approve.dto';
 import { UpdateMaterialExportReceiptDto } from './dto/update-material-export-receipt.dto';
+import { WarehouseStaffExportDto } from './dto/warehouse-staff-export.dto';
 import { MaterialExportReceiptService } from './material-export-receipt.service';
 
 @Controller('material-export-receipt')
@@ -129,5 +131,31 @@ export class MaterialExportReceiptController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.materialExportReceiptService.remove(id);
+  }
+
+  @Post('/warehouse-staff-process')
+  async warehouseStaffProcess(
+    @Body() WarehouseStaffExportDto: WarehouseStaffExportDto,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportReceiptService.warehouseStaffExport(
+        WarehouseStaffExportDto,
+      ),
+      'Warehouse staff process successfully',
+    );
+  }
+
+  @Post('/production-staff-process')
+  async productionStaffProcess(
+    @Body() productionStaffApproveDto: ProductionStaffApproveDto,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportReceiptService.productionStaffApprove(
+        productionStaffApproveDto,
+      ),
+      'Production staff process successfully',
+    );
   }
 }

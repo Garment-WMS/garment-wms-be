@@ -5,7 +5,7 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { $Enums, Prisma } from '@prisma/client';
 import {
   materialExportReceiptInclude,
   materialExportRequestInclude,
@@ -17,10 +17,19 @@ import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { TaskService } from '../task/task.service';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
 import { ExportAlgorithmParam } from './dto/export-algorithm-param.type';
 import { ExportAlgorithmResult } from './dto/export-algorithm-result.dto';
+import {
+  ProductionStaffApproveDto,
+  ProductionStaffCApproveAction,
+} from './dto/production-staff-approve.dto';
 import { UpdateMaterialExportReceiptDto } from './dto/update-material-export-receipt.dto';
+import {
+  WarehouseStaffExportAction,
+  WarehouseStaffExportDto,
+} from './dto/warehouse-staff-export.dto';
 import { ExportAlgorithmEnum } from './enum/export-algorithm.enum';
 import { ExportAlgorithmService } from './export-algorithm.service';
 
@@ -29,6 +38,7 @@ export class MaterialExportReceiptService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly exportAlgorithmService: ExportAlgorithmService,
+    private readonly taskService: TaskService,
   ) {}
   async create(createMaterialExportReceiptDto: CreateMaterialExportReceiptDto) {
     const input: Prisma.MaterialExportReceiptUncheckedCreateInput = {
@@ -324,5 +334,77 @@ export class MaterialExportReceiptService {
       }));
 
     return recommendMaterialExportReceiptDetails;
+  }
+
+  async warehouseStaffExport(
+    warehouseStaffExportDto: WarehouseStaffExportDto,
+    // warehouseStaff: AuthenUser,
+  ) {
+    switch (warehouseStaffExportDto.action) {
+      case WarehouseStaffExportAction.EXPORTING:
+        return this.prismaService.materialExportReceipt.update({
+          where: {
+            materialExportRequestId:
+              warehouseStaffExportDto.materialExportRequestId,
+          },
+          data: {
+            status: WarehouseStaffExportAction.EXPORTING,
+          },
+
+          include: materialExportReceiptInclude,
+        });
+      case WarehouseStaffExportAction.EXPORTED:
+        return this.prismaService.materialExportReceipt.update({
+          where: {
+            materialExportRequestId:
+              warehouseStaffExportDto.materialExportRequestId,
+          },
+          data: {
+            status: WarehouseStaffExportAction.EXPORTED,
+          },
+          include: materialExportReceiptInclude,
+        });
+      case WarehouseStaffExportAction.DELIVERING:
+        return this.prismaService.materialExportRequest.update({
+          where: { id: warehouseStaffExportDto.materialExportRequestId },
+          data: {
+            status: WarehouseStaffExportAction.DELIVERING,
+          },
+          include: materialExportRequestInclude,
+        });
+      case WarehouseStaffExportAction.DELIVERED:
+        const result = await this.prismaService.materialExportRequest.update({
+          where: { id: warehouseStaffExportDto.materialExportRequestId },
+          data: {
+            status: WarehouseStaffExportAction.DELIVERED,
+          },
+          include: materialExportRequestInclude,
+        });
+        const task = await this.taskService.updateTaskStatusToDone({
+          id: warehouseStaffExportDto.materialExportRequestId,
+        });
+        Logger.log('updateTaskStatusToDone', task);
+        return result;
+      default:
+        throw new Error('Invalid action');
+    }
+  }
+
+  async productionStaffApprove(
+    productionStaffApproveDto: ProductionStaffApproveDto,
+  ) {
+    const materialExportRequest =
+      await this.prismaService.materialExportRequest.update({
+        where: { id: productionStaffApproveDto.materialExportRequestId },
+        data: {
+          status:
+            productionStaffApproveDto.action ===
+            ProductionStaffCApproveAction.PRODUCTION_APPROVED
+              ? $Enums.MaterialExportRequestStatus.PRODUCTION_APPROVED
+              : $Enums.MaterialExportRequestStatus.PRODUCTION_REJECTED,
+        },
+        include: materialExportRequestInclude,
+      });
+    return materialExportRequest;
   }
 }
