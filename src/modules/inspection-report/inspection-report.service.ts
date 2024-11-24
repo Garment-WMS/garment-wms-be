@@ -52,8 +52,6 @@ export class InspectionReportService {
       );
     }
 
-    Logger.debug('inspectionRequest', inspectionRequest);
-
     const inspectionReport =
       await this.prismaService.inspectionReport.findFirst({
         where: {
@@ -77,8 +75,6 @@ export class InspectionReportService {
           inspectionRequest.code,
       );
     }
-
-    Logger.debug('inspectionReport', inspectionReport);
 
     return inspectionReport;
   }
@@ -123,9 +119,9 @@ export class InspectionReportService {
     return inspectionReport;
   }
 
-  findFirst(id: string) {
-    return this.prismaService.inspectionReport.findFirst({
-      where: { id },
+  async findFirst(id: string) {
+    return await this.prismaService.inspectionReport.findFirst({
+      where: { id: id },
       include: inspectionReportInclude,
     });
   }
@@ -296,7 +292,7 @@ export class InspectionReportService {
       dto,
       importRequest,
     );
-    // this.mapInspectionReportDetail(dto, importRequest);
+    this.mapInspectionReportDetail(dto, importRequest);
 
     //log inspection report detail
     dto.inspectionReportDetail.forEach((inspectionReportDetail) => {
@@ -308,19 +304,19 @@ export class InspectionReportService {
       {
         code: dto.code,
         inspectionRequestId: dto.inspectionRequestId,
-        inspectionReportDetail: {
-          createMany: {
-            data: dto.inspectionReportDetail.map((detail) => ({
-              materialPackageId: detail.materialPackageId,
-              productSizeId: detail.productSizeId,
-              quantityByPack: detail.quantityByPack,
-              approvedQuantityByPack: detail.approvedQuantityByPack,
-              defectQuantityByPack: detail.defectQuantityByPack,
-            })),
-          },
-        },
+        // inspectionReportDetail: {
+        //   createMany: {
+        //     data: dto.inspectionReportDetail.map((detail) => ({
+        //       materialPackageId: detail.materialPackageId,
+        //       productSizeId: detail.productSizeId,
+        //       quantityByPack: detail.quantityByPack,
+        //       approvedQuantityByPack: detail.approvedQuantityByPack,
+        //       defectQuantityByPack: detail.defectQuantityByPack,
+        //     })),
+        //   },
+        // },
       };
-    const result = await this.prismaService.$transaction(
+    let result = await this.prismaService.$transaction(
       async (
         prismaInstance: Omit<
           PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
@@ -334,8 +330,13 @@ export class InspectionReportService {
       ) => {
         const inspectionReport = await prismaInstance.inspectionReport.create({
           data: inspectionReportCreateInput,
-          include: inspectionReportInclude,
         });
+        const inspectionReportDetails =
+          await this.createInspectionReportDetails(
+            dto.inspectionReportDetail,
+            inspectionReport.id,
+            prismaInstance,
+          );
         const inspectionRequestStatusUpdated =
           await this.updateInspectionRequestStatusByInspectionRequestIdToInspected(
             inspectionReport.inspectionRequestId,
@@ -354,9 +355,9 @@ export class InspectionReportService {
         };
       },
     );
+    result.inspectionReport = await this.findUnique(result.inspectionReport.id);
     return result;
   }
-
   async createInspectionReportDetails(
     dto: CreateInspectionReportDetailDto[],
     inspectionReportId: string,
@@ -375,11 +376,38 @@ export class InspectionReportService {
         inspectionReportId: inspectionReportId,
       }),
     );
+
     const prisma = prismaInstance || this.prismaService;
-    return await prisma.inspectionReportDetail.createManyAndReturn({
-      data: input,
-      skipDuplicates: true,
-    });
+
+    // Create inspection report details
+    const createdDetails =
+      await prisma.inspectionReportDetail.createManyAndReturn({
+        data: input,
+        skipDuplicates: true,
+      });
+
+    // Create related inspection report detail defects
+    for (const detail of dto) {
+      if (detail.inspectionReportDetailDefect) {
+        const createdDetail = createdDetails.find(
+          (d) =>
+            d.materialPackageId === detail.materialPackageId &&
+            d.inspectionReportId === inspectionReportId,
+        );
+
+        if (createdDetail) {
+          await prisma.inspectionReportDetailDefect.createMany({
+            data: detail.inspectionReportDetailDefect.map((defect) => ({
+              defectId: defect.defectId,
+              quantityByPack: defect.quantityByPack,
+              inspectionReportDetailId: createdDetail.id,
+            })),
+          });
+        }
+      }
+    }
+
+    return createdDetails;
   }
 
   async updateInspectionRequestStatusByInspectionRequestIdToInspected(

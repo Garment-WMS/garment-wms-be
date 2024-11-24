@@ -1,16 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 import { IsInt, IsOptional, IsUUID, Min } from 'class-validator';
-import { IsInspectionReportExist } from '../../validator/is-inspection-report-exist.validator';
 
-export class InspectionReportDetailDefectDto
+export class CreateInspectionReportDetailDefectDto
   implements Prisma.InspectionReportDetailDefectUncheckedCreateInput
 {
   @ApiProperty()
-  @IsInspectionReportExist()
   @IsUUID()
   @IsOptional()
-  inspectionReportId: string;
+  inspectionReportDetailId: string;
 
   @ApiProperty()
   @IsUUID()

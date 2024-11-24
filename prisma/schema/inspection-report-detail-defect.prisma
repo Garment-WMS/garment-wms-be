@@ -1,13 +1,13 @@
 model InspectionReportDetailDefect {
-  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  inspectionReportId String           @map("inspection_report_id") @db.Uuid
-  defectId           String           @map("defect_id") @db.Uuid
-  quantityByPack     Int              @map("quantity_by_pack") @db.Integer
-  createdAt          DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime?        @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt          DateTime?        @map("deleted_at") @db.Timestamptz(6)
-  inspectionReport   InspectionReport @relation(fields: [inspectionReportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  defect             Defect           @relation(fields: [defectId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                       String                 @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  inspectionReportDetailId String                 @map("inspection_report_detail_id") @db.Uuid
+  defectId                 String                 @map("defect_id") @db.Uuid
+  quantityByPack           Int                    @map("quantity_by_pack") @db.Integer
+  createdAt                DateTime?              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime?              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                DateTime?              @map("deleted_at") @db.Timestamptz(6)
+  inspectionReportDetail   InspectionReportDetail @relation(fields: [inspectionReportDetailId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  defect                   Defect                 @relation(fields: [defectId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("inspection_report_detail_defect")
 }

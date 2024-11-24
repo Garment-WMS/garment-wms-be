@@ -135,12 +135,20 @@ export const importReceiptInclude: Prisma.ImportReceiptInclude = {
   },
 };
 
+export const inspectionReportDetailDefectIncludeWithoutInspectionReportDetail: Prisma.InspectionReportDetailDefectInclude =
+  {
+    defect: true,
+  };
+
 export const inspectionReportDetailWithoutInspectionReportInclude: Prisma.InspectionReportDetailInclude =
   {
     materialPackage: {
       include: materialPackageInclude,
     },
     productSize: { include: productSizeInclude },
+    inspectionReportDetailDefect: {
+      include: inspectionReportDetailDefectIncludeWithoutInspectionReportDetail,
+    },
   };
 
 export const inspectionReportIncludeWithoutInspectionRequestWithImportReceipt: Prisma.InspectionReportInclude =
