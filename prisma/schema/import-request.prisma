@@ -33,15 +33,14 @@ model ImportRequest {
 }
 
 enum ImportRequestStatus {
-  // PENDING
-  ARRIVED
-  CANCELED
-  REJECTED
-  APPROVED
-  INSPECTING
-  INSPECTED
-  IMPORTING
-  IMPORTED
+  ARRIVED //purchasing staff
+  CANCELED //purchasing staff
+  REJECTED //warehouse manager
+  APPROVED //warehouse manager
+  INSPECTING //inspection department
+  INSPECTED //inspection department
+  IMPORTING //warehouse staff
+  IMPORTED //warehouse staff
 
   @@map("import_request_status")
 }
