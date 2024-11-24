@@ -16,7 +16,12 @@ import {
   RoleCode,
 } from '@prisma/client';
 import { isUUID } from 'class-validator';
-import { importReceiptInclude } from 'prisma/prisma-include';
+import {
+  importReceiptInclude,
+  inspectionReportDetailDefectIncludeWithoutInspectionReportDetail,
+  materialPackageInclude,
+  productSizeInclude,
+} from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
@@ -37,6 +42,28 @@ import { UpdateImportReceiptDto } from './dto/update-import-receipt.dto';
 
 @Injectable()
 export class ImportReceiptService {
+  async getLatest(from: any, to: any) {
+    const fromDate = from ? new Date(from) : undefined;
+    const toDate = to ? new Date(to) : undefined;
+
+    const importReceipt = await this.prismaService.importReceipt.findMany({
+      where: {
+        createdAt: {
+          ...(from ? { gte: fromDate } : {}),
+          ...(to ? { lte: toDate } : {}),
+        },
+      },
+      include: importReceiptInclude,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    return apiSuccess(
+      HttpStatus.OK,
+      importReceipt,
+      'Get import receipts successfully',
+    );
+  }
   constructor(
     private readonly prismaService: PrismaService,
     private readonly materialReceiptService: MaterialReceiptService,
@@ -470,7 +497,6 @@ export class ImportReceiptService {
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         if (importReceipt?.materialReceipt.length > 0) {
-          console.log('materialReceipt', importReceipt.materialReceipt);
           for (const detail of importReceipt.materialReceipt) {
             await this.materialReceiptService.updateMaterialReceiptStatus(
               detail.id,
@@ -610,6 +636,20 @@ export class ImportReceiptService {
         },
         inspectionReport: {
           include: {
+            inspectionReportDetail: {
+              include: {
+                materialPackage: {
+                  include: materialPackageInclude,
+                },
+                productSize: {
+                  include: productSizeInclude,
+                },
+                inspectionReportDetailDefect: {
+                  include:
+                    inspectionReportDetailDefectIncludeWithoutInspectionReportDetail,
+                },
+              },
+            },
             inspectionRequest: {
               include: {
                 inspectionDepartment: {

@@ -103,6 +103,11 @@ export class MaterialExportReceiptController {
     );
   }
 
+  @Get('/latest')
+  findLatest(@Query('from') from, @Query('to') to) {
+    return this.materialExportReceiptService.getLatest(from, to);
+  }
+
   @Get(':id')
   async findUnique(@Param('id') id: string) {
     return apiSuccess(

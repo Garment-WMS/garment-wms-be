@@ -2,6 +2,7 @@ import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import {
   BadRequestException,
   ConflictException,
+  HttpStatus,
   Injectable,
   Logger,
   NotFoundException,
@@ -14,6 +15,7 @@ import {
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
+import { apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
 import { CustomHttpException } from 'src/common/filter/custom-http.exception';
@@ -34,6 +36,71 @@ export class InspectionReportService {
     private readonly importReceiptService: ImportReceiptService,
     // private readonly importRequestService: ImportRequestService,
   ) {}
+
+  async getQualityRate(from: Date, to: Date) {
+    const inspectedReportDetail =
+      await this.prismaService.inspectionReportDetail.findMany({
+        where: {
+          createdAt: {
+            ...(from ? { gte: from } : {}),
+            ...(to ? { lte: to } : {}),
+          },
+        },
+      });
+    const [numberOfApproveQuantity, numberOfDefectQuantity] =
+      inspectedReportDetail.reduce(
+        (acc, item) => {
+          return [
+            acc[0] + item.approvedQuantityByPack,
+            acc[1] + item.defectQuantityByPack,
+          ];
+        },
+        [0, 0],
+      );
+    const qualityRate =
+      numberOfApproveQuantity /
+      (numberOfApproveQuantity + numberOfDefectQuantity);
+
+    const roundedQualityRate = parseFloat((qualityRate * 100).toFixed(2));
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        numberOfApproveQuantity,
+        numberOfDefectQuantity,
+        qualityRate: roundedQualityRate,
+      },
+      'Get quality rate successfully',
+    );
+  }
+
+  async getProductQualityRate() {
+    const inspectedReportDetail =
+      await this.prismaService.inspectionReportDetail.findMany({
+        where: {
+          productSizeId: {
+            not: null,
+          },
+        },
+      });
+    const [numberOfApproveQuantity, numberOfDefectQuantity] =
+      inspectedReportDetail.reduce(
+        (acc, item) => {
+          return [
+            acc[0] + item.approvedQuantityByPack,
+            acc[1] + item.defectQuantityByPack,
+          ];
+        },
+        [0, 0],
+      );
+    const qualityRate =
+      numberOfApproveQuantity /
+      (numberOfApproveQuantity + numberOfDefectQuantity);
+
+    const roundedQualityRate = parseFloat((qualityRate * 100).toFixed(2));
+
+    return roundedQualityRate;
+  }
 
   async search(
     findOptions: GeneratedFindOptions<Prisma.InspectionReportWhereInput>,

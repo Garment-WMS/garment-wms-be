@@ -124,6 +124,15 @@ export class ImportRequestController {
     );
   }
 
+  @Get('/latest')
+  async getLatest(@Query('from') from, @Query('to') to) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.importRequestService.getLatest(from, to),
+      'Get latest import request successfully',
+    );
+  }
+
   @Get('/statistic')
   async getStatistic() {
     return apiSuccess(

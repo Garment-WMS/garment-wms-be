@@ -45,6 +45,32 @@ export class ImportRequestService {
     private readonly discussionService: DiscussionService,
   ) {}
 
+  async getLatest(from: any, to: any) {
+    const fromDate = from ? new Date(from) : undefined;
+    const toDate = to ? new Date(to) : undefined;
+    const result = await this.prismaService.importRequest.findFirst({
+      where: {
+        OR: [
+          {
+            startedAt: { gte: fromDate },
+          },
+          {
+            finishedAt: { lte: toDate },
+          },
+        ],
+      },
+      orderBy: {
+        startedAt: 'desc',
+      },
+      include: importRequestInclude,
+    });
+    return apiSuccess(
+      HttpStatus.OK,
+      result,
+      'Get latest import request successfully',
+    );
+  }
+
   async isAnyImportingImportRequest() {
     const result = await this.prismaService.importRequest.findMany({
       where: {

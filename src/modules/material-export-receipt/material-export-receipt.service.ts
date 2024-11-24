@@ -1,14 +1,20 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import {
+  ConflictException,
+  HttpStatus,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { $Enums, Prisma } from '@prisma/client';
 import {
   materialExportReceiptInclude,
   materialExportRequestInclude,
-  materialReceiptInclude,
+  materialReceiptIncludeWithoutImportReceipt,
   materialVariantInclude,
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
+import { apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { TaskService } from '../task/task.service';
@@ -56,6 +62,30 @@ export class MaterialExportReceiptService {
       data: input,
       include: materialExportReceiptInclude,
     });
+  }
+
+  async getLatest(from: any, to: any) {
+    const fromDate = from ? new Date(from) : undefined;
+    const toDate = to ? new Date(to) : undefined;
+
+    const importReceipt =
+      await this.prismaService.materialExportReceipt.findMany({
+        where: {
+          createdAt: {
+            ...(from ? { gte: fromDate } : {}),
+            ...(to ? { lte: toDate } : {}),
+          },
+        },
+        include: materialExportReceiptInclude,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    return apiSuccess(
+      HttpStatus.OK,
+      importReceipt,
+      'Get import receipts successfully',
+    );
   }
 
   async search(
@@ -119,7 +149,7 @@ export class MaterialExportReceiptService {
           },
         },
       },
-      include: materialReceiptInclude,
+      include: materialReceiptIncludeWithoutImportReceipt,
     });
 
     // Handle the algorithm
@@ -170,7 +200,7 @@ export class MaterialExportReceiptService {
               materialVariantId: materialExportRequestDetail.materialVariantId,
             },
           },
-          include: materialReceiptInclude,
+          include: materialReceiptIncludeWithoutImportReceipt,
         });
       for (let i = 0; i < materialReceiptOfMaterialVariant.length; i++) {
         const materialReceipt = materialReceiptOfMaterialVariant[i];
@@ -290,7 +320,7 @@ export class MaterialExportReceiptService {
           },
         },
       },
-      include: materialReceiptInclude,
+      include: materialReceiptIncludeWithoutImportReceipt,
     });
 
     const recommendMaterialExportReceiptDetails: Prisma.MaterialExportReceiptDetailUncheckedCreateInput[] =
