@@ -102,12 +102,8 @@ export class MaterialExportReceiptController {
   }
 
   @Get('/latest')
-  async findLatest(@Query('from') from, @Query('to') to) {
-    return apiSuccess(
-      HttpStatus.OK,
-      await this.materialExportReceiptService.getLatest(from, to),
-      'Get latest material export receipt successfully',
-    );
+  findLatest(@Query('from') from, @Query('to') to) {
+    return this.materialExportReceiptService.getLatest(from, to);
   }
 
   @Get(':id')
