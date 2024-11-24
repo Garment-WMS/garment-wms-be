@@ -19,6 +19,8 @@ import { ApiResponse } from 'src/common/dto/response.dto';
 import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta } from 'src/common/utils/utils';
+import { CreateImportReceiptDto } from '../import-receipt/dto/create-import-receipt.dto';
+import { ImportReceiptService } from '../import-receipt/import-receipt.service';
 import { TaskService } from '../task/task.service';
 import { CreateInspectionReportDetailDto } from './dto/inspection-report-detail/create-inspection-report-detail.dto';
 import { CreateInspectionReportDto } from './dto/inspection-report/create-inspection-report.dto';
@@ -29,55 +31,9 @@ export class InspectionReportService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly taskService: TaskService,
+    private readonly importReceiptService: ImportReceiptService,
     // private readonly importRequestService: ImportRequestService,
   ) {}
-
-  async findUniqueInspectedByRequestId(importRequestId: string) {
-    Logger.debug('importRequestId: ' + importRequestId);
-    const inspectionRequest =
-      await this.prismaService.inspectionRequest.findFirst({
-        where: {
-          importRequestId: importRequestId,
-          status: $Enums.InspectionRequestStatus.INSPECTED,
-        },
-        include: {
-          importRequest: true,
-        },
-      });
-
-    if (!inspectionRequest) {
-      throw new ConflictException(
-        'Inspection request not found for import request ' +
-          inspectionRequest.code,
-      );
-    }
-
-    const inspectionReport =
-      await this.prismaService.inspectionReport.findFirst({
-        where: {
-          inspectionRequestId: inspectionRequest.id,
-        },
-        include: {
-          inspectionRequest: {
-            include: {
-              importRequest: true,
-              inspectionDepartment: true,
-              purchasingStaff: true,
-            },
-          },
-          inspectionReportDetail: true,
-        },
-      });
-
-    if (!inspectionReport) {
-      throw new NotFoundException(
-        'Inspection report not found for inspection request' +
-          inspectionRequest.code,
-      );
-    }
-
-    return inspectionReport;
-  }
 
   async search(
     findOptions: GeneratedFindOptions<Prisma.InspectionReportWhereInput>,
@@ -317,9 +273,7 @@ export class InspectionReportService {
         // },
       };
     let result = await this.prismaService.$transaction(
-      async (
-        prismaInstance: PrismaService,
-      ) => {
+      async (prismaInstance: PrismaService) => {
         const inspectionReport = await prismaInstance.inspectionReport.create({
           data: inspectionReportCreateInput,
         });
@@ -348,8 +302,23 @@ export class InspectionReportService {
       },
     );
     result.inspectionReport = await this.findUnique(result.inspectionReport.id);
-    return result;
+    //auto create import receipt
+    const importReceipt = await this.createImportReceipt(
+      {
+        importRequestId: importRequest.id,
+        type: importRequest.type.startsWith('MATERIAL')
+          ? $Enums.ReceiptType.MATERIAL
+          : $Enums.ReceiptType.PRODUCT,
+        startAt: new Date(),
+      },
+      importRequest.warehouseManagerId,
+    );
+    return {
+      ...result,
+      importReceipt,
+    };
   }
+
   async createInspectionReportDetails(
     dto: CreateInspectionReportDetailDto[],
     inspectionReportId: string,
@@ -498,6 +467,24 @@ export class InspectionReportService {
       data: inspectionReportUpdateInput,
       include: inspectionReportInclude,
     });
+  }
+
+  async createImportReceipt(
+    createImportReceiptDto: CreateImportReceiptDto,
+    managerId: string,
+  ) {
+    switch (createImportReceiptDto.type) {
+      case $Enums.ReceiptType.MATERIAL:
+        return this.importReceiptService.createMaterialReceipt(
+          createImportReceiptDto,
+          managerId,
+        );
+      case $Enums.ReceiptType.PRODUCT:
+        return this.importReceiptService.createProductReceipt(
+          createImportReceiptDto,
+          managerId,
+        );
+    }
   }
 
   remove(id: string) {

@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   $Enums,
@@ -23,7 +24,6 @@ import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ImportRequestService } from '../import-request/import-request.service';
-import { InspectionReportService } from '../inspection-report/inspection-report.service';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
@@ -41,7 +41,7 @@ export class ImportReceiptService {
     private readonly prismaService: PrismaService,
     private readonly materialReceiptService: MaterialReceiptService,
     private readonly productReceiptService: ProductReceiptService,
-    private readonly inspectionReportService: InspectionReportService,
+    // private readonly inspectionReportService: InspectionReportService,
     private readonly poDeliveryService: PoDeliveryService,
     private readonly inventoryStockService: InventoryStockService,
     private readonly importRequestService: ImportRequestService,
@@ -57,6 +57,53 @@ export class ImportReceiptService {
     });
   }
 
+  async findUniqueInspectedByRequestId(importRequestId: string) {
+    Logger.debug('importRequestId: ' + importRequestId);
+    const inspectionRequest =
+      await this.prismaService.inspectionRequest.findFirst({
+        where: {
+          importRequestId: importRequestId,
+          status: $Enums.InspectionRequestStatus.INSPECTED,
+        },
+        include: {
+          importRequest: true,
+        },
+      });
+
+    if (!inspectionRequest) {
+      throw new ConflictException(
+        'Inspection request not found for import request ' +
+          inspectionRequest.code,
+      );
+    }
+
+    const inspectionReport =
+      await this.prismaService.inspectionReport.findFirst({
+        where: {
+          inspectionRequestId: inspectionRequest.id,
+        },
+        include: {
+          inspectionRequest: {
+            include: {
+              importRequest: true,
+              inspectionDepartment: true,
+              purchasingStaff: true,
+            },
+          },
+          inspectionReportDetail: true,
+        },
+      });
+
+    if (!inspectionReport) {
+      throw new NotFoundException(
+        'Inspection report not found for inspection request' +
+          inspectionRequest.code,
+      );
+    }
+
+    return inspectionReport;
+  }
+
   async createProductReceipt(
     createImportReceiptDto: CreateImportReceiptDto,
     managerId: string,
@@ -64,10 +111,9 @@ export class ImportReceiptService {
     const importRequest = await this.validateImportRequest(
       createImportReceiptDto.importRequestId,
     );
-    const inspectionReport =
-      await this.inspectionReportService.findUniqueInspectedByRequestId(
-        importRequest.id,
-      );
+    const inspectionReport = await this.findUniqueInspectedByRequestId(
+      importRequest.id,
+    );
 
     if (!inspectionReport) {
       return apiFailed(
@@ -164,10 +210,9 @@ export class ImportReceiptService {
     const importRequest = await this.validateImportRequest(
       createImportReceiptDto.importRequestId,
     );
-    const inspectionReport =
-      await this.inspectionReportService.findUniqueInspectedByRequestId(
-        importRequest.id,
-      );
+    const inspectionReport = await this.findUniqueInspectedByRequestId(
+      importRequest.id,
+    );
 
     if (!inspectionReport) {
       return apiFailed(
@@ -474,11 +519,11 @@ export class ImportReceiptService {
             );
           }
           await this.productionBatchService.updateProductBatchStatus(
-            importReceipt.inspectionReport.inspectionRequest.importRequest.productionBatchId,
+            importReceipt.inspectionReport.inspectionRequest.importRequest
+              .productionBatchId,
             $Enums.ProductionBatchStatus.IMPORTED,
             prismaInstance,
           );
-
         } else {
           throw new Error('Receipt not found');
         }
