@@ -303,6 +303,4 @@ export class MaterialExportRequestService {
         throw new BadRequestException('Invalid manager action');
     }
   }
-
-  warehouseStaffExport() {}
 }

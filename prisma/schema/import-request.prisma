@@ -39,6 +39,7 @@ enum ImportRequestStatus {
   APPROVED //warehouse manager
   INSPECTING //inspection department
   INSPECTED //inspection department
+  AWAIT_TO_IMPORT //warehouse staff
   IMPORTING //warehouse staff
   IMPORTED //warehouse staff
 

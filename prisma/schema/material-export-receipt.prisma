@@ -20,8 +20,9 @@ model MaterialExportReceipt {
 }
 
 enum ExportReceiptStatus {
-  EXPORTED
+  AWAIT_TO_EXPORT
   EXPORTING
+  EXPORTED
   CANCELLED
 
   @@map("export_receipt_status")
