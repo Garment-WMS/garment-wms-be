@@ -6,8 +6,8 @@ model MaterialExportReceipt {
   type                        MaterialExportReceiptType     @default(PRODUCTION) @map("type")
   status                      ExportReceiptStatus           @default(EXPORTING) @map("status")
   note                        String?                       @map("note") @db.Text
-  startAt                     DateTime?                     @default(now()) @map("start_at") @db.Timestamptz(6)
-  finishAt                    DateTime?                     @map("finish_at") @db.Timestamptz(6)
+  startedAt                   DateTime?                     @default(now()) @map("start_at") @db.Timestamptz(6)
+  finishedAt                  DateTime?                     @map("finish_at") @db.Timestamptz(6)
   createdAt                   DateTime?                     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
@@ -30,8 +30,6 @@ enum ExportReceiptStatus {
 enum MaterialExportReceiptType {
   PRODUCTION
   DISCHARGED
-  TRANSFERRED
-  RETURNED
 
   @@map("material_export_receipt_type")
 }
