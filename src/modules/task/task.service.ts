@@ -1,6 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { $Enums, Prisma } from '@prisma/client';
+import { $Enums, Prisma, Task } from '@prisma/client';
 import { taskInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -23,11 +23,40 @@ export class TaskService {
       data: taskCreateInput,
     });
 
+    this.mockExpectFinishAt(task);
     await this.createMockTodo(task);
     return task;
   }
 
-  async createMockTodo(task: Prisma.TaskWhereUniqueInput) {
+  mockExpectFinishAt(task: Task) {
+    const expectFinishedAt = new Date(task.startedAt);
+    switch (task.taskType) {
+      case $Enums.TaskType.INSPECTION:
+        // const detailCount = await this.prismaService.importRequestDetail.count({
+        //   where: {
+        //     importRequest: {
+        //       inspectionRequest: {
+        //         some: {
+        //           task: {
+        //             some: {
+        //               id: task.id,
+        //             },
+        //           },
+        //         },
+        //       },
+        //     },
+        //   },
+        // });
+        expectFinishedAt.setHours(task.startedAt.getHours() + 1);
+        break;
+      case $Enums.TaskType.IMPORT:
+        expectFinishedAt.setHours(task.startedAt.getHours() + 1);
+        break;
+    }
+    return (task.expectFinishedAt = expectFinishedAt);
+  }
+
+  async createMockTodo(task: Task) {
     switch (task.taskType) {
       case $Enums.TaskType.INSPECTION:
         const mockTodoInspection: Prisma.TodoCreateManyInput[] = [
