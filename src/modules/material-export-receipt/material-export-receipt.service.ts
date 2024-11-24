@@ -342,28 +342,53 @@ export class MaterialExportReceiptService {
   ) {
     switch (warehouseStaffExportDto.action) {
       case WarehouseStaffExportAction.EXPORTING:
-        return this.prismaService.materialExportReceipt.update({
-          where: {
-            materialExportRequestId:
-              warehouseStaffExportDto.materialExportRequestId,
-          },
-          data: {
-            status: WarehouseStaffExportAction.EXPORTING,
-          },
+        const materialExportReceipt =
+          await this.prismaService.materialExportReceipt.update({
+            where: {
+              materialExportRequestId:
+                warehouseStaffExportDto.materialExportRequestId,
+            },
+            data: {
+              status: WarehouseStaffExportAction.EXPORTING,
+            },
+            include: materialExportReceiptInclude,
+          });
+        const materialRequest =
+          await this.prismaService.materialExportRequest.update({
+            where: { id: warehouseStaffExportDto.materialExportRequestId },
+            data: {
+              status: WarehouseStaffExportAction.EXPORTING,
+            },
+          });
+        return {
+          materialExportReceipt,
+          materialRequest,
+        };
 
-          include: materialExportReceiptInclude,
-        });
       case WarehouseStaffExportAction.EXPORTED:
-        return this.prismaService.materialExportReceipt.update({
-          where: {
-            materialExportRequestId:
-              warehouseStaffExportDto.materialExportRequestId,
-          },
-          data: {
-            status: WarehouseStaffExportAction.EXPORTED,
-          },
-          include: materialExportReceiptInclude,
-        });
+        const materialExportReceipt2 =
+          await this.prismaService.materialExportReceipt.update({
+            where: {
+              materialExportRequestId:
+                warehouseStaffExportDto.materialExportRequestId,
+            },
+            data: {
+              status: WarehouseStaffExportAction.EXPORTING,
+            },
+            include: materialExportReceiptInclude,
+          });
+        const materialRequest2 =
+          await this.prismaService.materialExportRequest.update({
+            where: { id: warehouseStaffExportDto.materialExportRequestId },
+            data: {
+              status: WarehouseStaffExportAction.EXPORTING,
+            },
+          });
+        return {
+          materialExportReceipt2,
+          materialRequest2,
+        };
+
       case WarehouseStaffExportAction.DELIVERING:
         return this.prismaService.materialExportRequest.update({
           where: { id: warehouseStaffExportDto.materialExportRequestId },
