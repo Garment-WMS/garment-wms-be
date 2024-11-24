@@ -373,7 +373,7 @@ export class MaterialExportReceiptService {
                 warehouseStaffExportDto.materialExportRequestId,
             },
             data: {
-              status: WarehouseStaffExportAction.EXPORTING,
+              status: WarehouseStaffExportAction.EXPORTED,
             },
             include: materialExportReceiptInclude,
           });
@@ -381,7 +381,7 @@ export class MaterialExportReceiptService {
           await this.prismaService.materialExportRequest.update({
             where: { id: warehouseStaffExportDto.materialExportRequestId },
             data: {
-              status: WarehouseStaffExportAction.EXPORTING,
+              status: WarehouseStaffExportAction.EXPORTED,
             },
           });
         return {
