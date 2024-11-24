@@ -318,7 +318,15 @@ export class InspectionReportService {
       };
     let result = await this.prismaService.$transaction(
       async (
-        prismaInstance: PrismaService,
+        prismaInstance: Omit<
+          PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+          | '$connect'
+          | '$disconnect'
+          | '$on'
+          | '$transaction'
+          | '$use'
+          | '$extends'
+        >,
       ) => {
         const inspectionReport = await prismaInstance.inspectionReport.create({
           data: inspectionReportCreateInput,

@@ -278,13 +278,6 @@ export const productionBatchInclude: Prisma.ProductionBatchInclude = {
     include: importRequestInclude,
   },
   materialExportRequest: true,
-  productionBatchMaterialVariant: {
-    include: {
-      materialVariant: {
-        include: materialVariantInclude,
-      },
-    },
-  },
   productionPlanDetail: {
     include: {
       productSize: {
@@ -429,43 +422,11 @@ export const importReceipt: Prisma.ImportReceiptInclude = {
 export const materialInclude: Prisma.MaterialInclude = {
   materialUom: true,
 };
-export const materialExportRequestDetailInclude: Prisma.MaterialExportRequestDetailInclude =
-  {
-    materialVariant: { include: materialVariantInclude },
-  };
-
-  export const materialExportRequestInclude: Prisma.MaterialExportRequestInclude =
-  {
-    discussion: {
-      include: discussionInclude,
-    },
-    materialExportRequestDetail: {
-      include: materialExportRequestDetailInclude,
-    },
-    productFormula: {
-      include: productFormulaInclude,
-    },
-    productionBatch: {
-      include: productionBatchInclude,
-    },
-    productionDepartment: {
-      include: productionDepartmentInclude,
-    },
-    warehouseManager: {
-      include: warehouseManagerInclude,
-    },
-    warehouseStaff: {
-      include: warehouseStaffInclude,
-    },
-  };
 
 export const materialExportReceiptInclude: Prisma.MaterialExportReceiptInclude =
   {
     warehouseStaff: {
       include: warehouseStaffInclude,
-    },
-    materialExportRequest: {
-      include: materialExportRequestInclude,
     },
     materialExportReceiptDetail: {
       include: {
@@ -502,7 +463,32 @@ export const taskInclude: Prisma.TaskInclude = {
   todo: true,
 };
 
+export const materialExportRequestDetailInclude: Prisma.MaterialExportRequestDetailInclude =
+  {
+    materialVariant: { include: materialVariantInclude },
+  };
 
+export const materialExportRequestInclude: Prisma.MaterialExportRequestInclude =
+  {
+    materialExportRequestDetail: {
+      include: materialExportRequestDetailInclude,
+    },
+    productFormula: {
+      include: productFormulaInclude,
+    },
+    productionBatch: {
+      include: productionBatchInclude,
+    },
+    productionDepartment: {
+      include: productionDepartmentInclude,
+    },
+    warehouseManager: {
+      include: warehouseManagerInclude,
+    },
+    warehouseStaff: {
+      include: warehouseStaffInclude,
+    },
+  };
 
 export const productReceiptIncludeQuery: Prisma.ProductReceiptInclude = {
   importReceipt: { include: importReceiptInclude },

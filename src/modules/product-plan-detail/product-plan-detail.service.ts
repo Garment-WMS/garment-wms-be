@@ -8,28 +8,6 @@ import { UpdateProductPlanDetailDto } from './dto/update-product-plan-detail.dto
 export class ProductPlanDetailService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async IsExceedQuantityPlanDetail(
-    productionPlanDetailId: string,
-    quantityToProduce: number,
-  ) {
-    const result = await this.prismaService.productionPlanDetail.findFirst({
-      where: {
-        id: productionPlanDetailId,
-      },
-      include: {
-        productionBatch: true,
-      },
-    });
-
-    let numberOfProduce = result.productionBatch.reduce(
-      (accumulator, productionBatch) => {
-        return accumulator + productionBatch.quantityToProduce;
-      },
-      0,
-    );
-    return numberOfProduce + quantityToProduce > result.quantityToProduce;
-  }
-
   async createMany(
     createProductPlanDetailDto,
     prismaInstance: PrismaClient = this.prismaService,
