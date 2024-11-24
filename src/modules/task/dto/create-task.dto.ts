@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { $Enums } from '@prisma/client';
-import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsDate, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateTaskDto {
   @ApiProperty()
@@ -67,4 +67,14 @@ export class CreateTaskDto {
   @IsOptional()
   @IsEnum($Enums.TaskStatus)
   status: $Enums.TaskStatus = $Enums.TaskStatus.OPEN;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsDate()
+  startedAt?: Date;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsDate()
+  expectFinishedAt?: Date;
 }

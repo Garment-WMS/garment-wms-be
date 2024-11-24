@@ -169,20 +169,14 @@ export class InspectionRequestService {
       warehouseManagerId: warehouseManagerId,
       note: managerProcess.InspectionNote,
     };
-    try {
-      let inspectionRequest = await this.create(createInspectionRequestDto);
-      const task = await this.createTaskByInspectionRequest(
-        inspectionRequest.inspectionDepartmentId,
-        inspectionRequest.id,
-      );
-      Logger.log(task);
-      return inspectionRequest;
-    } catch (e) {
-      Logger.error(e);
-      throw new ConflictException(
-        'Can not create Inspection Request automatically',
-      );
-    }
+
+    let inspectionRequest = await this.create(createInspectionRequestDto);
+    const task = await this.createTaskByInspectionRequest(
+      inspectionRequest.inspectionDepartmentId,
+      inspectionRequest.id,
+    );
+    Logger.log(task);
+    return inspectionRequest;
   }
 
   async createTaskByInspectionRequest(

@@ -160,7 +160,7 @@ export class InventoryReportPlanService {
         inventoryPlanResult.inventoryReportPlanDetail =
           inventoryPlanDetailResult;
 
-        const createTaskDto: Prisma.TaskCreateManyInput []=[];
+        const createTaskDto: CreateTaskDto[] = [];
 
         staffList.forEach((staff: any) => {
           createTaskDto.push({
@@ -171,7 +171,7 @@ export class InventoryReportPlanService {
           });
         });
 
-        await this.taskService.createMany(createTaskDto);
+        await this.taskService.createMany(createTaskDto, prismaInstance);
         return inventoryPlanResult;
       },
       {
@@ -510,7 +510,7 @@ export class InventoryReportPlanService {
             inventoryReportPlanId: inventoryPlanResult.id,
           });
         });
-        await this.taskService.createMany(createTaskDto);
+        await this.taskService.createMany(createTaskDto, prismaInstance);
         return inventoryPlanResult;
       },
     );
