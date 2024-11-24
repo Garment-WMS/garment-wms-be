@@ -191,7 +191,10 @@ export class TaskService {
     });
   }
 
-  async updateTaskStatusToDone(taskWhereInput: Prisma.TaskWhereInput) {
+  async updateTaskStatusToDone(
+    taskWhereInput: Prisma.TaskWhereInput,
+    finishedAt?: Date,
+  ) {
     const task = await this.prismaService.task.findFirst({
       where: taskWhereInput,
     });
@@ -202,7 +205,46 @@ export class TaskService {
     }
     return await this.prismaService.task.update({
       where: { id: task.id },
-      data: { status: $Enums.TaskStatus.DONE },
+      data: {
+        status: $Enums.TaskStatus.DONE,
+        finishedAt: finishedAt || new Date(),
+      },
     });
+  }
+
+  async genFinishAt() {
+    const tasks = await this.prismaService.task.findMany({
+      where: {
+        status: $Enums.TaskStatus.DONE,
+      },
+    });
+    for (const task of tasks) {
+      const finishedAt = new Date(task.startedAt);
+      finishedAt.setHours(task.startedAt.getHours() + 1);
+      await this.updateTaskStatusToDone(
+        {
+          id: task.id,
+        },
+        finishedAt,
+      );
+    }
+  }
+
+  async genExpectedFinishedAt() {
+    const tasks = await this.prismaService.task.findMany({
+      where: {
+        expectFinishedAt: null,
+      },
+    });
+    for (const task of tasks) {
+      const finishedAt = new Date(task.startedAt);
+      finishedAt.setHours(task.startedAt.getHours() + 1);
+      await this.prismaService.task.update({
+        where: { id: task.id },
+        data: {
+          expectFinishedAt: finishedAt,
+        },
+      });
+    }
   }
 }

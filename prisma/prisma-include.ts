@@ -115,6 +115,13 @@ export const inspectionDepartmentInclude: Prisma.InspectionDepartmentInclude = {
           },
         },
       },
+      task: {
+        where: {
+          status: {
+            equals: $Enums.TaskStatus.IN_PROGRESS,
+          },
+        },
+      },
     },
   },
 };
@@ -328,6 +335,13 @@ export const warehouseStaffInclude: Prisma.WarehouseStaffInclude = {
       importReceipt: {
         where: {
           status: $Enums.ImportReceiptStatus.IMPORTING,
+        },
+      },
+      task: {
+        where: {
+          status: {
+            equals: $Enums.TaskStatus.IN_PROGRESS,
+          },
         },
       },
     },
