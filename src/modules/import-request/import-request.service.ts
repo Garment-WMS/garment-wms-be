@@ -48,13 +48,10 @@ export class ImportRequestService {
   async isAnyImportingImportRequest() {
     const result = await this.prismaService.importRequest.findMany({
       where: {
-        OR: [{ status: ImportRequestStatus.IMPORTING }],
+        status: ImportRequestStatus.IMPORTING,
       },
     });
-    if (result.length === 0) {
-      return false;
-    }
-    return true;
+    return result;
   }
 
   async search(
