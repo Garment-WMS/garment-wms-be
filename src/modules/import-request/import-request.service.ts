@@ -266,7 +266,7 @@ export class ImportRequestService {
     // ]);
 
     const result = await this.prismaService.$transaction(
-      async (prismaInstance) => {
+      async (prismaInstance: PrismaService) => {
         const resultOut = await prismaInstance.importRequest.create({
           data: createImportRequestInput,
           include: importRequestInclude,
@@ -276,9 +276,12 @@ export class ImportRequestService {
           $Enums.PoDeliveryStatus.IMPORTING,
         );
 
-        const discussion = await this.discussionService.create({
-          importRequestId: resultOut.id,
-        });
+        const discussion = await this.discussionService.create(
+          {
+            importRequestId: resultOut.id,
+          },
+          prismaInstance,
+        );
         resultOut.discussion = discussion;
         return resultOut;
       },
@@ -685,10 +688,13 @@ export class ImportRequestService {
           ProductionBatchStatus.IMPORTING,
           prismaInstance,
         );
-
-        const discussion = await this.discussionService.create({
-          importRequestId: result.id,
-        });
+        console.log(result);
+        const discussion = await this.discussionService.create(
+          {
+            importRequestId: result.id,
+          },
+          prismaInstance,
+        );
         result.discussion = discussion;
         return result;
       },

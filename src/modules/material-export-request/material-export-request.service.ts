@@ -74,9 +74,12 @@ export class MaterialExportRequestService {
           include: materialExportRequestInclude,
         });
 
-        const discussion = await this.discussionService.create({
-          exportRequestId: result.id,
-        });
+        const discussion = await this.discussionService.create(
+          {
+            exportRequestId: result.id,
+          },
+          prismaInstance,
+        );
         result.discussion = discussion;
         return result;
       },

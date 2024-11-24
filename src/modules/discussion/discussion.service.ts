@@ -30,9 +30,13 @@ export class DiscussionService {
     return createdDiscussions;
   }
 
-  async create(createDiscussionDto: CreateDiscussionDto) {
-    return await this.prismaService.discussion.create({
-      data: createDiscussionDto,
+  async create(
+    createDiscussionDto: CreateDiscussionDto,
+    prismaInstance: PrismaService,
+  ) {
+    console.log('createDiscussionDto', createDiscussionDto);
+    return await prismaInstance.discussion.create({
+      data: { ...createDiscussionDto },
     });
   }
 
