@@ -160,7 +160,7 @@ export class InventoryReportPlanService {
         inventoryPlanResult.inventoryReportPlanDetail =
           inventoryPlanDetailResult;
 
-        const createTaskDto: Prisma.TaskCreateManyInput[] = [];
+        const createTaskDto: CreateTaskDto[] = [];
 
         staffList.forEach((staff: any) => {
           createTaskDto.push({
