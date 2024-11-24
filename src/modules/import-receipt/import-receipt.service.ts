@@ -42,6 +42,28 @@ import { UpdateImportReceiptDto } from './dto/update-import-receipt.dto';
 
 @Injectable()
 export class ImportReceiptService {
+  async getLatest(from: any, to: any) {
+    const fromDate = from ? new Date(from) : undefined;
+    const toDate = to ? new Date(to) : undefined;
+
+    const importReceipt = await this.prismaService.importReceipt.findMany({
+      where: {
+        createdAt: {
+          ...(from ? { gte: fromDate } : {}),
+          ...(to ? { lte: toDate } : {}),
+        },
+      },
+      include: importReceiptInclude,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    return apiSuccess(
+      HttpStatus.OK,
+      importReceipt,
+      'Get import receipts successfully',
+    );
+  }
   constructor(
     private readonly prismaService: PrismaService,
     private readonly materialReceiptService: MaterialReceiptService,

@@ -30,6 +30,11 @@ import { ImportReceiptService } from './import-receipt.service';
 export class ImportReceiptController {
   constructor(private readonly importReceiptService: ImportReceiptService) {}
 
+  @Get('/latest')
+  getLatest(@Query('from') from, @Query('to') to) {
+    return this.importReceiptService.getLatest(from, to);
+  }
+
   @Post('/material')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.WAREHOUSE_MANAGER)

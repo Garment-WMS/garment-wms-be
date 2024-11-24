@@ -130,6 +130,10 @@ export class DashboardService {
     );
   }
 
+  findById(id: number) {
+    return `This action returns a #${id} dashboard`;
+  }
+
   findOne(id: number) {
     return `This action returns a #${id} dashboard`;
   }
