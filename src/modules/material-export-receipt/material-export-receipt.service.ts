@@ -381,7 +381,8 @@ export class MaterialExportReceiptService {
           include: materialExportRequestInclude,
         });
         const task = await this.taskService.updateTaskStatusToDone({
-          id: warehouseStaffExportDto.materialExportRequestId,
+          materialExportReceiptId:
+            warehouseStaffExportDto.materialExportRequestId,
         });
         Logger.log('updateTaskStatusToDone', task);
         return result;

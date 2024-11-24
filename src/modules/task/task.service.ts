@@ -214,16 +214,18 @@ export class TaskService {
   }
 
   async updateTaskStatusToDone(taskWhereInput: Prisma.TaskWhereInput) {
-    const task = await this.prismaService.task.findFirst({
+    const taskToUpdate = await this.prismaService.task.findFirst({
       where: taskWhereInput,
+      select: { id: true },
     });
-    if (!task) {
+    if (!taskToUpdate) {
       Logger.error(
         `Cannot auto finish Task with ${JSON.stringify(taskWhereInput)} because of not found`,
       );
+      return null;
     }
     return await this.prismaService.task.update({
-      where: { id: task.id },
+      where: { id: taskToUpdate.id },
       data: { status: $Enums.TaskStatus.DONE },
     });
   }
