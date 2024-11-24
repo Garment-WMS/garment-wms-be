@@ -365,7 +365,7 @@ export class ProductPlanService {
           // if (batch.status === ProductionStatus.FINISHED) {
           batch.importRequest.forEach((request) => {
             request.inspectionRequest.forEach((inspection) => {
-              inspection.inspectionReport.importReceipt.productReceipt.forEach(
+              inspection.inspectionReport?.importReceipt.productReceipt.forEach(
                 (productReceipt) => {
                   if (productReceipt.isDefect) {
                     totalDefectQuantity += productReceipt.quantityByUom;

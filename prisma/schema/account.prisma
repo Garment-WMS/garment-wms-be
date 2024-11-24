@@ -22,6 +22,7 @@ model Account {
   purchasingStaff      PurchasingStaff?
   warehouseManager     WarehouseManager?
   warehouseStaff       WarehouseStaff?
+  Chat                 Chat[]
 
   @@map("accounts")
 }

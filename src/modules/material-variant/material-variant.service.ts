@@ -1,7 +1,12 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { MaterialReceiptStatus, Prisma } from '@prisma/client';
+import {
+  ExportReceiptStatus,
+  MaterialReceiptStatus,
+  Prisma,
+} from '@prisma/client';
 import { isUUID } from 'class-validator';
+import { materialPackageInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant, months } from 'src/common/constant/constant';
 import { PathConstants } from 'src/common/constant/path.constant';
@@ -211,12 +216,22 @@ export class MaterialVariantService {
   async getChart(chartDto: ChartDto) {
     const materialVariantIds = chartDto.materialVariantId || [];
     let additionQuery: Prisma.MaterialReceiptWhereInput;
+    let additionExportReceiptQuery: Prisma.MaterialExportReceiptDetailWhereInput;
 
     if (materialVariantIds.length > 0) {
       additionQuery = {
         materialPackage: {
           materialVariantId: {
             in: materialVariantIds,
+          },
+        },
+      };
+      additionExportReceiptQuery = {
+        materialReceipt: {
+          materialPackage: {
+            materialVariantId: {
+              in: materialVariantIds,
+            },
           },
         },
       };
@@ -264,34 +279,34 @@ export class MaterialVariantService {
 
       //TODO: Need to check if this is correct after doing materialExportReceipt
       const exportMaterialReceipt =
-        await this.prismaService.materialExportReceipt.findMany({
+        await this.prismaService.materialExportReceiptDetail.findMany({
           where: {
             AND: {
+              ...additionExportReceiptQuery,
               createdAt: {
                 gte: from,
                 lte: to,
               },
             },
+            materialExportReceipt: {
+              status: ExportReceiptStatus.EXPORTED,
+            },
           },
-          //TODO
-          // include: {
-          //   materialReceipt: {
-          //     include: {
-          //       materialPackage: {
-          //         include: {
-          //           materialVariant: true,
-          //         },
-          //       },
-          //     },
-          //   },
-          // },
+          include: {
+            materialReceipt: {
+              include: {
+                materialPackage: {
+                  include: materialPackageInclude,
+                },
+              },
+            },
+          },
         });
 
       const totalQuantities = this.calculateTotalQuantities(
         importMaterialReceipt,
         exportMaterialReceipt,
       );
-
       monthlyData.push({
         month: month + 1,
         data: totalQuantities,
@@ -327,7 +342,6 @@ export class MaterialVariantService {
       const materialVariantId = materialVariant.id;
       const importQuantity = el.quantityByPack * el.materialPackage.uomPerPack;
       const importQuantityByPack = el.quantityByPack;
-      console.log('importQuantity', importQuantityByPack);
       if (acc[materialVariantId]) {
         acc[materialVariantId].totalImportQuantityByUom += importQuantity;
         acc[materialVariantId].totalImportQuantityByPack +=
@@ -345,7 +359,9 @@ export class MaterialVariantService {
       return acc;
     }, totals);
 
+    // console.log(exportMaterialReceipt.materialReceiptDetail);
     exportMaterialReceipt.reduce((acc, el) => {
+      console.log(el);
       const materialVariant =
         el.materialReceipt.materialPackage.materialVariant;
       const materialVariantId = materialVariant.id;

@@ -52,6 +52,18 @@ export class MaterialExportReceiptController {
   ) {
     return this.materialExportReceiptService.search(filterDto.findOptions);
   }
+  @Get()
+  findAllCustomResponse(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialExportReceiptWhereInput>(
+        [],
+        [{ createdAt: 'desc' }, { id: 'asc' }],
+      ),
+    )
+    filterDto: FilterDto<Prisma.MaterialExportReceiptWhereInput>,
+  ) {
+    return this.materialExportReceiptService.search(filterDto.findOptions);
+  }
 
   @Post('/recommend')
   async getExportAlgorithm(

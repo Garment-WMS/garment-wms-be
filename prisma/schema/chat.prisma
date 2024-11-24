@@ -1,0 +1,14 @@
+model Chat {
+    id           String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+    discussionId String    @map("discussion_id") @db.Uuid
+    senderId     String    @map("sender_id") @db.Uuid
+    message      String    @map("message") @db.Text
+    createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+    deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+    discussion Discussion @relation(fields: [discussionId], references: [id])
+    sender     Account    @relation(fields: [senderId], references: [id])
+
+    @@map("chat")
+}

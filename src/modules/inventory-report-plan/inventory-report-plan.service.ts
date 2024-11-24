@@ -60,9 +60,23 @@ export class InventoryReportPlanService {
       plan.inventoryReportPlanDetail.map((detail) => detail.warehouseStaffId),
     );
     const uniqueStaffIds = Array.from(new Set(staffIds));
-    for (let i = 0; i < uniqueStaffIds.length; i++) {
-      await this.processInventoryReportPlan(id, uniqueStaffIds[i]);
-    }
+    await this.prismaService.$transaction(
+      async (prismaInstance: PrismaService) => {
+        for (let i = 0; i < uniqueStaffIds.length; i++) {
+          await this.processInventoryReportPlan(
+            id,
+            uniqueStaffIds[i],
+            prismaInstance,
+          );
+        }
+
+        return apiSuccess(
+          HttpStatus.NO_CONTENT,
+          {},
+          'Inventory report plan started successfully',
+        );
+      },
+    );
 
     return apiSuccess(
       HttpStatus.NO_CONTENT,
@@ -122,8 +136,6 @@ export class InventoryReportPlanService {
           inventoryReportPlanDetails,
           prismaInstance,
         );
-        console.log(inventoryPlanResult.id);
-
         const inventoryPlanDetailResult =
           await prismaInstance.inventoryReportPlanDetail.findMany({
             where: { inventoryReportPlanId: inventoryPlanResult.id },
@@ -200,6 +212,7 @@ export class InventoryReportPlanService {
     //     'All inventory report plan detail already processed',
     //   );
     // }
+    console.log(inventoryReportPlanDetailBelongToWarehouseStaff);
 
     const inventoryReportInput: InventoryReportPlanDto = {
       ...inventoryReportPlan,
@@ -216,9 +229,7 @@ export class InventoryReportPlanService {
     if (!inventoryReport) {
       throw new BadRequestException('Create inventory report failed');
     }
-
-    console.log(inventoryReport);
-    await prismaInstance.inventoryReportPlanDetail.updateMany({
+    const result = await prismaInstance.inventoryReportPlanDetail.updateMany({
       where: {
         id: {
           in: inventoryReportPlanDetailBelongToWarehouseStaff.map(
@@ -477,8 +488,6 @@ export class InventoryReportPlanService {
   }
 
   async getAllReportPlanInTimeRange(from: Date, to?: Date) {
-    console.log(from, to);
-
     const result = await this.prismaService.inventoryReportPlan.findMany({
       where: {
         AND: [
