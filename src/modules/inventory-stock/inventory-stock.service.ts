@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { MaterialVariantService } from '../material-variant/material-variant.service';
+import { ProductVariantService } from '../product-variant/product-variant.service';
 import { CreateInventoryStockDto } from './dto/create-inventory-stock.dto';
 import { MaterialStock } from './dto/stock-material.dto';
 import { UpdateInventoryStockDto } from './dto/update-inventory-stock.dto';
@@ -12,7 +13,172 @@ export class InventoryStockService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly materialVariantService: MaterialVariantService,
+    private readonly productVariantService: ProductVariantService,
   ) {}
+
+  async getInvetoryStockDashboard() {
+    const materialInventoryStock =
+      await this.prismaService.inventoryStock.findMany({
+        where: { materialPackageId: { not: null } },
+        include: { materialPackage: { include: { materialVariant: true } } },
+      });
+
+    const productInventoryStock =
+      await this.prismaService.inventoryStock.findMany({
+        where: { productSizeId: { not: null } },
+        include: { productSize: { include: { productVariant: true } } },
+      });
+
+    const allMaterialVariants =
+      await this.materialVariantService.findAllWithoutResponseMinimizeInlude();
+    const allProductVariants =
+      await this.productVariantService.findAllWithoutResponseMinimizeInclude();
+
+    const numberOfMaterialStock = materialInventoryStock.reduce(
+      (acc, item) => acc + item.quantityByPack,
+      0,
+    );
+    const numberOfProductStock = productInventoryStock.reduce(
+      (acc, item) => acc + item.quantityByUom,
+      0,
+    );
+
+    const materialDistribution = allMaterialVariants.reduce((acc, variant) => {
+      acc[variant.id] = {
+        materialVariant: variant,
+        quantity: 0,
+      };
+      return acc;
+    }, {});
+
+    materialInventoryStock.forEach((item) => {
+      const variantId = item.materialPackage.materialVariant.id;
+      materialDistribution[variantId].quantity += item.quantityByPack;
+    });
+
+    const productDistribution = allProductVariants.reduce((acc, variant) => {
+      acc[variant.id] = {
+        productVariant: variant,
+        quantity: 0,
+      };
+      return acc;
+    }, {});
+
+    productInventoryStock.forEach((item) => {
+      const variantId = item.productSize.productVariant.id;
+      productDistribution[variantId].quantity += item.quantityByUom;
+    });
+
+    const materialPercentageDistribution = Object.values(
+      materialDistribution,
+    ).map((variant: any) => ({
+      ...variant,
+      percentage: parseFloat(
+        ((variant.quantity / numberOfMaterialStock) * 100 || 0).toFixed(2),
+      ),
+    }));
+
+    const productPercentageDistribution = Object.values(
+      productDistribution,
+    ).map((variant: any) => ({
+      ...variant,
+      percentage: parseFloat(
+        ((variant.quantity / numberOfProductStock) * 100 || 0).toFixed(2),
+      ),
+    }));
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        overAllQualityRate: await this.getQualityRate(),
+        numberOfMaterialStock,
+        numberOfProductStock,
+        materialQualityRate: await this.getMaterialQualityRate(),
+        materialDistribution: materialPercentageDistribution,
+        productDistribution: productPercentageDistribution,
+        productQualityRate: await this.getProductQualityRate(),
+      },
+      'Get inventory stock dashboard successfully',
+    );
+  }
+
+  async getQualityRate() {
+    const inspectedReportDetail =
+      await this.prismaService.inspectionReportDetail.findMany({});
+    const [numberOfApproveQuantity, numberOfDefectQuantity] =
+      inspectedReportDetail.reduce(
+        (acc, item) => {
+          return [
+            acc[0] + item.approvedQuantityByPack,
+            acc[1] + item.defectQuantityByPack,
+          ];
+        },
+        [0, 0],
+      );
+    const qualityRate =
+      numberOfApproveQuantity /
+      (numberOfApproveQuantity + numberOfDefectQuantity);
+
+    const roundedQualityRate = parseFloat((qualityRate * 100).toFixed(2));
+
+    return roundedQualityRate;
+  }
+
+  async getMaterialQualityRate() {
+    const inspectedReportDetail =
+      await this.prismaService.inspectionReportDetail.findMany({
+        where: {
+          materialPackageId: {
+            not: null,
+          },
+        },
+      });
+    const [numberOfApproveQuantity, numberOfDefectQuantity] =
+      inspectedReportDetail.reduce(
+        (acc, item) => {
+          return [
+            acc[0] + item.approvedQuantityByPack,
+            acc[1] + item.defectQuantityByPack,
+          ];
+        },
+        [0, 0],
+      );
+    const qualityRate =
+      numberOfApproveQuantity /
+      (numberOfApproveQuantity + numberOfDefectQuantity);
+
+    const roundedQualityRate = parseFloat((qualityRate * 100).toFixed(2));
+
+    return roundedQualityRate;
+  }
+
+  async getProductQualityRate() {
+    const inspectedReportDetail =
+      await this.prismaService.inspectionReportDetail.findMany({
+        where: {
+          productSizeId: {
+            not: null,
+          },
+        },
+      });
+    const [numberOfApproveQuantity, numberOfDefectQuantity] =
+      inspectedReportDetail.reduce(
+        (acc, item) => {
+          return [
+            acc[0] + item.approvedQuantityByPack,
+            acc[1] + item.defectQuantityByPack,
+          ];
+        },
+        [0, 0],
+      );
+    const qualityRate =
+      numberOfApproveQuantity /
+      (numberOfApproveQuantity + numberOfDefectQuantity);
+
+    const roundedQualityRate = parseFloat((qualityRate * 100).toFixed(2));
+
+    return roundedQualityRate;
+  }
 
   create(createInventoryStockDto: CreateInventoryStockDto) {
     return 'This action adds a new inventoryStock';

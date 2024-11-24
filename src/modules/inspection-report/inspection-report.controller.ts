@@ -25,6 +25,7 @@ export class InspectionReportController {
     private readonly inspectionReportService: InspectionReportService,
   ) {}
 
+  
   @Post()
   async create(@Body() createInspectionReportDto: CreateInspectionReportDto) {
     return apiSuccess(
@@ -58,6 +59,13 @@ export class InspectionReportController {
       await this.inspectionReportService.search(filterDto.findOptions),
       'Get all inspection report successfully',
     );
+  }
+
+  @Get('/quality-rate')
+   getQualityRate(
+
+  ) {
+    return this.inspectionReportService.getQualityRate();
   }
 
   @Get(':id')

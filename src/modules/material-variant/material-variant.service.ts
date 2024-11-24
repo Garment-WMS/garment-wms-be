@@ -695,6 +695,15 @@ export class MaterialVariantService {
     return result;
   }
 
+  findAllWithoutResponseMinimizeInlude() {
+    const result = this.prismaService.materialVariant.findMany({
+      // include:{
+      //   materialPackage: true,
+      // },
+    });
+    return result;
+  }
+
   findMaterialStock() {
     return this.prismaService.materialVariant.findMany({
       include: {

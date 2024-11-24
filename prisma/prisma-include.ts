@@ -158,6 +158,7 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
   discussion: {
     include: discussionInclude,
   },
+
   importRequestDetail: {
     include: importRequestDetailInclude,
   },
@@ -200,6 +201,9 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
   },
   inspectionRequest: {
     include: {
+      inspectionReport: {
+        include: inspectionReportIncludeWithoutInspectionRequestWithImportReceipt,
+      },
       inspectionDepartment: { include: inspectionDepartmentInclude },
     },
   },

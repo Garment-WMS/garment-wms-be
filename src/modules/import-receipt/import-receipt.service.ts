@@ -475,7 +475,6 @@ export class ImportReceiptService {
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         if (importReceipt?.materialReceipt.length > 0) {
-          console.log('materialReceipt', importReceipt.materialReceipt);
           for (const detail of importReceipt.materialReceipt) {
             await this.materialReceiptService.updateMaterialReceiptStatus(
               detail.id,

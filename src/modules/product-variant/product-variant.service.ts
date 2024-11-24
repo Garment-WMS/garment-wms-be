@@ -334,6 +334,11 @@ export class ProductVariantService {
     return data;
   }
 
+  async findAllWithoutResponseMinimizeInclude() {
+    const data = await this.prismaService.productVariant.findMany({});
+    return data;
+  }
+
   async findProductHasReceipt() {
     return await this.prismaService.productVariant.findMany({
       where: {

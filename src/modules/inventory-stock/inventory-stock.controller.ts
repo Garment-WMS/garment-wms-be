@@ -21,6 +21,11 @@ export class InventoryStockController {
   create(@Body() createInventoryStockDto: CreateInventoryStockDto) {
     return this.inventoryStockService.create(createInventoryStockDto);
   }
+  @Get('/dashboard')
+  getInvetoryStockDashboard() {
+    return this.inventoryStockService.getInvetoryStockDashboard();
+
+  }
 
   @Get('/material')
   findAll() {
