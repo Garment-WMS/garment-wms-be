@@ -21,7 +21,8 @@ export class DashboardService {
   }
 
   async findAll(from: Date, to: Date) {
-    console.log(from, to);
+    const fromDate = from ? new Date(from) : undefined;
+    const toDate = to ? new Date(to) : undefined;
     const materialVariant: any =
       await this.prismaService.materialVariant.findMany({
         include: {
@@ -31,8 +32,8 @@ export class DashboardService {
                 where: {
                   status: 'AVAILABLE',
                   createdAt: {
-                    ...(from ? { gte: new Date(from) } : {}),
-                    ...(to ? { lte: new Date(to) } : {}),
+                    ...(from ? { gte: new Date(fromDate) } : {}),
+                    ...(to ? { lte: new Date(toDate) } : {}),
                   },
                 },
               },
@@ -53,8 +54,8 @@ export class DashboardService {
                 where: {
                   status: 'AVAILABLE',
                   createdAt: {
-                    ...(from ? { gte: from } : {}),
-                    ...(to ? { lte: to } : {}),
+                    ...(from ? { gte: fromDate } : {}),
+                    ...(to ? { lte: toDate } : {}),
                   },
                 },
               },
@@ -64,15 +65,6 @@ export class DashboardService {
       });
     let quantityProduct = 0;
     let numberOfProductStock = 0;
-    const inspectionReport: any =
-      await this.prismaService.inspectionReport.findMany({
-        where: {
-          createdAt: {
-            ...(from ? { gte: from } : {}),
-            ...(to ? { lte: to } : {}),
-          },
-        },
-      });
 
     productVariant.forEach((item: any) => {
       quantityProduct = 0;
