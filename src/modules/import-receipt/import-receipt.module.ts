@@ -19,7 +19,6 @@ import { InspectionReportModule } from '../inspection-report/inspection-report.m
     ProductReceiptModule,
     PrismaModule,
     ProductionBatchModule,
-    InspectionReportModule,
     PoDeliveryModule,
     PoDeliveryMaterialModule,
     InventoryStockModule,
