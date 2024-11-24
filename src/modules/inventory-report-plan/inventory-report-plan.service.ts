@@ -38,7 +38,7 @@ export class InventoryReportPlanService {
 
     if (isAnyImportingImportRequest.length > 0) {
       return apiFailed(
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.CONFLICT,
         'Cannot start recording inventory report plan while there is importing import request',
         isAnyImportingImportRequest,
       );
