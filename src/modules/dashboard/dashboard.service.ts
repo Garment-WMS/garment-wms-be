@@ -41,9 +41,6 @@ export class DashboardService {
           },
         },
       });
-    let quantity = 0;
-    let numberOfMaterialStock = 0;
-    let materialQualityRate = 0;
 
     const productVariant: any =
       await this.prismaService.productVariant.findMany({
@@ -63,8 +60,35 @@ export class DashboardService {
           },
         },
       });
+
+    const inspectionReportDetail =
+      await this.prismaService.inspectionReportDetail.findMany({
+        where: {
+          createdAt: {
+            ...(from ? { gte: fromDate } : {}),
+            ...(to ? { lte: toDate } : {}),
+          },
+        },
+      });
+    let materialQualityRate = 0;
+    let productQualityRate = 0;
+    let numberOfInspcectMaterial = 0;
+    let numberOfInspcectProduct = 0;
+    let quantity = 0;
+    let numberOfMaterialStock = 0;
     let quantityProduct = 0;
     let numberOfProductStock = 0;
+
+    inspectionReportDetail.forEach((item) => {
+      if (item.materialPackageId) {
+        materialQualityRate += item.approvedQuantityByPack;
+        numberOfInspcectMaterial += item.quantityByPack;
+      }
+      if (item.productSizeId) {
+        productQualityRate += item.approvedQuantityByPack;
+        numberOfInspcectProduct += item.quantityByPack;
+      }
+    });
 
     productVariant.forEach((item: any) => {
       quantityProduct = 0;
@@ -91,6 +115,12 @@ export class DashboardService {
     return apiSuccess(
       HttpStatus.OK,
       {
+        materialQualityRate: parseFloat(
+          ((materialQualityRate / numberOfInspcectMaterial) * 100).toFixed(2),
+        ),
+        productQualityRate: parseFloat(
+          ((productQualityRate / numberOfInspcectProduct) * 100).toFixed(2),
+        ),
         materialVariant,
         productVariant,
         numberOfMaterialStock,
