@@ -27,7 +27,10 @@ export class TaskService {
     return task;
   }
 
-  async createMany(createTaskDto: CreateTaskDto[]) {
+  async createMany(
+    createTaskDto: CreateTaskDto[],
+    prismaInstance: PrismaService = this.prismaService,
+  ) {
     const taskCreateInput: Prisma.TaskCreateManyInput[] = createTaskDto.map(
       (task) => {
         return {
@@ -36,7 +39,7 @@ export class TaskService {
       },
     );
 
-    const task = await this.prismaService.task.createMany({
+    const task = await prismaInstance.task.createMany({
       data: taskCreateInput,
     });
 
