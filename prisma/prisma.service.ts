@@ -148,6 +148,7 @@ export class PrismaService
     'ProductFormula',
     'ProductReceipt',
     'MaterialExportRequest',
+    'MaterialExportReceipt',
   ];
 
   getPrefix(modelName: string, delimiter: string): string {
