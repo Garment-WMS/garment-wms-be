@@ -16,7 +16,10 @@ import {
 } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isNotEmpty } from 'class-validator';
-import { importRequestInclude } from 'prisma/prisma-include';
+import {
+  importRequestInclude,
+  importRequestIncludeUnique,
+} from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
@@ -179,7 +182,7 @@ export class ImportRequestService {
   async findUnique(id: string) {
     const importRequest = await this.prismaService.importRequest.findUnique({
       where: { id },
-      include: importRequestInclude,
+      include: importRequestIncludeUnique,
     });
     if (!importRequest) {
       throw new NotFoundException("Import request doesn't exist");

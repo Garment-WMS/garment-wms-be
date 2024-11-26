@@ -209,6 +209,31 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
   },
 };
 
+export const importRequestIncludeUnique: Prisma.ImportRequestInclude = {
+  ...importRequestInclude,
+  inspectionRequest: {
+    include: {
+      inspectionReport: {
+        include: {
+          inspectionReportDetail: {
+            include: {
+              materialPackage: {
+                include: materialPackageInclude,
+              },
+              productSize: { include: productSizeInclude },
+              inspectionReportDetailDefect: {
+                include: {
+                  defect: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
 export const inspectionReportInclude: Prisma.InspectionReportInclude = {
   inspectionRequest: {
     include: {
