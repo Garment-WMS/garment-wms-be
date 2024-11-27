@@ -156,7 +156,7 @@ export class ImportRequestController {
     return apiSuccess(
       HttpStatus.OK,
       await this.importRequestService.findUnique(id),
-      'Get import request successfully! Pleaseasdadsa',
+      'Get import request successfully',
     );
   }
 
