@@ -95,9 +95,9 @@ export class ProductionBatchService {
     if (productionBatch.status === 'IMPORTING') {
       throw new BadRequestException('Production Batch is importing');
     }
-    if (productionBatch.status === 'IMPORTED') {
-      throw new BadRequestException('Production Batch is imported');
-    }
+    // if (productionBatch.status === 'IMPORTED') {
+    //   throw new BadRequestException('Production Batch is imported');
+    // }
     if (productionBatch.status === 'FINISHED') {
       throw new BadRequestException('Production Batch is finished');
     }

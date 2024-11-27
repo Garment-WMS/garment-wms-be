@@ -36,7 +36,7 @@ export class TaskService {
       (task) => {
         return {
           ...task,
-          finishedAt: this.mockExpectFinishAt(task),
+          
         };
       },
     );

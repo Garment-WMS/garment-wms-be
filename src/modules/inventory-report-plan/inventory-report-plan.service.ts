@@ -168,6 +168,7 @@ export class InventoryReportPlanService {
             taskType: TaskType.INVENTORY,
             warehouseStaffId: staff.warehouseStaffId,
             inventoryReportPlanId: inventoryPlanResult.id,
+            expectFinishedAt: createInventoryReportPlanDto.to,
           });
         });
 
@@ -512,6 +513,9 @@ export class InventoryReportPlanService {
         });
         await this.taskService.createMany(createTaskDto, prismaInstance);
         return inventoryPlanResult;
+      },
+      {
+        timeout: 100000,
       },
     );
 

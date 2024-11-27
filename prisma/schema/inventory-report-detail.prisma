@@ -21,10 +21,4 @@ model InventoryReportDetail {
   @@map("inventory_report_detail")
 }
 
-enum InventoryReportDetailStatus {
-  IN_PROGRESS
-  // PENDING
-  PENDING_APPROVAL
-  APPROVED
-  REJECTED
-}
+

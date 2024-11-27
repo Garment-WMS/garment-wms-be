@@ -547,7 +547,7 @@ export class ImportReceiptService {
           await this.productionBatchService.updateProductBatchStatus(
             importReceipt.inspectionReport.inspectionRequest.importRequest
               .productionBatchId,
-            $Enums.ProductionBatchStatus.IMPORTED,
+            $Enums.ProductionBatchStatus.FINISHED,
             prismaInstance,
           );
         } else {
