@@ -30,7 +30,9 @@ import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { DiscussionService } from '../discussion/discussion.service';
 import { InspectionRequestService } from '../inspection-request/inspection-request.service';
+import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
+import { ProductReceiptService } from '../product-receipt/product-receipt.service';
 import { ProductionBatchService } from '../production-batch/production-batch.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { CreateProductImportRequestDto } from './dto/import-request/create-product-import-request.dto';
@@ -47,7 +49,16 @@ export class ImportRequestService {
     private readonly productionBatchService: ProductionBatchService,
     private readonly discussionService: DiscussionService,
   ) {}
-
+  async updateAwaitStatusToImportingStatus() {
+    await this.prismaService.importRequest.updateMany({
+      where: {
+        status: ImportRequestStatus.AWAIT_TO_IMPORT,
+      },
+      data: {
+        status: ImportRequestStatus.IMPORTING,
+      },
+    });
+  }
   async getLatest(from: any, to: any) {
     const fromDate = from ? new Date(from) : undefined;
     const toDate = to ? new Date(to) : undefined;

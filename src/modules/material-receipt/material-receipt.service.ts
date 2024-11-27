@@ -12,6 +12,9 @@ import { UpdateMaterialReceiptDto } from './dto/update-material-receipt.dto';
 
 @Injectable()
 export class MaterialReceiptService {
+  updateAwaitStatus() {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     private readonly prismaService: PrismaService,
     private readonly poDeliveryService: PoDeliveryService,

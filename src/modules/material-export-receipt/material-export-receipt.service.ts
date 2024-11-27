@@ -5,7 +5,7 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { $Enums, Prisma } from '@prisma/client';
+import { $Enums, ExportReceiptStatus, Prisma } from '@prisma/client';
 import {
   materialExportReceiptInclude,
   materialExportRequestInclude,
@@ -40,6 +40,18 @@ export class MaterialExportReceiptService {
     private readonly exportAlgorithmService: ExportAlgorithmService,
     private readonly taskService: TaskService,
   ) {}
+
+  async updateAwaitStatusToExportingStatus() {
+    await this.prismaService.materialExportReceipt.updateMany({
+      where: {
+        status: ExportReceiptStatus.AWAIT_TO_EXPORT,
+      },
+      data: {
+        status: ExportReceiptStatus.EXPORTING,
+      },
+    });
+  }
+
   async create(createMaterialExportReceiptDto: CreateMaterialExportReceiptDto) {
     const input: Prisma.MaterialExportReceiptUncheckedCreateInput = {
       type: createMaterialExportReceiptDto.type,
@@ -342,6 +354,19 @@ export class MaterialExportReceiptService {
   ) {
     switch (warehouseStaffExportDto.action) {
       case WarehouseStaffExportAction.EXPORTING:
+        const isAnyAwaitOrInProgressReportPlan: boolean =
+          await this.isAnyWaitOrInProgressReportPlan();
+        let materialExportRequestStatus: $Enums.MaterialExportRequestStatus =
+          $Enums.MaterialExportRequestStatus.EXPORTING;
+        let materialExportReceiptStatus: $Enums.MaterialExportRequestStatus =
+          $Enums.ExportReceiptStatus.EXPORTING;
+        if (isAnyAwaitOrInProgressReportPlan) {
+          materialExportRequestStatus =
+            $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT;
+          materialExportReceiptStatus =
+            $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT;
+        }
+
         const materialExportReceipt1 =
           await this.prismaService.materialExportReceipt.update({
             where: {
@@ -349,7 +374,7 @@ export class MaterialExportReceiptService {
                 warehouseStaffExportDto.materialExportRequestId,
             },
             data: {
-              status: $Enums.MaterialExportRequestStatus.EXPORTING,
+              status: materialExportReceiptStatus,
             },
             include: materialExportReceiptInclude,
           });
@@ -357,7 +382,7 @@ export class MaterialExportReceiptService {
           await this.prismaService.materialExportRequest.update({
             where: { id: warehouseStaffExportDto.materialExportRequestId },
             data: {
-              status: $Enums.MaterialExportRequestStatus.EXPORTING,
+              status: materialExportRequestStatus,
             },
           });
         return {
@@ -457,5 +482,19 @@ export class MaterialExportReceiptService {
         include: materialExportRequestInclude,
       });
     return materialExportRequest;
+  }
+
+  async isAnyWaitOrInProgressReportPlan() {
+    const result = await this.prismaService.inventoryReportPlan.findMany({
+      where: {
+        status: {
+          in: [
+            $Enums.InventoryReportPlanStatus.AWAIT,
+            $Enums.InventoryReportPlanStatus.IN_PROGRESS,
+          ],
+        },
+      },
+    });
+    return result.length > 0;
   }
 }

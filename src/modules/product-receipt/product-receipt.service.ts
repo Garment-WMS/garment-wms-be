@@ -2,20 +2,21 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma, PrismaClient, ProductReceiptStatus } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isUUID } from 'class-validator';
+import { productReceiptIncludeQuery } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { CreateProductReceiptDto } from './dto/create-product-receipt.dto';
 import { UpdateProductReceiptDto } from './dto/update-product-receipt.dto';
-import { productReceiptIncludeQuery } from 'prisma/prisma-include';
 
 @Injectable()
 export class ProductReceiptService {
+  updateAwaitStatus() {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     private prismaService: PrismaService,
     private readonly inventoryStockService: InventoryStockService,
   ) {}
-
-  
 
   async updateProductReceiptQuantity(
     id: string,
