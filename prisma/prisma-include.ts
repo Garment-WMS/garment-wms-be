@@ -460,6 +460,7 @@ export const materialExportRequestInclude: Prisma.MaterialExportRequestInclude =
 
 export const materialExportReceiptInclude: Prisma.MaterialExportReceiptInclude =
   {
+    discussion: { include: discussionInclude },
     warehouseStaff: {
       include: warehouseStaffInclude,
     },

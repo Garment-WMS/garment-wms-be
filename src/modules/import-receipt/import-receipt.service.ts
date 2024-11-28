@@ -17,6 +17,7 @@ import {
 } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import {
+  discussionInclude,
   importReceiptInclude,
   inspectionReportDetailDefectIncludeWithoutInspectionReportDetail,
   materialPackageInclude,
@@ -28,6 +29,7 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { DiscussionService } from '../discussion/discussion.service';
 import { ImportRequestService } from '../import-request/import-request.service';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
@@ -42,6 +44,20 @@ import { UpdateImportReceiptDto } from './dto/update-import-receipt.dto';
 
 @Injectable()
 export class ImportReceiptService {
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly materialReceiptService: MaterialReceiptService,
+    private readonly productReceiptService: ProductReceiptService,
+    // private readonly inspectionReportService: InspectionReportService,
+    private readonly disussionService: DiscussionService,
+    private readonly poDeliveryService: PoDeliveryService,
+    private readonly inventoryStockService: InventoryStockService,
+    private readonly importRequestService: ImportRequestService,
+    private readonly poDeliveryDetailsService: PoDeliveryMaterialService,
+    private readonly productionBatchService: ProductionBatchService,
+    private readonly taskService: TaskService,
+  ) {}
+
   async getLatest(from: any, to: any) {
     const fromDate = from ? new Date(from) : undefined;
     const toDate = to ? new Date(to) : undefined;
@@ -64,18 +80,6 @@ export class ImportReceiptService {
       'Get import receipts successfully',
     );
   }
-  constructor(
-    private readonly prismaService: PrismaService,
-    private readonly materialReceiptService: MaterialReceiptService,
-    private readonly productReceiptService: ProductReceiptService,
-    // private readonly inspectionReportService: InspectionReportService,
-    private readonly poDeliveryService: PoDeliveryService,
-    private readonly inventoryStockService: InventoryStockService,
-    private readonly importRequestService: ImportRequestService,
-    private readonly poDeliveryDetailsService: PoDeliveryMaterialService,
-    private readonly productionBatchService: ProductionBatchService,
-    private readonly taskService: TaskService,
-  ) {}
 
   findByQuery(query: any) {
     return this.prismaService.importReceipt.findFirst({
@@ -212,6 +216,10 @@ export class ImportReceiptService {
         await this.createTaskByImportReceipt(
           result.id,
           inspectionReport.inspectionRequest.importRequest.warehouseStaffId,
+        );
+        await this.disussionService.updateImportReceiptDiscussion(
+          result.id,
+          createImportReceiptDto.importRequestId,
         );
       } catch (e) {
         Logger.error(e);
@@ -370,6 +378,10 @@ export class ImportReceiptService {
         await this.createTaskByImportReceipt(
           result.id,
           inspectionReport.inspectionRequest.importRequest.warehouseStaffId,
+        );
+        await this.disussionService.updateImportReceiptDiscussion(
+          result.id,
+          createImportReceiptDto.importRequestId,
         );
       } catch (e) {
         Logger.error(e);
@@ -585,6 +597,7 @@ export class ImportReceiptService {
     return this.prismaService.importReceipt.findUnique({
       where: { id },
       include: {
+        discussion: { include: discussionInclude },
         warehouseManager: {
           include: {
             account: true,
