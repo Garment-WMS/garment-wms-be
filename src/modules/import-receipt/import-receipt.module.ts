@@ -10,6 +10,7 @@ import { ProductionBatchModule } from '../production-batch/production-batch.modu
 import { TaskModule } from '../task/task.module';
 import { ImportReceiptController } from './import-receipt.controller';
 import { ImportReceiptService } from './import-receipt.service';
+import { InspectionReportModule } from '../inspection-report/inspection-report.module';
 
 @Module({
   controllers: [ImportReceiptController],
@@ -23,6 +24,7 @@ import { ImportReceiptService } from './import-receipt.service';
     InventoryStockModule,
     ImportRequestModule,
     TaskModule,
+    DiscussionModule,
   ],
   providers: [ImportReceiptService],
   exports: [ImportReceiptService],

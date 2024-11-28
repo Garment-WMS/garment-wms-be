@@ -37,7 +37,7 @@ export class PurchaseOrderController {
   getPurchaseOrders(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.PurchaseOrderWhereInput>(
-        ['quarterlyProductionPlan'],
+        ['productionPlan.code'],
         [
           {
             createdAt: 'desc',
@@ -125,14 +125,18 @@ export class PurchaseOrderController {
   }
 
   @Patch(':id/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.PURCHASING_STAFF)
   @UsePipes(new ValidationPipe())
   async cancelPurchaseOrder(
     @Param('id', CustomUUIDPipe) id: string,
     @Body() cancelPurchaseOrder: CancelledPurchaseOrderDto,
+    @GetUser() user: AuthenUser,
   ) {
     return this.purchaseOrderService.cancelledPurchaseOrder(
       id,
       cancelPurchaseOrder,
+      user.purchasingStaffId,
     );
   }
 }

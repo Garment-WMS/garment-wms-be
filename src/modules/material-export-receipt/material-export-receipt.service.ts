@@ -1,26 +1,26 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import {
-  ConflictException,
+  ForbiddenException,
   HttpStatus,
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { $Enums, ExportReceiptStatus, Prisma } from '@prisma/client';
+import { $Enums, Prisma, RoleCode } from '@prisma/client';
 import {
   materialExportReceiptInclude,
   materialExportRequestInclude,
-  materialReceiptIncludeWithoutImportReceipt,
-  materialVariantInclude,
+  materialInclude,
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { TaskService } from '../task/task.service';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
 import { ExportAlgorithmParam } from './dto/export-algorithm-param.type';
-import { ExportAlgorithmResult } from './dto/export-algorithm-result.dto';
+import { ExportAlgorithmResults } from './dto/export-algorithm-result.dto';
 import {
   ProductionStaffApproveDto,
   ProductionStaffCApproveAction,
@@ -40,6 +40,21 @@ export class MaterialExportReceiptService {
     private readonly exportAlgorithmService: ExportAlgorithmService,
     private readonly taskService: TaskService,
   ) {}
+
+  async getByUserToken(
+    authenUser: AuthenUser,
+    findOptions: GeneratedFindOptions<Prisma.MaterialExportReceiptWhereInput>,
+  ) {
+    switch (authenUser.role) {
+      case RoleCode.WAREHOUSE_STAFF:
+        findOptions.where = {
+          warehouseStaffId: authenUser.warehouseStaffId,
+        };
+        return this.search(findOptions);
+      default:
+        throw new ForbiddenException('This role is not allowed');
+    }
+  }
 
   async updateAwaitStatusToExportingStatus() {
     await this.prismaService.materialExportReceipt.updateMany({
@@ -142,143 +157,216 @@ export class MaterialExportReceiptService {
         where: {
           id: materialExportRequestId,
         },
-        include: materialExportRequestInclude,
+        include: {
+          materialExportRequestDetail: {
+            include: {
+              materialVariant: {
+                include: {
+                  materialPackage: { include: { materialReceipt: true } },
+                },
+              },
+            },
+          },
+        },
       });
     if (!materialExportRequest) {
       throw new Error('Material export request not found');
     }
-    const materialVariantIds: string[] =
-      materialExportRequest.materialExportRequestDetail.map(
-        (detail) => detail.materialVariantId,
-      );
 
-    // Get all material receipts that have material variants in the material export request
-    const materialReceipts = await this.prismaService.materialReceipt.findMany({
-      where: {
-        materialPackage: {
-          materialVariantId: {
-            in: materialVariantIds,
+    // const notEnoughMaterialExportRequestDetails = [];
+    for (const materialExportRequestDetail of materialExportRequest.materialExportRequestDetail) {
+      // const inventoryStockOfAMaterialVariant =
+      //   await this.prismaService.inventoryStock.findMany({
+      //     where: {
+      //       materialPackage: {
+      //         materialVariantId: materialExportRequestDetail.materialVariantId,
+      //       },
+      //     },
+      //   });
+      // const totalRemainQuantityByUom = inventoryStockOfAMaterialVariant.reduce(
+      //   (acc, item) => acc + item.quantityByUom,
+      //   0,
+      // );
+      // Logger.debug('totalRemainQuantityByUom', totalRemainQuantityByUom);
+      // Logger.debug(
+      //   'target quantity',
+      //   materialExportRequestDetail.quantityByUom,
+      // );
+      // if (
+      //   totalRemainQuantityByUom < materialExportRequestDetail.quantityByUom
+      // ) {
+      //   const notEnoughMaterialExportRequestDetail = {
+      //     ...materialExportRequestDetail,
+      //     remainQuantityByUom: totalRemainQuantityByUom,
+      //     missingQuantityByUom:
+      //       materialExportRequestDetail.quantityByUom -
+      //       totalRemainQuantityByUom,
+      //     isFullFilled: false,
+      //   };
+      //   delete materialExportRequestDetail.materialVariant.materialPackage;
+      //   notEnoughMaterialExportRequestDetails.push(
+      //     notEnoughMaterialExportRequestDetail,
+      //   );
+      //   continue;
+      // }
+    }
+
+    const exportAlgorithmParam: ExportAlgorithmParam =
+      materialExportRequest.materialExportRequestDetail.map((detail) => ({
+        materialVariantId: detail.materialVariantId,
+        targetQuantityUom: detail.quantityByUom,
+        allMaterialReceipts: detail.materialVariant.materialPackage?.flatMap(
+          (materialPackage) => {
+            return materialPackage.materialReceipt.map((materialReceipt) => {
+              let date = new Date();
+              switch (exportAlgorithmEnum) {
+                case ExportAlgorithmEnum.FIFO:
+                  date = materialReceipt.importDate;
+                  break;
+                case ExportAlgorithmEnum.LIFO:
+                  date = materialReceipt.importDate;
+                  break;
+                case ExportAlgorithmEnum.FEFO:
+                  date = materialReceipt.expireDate;
+                  break;
+                default:
+                  throw new Error('Invalid export algorithm');
+              }
+              return {
+                id: materialReceipt.id,
+                remainQuantityByPack: materialReceipt.remainQuantityByPack,
+                uomPerPack: materialPackage.uomPerPack,
+                date: date,
+              };
+            });
           },
-        },
-      },
-      include: materialReceiptIncludeWithoutImportReceipt,
-    });
-
-    // Handle the algorithm
-    let algorithmResult: ExportAlgorithmResult;
-
-    algorithmResult = await this.handleAlgorithm(
-      materialExportRequest.materialExportRequestDetail,
-      exportAlgorithmEnum,
-    );
-
-    const recommendMaterialExportReceiptDetails: Prisma.MaterialExportReceiptDetailUncheckedCreateInput[] =
-      algorithmResult.map((result) => ({
-        materialExportReceiptId: undefined,
-        materialReceiptId: result.id,
-        quantityByPack: result.quantityByPack,
-        materialReceipt: materialReceipts.find(
-          (materialReceipt) => materialReceipt.id === result.id,
         ),
       }));
 
-    return recommendMaterialExportReceiptDetails;
-  }
-
-  async handleAlgorithm(
-    materialExportRequestDetails: {
-      materialVariantId: string;
-      quantityByUom: number;
-    }[],
-    exportAlgorithmEnum: ExportAlgorithmEnum,
-  ): Promise<ExportAlgorithmResult> {
-    let resultPromises: Promise<
-      {
-        id: string;
-        quantityByPack: number;
-      }[]
-    >[] = [];
-    for (let i = 0; i < materialExportRequestDetails.length; i++) {
-      const materialExportRequestDetail = materialExportRequestDetails[i];
-      const targetQuantityUom = materialExportRequestDetail.quantityByUom;
-      const exportAlgorithmParam: ExportAlgorithmParam = {
-        targetQuantityUom,
-        items: [],
-      };
-      const materialReceiptOfMaterialVariant =
-        await this.prismaService.materialReceipt.findMany({
-          where: {
-            materialPackage: {
-              materialVariantId: materialExportRequestDetail.materialVariantId,
-            },
-          },
-          include: materialReceiptIncludeWithoutImportReceipt,
-        });
-      for (let i = 0; i < materialReceiptOfMaterialVariant.length; i++) {
-        const materialReceipt = materialReceiptOfMaterialVariant[i];
-        const quantityByPack = materialReceipt.remainQuantityByPack;
-        const uomPerPack = materialReceipt.materialPackage.uomPerPack;
-        let date;
-        switch (exportAlgorithmEnum) {
-          case ExportAlgorithmEnum.FIFO:
-            date = materialReceipt.importDate;
-            break;
-          case ExportAlgorithmEnum.LIFO:
-            date = materialReceipt.importDate;
-            break;
-          case ExportAlgorithmEnum.FEFO:
-            date = materialReceipt.expireDate;
-            break;
-          default:
-            throw new Error('Invalid export algorithm');
-        }
-
-        exportAlgorithmParam.items.push({
-          id: materialReceipt.id,
-          quantityByPack,
-          uomPerPack,
-          date,
-        });
-      }
-      switch (exportAlgorithmEnum) {
-        case ExportAlgorithmEnum.FIFO:
-          resultPromises.push(
-            this.exportAlgorithmService.getBestQuantityByPackFIFO(
-              exportAlgorithmParam.targetQuantityUom,
-              exportAlgorithmParam.items,
-            ),
+    // Handle the algorithm
+    let algorithmResult: ExportAlgorithmResults;
+    switch (exportAlgorithmEnum) {
+      case ExportAlgorithmEnum.FIFO:
+        algorithmResult =
+          await this.exportAlgorithmService.getBestQuantityByPackFIFO(
+            exportAlgorithmParam,
           );
-          break;
-        case ExportAlgorithmEnum.LIFO:
-          resultPromises.push(
-            this.exportAlgorithmService.getBestQuantityByPackFIFO(
-              exportAlgorithmParam.targetQuantityUom,
-              exportAlgorithmParam.items,
-            ),
+        break;
+      case ExportAlgorithmEnum.LIFO:
+        algorithmResult =
+          await this.exportAlgorithmService.getBestQuantityByPackLIFO(
+            exportAlgorithmParam,
           );
-          break;
-        case ExportAlgorithmEnum.FEFO:
-          resultPromises.push(
-            this.exportAlgorithmService.getBestQuantityByPackFIFO(
-              exportAlgorithmParam.targetQuantityUom,
-              exportAlgorithmParam.items,
-            ),
+        break;
+      case ExportAlgorithmEnum.FEFO:
+        algorithmResult =
+          await this.exportAlgorithmService.getBestQuantityByPackFEFO(
+            exportAlgorithmParam,
           );
-          break;
-        default:
-          throw new Error('Invalid export algorithm');
-      }
+        break;
+      default:
+        throw new Error('Invalid export algorithm');
     }
-    try {
-      const result = await Promise.all(resultPromises);
-      Logger.debug('Log after promise', result);
-      // flatten array of arrays
-      if (result.some((item) => item === null)) {
-        throw new ConflictException('Not enough material');
-      }
-      return result.flat();
-    } catch (error) {
-      throw error;
+
+    // if (notEnoughMaterialExportRequestDetails.length > 0) {
+    //   return apiSuccess(
+    //     409,
+    //     notEnoughMaterialExportRequestDetails,
+    //     'There are not enough materials to export',
+    //   );
+    // }
+
+    let isAllFullFilled = true;
+
+    const materialExportRequestDetails = await Promise.all(
+      algorithmResult.flatMap(async (materialExportRequestDetail) => {
+        if (materialExportRequestDetail.isFullFilled !== true)
+          isAllFullFilled = false;
+        return {
+          ...materialExportRequestDetail,
+          materialVariant: await this.prismaService.materialVariant.findFirst({
+            where: {
+              id: materialExportRequestDetail.materialVariantId,
+            },
+            include: {
+              material: {
+                include: materialInclude,
+              },
+            },
+          }),
+          needMaterialReceipts: await Promise.all(
+            materialExportRequestDetail.needMaterialReceipts.map(
+              async (needMaterialReceipt) => ({
+                materialReceiptId: needMaterialReceipt.id,
+                materialReceipt:
+                  await this.prismaService.materialReceipt.findFirst({
+                    where: {
+                      id: needMaterialReceipt.id,
+                    },
+                    include: {
+                      materialPackage: true,
+                    },
+                  }),
+                quantityByPack: needMaterialReceipt.quantityByPack,
+                uomPerPack: needMaterialReceipt.uomPerPack,
+                date: needMaterialReceipt.date,
+              }),
+            ),
+          ),
+        };
+      }),
+    );
+
+    const flattenMaterialExportReceiptDetails = await Promise.all(
+      algorithmResult.flatMap((detail) => {
+        return detail.needMaterialReceipts.map(async (needMaterialReceipt) => ({
+          materialExportReceiptId: undefined,
+          materialReceiptId: needMaterialReceipt.id,
+          materialReceipt: await this.prismaService.materialReceipt.findUnique({
+            where: {
+              id: needMaterialReceipt.id,
+            },
+            include: {
+              materialPackage: {
+                include: {
+                  materialVariant: {
+                    include: {
+                      material: {
+                        include: materialInclude,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          }),
+          quantityByPack: needMaterialReceipt.quantityByPack,
+        }));
+      }),
+    );
+
+    if (isAllFullFilled) {
+      return apiSuccess(
+        200,
+        flattenMaterialExportReceiptDetails,
+        'There are enough materials to export',
+      );
+    } else {
+      return apiSuccess(
+        409,
+        {
+          fullFilledMaterialExportRequestDetails:
+            materialExportRequestDetails.filter(
+              (detail) => detail.isFullFilled,
+            ),
+          notFullFilledMaterialExportRequestDetails:
+            materialExportRequestDetails.filter(
+              (detail) => !detail.isFullFilled,
+            ),
+          flattenMaterialExportReceiptDetails,
+        },
+        'There are not enough materials to export',
+      );
     }
   }
 
@@ -291,61 +379,6 @@ export class MaterialExportReceiptService {
 
   remove(id: string) {
     return `This action removes a #${id} materialExportReceipt`;
-  }
-
-  async getRecommendedMaterialExportReceiptByFormula(
-    productFormulaId: string,
-    quantityToProduce: number,
-    exportAlgorithmEnum: ExportAlgorithmEnum,
-  ) {
-    const productFormulaMaterials =
-      await this.prismaService.productFormulaMaterial.findMany({
-        where: {
-          productFormulaId: productFormulaId,
-        },
-        include: {
-          materialVariant: { include: materialVariantInclude },
-        },
-      });
-    if (!productFormulaMaterials) {
-      throw new Error('Product formula not found');
-    }
-    const materialExportRequestDetails: {
-      materialVariantId: string;
-      quantityByUom: number;
-    }[] = productFormulaMaterials.map((productFormulaMaterial) => ({
-      materialVariantId: productFormulaMaterial.materialVariantId,
-      quantityByUom: productFormulaMaterial.quantityByUom * quantityToProduce,
-    }));
-    const algorithmResult = await this.handleAlgorithm(
-      materialExportRequestDetails,
-      exportAlgorithmEnum,
-    );
-
-    const materialReceipts = await this.prismaService.materialReceipt.findMany({
-      where: {
-        materialPackage: {
-          materialVariantId: {
-            in: materialExportRequestDetails.map(
-              (detail) => detail.materialVariantId,
-            ),
-          },
-        },
-      },
-      include: materialReceiptIncludeWithoutImportReceipt,
-    });
-
-    const recommendMaterialExportReceiptDetails: Prisma.MaterialExportReceiptDetailUncheckedCreateInput[] =
-      algorithmResult.map((result) => ({
-        materialExportReceiptId: undefined,
-        materialReceiptId: result.id,
-        quantityByPack: result.quantityByPack,
-        materialReceipt: materialReceipts.find(
-          (materialReceipt) => materialReceipt.id === result.id,
-        ),
-      }));
-
-    return recommendMaterialExportReceiptDetails;
   }
 
   async warehouseStaffExport(

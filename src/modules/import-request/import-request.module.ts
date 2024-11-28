@@ -7,6 +7,7 @@ import { MaterialReceiptModule } from '../material-receipt/material-receipt.modu
 import { PoDeliveryModule } from '../po-delivery/po-delivery.module';
 import { ProductReceiptModule } from '../product-receipt/product-receipt.module';
 import { ProductionBatchModule } from '../production-batch/production-batch.module';
+import { TaskModule } from '../task/task.module';
 import { ImportRequestController } from './import-request.controller';
 import { ImportRequestService } from './import-request.service';
 import { IsImportRequestExistPipe } from './pipe/is-import-request-exist.pipe';
@@ -23,7 +24,7 @@ import { IsPoDeliveryDoesNotHaveActiveImportRequestValidator } from './validator
     ProductReceiptModule,
     MaterialReceiptModule,
     ProductionBatchModule,
-    // ImportReceiptModule,
+    TaskModule,
   ],
   controllers: [ImportRequestController],
   providers: [

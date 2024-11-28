@@ -19,6 +19,7 @@ import {
 } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import {
+  discussionInclude,
   importReceiptInclude,
   inspectionReportDetailDefectIncludeWithoutInspectionReportDetail,
   materialPackageInclude,
@@ -30,6 +31,7 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { DiscussionService } from '../discussion/discussion.service';
 import { ImportRequestService } from '../import-request/import-request.service';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
@@ -49,6 +51,7 @@ export class ImportReceiptService {
     private readonly materialReceiptService: MaterialReceiptService,
     private readonly productReceiptService: ProductReceiptService,
     // private readonly inspectionReportService: InspectionReportService,
+    private readonly disussionService: DiscussionService,
     private readonly poDeliveryService: PoDeliveryService,
     private readonly inventoryStockService: InventoryStockService,
     private readonly importRequestService: ImportRequestService,
@@ -57,23 +60,6 @@ export class ImportReceiptService {
     private readonly taskService: TaskService,
   ) {}
 
-  findByQuery(query: any) {
-    return this.prismaService.importReceipt.findFirst({
-      where: query,
-      include: importReceiptInclude,
-    });
-  }
-
-  async updateAwaitStatusToImportingStatus() {
-    await this.prismaService.importReceipt.updateMany({
-      where: {
-        status: $Enums.ImportReceiptStatus.AWAIT_TO_IMPORT,
-      },
-      data: {
-        status: $Enums.ImportReceiptStatus.IMPORTING,
-      },
-    });
-  }
   async getLatest(from: any, to: any) {
     const fromDate = from ? new Date(from) : undefined;
     const toDate = to ? new Date(to) : undefined;
@@ -235,6 +221,10 @@ export class ImportReceiptService {
         await this.createTaskByImportReceipt(
           result.id,
           inspectionReport.inspectionRequest.importRequest.warehouseStaffId,
+        );
+        await this.disussionService.updateImportReceiptDiscussion(
+          result.id,
+          createImportReceiptDto.importRequestId,
         );
       } catch (e) {
         Logger.error(e);
@@ -403,6 +393,10 @@ export class ImportReceiptService {
         await this.createTaskByImportReceipt(
           result.id,
           inspectionReport.inspectionRequest.importRequest.warehouseStaffId,
+        );
+        await this.disussionService.updateImportReceiptDiscussion(
+          result.id,
+          createImportReceiptDto.importRequestId,
         );
       } catch (e) {
         Logger.error(e);
@@ -631,6 +625,7 @@ export class ImportReceiptService {
     return this.prismaService.importReceipt.findUnique({
       where: { id },
       include: {
+        discussion: { include: discussionInclude },
         warehouseManager: {
           include: {
             account: true,
@@ -782,6 +777,7 @@ export class ImportReceiptService {
         skip: offset,
         take: limit,
         where: findOptions?.where,
+        orderBy: findOptions?.orderBy,
         include: importReceiptInclude,
       }),
       this.prismaService.importReceipt.count({ where: findOptions?.where }),

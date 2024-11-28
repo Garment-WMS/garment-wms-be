@@ -1,5 +1,10 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { $Enums, Prisma, Task } from '@prisma/client';
 import { taskInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
@@ -36,7 +41,6 @@ export class TaskService {
       (task) => {
         return {
           ...task,
-          
         };
       },
     );
@@ -228,5 +232,197 @@ export class TaskService {
       where: { id: taskToUpdate.id },
       data: { status: $Enums.TaskStatus.DONE },
     });
+  }
+
+  //only task with status OPEN can be reassigned
+  async validateTaskStatusCanReassign(taskWhereInput: Prisma.TaskWhereInput) {
+    const tasks = await this.prismaService.task.findMany({
+      where: {
+        ...taskWhereInput,
+        status: {
+          notIn: [$Enums.TaskStatus.OPEN],
+        },
+      },
+    });
+    if (tasks.length > 0) {
+      throw new ConflictException(
+        'Cannot reassign task that is not in OPEN status',
+      );
+    }
+  }
+
+  async reassignImportRequestTask(
+    importReceiptId: string,
+    warehouseStaffId: string,
+  ) {
+    return await this.prismaService.task.updateMany({
+      where: { importReceiptId: importReceiptId },
+      data: {
+        warehouseStaffId: warehouseStaffId,
+      },
+    });
+  }
+
+  async getWarehouseStaffToAssign(expectedStartAt: Date, expectedEndAt: Date) {
+    const [free, busy] = await this.prismaService.$transaction([
+      this.prismaService.warehouseStaff.findMany({
+        where: {
+          task: {
+            every: {
+              AND: [
+                // { status: { notIn: [$Enums.TaskStatus.IN_PROGRESS] } },
+                {
+                  NOT: {
+                    OR: [
+                      {
+                        startedAt: {
+                          gte: expectedStartAt,
+                          lte: expectedEndAt,
+                        },
+                      },
+                      {
+                        expectFinishedAt: {
+                          gte: expectedStartAt,
+                          lte: expectedEndAt,
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        },
+        include: {
+          account: true,
+          task: {
+            where: {
+              status: {
+                in: [$Enums.TaskStatus.IN_PROGRESS],
+              },
+            },
+            orderBy: [
+              {
+                expectFinishedAt: 'asc',
+              },
+              {
+                startedAt: 'desc',
+              },
+            ],
+          },
+        },
+      }),
+      this.prismaService.warehouseStaff.findMany({
+        where: {
+          task: {
+            some: {
+              AND: [{ status: { in: [$Enums.TaskStatus.IN_PROGRESS] } }],
+            },
+          },
+        },
+        include: {
+          account: true,
+          task: {
+            where: {
+              status: {
+                in: [$Enums.TaskStatus.IN_PROGRESS],
+              },
+            },
+            orderBy: [
+              {
+                expectFinishedAt: 'asc',
+              },
+              {
+                startedAt: 'desc',
+              },
+            ],
+          },
+        },
+      }),
+    ]);
+    return { free, busy };
+  }
+
+  async getInspectionDepartmentToAssign(
+    expectedStartAt: Date,
+    expectedEndAt: Date,
+  ) {
+    const [free, busy] = await this.prismaService.$transaction([
+      this.prismaService.inspectionDepartment.findMany({
+        where: {
+          task: {
+            every: {
+              AND: [
+                // { status: { notIn: [$Enums.TaskStatus.IN_PROGRESS] } },
+                {
+                  NOT: {
+                    OR: [
+                      {
+                        startedAt: {
+                          gte: expectedStartAt,
+                          lte: expectedEndAt,
+                        },
+                      },
+                      {
+                        expectFinishedAt: {
+                          gte: expectedStartAt,
+                          lte: expectedEndAt,
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        },
+        include: {
+          account: true,
+          task: {
+            where: {
+              status: {
+                in: [$Enums.TaskStatus.IN_PROGRESS],
+              },
+            },
+            orderBy: [
+              {
+                expectFinishedAt: 'asc',
+              },
+              {
+                startedAt: 'desc',
+              },
+            ],
+          },
+        },
+      }),
+      this.prismaService.inspectionDepartment.findMany({
+        where: {
+          task: {
+            some: {
+              AND: [{ status: { in: [$Enums.TaskStatus.IN_PROGRESS] } }],
+            },
+          },
+        },
+        include: {
+          account: true,
+          task: {
+            where: {
+              status: {
+                in: [$Enums.TaskStatus.IN_PROGRESS],
+              },
+            },
+            orderBy: [
+              {
+                expectFinishedAt: 'asc',
+              },
+              {
+                startedAt: 'desc',
+              },
+            ],
+          },
+        },
+      }),
+    ]);
+    return { free, busy };
   }
 }

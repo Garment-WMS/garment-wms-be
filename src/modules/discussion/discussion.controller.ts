@@ -11,6 +11,10 @@ export class DiscussionController {
   create(@Body() createDiscussionDto: CreateDiscussionDto) {
     return this.discussionService.findAllImportRequestsAndCreateDiscussion();
   }
+  @Post('receipt')
+  createForReceipt(@Body() createDiscussionDto: CreateDiscussionDto) {
+    return this.discussionService.findAllExportRceiptImportReceiptAndCreateDiscussion();
+  }
 
   @Get()
   findAll() {

@@ -24,4 +24,5 @@ enum ProductReceiptStatus {
   IMPORTING
   AVAILABLE
   USED
+  DISCARDED
 }

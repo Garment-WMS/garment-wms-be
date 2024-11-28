@@ -4,9 +4,10 @@ import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isUUID, ValidationError } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
-import { apiSuccess } from 'src/common/dto/api-response';
+import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { CreateImportRequestDetailDto } from '../import-request/dto/import-request-detail/create-import-request-detail.dto';
 import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
+import { CancelPoDeliveryDto } from './dto/cancel-po-delivery.dto';
 import { PoDeliveryDto } from './dto/po-delivery.dto';
 import { UpdatePoDeliveryDto } from './dto/update-po-delivery.dto';
 
@@ -16,6 +17,38 @@ export class PoDeliveryService {
     private readonly pirsmaService: PrismaService,
     private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
   ) {}
+
+  async cancelPoDelivery(
+    id: string,
+    cancelPoDeliveryDto: CancelPoDeliveryDto,
+    purchasingStaffId: string,
+  ) {
+    const poDelivery = await this.findPoDeliveryId(id);
+    if (poDelivery.status === 'IMPORTING') {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Cannot cancel po delivery while importing',
+      );
+    }
+    if (poDelivery.status === 'FINISHED' || poDelivery.status === 'CANCELLED') {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Cannot cancel po delivery while it is finished or cancelled',
+      );
+    }
+    const result = await this.pirsmaService.poDelivery.update({
+      where: {
+        id,
+      },
+      data: {
+        status: 'CANCELLED',
+        cancelledAt: new Date(),
+        cancelledBy: purchasingStaffId,
+        cancelledReason: cancelPoDeliveryDto.cancelReason || undefined,
+      },
+    });
+    return apiSuccess(HttpStatus.OK, result, 'Cancel po delivery successfully');
+  }
 
   async createPoDeliveryNotExtra(
     poDeliveryCreateInput: Prisma.PoDeliveryCreateInput,
@@ -170,19 +203,22 @@ export class PoDeliveryService {
   }
 
   async findPoDeliveryId(id: string) {
-    if (isUUID(id)) {
-      return this.pirsmaService.poDelivery.findUnique({
-        where: {
-          id: id,
-        },
-        include: this.includeQuery,
-      });
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid po delivery id');
     }
-    return null;
+    return this.pirsmaService.poDelivery.findUnique({
+      where: {
+        id: id,
+      },
+      include: this.includeQuery,
+    });
   }
 
-  findPoDelivery(query: Prisma.PoDeliveryWhereInput) {
-    return this.pirsmaService.poDelivery.findMany({
+  findPoDelivery(
+    query: Prisma.PoDeliveryWhereInput,
+    prismaInstance: PrismaService = this.pirsmaService,
+  ) {
+    return prismaInstance.poDelivery.findMany({
       where: { ...query },
       include: this.includeQuery,
     });
@@ -217,7 +253,7 @@ export class PoDeliveryService {
   async updatePoDeliveryMaterialStatus(
     id: string,
     status: PoDeliveryStatus,
-    prismaInstance: PrismaClient = this.pirsmaService,
+    prismaInstance: PrismaService = this.pirsmaService,
   ) {
     const result = await prismaInstance.poDelivery.update({
       where: { id },
@@ -227,13 +263,17 @@ export class PoDeliveryService {
     });
     if (result) {
       //Check if there is another po delivery with PENDING STATUS for the same purchase order
-      const resultWithSameStatus = await this.findPoDelivery({
-        purchaseOrderId: result.purchaseOrderId,
-        status: PoDeliveryStatus.PENDING,
-      });
+      const resultWithSameStatus = await this.findPoDelivery(
+        {
+          purchaseOrderId: result.purchaseOrderId,
+          status: PoDeliveryStatus.PENDING,
+        },
+        prismaInstance,
+      );
+      console.log(resultWithSameStatus);
 
       //If there is no other po delivery with PENDING STATUS, update the purchase order status to FINISHED
-      if (!resultWithSameStatus) {
+      if (resultWithSameStatus.length === 0) {
         await prismaInstance.purchaseOrder.update({
           where: {
             id: result.purchaseOrderId,

@@ -1,11 +1,17 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { $Enums, MaterialExportRequestStatus, Prisma } from '@prisma/client';
+import {
+  $Enums,
+  MaterialExportRequestStatus,
+  Prisma,
+  RoleCode,
+} from '@prisma/client';
 import {
   materialExportRequestInclude,
   productFormulaInclude,
@@ -14,6 +20,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { DiscussionService } from '../discussion/discussion.service';
 import { ManagerAction } from '../import-request/dto/import-request/manager-process.dto';
 import { CreateNestedMaterialExportRequestDetailDto } from '../material-export-request-detail/dto/create-nested-material-export-request-detail.dto';
@@ -24,6 +31,30 @@ import { UpdateMaterialExportRequestDto } from './dto/update-material-export-req
 
 @Injectable()
 export class MaterialExportRequestService {
+  async getByUserToken(
+    authenUser: AuthenUser,
+    findOptions: GeneratedFindOptions<Prisma.MaterialExportRequestWhereInput>,
+  ) {
+    switch (authenUser.role) {
+      case RoleCode.WAREHOUSE_MANAGER:
+        findOptions.where = {
+          warehouseManagerId: authenUser.warehouseManagerId,
+        };
+        return this.search(findOptions);
+      case RoleCode.WAREHOUSE_STAFF:
+        findOptions.where = {
+          warehouseStaffId: authenUser.warehouseStaffId,
+        };
+        return this.search(findOptions);
+      case RoleCode.PRODUCTION_DEPARTMENT:
+        findOptions.where = {
+          productionDepartmentId: authenUser.purchasingStaffId,
+        };
+        return this.search(findOptions);
+      default:
+        throw new ForbiddenException('This role is not allowed');
+    }
+  }
   constructor(
     private readonly prismaService: PrismaService,
     private readonly taskService: TaskService,
@@ -290,6 +321,10 @@ export class MaterialExportRequestService {
             status: $Enums.TaskStatus.OPEN,
             warehouseStaffId: dto.warehouseStaffId,
           });
+          await this.discussionService.updateExportReceipt(
+            materialExportReceipt.id,
+            materialExportReceipt.materialExportRequestId,
+          );
         } catch (error) {
           Logger.error('Cannot create task', error);
         }

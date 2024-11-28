@@ -24,4 +24,5 @@ enum MaterialReceiptStatus {
   IMPORTING
   AVAILABLE
   USED
+  DISCARDED
 }

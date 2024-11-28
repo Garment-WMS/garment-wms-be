@@ -15,6 +15,7 @@ model MaterialExportReceipt {
   materialExportReceiptDetail MaterialExportReceiptDetail[]
   task                        Task[]
   materialExportRequest       MaterialExportRequest?        @relation(fields: [materialExportRequestId], references: [id])
+  discussion                  Discussion?
 
   @@map("material_export_receipt")
 }
