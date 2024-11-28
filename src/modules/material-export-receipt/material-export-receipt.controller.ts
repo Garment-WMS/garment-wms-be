@@ -14,10 +14,7 @@ import { Prisma } from '@prisma/client';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
-import {
-  GetRecommendMaterialExportReceiptTestDto as GetRecommendMaterialExportReceiptByFormulaDto,
-  GetRecommendMaterialExportReceiptDto,
-} from './dto/get-recommend-material-export-receipt.dto';
+import { GetRecommendMaterialExportReceiptDto } from './dto/get-recommend-material-export-receipt.dto';
 import { ProductionStaffApproveDto } from './dto/production-staff-approve.dto';
 import { UpdateMaterialExportReceiptDto } from './dto/update-material-export-receipt.dto';
 import { WarehouseStaffExportDto } from './dto/warehouse-staff-export.dto';
@@ -76,32 +73,28 @@ export class MaterialExportReceiptController {
     @Body()
     getRecommendMaterialExportReceiptDto: GetRecommendMaterialExportReceiptDto,
   ) {
-    return apiSuccess(
-      HttpStatus.OK,
-      await this.materialExportReceiptService.getRecommendedMaterialExportReceipt(
-        getRecommendMaterialExportReceiptDto.materialExportRequestId,
-        getRecommendMaterialExportReceiptDto.algorithm,
-      ),
-      'Recommend material export receipt successfully',
+    return await this.materialExportReceiptService.getRecommendedMaterialExportReceipt(
+      getRecommendMaterialExportReceiptDto.materialExportRequestId,
+      getRecommendMaterialExportReceiptDto.algorithm,
     );
   }
 
-  @Post('/recommend-by-formula')
-  async handleAlgorithmTest(
-    @Param('id') id: string,
-    @Body()
-    dto: GetRecommendMaterialExportReceiptByFormulaDto,
-  ) {
-    return apiSuccess(
-      HttpStatus.OK,
-      await this.materialExportReceiptService.getRecommendedMaterialExportReceiptByFormula(
-        dto.productFormulaId,
-        dto.quantityToProduce,
-        dto.algorithm,
-      ),
-      'Recommend material export receipt by formula successfully',
-    );
-  }
+  // @Post('/recommend-by-formula')
+  // async handleAlgorithmTest(
+  //   @Param('id') id: string,
+  //   @Body()
+  //   dto: GetRecommendMaterialExportReceiptByFormulaDto,
+  // ) {
+  //   return apiSuccess(
+  //     HttpStatus.OK,
+  //     await this.materialExportReceiptService.getRecommendedMaterialExportReceiptByFormula(
+  //       dto.productFormulaId,
+  //       dto.quantityToProduce,
+  //       dto.algorithm,
+  //     ),
+  //     'Recommend material export receipt by formula successfully',
+  //   );
+  // }
 
   @Get('/latest')
   findLatest(@Query('from') from, @Query('to') to) {
