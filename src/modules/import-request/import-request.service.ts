@@ -32,10 +32,12 @@ import { DiscussionService } from '../discussion/discussion.service';
 import { InspectionRequestService } from '../inspection-request/inspection-request.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { ProductionBatchService } from '../production-batch/production-batch.service';
+import { TaskService } from '../task/task.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { CreateProductImportRequestDto } from './dto/import-request/create-product-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
 import { PurchasingStaffProcessDto } from './dto/import-request/purchasing-staff-process.dto';
+import { ReassignImportRequestDto } from './dto/import-request/reassign-import-request.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 
 @Injectable()
@@ -46,6 +48,7 @@ export class ImportRequestService {
     private readonly inspectionRequestService: InspectionRequestService,
     private readonly productionBatchService: ProductionBatchService,
     private readonly discussionService: DiscussionService,
+    private readonly taskService: TaskService,
   ) {}
 
   async getLatest(from: any, to: any) {
@@ -757,5 +760,20 @@ export class ImportRequestService {
       },
       include: importRequestInclude,
     });
+  }
+
+  async reassign(reassignImportRequestDto: ReassignImportRequestDto) {
+    const importRequest = await this.prismaService.importRequest.update({
+      where: { id: reassignImportRequestDto.importRequestId },
+      data: {
+        warehouseStaffId: reassignImportRequestDto.warehouseStaffId,
+      },
+    });
+    //reassign task
+    const task = await this.taskService.reassignImportRequestTask(
+      importRequest.id,
+      importRequest.warehouseStaffId,
+    );
+    return { importRequest, task };
   }
 }

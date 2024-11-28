@@ -1,5 +1,10 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { $Enums, Prisma, Task } from '@prisma/client';
 import { taskInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
@@ -36,7 +41,6 @@ export class TaskService {
       (task) => {
         return {
           ...task,
-          
         };
       },
     );
@@ -227,6 +231,35 @@ export class TaskService {
     return await this.prismaService.task.update({
       where: { id: taskToUpdate.id },
       data: { status: $Enums.TaskStatus.DONE },
+    });
+  }
+
+  //only task with status OPEN can be reassigned
+  async validateTaskStatusCanReassign(taskWhereInput: Prisma.TaskWhereInput) {
+    const tasks = await this.prismaService.task.findMany({
+      where: {
+        ...taskWhereInput,
+        status: {
+          notIn: [$Enums.TaskStatus.OPEN],
+        },
+      },
+    });
+    if (tasks.length > 0) {
+      throw new ConflictException(
+        'Cannot reassign task that is not in OPEN status',
+      );
+    }
+  }
+
+  async reassignImportRequestTask(
+    importReceiptId: string,
+    warehouseStaffId: string,
+  ) {
+    return await this.prismaService.task.updateMany({
+      where: { importReceiptId: importReceiptId },
+      data: {
+        warehouseStaffId: warehouseStaffId,
+      },
     });
   }
 }
