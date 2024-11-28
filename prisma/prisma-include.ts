@@ -203,15 +203,6 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
     include: {
       inspectionReport: {
         include: {
-          inspectionRequest: {
-            include: {
-              inspectionDepartment: {
-                include: {
-                  account: true,
-                },
-              },
-            },
-          },
           inspectionReportDetail: {
             include: {
               materialPackage: {
@@ -236,6 +227,7 @@ export const importRequestIncludeUnique: Prisma.ImportRequestInclude = {
   ...importRequestInclude,
   inspectionRequest: {
     include: {
+      inspectionDepartment: { include: inspectionDepartmentInclude },
       inspectionReport: {
         include: {
           inspectionReportDetail: {
