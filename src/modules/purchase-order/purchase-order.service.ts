@@ -181,6 +181,7 @@ export class PurchaseOrderService {
         },
         orderBy: filterOption?.orderBy,
         include: {
+          productionPlan: true,
           supplier: true,
           poDelivery: {
             include: {
@@ -708,4 +709,3 @@ export class PurchaseOrderService {
   //   return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid status');
   // }
 }
-
