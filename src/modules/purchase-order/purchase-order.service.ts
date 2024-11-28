@@ -69,6 +69,7 @@ export class PurchaseOrderService {
   async cancelledPurchaseOrder(
     id: string,
     cancelPurchaseOrder: CancelledPurchaseOrderDto,
+    purchasingStaffId: string,
   ) {
     const purchaseOrder = await this.findById(id);
     if (!purchaseOrder) {
@@ -104,6 +105,7 @@ export class PurchaseOrderService {
         data: {
           status: PurchaseOrderStatus.CANCELLED,
           cancelledReason: cancelPurchaseOrder.cancelledReason,
+          cancelledBy: purchasingStaffId,
           cancelledAt: new Date(),
         },
       });
