@@ -4,9 +4,10 @@ import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isUUID, ValidationError } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
-import { apiSuccess } from 'src/common/dto/api-response';
+import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { CreateImportRequestDetailDto } from '../import-request/dto/import-request-detail/create-import-request-detail.dto';
 import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
+import { CancelPoDeliveryDto } from './dto/cancel-po-delivery.dto';
 import { PoDeliveryDto } from './dto/po-delivery.dto';
 import { UpdatePoDeliveryDto } from './dto/update-po-delivery.dto';
 
@@ -16,6 +17,38 @@ export class PoDeliveryService {
     private readonly pirsmaService: PrismaService,
     private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
   ) {}
+
+  async cancelPoDelivery(
+    id: string,
+    cancelPoDeliveryDto: CancelPoDeliveryDto,
+    purchasingStaffId: string,
+  ) {
+    const poDelivery = await this.findPoDeliveryId(id);
+    if (poDelivery.status === 'IMPORTING') {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Cannot cancel po delivery while importing',
+      );
+    }
+    if (poDelivery.status === 'FINISHED' || poDelivery.status === 'CANCELLED') {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Cannot cancel po delivery while it is finished or cancelled',
+      );
+    }
+    const result = await this.pirsmaService.poDelivery.update({
+      where: {
+        id,
+      },
+      data: {
+        status: 'CANCELLED',
+        cancelledAt: new Date(),
+        cancelledBy: purchasingStaffId,
+        cancelledReason: cancelPoDeliveryDto.cancelReason || undefined,
+      },
+    });
+    return apiSuccess(HttpStatus.OK, result, 'Cancel po delivery successfully');
+  }
 
   async createPoDeliveryNotExtra(
     poDeliveryCreateInput: Prisma.PoDeliveryCreateInput,
@@ -170,15 +203,15 @@ export class PoDeliveryService {
   }
 
   async findPoDeliveryId(id: string) {
-    if (isUUID(id)) {
-      return this.pirsmaService.poDelivery.findUnique({
-        where: {
-          id: id,
-        },
-        include: this.includeQuery,
-      });
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid po delivery id');
     }
-    return null;
+    return this.pirsmaService.poDelivery.findUnique({
+      where: {
+        id: id,
+      },
+      include: this.includeQuery,
+    });
   }
 
   findPoDelivery(
