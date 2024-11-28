@@ -4,6 +4,7 @@ import { DiscussionModule } from '../discussion/discussion.module';
 import { InspectionRequestModule } from '../inspection-request/inspection-request.module';
 import { PoDeliveryModule } from '../po-delivery/po-delivery.module';
 import { ProductionBatchModule } from '../production-batch/production-batch.module';
+import { TaskModule } from '../task/task.module';
 import { ImportRequestController } from './import-request.controller';
 import { ImportRequestService } from './import-request.service';
 import { IsImportRequestExistPipe } from './pipe/is-import-request-exist.pipe';
@@ -18,6 +19,7 @@ import { IsPoDeliveryDoesNotHaveActiveImportRequestValidator } from './validator
     PoDeliveryModule,
     InspectionRequestModule,
     ProductionBatchModule,
+    TaskModule,
   ],
   controllers: [ImportRequestController],
   providers: [

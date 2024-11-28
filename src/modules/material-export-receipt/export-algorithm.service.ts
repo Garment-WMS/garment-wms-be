@@ -26,8 +26,7 @@ export class ExportAlgorithmService {
         result.push({
           materialVariantId: needMaterialVariants.materialVariantId,
           targetQuantityUom: needMaterialVariants.targetQuantityUom,
-          remainingQuantityByPack: 0,
-          missingQuantityByPack: needMaterialVariants.targetQuantityUom,
+          missingQuantityUom: needMaterialVariants.targetQuantityUom,
           needMaterialReceipts: [],
           isFullFilled: false,
         });
@@ -74,9 +73,7 @@ export class ExportAlgorithmService {
       result.push({
         materialVariantId: needMaterialVariants.materialVariantId,
         targetQuantityUom: needMaterialVariants.targetQuantityUom,
-        remainingQuantityByPack: remainingTargetQuantityUom,
-        missingQuantityByPack:
-          needMaterialVariants.targetQuantityUom - remainingTargetQuantityUom,
+        missingQuantityUom: remainingTargetQuantityUom,
         needMaterialReceipts: needMaterialReceipts,
         isFullFilled: remainingTargetQuantityUom <= 0,
       });
