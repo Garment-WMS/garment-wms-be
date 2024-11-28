@@ -181,8 +181,11 @@ export class PoDeliveryService {
     return null;
   }
 
-  findPoDelivery(query: Prisma.PoDeliveryWhereInput) {
-    return this.pirsmaService.poDelivery.findMany({
+  findPoDelivery(
+    query: Prisma.PoDeliveryWhereInput,
+    prismaInstance: PrismaService = this.pirsmaService,
+  ) {
+    return prismaInstance.poDelivery.findMany({
       where: { ...query },
       include: this.includeQuery,
     });
@@ -217,7 +220,7 @@ export class PoDeliveryService {
   async updatePoDeliveryMaterialStatus(
     id: string,
     status: PoDeliveryStatus,
-    prismaInstance: PrismaClient = this.pirsmaService,
+    prismaInstance: PrismaService = this.pirsmaService,
   ) {
     const result = await prismaInstance.poDelivery.update({
       where: { id },
@@ -227,13 +230,17 @@ export class PoDeliveryService {
     });
     if (result) {
       //Check if there is another po delivery with PENDING STATUS for the same purchase order
-      const resultWithSameStatus = await this.findPoDelivery({
-        purchaseOrderId: result.purchaseOrderId,
-        status: PoDeliveryStatus.PENDING,
-      });
+      const resultWithSameStatus = await this.findPoDelivery(
+        {
+          purchaseOrderId: result.purchaseOrderId,
+          status: PoDeliveryStatus.PENDING,
+        },
+        prismaInstance,
+      );
+      console.log(resultWithSameStatus);
 
       //If there is no other po delivery with PENDING STATUS, update the purchase order status to FINISHED
-      if (!resultWithSameStatus) {
+      if (resultWithSameStatus.length === 0) {
         await prismaInstance.purchaseOrder.update({
           where: {
             id: result.purchaseOrderId,

@@ -17,19 +17,6 @@ export class CreateImportReceiptDto {
   @IsUUID()
   importRequestId: string;
 
-  // @ApiProperty()
-  // @IsNotEmpty()
-  // @IsUUID()
-  // @IsUserRoleExist(RoleCode.WAREHOUSE_STAFF)
-  // warehouseStaffId: string;
-
-  // @ApiProperty()
-  // @IsNotEmpty()
-  // @IsArray()
-  // @ValidateNested({ each: true })
-  // @Type(() => MaterialImportReceiptDto)
-  // materialReceipts: MaterialImportReceiptDto[];
-
   @ApiProperty()
   @IsNotEmpty()
   @IsEnum(ReceiptType)

@@ -201,9 +201,23 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
   },
   inspectionRequest: {
     include: {
-      // inspectionReport: {
-      //   include: inspectionReportIncludeWithoutInspectionRequestWithImportReceipt,
-      // },
+      inspectionReport: {
+        include: {
+          inspectionReportDetail: {
+            include: {
+              materialPackage: {
+                include: materialPackageInclude,
+              },
+              productSize: { include: productSizeInclude },
+              inspectionReportDetailDefect: {
+                include: {
+                  defect: true,
+                },
+              },
+            },
+          },
+        },
+      },
       inspectionDepartment: { include: inspectionDepartmentInclude },
     },
   },
@@ -213,6 +227,7 @@ export const importRequestIncludeUnique: Prisma.ImportRequestInclude = {
   ...importRequestInclude,
   inspectionRequest: {
     include: {
+      inspectionDepartment: { include: inspectionDepartmentInclude },
       inspectionReport: {
         include: {
           inspectionReportDetail: {
@@ -445,6 +460,7 @@ export const materialExportRequestInclude: Prisma.MaterialExportRequestInclude =
 
 export const materialExportReceiptInclude: Prisma.MaterialExportReceiptInclude =
   {
+    discussion: { include: discussionInclude },
     warehouseStaff: {
       include: warehouseStaffInclude,
     },

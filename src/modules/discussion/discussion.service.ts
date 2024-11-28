@@ -6,6 +6,67 @@ import { UpdateDiscussionDto } from './dto/update-discussion.dto';
 @Injectable()
 export class DiscussionService {
   constructor(private readonly prismaService: PrismaService) {}
+  async updateExportReceipt(id: string, materialExportRequestId: string) {
+    return await this.prismaService.discussion.update({
+      where: {
+        exportRequestId: materialExportRequestId,
+      },
+      data: {
+        exportReceiptId: id,
+      },
+    });
+  }
+  async updateImportReceiptDiscussion(id: string, requestId: string) {
+    return await this.prismaService.discussion.update({
+      where: {
+        importRequestId: requestId,
+      },
+      data: {
+        importReceiptId: id,
+      },
+    });
+  }
+  async findAllExportRceiptImportReceiptAndCreateDiscussion() {
+    const allImportReceipt = await this.prismaService.importReceipt.findMany({
+      include: {
+        inspectionReport: {
+          include: {
+            inspectionRequest: true,
+          },
+        },
+      },
+    });
+
+    const allExportReceipt =
+      await this.prismaService.materialExportReceipt.findMany();
+    for (const importReceipt of allImportReceipt) {
+      if (importReceipt.inspectionReport) {
+        const newDiscussion = await this.prismaService.discussion.update({
+          where: {
+            importRequestId:
+              importReceipt.inspectionReport.inspectionRequest.importRequestId,
+          },
+          data: {
+            importReceiptId: importReceipt.id,
+          },
+        });
+      }
+    }
+    for (const exportReceipt of allExportReceipt) {
+      if (exportReceipt.materialExportRequestId) {
+        const newDiscussion = await this.prismaService.discussion.update({
+          where: {
+            exportRequestId: exportReceipt.materialExportRequestId,
+          },
+          data: {
+            exportReceiptId: exportReceipt.id,
+          },
+        });
+      }
+    }
+    return `Discussions created for import requests and export receipts`;
+  }
+
   async findAllImportRequestsAndCreateDiscussion(): Promise<any[]> {
     // Find all import requests
     const importRequests =
