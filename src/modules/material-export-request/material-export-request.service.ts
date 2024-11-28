@@ -279,6 +279,7 @@ export class MaterialExportRequestService {
             status: $Enums.TaskStatus.OPEN,
             warehouseStaffId: dto.warehouseStaffId,
           });
+          await this.discussionService.updateExportReceipt(materialExportReceipt.id,materialExportReceipt.materialExportRequestId);
         } catch (error) {
           Logger.error('Cannot create task', error);
         }
