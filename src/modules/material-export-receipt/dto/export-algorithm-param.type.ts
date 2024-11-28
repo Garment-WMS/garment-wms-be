@@ -1,9 +1,20 @@
+// export type ExportAlgorithmParam = {
+//   targetQuantityUom: number;
+//   items: {
+//     id: string;
+//     quantityByPack: number;
+//     uomPerPack: number;
+//     date: Date;
+//   }[];
+// };
+
 export type ExportAlgorithmParam = {
+  materialVariantId: string;
   targetQuantityUom: number;
-  items: {
+  allMaterialReceipts: {
     id: string;
-    quantityByPack: number;
+    remainQuantityByPack: number;
     uomPerPack: number;
-    date: Date;
+    date: Date | null;
   }[];
-};
+}[];
