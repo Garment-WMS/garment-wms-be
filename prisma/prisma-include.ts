@@ -480,19 +480,6 @@ export const materialExportReceiptInclude: Prisma.MaterialExportReceiptInclude =
     },
   };
 
-export const materialReceiptIncludeWithoutImportReceipt: Prisma.MaterialReceiptInclude =
-  {
-    receiptAdjustment: true,
-    materialExportReceiptDetail: {
-      include: {
-        materialExportReceipt: true,
-      },
-    },
-    materialPackage: {
-      include: materialPackageInclude,
-    },
-  };
-
 export const materialReceiptIncludeWithoutImportExportReceipt: Prisma.MaterialReceiptInclude =
   {
     receiptAdjustment: true,
@@ -566,3 +553,19 @@ export const productReceiptIncludeQuery: Prisma.ProductReceiptInclude = {
     include: productSizeInclude,
   },
 };
+
+export const materialReceiptIncludeWithoutImportReceipt: Prisma.MaterialReceiptInclude =
+  {
+    receiptAdjustment: true,
+    importReceipt: {
+      include: importReceiptInclude,
+    },
+    materialExportReceiptDetail: {
+      include: {
+        materialExportReceipt: true,
+      },
+    },
+    materialPackage: {
+      include: materialPackageInclude,
+    },
+  };
