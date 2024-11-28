@@ -449,6 +449,7 @@ export class PurchaseOrderService {
     return this.prismaService.purchaseOrder.findUnique({
       where: { id },
       include: {
+        productionPlan: true,
         supplier: true,
         poDelivery: {
           include: {

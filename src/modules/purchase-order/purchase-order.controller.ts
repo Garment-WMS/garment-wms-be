@@ -37,7 +37,7 @@ export class PurchaseOrderController {
   getPurchaseOrders(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.PurchaseOrderWhereInput>(
-        ['quarterlyProductionPlan'],
+        ['productionPlan.code'],
         [
           {
             createdAt: 'desc',
