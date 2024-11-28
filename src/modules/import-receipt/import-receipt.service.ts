@@ -46,6 +46,7 @@ import { UpdateImportReceiptDto } from './dto/update-import-receipt.dto';
 
 @Injectable()
 export class ImportReceiptService {
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly materialReceiptService: MaterialReceiptService,
@@ -59,6 +60,24 @@ export class ImportReceiptService {
     private readonly productionBatchService: ProductionBatchService,
     private readonly taskService: TaskService,
   ) {}
+
+  findByQuery(query: any) {
+    return this.prismaService.importReceipt.findMany({
+      where: query,
+      include: importReceiptInclude,
+    });
+  }
+
+  async updateAwaitStatusToImportingStatus() {
+    await this.prismaService.importReceipt.updateMany({
+      where: {
+        status: ImportRequestStatus.AWAIT_TO_IMPORT,
+      },
+      data: {
+        status: ImportRequestStatus.IMPORTING,
+      },
+    });
+  }
 
   async getLatest(from: any, to: any) {
     const fromDate = from ? new Date(from) : undefined;

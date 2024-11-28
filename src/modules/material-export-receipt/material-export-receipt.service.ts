@@ -5,7 +5,7 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { $Enums, Prisma, RoleCode } from '@prisma/client';
+import { $Enums, ExportReceiptStatus, Prisma, RoleCode } from '@prisma/client';
 import {
   materialExportReceiptInclude,
   materialExportRequestInclude,

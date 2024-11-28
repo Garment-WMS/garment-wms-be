@@ -11,6 +11,7 @@ import { TaskModule } from '../task/task.module';
 import { ImportReceiptController } from './import-receipt.controller';
 import { ImportReceiptService } from './import-receipt.service';
 import { InspectionReportModule } from '../inspection-report/inspection-report.module';
+import { DiscussionModule } from '../discussion/discussion.module';
 
 @Module({
   controllers: [ImportReceiptController],
