@@ -736,6 +736,7 @@ export class ImportReceiptService {
         skip: offset,
         take: limit,
         where: findOptions?.where,
+        orderBy: findOptions?.orderBy,
         include: importReceiptInclude,
       }),
       this.prismaService.importReceipt.count({ where: findOptions?.where }),
