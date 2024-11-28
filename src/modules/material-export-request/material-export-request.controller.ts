@@ -66,6 +66,32 @@ export class MaterialExportRequestController {
       'Search material export requests successfully',
     );
   }
+  @Get('/my')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(
+    RoleCode.WAREHOUSE_MANAGER,
+    RoleCode.WAREHOUSE_STAFF,
+    RoleCode.PRODUCTION_DEPARTMENT,
+  )
+  async getByUser(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialExportRequestWhereInput>(
+        [],
+        [{ createdAt: 'desc' }, { id: 'asc' }],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.MaterialExportRequestWhereInput>,
+    @GetUser() user: AuthenUser,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportRequestService.getByUserToken(
+        user,
+        filterOptions.findOptions,
+      ),
+      'Search material export requests successfully',
+    );
+  }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
