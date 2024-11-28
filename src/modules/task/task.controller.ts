@@ -65,7 +65,7 @@ export class TaskController {
     );
   }
 
-  @Get('/get-warehouse-staff')
+  @Post('/get-warehouse-staff')
   @UsePipes()
   async getWarehouseStaff(@Body() getAssignDto: GetAssignDto) {
     return apiSuccess(
@@ -78,7 +78,7 @@ export class TaskController {
     );
   }
 
-  @Get('/get-inspection-department')
+  @Post('/get-inspection-department')
   async getInspectionDepartment(@Body() getAssignDto: GetAssignDto) {
     return apiSuccess(
       HttpStatus.OK,
