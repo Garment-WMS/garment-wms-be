@@ -284,14 +284,33 @@ export class MaterialExportReceiptService {
       }),
     );
 
-    const flattenMaterialExportReceiptDetails: Prisma.MaterialExportReceiptDetailUncheckedCreateInput[] =
+    const flattenMaterialExportReceiptDetails = await Promise.all(
       algorithmResult.flatMap((detail) => {
-        return detail.needMaterialReceipts.map((needMaterialReceipt) => ({
+        return detail.needMaterialReceipts.map(async (needMaterialReceipt) => ({
           materialExportReceiptId: undefined,
           materialReceiptId: needMaterialReceipt.id,
+          materialReceipt: await this.prismaService.materialReceipt.findUnique({
+            where: {
+              id: needMaterialReceipt.id,
+            },
+            include: {
+              materialPackage: {
+                include: {
+                  materialVariant: {
+                    include: {
+                      material: {
+                        include: materialInclude,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          }),
           quantityByPack: needMaterialReceipt.quantityByPack,
         }));
-      });
+      }),
+    );
 
     if (isAllFullFilled) {
       return apiSuccess(
