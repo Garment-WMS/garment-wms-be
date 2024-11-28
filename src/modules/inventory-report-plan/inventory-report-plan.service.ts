@@ -24,6 +24,8 @@ import { CreateInventoryReportPlanDto } from './dto/create-inventory-report-plan
 import { InventoryReportPlanDto } from './dto/inventory-report-plan.dto';
 import { CreateOverAllInventoryReportPlanDto } from './dto/over-all-report-plan.dto';
 import { UpdateInventoryReportPlanDto } from './dto/update-inventory-report-plan.dto';
+import { ImportReceiptService } from '../import-receipt/import-receipt.service';
+import { MaterialExportReceiptService } from '../material-export-receipt/material-export-receipt.service';
 
 @Injectable()
 export class InventoryReportPlanService {
@@ -36,6 +38,8 @@ export class InventoryReportPlanService {
     private readonly importRequestService: ImportRequestService,
     private readonly materialExportRequestService: MaterialExportRequestService,
     private readonly taskService: TaskService,
+    private readonly importReceiptService: ImportReceiptService ,
+    private readonly materialExportReceiptService: MaterialExportReceiptService,
   ) {}
 
   async startRecordInventoryReportPlan(id: string, warehouseManager: string) {
@@ -48,6 +52,7 @@ export class InventoryReportPlanService {
       isAnyImportingImportRequest.length > 0 ||
       isAnyExportingExportRequest.length > 0
     ) {
+      await this.updateStatus(id, InventoryReportPlanStatus.AWAIT);
       return apiFailed(
         HttpStatus.CONFLICT,
         'Cannot start recording inventory report plan while there is importing import request',
@@ -121,7 +126,7 @@ export class InventoryReportPlanService {
       note: createInventoryReportPlanDto.note,
       status: InventoryReportPlanStatus.NOT_YET,
     };
-
+    const staffList = createInventoryReportPlanDto.staffList;
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const inventoryPlanResult =
@@ -132,7 +137,6 @@ export class InventoryReportPlanService {
             },
           });
 
-        const staffList = createInventoryReportPlanDto.staffList;
         const inventoryReportPlanDetails: Prisma.InventoryReportPlanDetailCreateManyInput[] =
           [];
 
@@ -160,30 +164,31 @@ export class InventoryReportPlanService {
         inventoryPlanResult.inventoryReportPlanDetail =
           inventoryPlanDetailResult;
 
-        const createTaskDto: CreateTaskDto[] = [];
-
-        staffList.forEach((staff: any) => {
-          createTaskDto.push({
-            status: 'OPEN',
-            taskType: TaskType.INVENTORY,
-            warehouseStaffId: staff.warehouseStaffId,
-            inventoryReportPlanId: inventoryPlanResult.id,
-            expectFinishedAt: createInventoryReportPlanDto.to,
-          });
-        });
-
-        await this.taskService.createMany(createTaskDto, prismaInstance);
         return inventoryPlanResult;
       },
       {
         maxWait: 100000,
       },
     );
+
+    const createTaskDto: CreateTaskDto[] = [];
+    staffList.forEach((staff: any) => {
+      createTaskDto.push({
+        status: 'OPEN',
+        taskType: TaskType.INVENTORY,
+        warehouseStaffId: staff.warehouseStaffId,
+        inventoryReportPlanId: result.id,
+        expectFinishedAt: createInventoryReportPlanDto.to,
+      });
+    });
+    await this.taskService.createMany(createTaskDto, this.prismaService);
+    
     return apiSuccess(
       HttpStatus.CREATED,
       result,
       'Inventory report plan created successfully',
     );
+  
   }
 
   async checkLastInventoryReportInPlan(inventoryReportId: string) {
@@ -193,12 +198,21 @@ export class InventoryReportPlanService {
     inventoryReportPlanId: string,
     status: InventoryReportPlanStatus,
   ) {
-    return await this.prismaService.inventoryReportPlan.update({
+    const result = await this.prismaService.inventoryReportPlan.update({
       where: { id: inventoryReportPlanId },
       data: {
         status,
       },
     });
+
+    if (result?.status == InventoryReportPlanStatus.FINISHED) {
+      await this.importRequestService.updateAwaitStatusToImportingStatus();
+      await this.importReceiptService.updateAwaitStatusToImportingStatus();
+      await this.materialExportReceiptService.updateAwaitStatusToExportingStatus();
+      await this.materialExportRequestService.updateAwaitStatusToExportingStatus();
+      
+    }
+    return result;
   }
 
   async processInventoryReportPlan(

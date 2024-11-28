@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from 'prisma/prisma.module';
 import { DiscussionModule } from '../discussion/discussion.module';
+import { ImportReceiptModule } from '../import-receipt/import-receipt.module';
 import { InspectionRequestModule } from '../inspection-request/inspection-request.module';
+import { MaterialReceiptModule } from '../material-receipt/material-receipt.module';
 import { PoDeliveryModule } from '../po-delivery/po-delivery.module';
+import { ProductReceiptModule } from '../product-receipt/product-receipt.module';
 import { ProductionBatchModule } from '../production-batch/production-batch.module';
 import { TaskModule } from '../task/task.module';
 import { ImportRequestController } from './import-request.controller';
@@ -18,6 +21,8 @@ import { IsPoDeliveryDoesNotHaveActiveImportRequestValidator } from './validator
     PrismaModule,
     PoDeliveryModule,
     InspectionRequestModule,
+    ProductReceiptModule,
+    MaterialReceiptModule,
     ProductionBatchModule,
     TaskModule,
   ],

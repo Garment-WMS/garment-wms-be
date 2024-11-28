@@ -10,6 +10,8 @@ import {
 } from '@nestjs/common';
 import {
   $Enums,
+  ImportReceiptStatus,
+  ImportRequestStatus,
   PoDeliveryStatus,
   Prisma,
   ProductionBatchStatus,
@@ -44,6 +46,7 @@ import { UpdateImportReceiptDto } from './dto/update-import-receipt.dto';
 
 @Injectable()
 export class ImportReceiptService {
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly materialReceiptService: MaterialReceiptService,
@@ -57,6 +60,24 @@ export class ImportReceiptService {
     private readonly productionBatchService: ProductionBatchService,
     private readonly taskService: TaskService,
   ) {}
+
+  findByQuery(query: any) {
+    return this.prismaService.importReceipt.findMany({
+      where: query,
+      include: importReceiptInclude,
+    });
+  }
+
+  async updateAwaitStatusToImportingStatus() {
+    await this.prismaService.importReceipt.updateMany({
+      where: {
+        status: ImportRequestStatus.AWAIT_TO_IMPORT,
+      },
+      data: {
+        status: ImportRequestStatus.IMPORTING,
+      },
+    });
+  }
 
   async getLatest(from: any, to: any) {
     const fromDate = from ? new Date(from) : undefined;
@@ -79,13 +100,6 @@ export class ImportReceiptService {
       importReceipt,
       'Get import receipts successfully',
     );
-  }
-
-  findByQuery(query: any) {
-    return this.prismaService.importReceipt.findFirst({
-      where: query,
-      include: importReceiptInclude,
-    });
   }
 
   async findUniqueInspectedByRequestId(importRequestId: string) {
@@ -181,6 +195,16 @@ export class ImportReceiptService {
     //   createImportReceiptDto.materialReceipts,
     // );
 
+    const isAnyAwaitOrInProgressReportPlan =
+      await this.isAnyWaitOrInProgressReportPlan();
+
+    let importRequestStatus: ImportRequestStatus =
+      ImportRequestStatus.IMPORTING;
+    if (isAnyAwaitOrInProgressReportPlan) {
+      importRequestStatus = ImportRequestStatus.AWAIT_TO_IMPORT;
+      importReceiptInput.status = ImportReceiptStatus.AWAIT_TO_IMPORT;
+    }
+
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const importReceipt = await prismaInstance.importReceipt.create({
@@ -204,7 +228,7 @@ export class ImportReceiptService {
           //Update import request status to Approved
           await this.importRequestService.updateImportRequestStatus(
             inspectionReport.inspectionRequest.importRequestId,
-            $Enums.ImportRequestStatus.IMPORTING,
+            importRequestStatus,
             prismaInstance,
           );
         }
@@ -242,6 +266,8 @@ export class ImportReceiptService {
     createImportReceiptDto: CreateImportReceiptDto,
     managerId: string,
   ) {
+    //Check is there any inventory report plan
+
     const importRequest = await this.validateImportRequest(
       createImportReceiptDto.importRequestId,
     );
@@ -284,6 +310,16 @@ export class ImportReceiptService {
     //   createImportReceiptDto.materialReceipts,
     // );
 
+    const isAnyAwaitOrInProgressReportPlan =
+      await this.isAnyWaitOrInProgressReportPlan();
+
+    let importRequestStatus: ImportRequestStatus =
+      ImportRequestStatus.IMPORTING;
+    if (isAnyAwaitOrInProgressReportPlan) {
+      importRequestStatus = ImportRequestStatus.AWAIT_TO_IMPORT;
+      importReceiptInput.status = ImportReceiptStatus.AWAIT_TO_IMPORT;
+    }
+
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const importReceipt = await prismaInstance.importReceipt.create({
@@ -298,13 +334,11 @@ export class ImportReceiptService {
               prismaInstance,
               // createImportReceiptDto.materialReceipts,
             );
-
           await this.poDeliveryService.updatePoDeliveryMaterialStatus(
             importRequest.poDeliveryId,
             PoDeliveryStatus.FINISHED,
             prismaInstance,
           );
-
           let poDeliveryExtra;
           //Compare number of imported materials with number of approved material
           for (let i = 0; i < result.length; i++) {
@@ -366,7 +400,7 @@ export class ImportReceiptService {
           //Update import request status to Approved
           await this.importRequestService.updateImportRequestStatus(
             inspectionReport.inspectionRequest.importRequestId,
-            $Enums.ImportRequestStatus.IMPORTING,
+            importRequestStatus,
             prismaInstance,
           );
         }
@@ -398,6 +432,19 @@ export class ImportReceiptService {
       HttpStatus.INTERNAL_SERVER_ERROR,
       'Create import receipt failed',
     );
+  }
+  async isAnyWaitOrInProgressReportPlan() {
+    const result = await this.prismaService.inventoryReportPlan.findMany({
+      where: {
+        status: {
+          in: [
+            $Enums.InventoryReportPlanStatus.AWAIT,
+            $Enums.InventoryReportPlanStatus.IN_PROGRESS,
+          ],
+        },
+      },
+    });
+    return result.length > 0;
   }
 
   async createTaskByImportReceipt(
