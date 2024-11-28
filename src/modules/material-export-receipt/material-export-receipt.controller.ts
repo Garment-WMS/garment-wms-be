@@ -9,10 +9,16 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, RoleCode } from '@prisma/client';
+import { GetUser } from 'src/common/decorator/get_user.decorator';
+import { Roles } from 'src/common/decorator/roles.decorator';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
+import { RolesGuard } from 'src/common/guard/roles.guard';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
 import { GetRecommendMaterialExportReceiptDto } from './dto/get-recommend-material-export-receipt.dto';
 import { ProductionStaffApproveDto } from './dto/production-staff-approve.dto';
@@ -55,6 +61,29 @@ export class MaterialExportReceiptController {
       'Get all material export receipt successfully',
     );
   }
+  @Get('/my')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_STAFF)
+  async getByUser(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialExportReceiptWhereInput>(
+        [],
+        [{ createdAt: 'desc' }, { id: 'asc' }],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.MaterialExportReceiptWhereInput>,
+    @GetUser() user: AuthenUser,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportReceiptService.getByUserToken(
+        user,
+        filterOptions.findOptions,
+      ),
+      'Get all material export receipt successfully',
+    );
+  }
+
   @Get('/custom')
   findAllCustomResponse(
     @Query(

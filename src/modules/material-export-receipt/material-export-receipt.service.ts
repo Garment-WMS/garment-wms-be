@@ -1,6 +1,11 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { $Enums, Prisma } from '@prisma/client';
+import {
+  ForbiddenException,
+  HttpStatus,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+import { $Enums, Prisma, RoleCode } from '@prisma/client';
 import {
   materialExportReceiptInclude,
   materialExportRequestInclude,
@@ -11,6 +16,7 @@ import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { TaskService } from '../task/task.service';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
 import { ExportAlgorithmParam } from './dto/export-algorithm-param.type';
@@ -34,6 +40,21 @@ export class MaterialExportReceiptService {
     private readonly exportAlgorithmService: ExportAlgorithmService,
     private readonly taskService: TaskService,
   ) {}
+
+  async getByUserToken(
+    authenUser: AuthenUser,
+    findOptions: GeneratedFindOptions<Prisma.MaterialExportReceiptWhereInput>,
+  ) {
+    switch (authenUser.role) {
+      case RoleCode.WAREHOUSE_STAFF:
+        findOptions.where = {
+          warehouseStaffId: authenUser.warehouseStaffId,
+        };
+        return this.search(findOptions);
+      default:
+        throw new ForbiddenException('This role is not allowed');
+    }
+  }
   async create(createMaterialExportReceiptDto: CreateMaterialExportReceiptDto) {
     const input: Prisma.MaterialExportReceiptUncheckedCreateInput = {
       type: createMaterialExportReceiptDto.type,
