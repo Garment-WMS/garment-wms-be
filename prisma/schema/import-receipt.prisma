@@ -20,6 +20,7 @@ model ImportReceipt {
   task               Task[]
 
   @@map("import_receipt")
+  Discussion Discussion[]
 }
 
 enum ReceiptType {

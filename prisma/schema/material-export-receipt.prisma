@@ -17,6 +17,7 @@ model MaterialExportReceipt {
   materialExportRequest       MaterialExportRequest?        @relation(fields: [materialExportRequestId], references: [id])
 
   @@map("material_export_receipt")
+  Discussion Discussion[]
 }
 
 enum ExportReceiptStatus {
