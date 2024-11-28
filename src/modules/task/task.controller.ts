@@ -10,6 +10,7 @@ import {
   Post,
   Query,
   UseGuards,
+  UsePipes,
 } from '@nestjs/common';
 import { Prisma, RoleCode } from '@prisma/client';
 import { GetUser } from 'src/common/decorator/get_user.decorator';
@@ -20,6 +21,7 @@ import { RolesGuard } from 'src/common/guard/roles.guard';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { GetAssignDto } from './dto/get-assign.dto';
 import { TaskService } from './task.service';
 
 @Controller('task')
@@ -60,6 +62,31 @@ export class TaskController {
       HttpStatus.OK,
       await this.taskService.getByUserToken(authenUser),
       'Tasks have been retrieved successfully',
+    );
+  }
+
+  @Get('/get-warehouse-staff')
+  @UsePipes()
+  async getWarehouseStaff(@Body() getAssignDto: GetAssignDto) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.taskService.getWarehouseStaffToAssign(
+        getAssignDto.expectedStartAt,
+        getAssignDto.expectedEndAt,
+      ),
+      'Warehouse staff have been retrieved successfully',
+    );
+  }
+
+  @Get('/get-inspection-department')
+  async getInspectionDepartment(getAssignDto: GetAssignDto) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.taskService.getInspectionDepartmentToAssign(
+        getAssignDto.expectedStartAt,
+        getAssignDto.expectedEndAt,
+      ),
+      'Inspection department have been retrieved successfully',
     );
   }
 

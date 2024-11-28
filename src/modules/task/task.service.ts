@@ -262,4 +262,167 @@ export class TaskService {
       },
     });
   }
+
+  async getWarehouseStaffToAssign(expectedStartAt: Date, expectedEndAt: Date) {
+    const [free, busy] = await this.prismaService.$transaction([
+      this.prismaService.warehouseStaff.findMany({
+        where: {
+          task: {
+            every: {
+              AND: [
+                // { status: { notIn: [$Enums.TaskStatus.IN_PROGRESS] } },
+                {
+                  NOT: {
+                    OR: [
+                      {
+                        startedAt: {
+                          gte: expectedStartAt,
+                          lte: expectedEndAt,
+                        },
+                      },
+                      {
+                        expectFinishedAt: {
+                          gte: expectedStartAt,
+                          lte: expectedEndAt,
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        },
+        include: {
+          account: true,
+          task: {
+            where: {
+              status: {
+                in: [$Enums.TaskStatus.IN_PROGRESS],
+              },
+            },
+            orderBy: [
+              {
+                expectFinishedAt: 'asc',
+              },
+              {
+                startedAt: 'desc',
+              },
+            ],
+          },
+        },
+      }),
+      this.prismaService.warehouseStaff.findMany({
+        where: {
+          task: {
+            some: {
+              AND: [{ status: { in: [$Enums.TaskStatus.IN_PROGRESS] } }],
+            },
+          },
+        },
+        include: {
+          account: true,
+          task: {
+            where: {
+              status: {
+                in: [$Enums.TaskStatus.IN_PROGRESS],
+              },
+            },
+            orderBy: [
+              {
+                expectFinishedAt: 'asc',
+              },
+              {
+                startedAt: 'desc',
+              },
+            ],
+          },
+        },
+      }),
+    ]);
+    return { free, busy };
+  }
+
+  async getInspectionDepartmentToAssign(
+    expectedStartAt: Date,
+    expectedEndAt: Date,
+  ) {
+    const [free, busy] = await this.prismaService.$transaction([
+      this.prismaService.inspectionDepartment.findMany({
+        where: {
+          task: {
+            every: {
+              AND: [
+                // { status: { notIn: [$Enums.TaskStatus.IN_PROGRESS] } },
+                {
+                  NOT: {
+                    OR: [
+                      {
+                        startedAt: {
+                          gte: expectedStartAt,
+                          lte: expectedEndAt,
+                        },
+                      },
+                      {
+                        expectFinishedAt: {
+                          gte: expectedStartAt,
+                          lte: expectedEndAt,
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        },
+        include: {
+          account: true,
+          task: {
+            where: {
+              status: {
+                in: [$Enums.TaskStatus.IN_PROGRESS],
+              },
+            },
+            orderBy: [
+              {
+                expectFinishedAt: 'asc',
+              },
+              {
+                startedAt: 'desc',
+              },
+            ],
+          },
+        },
+      }),
+      this.prismaService.inspectionDepartment.findMany({
+        where: {
+          task: {
+            some: {
+              AND: [{ status: { in: [$Enums.TaskStatus.IN_PROGRESS] } }],
+            },
+          },
+        },
+        include: {
+          account: true,
+          task: {
+            where: {
+              status: {
+                in: [$Enums.TaskStatus.IN_PROGRESS],
+              },
+            },
+            orderBy: [
+              {
+                expectFinishedAt: 'asc',
+              },
+              {
+                startedAt: 'desc',
+              },
+            ],
+          },
+        },
+      }),
+    ]);
+    return { free, busy };
+  }
 }
