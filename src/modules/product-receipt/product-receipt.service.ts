@@ -1,12 +1,17 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PrismaClient, ProductReceiptStatus } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isUUID } from 'class-validator';
+import { productReceiptIncludeQuery } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
+import { apiSuccess } from 'src/common/dto/api-response';
+import { DataResponse } from 'src/common/dto/data-response';
+import { getPageMeta } from 'src/common/utils/utils';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { CreateProductReceiptDto } from './dto/create-product-receipt.dto';
 import { UpdateProductReceiptDto } from './dto/update-product-receipt.dto';
-import { productReceiptIncludeQuery } from 'prisma/prisma-include';
 
 @Injectable()
 export class ProductReceiptService {
@@ -14,8 +19,6 @@ export class ProductReceiptService {
     private prismaService: PrismaService,
     private readonly inventoryStockService: InventoryStockService,
   ) {}
-
-  
 
   async updateProductReceiptQuantity(
     id: string,
@@ -183,12 +186,45 @@ export class ProductReceiptService {
     return 'This action adds a new productReceipt';
   }
 
-  findAll() {
-    return `This action returns all productReceipt`;
+  async findAll(
+    findOptions: GeneratedFindOptions<Prisma.ProductReceiptScalarWhereInput>,
+  ) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.productReceipt.findMany({
+        skip: offset,
+        take: limit,
+        where: {
+          ...findOptions?.where,
+        },
+        include: {
+          productSize: true,
+        },
+        orderBy: findOptions?.orderBy,
+      }),
+      this.prismaService.productReceipt.count({
+        where: {
+          ...findOptions?.where,
+        },
+      }),
+    ]);
+
+    const dataResponse: DataResponse = {
+      data,
+      pageMeta: getPageMeta(total, offset, limit),
+    };
+
+    return apiSuccess(
+      HttpStatus.OK,
+      dataResponse,
+      'List of import product receipt',
+    );
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} productReceipt`;
+  async findOne(id: string) {
+    const result = await this.findById(id);
+    return apiSuccess(200, result, 'Get one product receipt successfully');
   }
 
   update(id: number, updateProductReceiptDto: UpdateProductReceiptDto) {
