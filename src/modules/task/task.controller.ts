@@ -79,7 +79,7 @@ export class TaskController {
   }
 
   @Get('/get-inspection-department')
-  async getInspectionDepartment(getAssignDto: GetAssignDto) {
+  async getInspectionDepartment(@Body() getAssignDto: GetAssignDto) {
     return apiSuccess(
       HttpStatus.OK,
       await this.taskService.getInspectionDepartmentToAssign(
