@@ -11,6 +11,8 @@ import { InventoryReportPlanService } from './inventory-report-plan.service';
 import { ImportRequestModule } from '../import-request/import-request.module';
 import { MaterialExportRequestModule } from '../material-export-request/material-export-request.module';
 import { TaskModule } from '../task/task.module';
+import { ImportReceiptModule } from '../import-receipt/import-receipt.module';
+import { MaterialExportReceiptModule } from '../material-export-receipt/material-export-receipt.module';
 
 @Module({
   controllers: [InventoryReportPlanController],
@@ -23,8 +25,10 @@ import { TaskModule } from '../task/task.module';
     MaterialPackageModule,
     MaterialVariantModule,
     ProductVariantModule,
+    ImportReceiptModule,
     ImportRequestModule,
     ProductSizeModule,
+    MaterialExportReceiptModule
   ],
   providers: [InventoryReportPlanService],
   exports: [InventoryReportPlanService],

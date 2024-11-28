@@ -61,6 +61,17 @@ export class MaterialExportRequestService {
     private readonly discussionService: DiscussionService,
   ) {}
 
+  async updateAwaitStatusToExportingStatus() {
+    await this.prismaService.materialExportRequest.updateMany({
+      where: {
+        status: MaterialExportRequestStatus.AWAIT_TO_EXPORT,
+      },
+      data: {
+        status: MaterialExportRequestStatus.EXPORTING,
+      },
+    });
+  }
+
   async isAnyExportingExportRequest() {
     const result = await this.prismaService.materialExportRequest.findMany({
       where: {

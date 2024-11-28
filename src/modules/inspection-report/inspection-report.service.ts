@@ -475,7 +475,6 @@ export class InspectionReportService {
       },
       data: {
         status: $Enums.ImportRequestStatus.INSPECTED,
-        // status: $Enums.ImportRequestStatus.APPROVED,
       },
     });
   }
