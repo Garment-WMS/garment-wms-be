@@ -4,6 +4,7 @@ import {
   HttpStatus,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { $Enums, ExportReceiptStatus, Prisma, RoleCode } from '@prisma/client';
 import {
@@ -64,7 +65,7 @@ export class MaterialExportReceiptService {
         },
       });
     if (materialExportRequest === 0) {
-      throw new Error('Material export request not found');
+      throw new NotFoundException('Material export request not found');
     }
     const data = await this.prismaService.materialExportReceipt.findMany({
       where: {
