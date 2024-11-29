@@ -171,6 +171,8 @@ export class ImportRequestService {
       inspected,
       approved,
       rejected,
+      importing,
+      imported,
     };
   }
 
