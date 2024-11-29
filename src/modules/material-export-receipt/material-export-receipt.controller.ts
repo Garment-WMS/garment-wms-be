@@ -6,6 +6,7 @@ import {
   Get,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -178,6 +179,15 @@ export class MaterialExportReceiptController {
         productionStaffApproveDto,
       ),
       'Production staff process successfully',
+    );
+  }
+
+  @Get('/by-material-export-request/:id')
+  async getByMaterialExportRequestId(@Param('id', ParseUUIDPipe) id: string) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportReceiptService.getByMaterialExportRequestId(id),
+      'Get material export receipt by material export request id successfully',
     );
   }
 }

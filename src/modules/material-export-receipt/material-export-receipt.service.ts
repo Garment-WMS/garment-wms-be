@@ -56,6 +56,25 @@ export class MaterialExportReceiptService {
     }
   }
 
+  async getByMaterialExportRequestId(materialExportRequestId: string) {
+    const materialExportRequest =
+      await this.prismaService.materialExportRequest.count({
+        where: {
+          id: materialExportRequestId,
+        },
+      });
+    if (materialExportRequest === 0) {
+      throw new Error('Material export request not found');
+    }
+    const data = await this.prismaService.materialExportReceipt.findMany({
+      where: {
+        materialExportRequestId: materialExportRequestId,
+      },
+      include: materialExportReceiptInclude,
+    });
+    return data;
+  }
+
   async updateAwaitStatusToExportingStatus() {
     await this.prismaService.materialExportReceipt.updateMany({
       where: {
