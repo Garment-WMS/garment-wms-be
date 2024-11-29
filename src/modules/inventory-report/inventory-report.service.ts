@@ -13,6 +13,8 @@ import { WarehouseManagerQuantityReportDetails } from '../inventory-report-detai
 import { WarehouseStaffQuantityReportDetails } from '../inventory-report-detail/dto/warehouse-staff-quantity-report.dto';
 import { InventoryReportDetailService } from '../inventory-report-detail/inventory-report-detail.service';
 import { InventoryReportPlanDto } from '../inventory-report-plan/dto/inventory-report-plan.dto';
+import { MaterialExportReceiptService } from '../material-export-receipt/material-export-receipt.service';
+import { MaterialExportRequestService } from '../material-export-request/material-export-request.service';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { MaterialVariantService } from '../material-variant/material-variant.service';
 import { ProductReceiptService } from '../product-receipt/product-receipt.service';
@@ -29,6 +31,8 @@ export class InventoryReportService {
     private readonly materialReceiptService: MaterialReceiptService,
     private readonly productReceiptService: ProductReceiptService,
     private readonly importRequestService: ImportRequestService,
+    private readonly materialExportReceiptService: MaterialExportReceiptService,
+    private readonly materialExportRequestService: MaterialExportRequestService
   ) {}
 
   includeQuery: Prisma.InventoryReportInclude = {
@@ -144,7 +148,11 @@ export class InventoryReportService {
           to: new Date(),
         },
       });
-    }
+        await this.importRequestService.updateAwaitStatusToImportingStatus();
+        await this.importReceiptService.updateAwaitStatusToImportingStatus();
+        await this.materialExportReceiptService.updateAwaitStatusToExportingStatus();
+        await this.materialExportRequestService.updateAwaitStatusToExportingStatus();
+      }
 
     // const
 
