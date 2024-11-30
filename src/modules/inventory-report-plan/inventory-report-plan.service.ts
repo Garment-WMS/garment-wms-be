@@ -1,5 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import {
   InventoryReportPlanStatus,
   InventoryReportPlanType,
@@ -41,6 +42,12 @@ export class InventoryReportPlanService {
     private readonly importReceiptService: ImportReceiptService,
     private readonly materialExportReceiptService: MaterialExportReceiptService,
   ) {}
+
+  @OnEvent('start-await-inventory-report-plan')
+  async handleStartAwaitInventoryReportPlan() {
+    console.log('Start await inventory report plan');
+    await this.startAwaitInventoryReportPlan();
+  }
 
   async startRecordInventoryReportPlan(id: string, warehouseManager: string) {
     const isAnyImportingImportRequest =
@@ -103,6 +110,31 @@ export class InventoryReportPlanService {
       {},
       'Inventory report plan started successfully',
     );
+  }
+
+  async startAwaitInventoryReportPlan() {
+    const awaitInventoryReportPlan = await this.findQuery({
+      where: {
+        status: InventoryReportPlanStatus.AWAIT,
+      },
+    });
+    for (let i = 0; i < awaitInventoryReportPlan.length; i++) {
+      await this.startRecordInventoryReportPlan(
+        awaitInventoryReportPlan[i].id,
+        awaitInventoryReportPlan[i].warehouseManager.id,
+      );
+    }
+    return true;
+  }
+
+  findQuery(query: Prisma.InventoryReportPlanFindManyArgs) {
+    return this.prismaService.inventoryReportPlan.findMany({
+      ...query,
+      include: {
+        inventoryReportPlanDetail: true,
+        warehouseManager: true,
+      },
+    });
   }
 
   async createOverAllInventoryPlan(

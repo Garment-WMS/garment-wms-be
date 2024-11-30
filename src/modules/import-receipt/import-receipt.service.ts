@@ -1,4 +1,5 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
+import { InjectQueue } from '@nestjs/bullmq';
 import {
   BadRequestException,
   ConflictException,
@@ -17,6 +18,7 @@ import {
   ProductionBatchStatus,
   RoleCode,
 } from '@prisma/client';
+import { Queue } from 'bullmq';
 import { isUUID } from 'class-validator';
 import {
   discussionInclude,
@@ -61,6 +63,7 @@ export class ImportReceiptService {
     private readonly productionBatchService: ProductionBatchService,
     private readonly taskService: TaskService,
     private readonly chatService: ChatService,
+    @InjectQueue('import-receipt') private importReceiptQueue: Queue,
   ) {}
 
   findByQuery(query: any) {
@@ -628,6 +631,9 @@ export class ImportReceiptService {
       message: Constant.INSPECTED_TO_IMPORTING,
     };
     await this.chatService.create(chat, user);
+    console.log('Created chat');
+    await this.importReceiptQueue.add('check-last-importing-receipt', {});
+
     if (result) {
       return apiSuccess(
         HttpStatus.OK,
@@ -757,6 +763,10 @@ export class ImportReceiptService {
       },
     });
   }
+  async test() {
+    await this.importReceiptQueue.add('check-last-importing-receipt', {});
+    return apiSuccess(200, {}, 'Test');
+  }
 
   async findAll() {
     const result = await this.prismaService.importReceipt.findMany({
@@ -854,5 +864,14 @@ export class ImportReceiptService {
       data,
       'Get import receipt by import request id successfully',
     );
+  }
+
+  async checkIsLastImportingImportReceipt() {
+    const importReceipt = await this.prismaService.importReceipt.findFirst({
+      where: {
+        status: ImportReceiptStatus.IMPORTING,
+      },
+    });
+    return importReceipt ? false : true;
   }
 }

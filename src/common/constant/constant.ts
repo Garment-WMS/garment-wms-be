@@ -10,7 +10,9 @@ export class Constant {
   public static readonly DEFAULT_LIMIT = 100;
   public static readonly PO_CODE_PREFIX = 'PO';
   public static readonly POD_CODE_PREFIX = 'PO-DEL';
-  public static readonly APPROVED_TO_INSPECTED = 'status:Approved->Inspected';
+  public static readonly INSPECTING_TO_INSPECTED =
+    'status:Inspecting->Inspected';
+  public static readonly APPROVED_TO_INSPECTING = 'status:Approved->Inspecting';
   public static readonly INSPECTED_TO_IMPORTING = 'status:Inspected->Importing';
 
   public static readonly months = [

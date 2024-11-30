@@ -35,6 +35,11 @@ export class ImportReceiptController {
     return this.importReceiptService.getLatest(from, to);
   }
 
+  @Post('/test')
+  test() {
+    return this.importReceiptService.test();
+  }
+
   @Post('/material')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.WAREHOUSE_MANAGER)
@@ -108,8 +113,11 @@ export class ImportReceiptController {
   @Patch('/:id/finish/')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.WAREHOUSE_STAFF)
-  finishImportReceipt(@Param('id', CustomUUIDPipe) id: string, @GetUser() user:AuthenUser) {
-    return this.importReceiptService.finishImportReceipt(id,user);
+  finishImportReceipt(
+    @Param('id', CustomUUIDPipe) id: string,
+    @GetUser() user: AuthenUser,
+  ) {
+    return this.importReceiptService.finishImportReceipt(id, user);
   }
 
   @Patch(':id')
