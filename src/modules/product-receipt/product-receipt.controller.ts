@@ -37,6 +37,12 @@ export class ProductReceiptController {
     return this.productReceiptService.findAll(filterOptions.findOptions);
   }
 
+  @Get('by-code')
+  findByCode(@Query('code') code: string) {
+    return this.productReceiptService.findByCode(code);
+  }
+
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productReceiptService.findOne(id);

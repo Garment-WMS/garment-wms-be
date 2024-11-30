@@ -15,13 +15,27 @@ import { UpdateProductReceiptDto } from './dto/update-product-receipt.dto';
 
 @Injectable()
 export class ProductReceiptService {
-  updateAwaitStatus() {
-    throw new Error('Method not implemented.');
-  }
   constructor(
     private prismaService: PrismaService,
     private readonly inventoryStockService: InventoryStockService,
   ) {}
+
+  async findByCode(code: string) {
+    const result = await this.prismaService.productReceipt.findFirst({
+      where: {
+        code,
+      },
+      include: productReceiptIncludeQuery,
+    });
+    return apiSuccess(
+      result ? HttpStatus.OK : HttpStatus.NOT_FOUND,
+      result,
+      result ? 'Product Receipt found' : 'Product Receipt not found',
+    );
+  }
+  updateAwaitStatus() {
+    throw new Error('Method not implemented.');
+  }
 
   async updateProductReceiptQuantity(
     id: string,

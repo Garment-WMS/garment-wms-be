@@ -12,15 +12,28 @@ import { UpdateMaterialReceiptDto } from './dto/update-material-receipt.dto';
 
 @Injectable()
 export class MaterialReceiptService {
-  updateAwaitStatus() {
-    throw new Error('Method not implemented.');
-  }
   constructor(
     private readonly prismaService: PrismaService,
     private readonly poDeliveryService: PoDeliveryService,
     private readonly inventoryStockService: InventoryStockService,
     private readonly materialPackagesService: MaterialPackageService,
   ) {}
+  async findByCode(code: string) {
+    const result = await this.prismaService.materialReceipt.findFirst({
+      where: {
+        code,
+      },
+      include: materialReceiptIncludeWithoutImportReceipt,
+    });
+    return apiSuccess(
+      result ? HttpStatus.OK : HttpStatus.NOT_FOUND,
+      result,
+      result ? 'Material Receipt found' : 'Material Receipt not found',
+    );
+  }
+  updateAwaitStatus() {
+    throw new Error('Method not implemented.');
+  }
 
   findByQuery(query: any) {
     return this.prismaService.materialReceipt.findFirst({

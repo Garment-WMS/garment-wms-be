@@ -39,6 +39,11 @@ export class MaterialReceiptController {
     return this.materialReceiptService.findAll();
   }
 
+  @Get('/by-code')
+  findByCode(@Query('code') code: string) {
+    return this.materialReceiptService.findByCode(code);
+  }
+
   @Patch('/re-count')
   recountMaterialReceipt() {
     return this.materialReceiptService.recountMaterialInventoryStock();
