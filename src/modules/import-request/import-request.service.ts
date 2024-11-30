@@ -474,68 +474,10 @@ export class ImportRequestService {
             managerNote: managerProcess.managerNote,
             warehouseStaffId: managerProcess.warehouseStaffId,
             warehouseManagerId: warehouseManagerId,
-          },
-        });
-
-        const inspectionRequest =
-          await this.inspectionRequestService.createInspectionRequestByImportRequest(
-            warehouseManagerId,
-            managerProcess,
-            importRequest,
-          );
-        return { importRequest, inspectionRequest };
-
-      case $Enums.ImportRequestStatus.REJECTED:
-        return await this.prismaService.importRequest.update({
-          where: { id },
-          data: {
-            status: $Enums.ImportRequestStatus.REJECTED,
-            rejectAt: new Date(),
-            warehouseManagerId: warehouseManagerId,
-            managerNote: managerProcess.managerNote,
-          },
-        });
-      default:
-        throw new BadRequestException(
-          `Allowed action is ${$Enums.ImportRequestStatus.APPROVED} or ${$Enums.ImportRequestStatus.REJECTED}`,
-        );
-    }
-  }
-
-  async managerProcess2(
-    warehouseManagerId: string,
-    id: string,
-    managerProcess: ManagerProcessDto,
-  ) {
-    const importRequest = await this.prismaService.importRequest.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        status: true,
-        warehouseManagerId: true,
-      },
-    });
-
-    const allowApproveAndReject: $Enums.ImportRequestStatus[] = [
-      $Enums.ImportRequestStatus.ARRIVED,
-      $Enums.ImportRequestStatus.INSPECTED,
-    ];
-
-    if (importRequest.status !== $Enums.ImportRequestStatus.ARRIVED) {
-      throw new BadRequestException(
-        `Manager only can approve/reject ${allowApproveAndReject.join(', ')} import request`,
-      );
-    }
-
-    switch (managerProcess.action) {
-      case $Enums.ImportRequestStatus.APPROVED:
-        const importRequest = await this.prismaService.importRequest.update({
-          where: { id: id },
-          data: {
-            status: $Enums.ImportRequestStatus.APPROVED,
-            managerNote: managerProcess.managerNote,
-            warehouseStaffId: managerProcess.warehouseStaffId,
-            warehouseManagerId: warehouseManagerId,
+            inspectExpectedStartedAt: managerProcess.inspectExpectedStartedAt,
+            inspectExpectedFinishedAt: managerProcess.inspectExpectedFinishedAt,
+            importExpectedStartedAt: managerProcess.importExpectedStartedAt,
+            importExpectedFinishedAt: managerProcess.importExpectedFinishedAt,
           },
         });
 

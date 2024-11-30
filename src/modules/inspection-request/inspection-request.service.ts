@@ -14,20 +14,20 @@ import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { ChatService } from '../chat/chat.service';
+import { CreateChatDto } from '../chat/dto/create-chat.dto';
 import { ManagerProcessDto } from '../import-request/dto/import-request/manager-process.dto';
 import { CreateTaskDto } from '../task/dto/create-task.dto';
 import { TaskService } from '../task/task.service';
 import { CreateInspectionRequestDto } from './dto/create-inspection-request.dto';
 import { UpdateInspectionRequestDto } from './dto/update-inspection-request.dto';
-import { ChatService } from '../chat/chat.service';
-import { CreateChatDto } from '../chat/dto/create-chat.dto';
 
 @Injectable()
 export class InspectionRequestService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly taskService: TaskService,
-    private readonly chatService: ChatService
+    private readonly chatService: ChatService,
   ) {}
 
   async search(
@@ -160,10 +160,10 @@ export class InspectionRequestService {
         }),
       ]);
 
-      const chat :CreateChatDto ={
-        discussionId: '',
-        message: ''
-      }
+    const chat: CreateChatDto = {
+      discussionId: '',
+      message: '',
+    };
 
     return inspectionRequest;
   }
@@ -178,12 +178,16 @@ export class InspectionRequestService {
       inspectionDepartmentId: managerProcess.inspectionDepartmentId,
       warehouseManagerId: warehouseManagerId,
       note: managerProcess.InspectionNote,
+      expectedStartedAt: managerProcess.inspectExpectedStartedAt,
+      expectedFinishedAt: managerProcess.inspectExpectedFinishedAt,
     };
 
     let inspectionRequest = await this.create(createInspectionRequestDto);
     const task = await this.createTaskByInspectionRequest(
       inspectionRequest.inspectionDepartmentId,
       inspectionRequest.id,
+      inspectionRequest.expectedStartedAt,
+      inspectionRequest.expectedStartedAt,
     );
     Logger.log(task);
     return inspectionRequest;
@@ -192,12 +196,16 @@ export class InspectionRequestService {
   async createTaskByInspectionRequest(
     inspectionDepartmentId: string,
     inspectionRequestId: string,
+    expectedStartedAt: Date,
+    expectedFinishedAt: Date,
   ) {
     const createTaskDto: CreateTaskDto = {
       taskType: 'INSPECTION',
       inspectionDepartmentId: inspectionDepartmentId,
       inspectionRequestId: inspectionRequestId,
       status: 'OPEN',
+      exportStartedAt: expectedStartedAt,
+      expectFinishedAt: expectedFinishedAt,
     };
     const task = await this.taskService.create(createTaskDto);
     return task;

@@ -14,7 +14,7 @@ model InspectionRequest {
   note                   String?                 @map("note")
   expectedStartedAt      DateTime?               @map("expected_started_at") @db.Timestamptz(6)
   startedAt              DateTime?               @default(now()) @map("started_at") @db.Timestamptz(6)
-  expectFinishedAt       DateTime?               @map("expect_finished_at") @db.Timestamptz(6)
+  expectedFinishedAt     DateTime?               @map("expected_finished_at") @db.Timestamptz(6)
   finishedAt             DateTime?               @map("finished_at") @db.Timestamptz(6)
   inspectionReport       InspectionReport?
   importRequest          ImportRequest?          @relation(fields: [importRequestId], references: [id], onDelete: NoAction, onUpdate: NoAction)
