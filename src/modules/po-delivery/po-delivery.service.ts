@@ -163,7 +163,40 @@ export class PoDeliveryService {
         },
       },
     },
-    importRequest: true,
+    importRequest: {
+      include: {
+        inspectionRequest: {
+          include: {
+            inspectionReport: {
+              include: {
+                importReceipt: {
+                  include: {
+                    materialReceipt: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        importRequestDetail: {
+          include: {
+            materialPackage: {
+              include: {
+                materialVariant: {
+                  include: {
+                    material: {
+                      include: {
+                        materialUom: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   };
 
   async createPoDelivery(
