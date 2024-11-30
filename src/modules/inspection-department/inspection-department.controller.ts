@@ -23,7 +23,7 @@ export class InspectionDepartmentController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.InspectionDepartmentWhereInput>(
         ['inspectionRequest.id', 'inspectionReport.id'],
-        [{ id: 'asc', createdAt: 'desc', updatedAt: 'desc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterDto: FilterDto<Prisma.InspectionDepartmentWhereInput>,
