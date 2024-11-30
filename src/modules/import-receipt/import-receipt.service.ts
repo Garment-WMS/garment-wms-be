@@ -339,11 +339,7 @@ export class ImportReceiptService {
               prismaInstance,
               // createImportReceiptDto.materialReceipts,
             );
-          await this.poDeliveryService.updatePoDeliveryMaterialStatus(
-            importRequest.poDeliveryId,
-            PoDeliveryStatus.FINISHED,
-            prismaInstance,
-          );
+
           let poDeliveryExtra;
           //Compare number of imported materials with number of approved material
           for (let i = 0; i < result.length; i++) {
@@ -373,6 +369,10 @@ export class ImportReceiptService {
                 detail.materialPackageId === result[i].materialPackageId,
             ).quantityByPack;
             if (result[i].quantityByPack !== expectedImportQuantity) {
+              poDeliveryExtra =
+                await this.poDeliveryService.findExtraPoDelivery(
+                  importRequest.poDelivery.purchaseOrderId,
+                );
               if (!poDeliveryExtra) {
                 poDeliveryExtra = await this.poDeliveryService.createPoDelivery(
                   {
@@ -581,6 +581,14 @@ export class ImportReceiptService {
               $Enums.ImportRequestStatus.IMPORTED,
               prismaInstance,
             );
+
+            await this.poDeliveryService.updatePoDeliveryMaterialStatus(
+              importReceipt.inspectionReport.inspectionRequest.importRequest
+                .poDeliveryId,
+              PoDeliveryStatus.FINISHED,
+              prismaInstance,
+            );
+          
           }
         } else if (importReceipt?.productReceipt.length > 0) {
           for (const detail of importReceipt.productReceipt) {

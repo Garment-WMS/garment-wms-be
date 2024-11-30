@@ -18,6 +18,18 @@ export class PoDeliveryService {
     private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
   ) {}
 
+  findExtraPoDelivery(purchaseOrderId: string) {
+    return this.pirsmaService.poDelivery.findFirst({
+      where: {
+        purchaseOrderId,
+        isExtra: true,
+      },
+      include: {
+        poDeliveryDetail: true,
+      },
+    });
+  }
+
   async cancelPoDelivery(
     id: string,
     cancelPoDeliveryDto: CancelPoDeliveryDto,
@@ -270,7 +282,6 @@ export class PoDeliveryService {
         },
         prismaInstance,
       );
-      console.log(resultWithSameStatus);
 
       //If there is no other po delivery with PENDING STATUS, update the purchase order status to FINISHED
       if (resultWithSameStatus.length === 0) {
