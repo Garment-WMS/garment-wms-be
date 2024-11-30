@@ -582,13 +582,17 @@ export class ImportReceiptService {
               prismaInstance,
             );
 
-            await this.poDeliveryService.updatePoDeliveryMaterialStatus(
+            if (
               importReceipt.inspectionReport.inspectionRequest.importRequest
-                .poDeliveryId,
-              PoDeliveryStatus.FINISHED,
-              prismaInstance,
-            );
-          
+                .poDeliveryId
+            ) {
+              await this.poDeliveryService.updatePoDeliveryMaterialStatus(
+                importReceipt.inspectionReport.inspectionRequest?.importRequest
+                  ?.poDeliveryId,
+                PoDeliveryStatus.FINISHED,
+                prismaInstance,
+              );
+            }
           }
         } else if (importReceipt?.productReceipt.length > 0) {
           for (const detail of importReceipt.productReceipt) {

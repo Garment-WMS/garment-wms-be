@@ -3,7 +3,7 @@ import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PrismaClient, ProductReceiptStatus } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isUUID } from 'class-validator';
-import { productReceiptIncludeQuery } from 'prisma/prisma-include';
+import { productReceiptIncludeQuery, productReceiptIncludeQueryWithoutReceipt } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
@@ -25,7 +25,7 @@ export class ProductReceiptService {
       where: {
         code,
       },
-      include: productReceiptIncludeQuery,
+      include: productReceiptIncludeQueryWithoutReceipt,
     });
     return apiSuccess(
       result ? HttpStatus.OK : HttpStatus.NOT_FOUND,
