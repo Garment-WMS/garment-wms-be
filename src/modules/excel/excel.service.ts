@@ -45,6 +45,7 @@ import { apiFailed } from 'src/common/dto/api-response';
 import {
   addMissingStartCharacter,
   compareArray,
+  getDatePart,
   validateDate,
 } from 'src/common/utils/utils';
 import { FirebaseService } from '../firebase/firebase.service';
@@ -460,7 +461,10 @@ export class ExcelService {
               errorFlag = true;
             }
 
-            if (new Date(value) < new Date() && !errorFlag) {
+            if (
+              getDatePart(new Date(value)) < getDatePart(new Date()) &&
+              !errorFlag
+            ) {
               const text = [
                 { text: `${value.toISOString().split('T')[0]}` },
                 {
@@ -985,7 +989,10 @@ export class ExcelService {
               );
               errorSet = true;
             }
-            if (new Date(value) < new Date() && !errorSet) {
+            if (
+              getDatePart(new Date(value)) < getDatePart(new Date()) &&
+              !errorSet
+            ) {
               const text = [
                 { text: `${value.toISOString().split('T')[0]}` },
                 {
