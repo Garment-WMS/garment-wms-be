@@ -106,8 +106,10 @@ export class ImportReceiptController {
   }
 
   @Patch('/:id/finish/')
-  finishImportReceipt(@Param('id', CustomUUIDPipe) id: string) {
-    return this.importReceiptService.finishImportReceipt(id);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_STAFF)
+  finishImportReceipt(@Param('id', CustomUUIDPipe) id: string, @GetUser() user:AuthenUser) {
+    return this.importReceiptService.finishImportReceipt(id,user);
   }
 
   @Patch(':id')

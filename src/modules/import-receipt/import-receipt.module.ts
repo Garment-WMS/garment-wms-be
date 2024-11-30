@@ -12,6 +12,7 @@ import { ImportReceiptController } from './import-receipt.controller';
 import { ImportReceiptService } from './import-receipt.service';
 import { InspectionReportModule } from '../inspection-report/inspection-report.module';
 import { DiscussionModule } from '../discussion/discussion.module';
+import { ChatModule } from '../chat/chat.module';
 
 @Module({
   controllers: [ImportReceiptController],
@@ -26,6 +27,7 @@ import { DiscussionModule } from '../discussion/discussion.module';
     ImportRequestModule,
     TaskModule,
     DiscussionModule,
+    ChatModule,
   ],
   providers: [ImportReceiptService],
   exports: [ImportReceiptService],

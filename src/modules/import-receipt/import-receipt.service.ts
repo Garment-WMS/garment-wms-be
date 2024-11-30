@@ -31,6 +31,8 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { ChatService } from '../chat/chat.service';
+import { CreateChatDto } from '../chat/dto/create-chat.dto';
 import { DiscussionService } from '../discussion/discussion.service';
 import { ImportRequestService } from '../import-request/import-request.service';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
@@ -46,19 +48,19 @@ import { UpdateImportReceiptDto } from './dto/update-import-receipt.dto';
 
 @Injectable()
 export class ImportReceiptService {
-
   constructor(
     private readonly prismaService: PrismaService,
     private readonly materialReceiptService: MaterialReceiptService,
     private readonly productReceiptService: ProductReceiptService,
     // private readonly inspectionReportService: InspectionReportService,
-    private readonly disussionService: DiscussionService,
+    private readonly discussionService: DiscussionService,
     private readonly poDeliveryService: PoDeliveryService,
     private readonly inventoryStockService: InventoryStockService,
     private readonly importRequestService: ImportRequestService,
     private readonly poDeliveryDetailsService: PoDeliveryMaterialService,
     private readonly productionBatchService: ProductionBatchService,
     private readonly taskService: TaskService,
+    private readonly chatService: ChatService,
   ) {}
 
   findByQuery(query: any) {
@@ -241,7 +243,7 @@ export class ImportReceiptService {
           result.id,
           inspectionReport.inspectionRequest.importRequest.warehouseStaffId,
         );
-        await this.disussionService.updateImportReceiptDiscussion(
+        await this.discussionService.updateImportReceiptDiscussion(
           result.id,
           createImportReceiptDto.importRequestId,
         );
@@ -413,7 +415,7 @@ export class ImportReceiptService {
           result.id,
           inspectionReport.inspectionRequest.importRequest.warehouseStaffId,
         );
-        await this.disussionService.updateImportReceiptDiscussion(
+        await this.discussionService.updateImportReceiptDiscussion(
           result.id,
           createImportReceiptDto.importRequestId,
         );
@@ -538,7 +540,7 @@ export class ImportReceiptService {
     });
   }
 
-  async finishImportReceipt(importReceiptId: string) {
+  async finishImportReceipt(importReceiptId: string, user: AuthenUser) {
     const importReceipt = await this.findUnique(importReceiptId);
 
     if (!importReceipt) {
@@ -551,8 +553,6 @@ export class ImportReceiptService {
         'Cannot finish import receipt, Import Receipt status is not valid',
       );
     }
-    console.log('importReceipt', importReceipt);
-
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         if (importReceipt?.materialReceipt.length > 0) {
@@ -623,6 +623,11 @@ export class ImportReceiptService {
       },
     );
 
+    const chat: CreateChatDto = {
+      discussionId: importReceipt.discussion.id,
+      message: Constant.INSPECTED_TO_IMPORTING,
+    };
+    await this.chatService.create(chat, user);
     if (result) {
       return apiSuccess(
         HttpStatus.OK,
