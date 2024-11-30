@@ -1,5 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import {
   InventoryReportPlanStatus,
   InventoryReportPlanType,
@@ -42,12 +43,17 @@ export class InventoryReportPlanService {
     private readonly materialExportReceiptService: MaterialExportReceiptService,
   ) {}
 
+  @OnEvent('start-await-inventory-report-plan')
+  async handleStartAwaitInventoryReportPlan() {
+    console.log('Start await inventory report plan');
+    await this.startAwaitInventoryReportPlan();
+  }
+
   async startRecordInventoryReportPlan(id: string, warehouseManager: string) {
     const isAnyImportingImportRequest =
       await this.importRequestService.isAnyImportingImportRequest();
     const isAnyExportingExportRequest =
       await this.materialExportRequestService.isAnyExportingExportRequest();
-
     if (
       isAnyImportingImportRequest.length > 0 ||
       isAnyExportingExportRequest.length > 0
@@ -104,6 +110,31 @@ export class InventoryReportPlanService {
       {},
       'Inventory report plan started successfully',
     );
+  }
+
+  async startAwaitInventoryReportPlan() {
+    const awaitInventoryReportPlan = await this.findQuery({
+      where: {
+        status: InventoryReportPlanStatus.AWAIT,
+      },
+    });
+    for (let i = 0; i < awaitInventoryReportPlan.length; i++) {
+      await this.startRecordInventoryReportPlan(
+        awaitInventoryReportPlan[i].id,
+        awaitInventoryReportPlan[i].warehouseManager.id,
+      );
+    }
+    return true;
+  }
+
+  findQuery(query: Prisma.InventoryReportPlanFindManyArgs) {
+    return this.prismaService.inventoryReportPlan.findMany({
+      ...query,
+      include: {
+        inventoryReportPlanDetail: true,
+        warehouseManager: true,
+      },
+    });
   }
 
   async createOverAllInventoryPlan(
@@ -257,7 +288,6 @@ export class InventoryReportPlanService {
     //     'All inventory report plan detail already processed',
     //   );
     // }
-    console.log(inventoryReportPlanDetailBelongToWarehouseStaff);
 
     const inventoryReportInput: InventoryReportPlanDto = {
       ...inventoryReportPlan,
@@ -287,16 +317,23 @@ export class InventoryReportPlanService {
       },
     });
 
-    if (inventoryReportPlan.status === InventoryReportPlanStatus.NOT_YET) {
+    if (
+      inventoryReportPlan.status === InventoryReportPlanStatus.NOT_YET ||
+      inventoryReportPlan.status === InventoryReportPlanStatus.AWAIT
+    ) {
       await prismaInstance.inventoryReportPlan.update({
         where: { id },
         data: {
           status: InventoryReportPlanStatus.IN_PROGRESS,
         },
       });
+    } else {
+      throw new BadRequestException(
+        'Inventory report plan is already in progress',
+      );
     }
 
-    return apiSuccess(204, {}, 'Inventory report plan processed successfully');
+    return apiSuccess(200, {}, 'Inventory report plan processed successfully');
   }
   findById(id: string) {
     if (!isUUID(id)) {

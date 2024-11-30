@@ -12,7 +12,6 @@ export class ReceiptAdjustmentProcessor extends WorkerHost {
   }
 
   async process(job: Job, token?: string): Promise<any> {
-    return await this.createReceiptAdjustment(job);
 
     switch (job.name.toString()) {
       case 'create-receipt-adjustment': {
@@ -22,13 +21,12 @@ export class ReceiptAdjustmentProcessor extends WorkerHost {
     }
   }
 
+
   async createReceiptAdjustment(job: Job<CreateReceiptAdjustmentDto>) {
     const createReceiptAdjustmentDto = job.data;
-    console.log(createReceiptAdjustmentDto);
     const result = await this.receiptAdjustmentService.create(
       createReceiptAdjustmentDto,
     );
-    console.log(result);
   }
 }
 function delay(ms: number) {

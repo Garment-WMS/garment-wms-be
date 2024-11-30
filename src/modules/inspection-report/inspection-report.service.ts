@@ -21,6 +21,10 @@ import { ApiResponse } from 'src/common/dto/response.dto';
 import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta } from 'src/common/utils/utils';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { ChatService } from '../chat/chat.service';
+import { CreateChatDto } from '../chat/dto/create-chat.dto';
+import { DiscussionService } from '../discussion/discussion.service';
 import { CreateImportReceiptDto } from '../import-receipt/dto/create-import-receipt.dto';
 import { ImportReceiptService } from '../import-receipt/import-receipt.service';
 import { TaskService } from '../task/task.service';
@@ -34,6 +38,7 @@ export class InspectionReportService {
     private readonly prismaService: PrismaService,
     private readonly taskService: TaskService,
     private readonly importReceiptService: ImportReceiptService,
+    private readonly chatService: ChatService,
     // private readonly importRequestService: ImportRequestService,
   ) {}
 
@@ -298,7 +303,7 @@ export class InspectionReportService {
     return inspectionReport ? true : false;
   }
 
-  async create(dto: CreateInspectionReportDto) {
+  async create(dto: CreateInspectionReportDto, user: AuthenUser) {
     //check inspection request valid
     if (
       await this.isInspectionRequestHasInspectionReport(dto.inspectionRequestId)
@@ -381,6 +386,12 @@ export class InspectionReportService {
       },
       importRequest.warehouseManagerId,
     );
+
+    const chat: CreateChatDto = {
+      discussionId: importRequest?.discussion.id,
+      message: Constant.APPROVED_TO_INSPECTING,
+    };
+    await this.chatService.create(chat, user);
     return {
       ...result,
       importReceipt,

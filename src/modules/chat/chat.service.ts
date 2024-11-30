@@ -9,7 +9,6 @@ import { UpdateChatDto } from './dto/update-chat.dto';
 export class ChatService {
   constructor(private readonly prismaService: PrismaService) {}
   async create(createChatDto: CreateChatDto, user: AuthenUser) {
-    console.log(createChatDto);
     const newChat = await this.prismaService.chat.create({
       data: {
         discussionId: createChatDto.discussionId,

@@ -19,12 +19,15 @@ import { CreateTaskDto } from '../task/dto/create-task.dto';
 import { TaskService } from '../task/task.service';
 import { CreateInspectionRequestDto } from './dto/create-inspection-request.dto';
 import { UpdateInspectionRequestDto } from './dto/update-inspection-request.dto';
+import { ChatService } from '../chat/chat.service';
+import { CreateChatDto } from '../chat/dto/create-chat.dto';
 
 @Injectable()
 export class InspectionRequestService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly taskService: TaskService,
+    private readonly chatService: ChatService
   ) {}
 
   async search(
@@ -156,6 +159,12 @@ export class InspectionRequestService {
           },
         }),
       ]);
+
+      const chat :CreateChatDto ={
+        discussionId: '',
+        message: ''
+      }
+
     return inspectionRequest;
   }
 

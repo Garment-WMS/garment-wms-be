@@ -8,7 +8,7 @@ model Material {
   deletedAt              DateTime?                @map("deleted_at") @db.Timestamptz(6)
   materialVariant        MaterialVariant[]
   materialUom            MaterialUom?             @relation(fields: [materialUomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  ProductFormulaMaterial ProductFormulaMaterial[]
+  // ProductFormulaMaterial ProductFormulaMaterial[]
 
   @@map("material")
 }

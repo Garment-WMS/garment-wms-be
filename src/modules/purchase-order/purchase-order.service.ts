@@ -55,9 +55,55 @@ export class PurchaseOrderService {
   };
 
   async getAllPurchaseOrders() {
-    const result = await this.prismaService.purchaseOrder.findMany({
-      include: this.queryInclude,
-    });
+    const result = (await this.prismaService.purchaseOrder.findMany({
+      include: {
+        productionPlan: true,
+        supplier: true,
+        poDelivery: {
+          include: {
+            poDeliveryDetail: {
+              include: {
+                materialPackage: {
+                  include: {
+                    materialVariant: {
+                      include: {
+                        material: {
+                          include: {
+                            materialUom: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    })) as any;
+
+    for (const purchaseOrder of result) {
+      const [
+        totalImportQuantity,
+        totalFailImportQuantity,
+        totalQuantityToImport,
+        totalPoDelivery,
+        totalFinishedPoDelivery,
+        totalInProgressPoDelivery,
+        totalCancelledPoDelivery,
+        totalPendingPoDelivery,
+      ] = await this.getPurchaseOrderStatistic(purchaseOrder, purchaseOrder.id);
+
+      purchaseOrder.totalImportQuantity = totalImportQuantity;
+      purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
+      purchaseOrder.totalQuantityToImport = totalQuantityToImport;
+      purchaseOrder.totalPoDelivery = totalPoDelivery;
+      purchaseOrder.totalFinishedPoDelivery = totalFinishedPoDelivery;
+      purchaseOrder.totalInProgressPoDelivery = totalInProgressPoDelivery;
+      purchaseOrder.totalCancelledPoDelivery = totalCancelledPoDelivery;
+      purchaseOrder.totalPendingPoDelivery = totalPendingPoDelivery;
+    }
 
     return apiSuccess(
       HttpStatus.OK,

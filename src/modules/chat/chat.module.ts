@@ -7,5 +7,6 @@ import { ChatService } from './chat.service';
   controllers: [ChatController],
   imports: [PrismaModule],
   providers: [ChatService],
+  exports: [ChatService],
 })
 export class ChatModule {}

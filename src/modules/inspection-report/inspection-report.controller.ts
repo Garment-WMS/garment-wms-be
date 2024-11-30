@@ -9,11 +9,17 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Prisma } from '@prisma/client';
+import { Prisma, RoleCode } from '@prisma/client';
+import { GetUser } from 'src/common/decorator/get_user.decorator';
+import { Roles } from 'src/common/decorator/roles.decorator';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
+import { RolesGuard } from 'src/common/guard/roles.guard';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateInspectionReportDto } from './dto/inspection-report/create-inspection-report.dto';
 import { UpdateInspectionReportDto } from './dto/inspection-report/update-inspection-report.dto';
 import { InspectionReportService } from './inspection-report.service';
@@ -25,12 +31,19 @@ export class InspectionReportController {
     private readonly inspectionReportService: InspectionReportService,
   ) {}
 
-  
   @Post()
-  async create(@Body() createInspectionReportDto: CreateInspectionReportDto) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.INSPECTION_DEPARTMENT)
+  async create(
+    @Body() createInspectionReportDto: CreateInspectionReportDto,
+    @GetUser() user: AuthenUser,
+  ) {
     return apiSuccess(
       HttpStatus.CREATED,
-      await this.inspectionReportService.create(createInspectionReportDto),
+      await this.inspectionReportService.create(
+        createInspectionReportDto,
+        user,
+      ),
       'Inspection report created successfully',
     );
   }
@@ -62,11 +75,8 @@ export class InspectionReportController {
   }
 
   @Get('/quality-rate')
-   getQualityRate(
-    @Param('from') from: Date,
-    @Param('to') to: Date,
-  ) {
-    return this.inspectionReportService.getQualityRate(from,to);
+  getQualityRate(@Param('from') from: Date, @Param('to') to: Date) {
+    return this.inspectionReportService.getQualityRate(from, to);
   }
 
   @Get(':id')
