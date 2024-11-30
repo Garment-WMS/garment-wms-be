@@ -1,7 +1,10 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { MaterialReceiptStatus, Prisma, PrismaClient } from '@prisma/client';
 import { isUUID } from 'class-validator';
-import { materialReceiptIncludeWithoutImportReceipt } from 'prisma/prisma-include';
+import {
+  materialReceiptIncludeWithoutImportReceipt,
+  materialReceiptIncludeWithoutImportReceipt2,
+} from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
@@ -23,7 +26,7 @@ export class MaterialReceiptService {
       where: {
         code,
       },
-      include: materialReceiptIncludeWithoutImportReceipt,
+      include: materialReceiptIncludeWithoutImportReceipt2,
     });
     return apiSuccess(
       result ? HttpStatus.OK : HttpStatus.NOT_FOUND,
