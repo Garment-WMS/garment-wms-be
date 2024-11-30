@@ -46,4 +46,12 @@ export class CreateInspectionRequestDto {
   @IsOptional()
   @IsDateString()
   createdAt?: string;
+
+  @ApiProperty({ required: false })
+  @IsDateString()
+  expectedStartedAt?: Date;
+
+  @ApiProperty({ required: false })
+  @IsDateString()
+  expectedFinishedAt?: Date;
 }

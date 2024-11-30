@@ -71,10 +71,20 @@ export class CreateTaskDto {
   @ApiProperty()
   @IsOptional()
   @IsDate()
+  exportStartedAt?: Date;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsDate()
   startedAt?: Date;
 
   @ApiProperty()
   @IsOptional()
   @IsDate()
   expectFinishedAt?: Date;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsDate()
+  finishedAt?: Date;
 }

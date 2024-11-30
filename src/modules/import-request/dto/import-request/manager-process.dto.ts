@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { RoleCode } from '@prisma/client';
 import {
+  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -54,4 +55,24 @@ export class ManagerProcessDto {
   @IsString()
   @IsNotEmpty()
   InspectionNote?: string;
+
+  @ApiProperty({ required: true, type: 'date' })
+  @IsDateString()
+  @IsNotEmpty()
+  inspectExpectedStartedAt: Date;
+
+  @ApiProperty({ required: true, type: 'date' })
+  @IsDateString()
+  @IsNotEmpty()
+  inspectExpectedFinishedAt: Date;
+
+  @ApiProperty({ required: true, type: 'date' })
+  @IsDateString()
+  @IsNotEmpty()
+  importExpectedStartedAt: Date;
+
+  @ApiProperty({ required: true, type: 'date' })
+  @IsDateString()
+  @IsNotEmpty()
+  importExpectedFinishedAt: Date;
 }
