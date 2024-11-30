@@ -38,7 +38,6 @@ export class InspectionReportService {
     private readonly prismaService: PrismaService,
     private readonly taskService: TaskService,
     private readonly importReceiptService: ImportReceiptService,
-    private readonly discussionService: DiscussionService,
     private readonly chatService: ChatService,
     // private readonly importRequestService: ImportRequestService,
   ) {}
