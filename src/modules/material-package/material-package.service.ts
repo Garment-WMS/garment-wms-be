@@ -27,9 +27,6 @@ export class MaterialPackageService {
     },
   };
 
-
-  
-
   async create(createMaterialVariantDto: CreateMaterialVariantDto) {
     const result = await this.prismaService.materialPackage.create({
       data: createMaterialVariantDto,
@@ -70,6 +67,7 @@ export class MaterialPackageService {
         skip: offset,
         take: limit,
         where: filterOption?.where,
+        orderBy: filterOption?.orderBy,
         include: this.includeQuery,
       }),
       this.prismaService.materialPackage.count({

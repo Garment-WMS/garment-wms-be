@@ -65,6 +65,7 @@ import { SupplierModule } from './modules/supplier/supplier.module';
 import { TaskModule } from './modules/task/task.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
+import { UtilModule } from './modules/util/util.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
 
 @Module({
@@ -160,6 +161,7 @@ import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.
     ChatModule,
     DefectModule,
     DashboardModule,
+    UtilModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

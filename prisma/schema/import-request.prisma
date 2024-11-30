@@ -28,6 +28,7 @@ model ImportRequest {
   importRequestDetail    ImportRequestDetail[]
   inspectionRequest      InspectionRequest[]
   discussion             Discussion?
+  task                   Task[]
 
   @@map("import_request")
 }

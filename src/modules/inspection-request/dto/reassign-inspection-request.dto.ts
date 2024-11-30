@@ -8,7 +8,7 @@ export class ReassignImportRequestDto {
   @ApiProperty()
   @IsInspectionRequestExist()
   @IsUUID()
-  importRequestId: string;
+  inspectionRequestId: string;
 
   @ApiProperty()
   @IsUserRoleExist(RoleCode.INSPECTION_DEPARTMENT)

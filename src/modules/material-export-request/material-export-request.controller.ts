@@ -22,6 +22,7 @@ import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateMaterialExportRequestDto } from './dto/create-material-export-request.dto';
 import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-request.dto';
+import { ProductionStaffDepartmentDto } from './dto/production-department-approve.dto';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
 import { MaterialExportRequestService } from './material-export-request.service';
 
@@ -66,6 +67,16 @@ export class MaterialExportRequestController {
       'Search material export requests successfully',
     );
   }
+
+  @Get('/enum')
+  async getEnum() {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportRequestService.getEnum(),
+      'Get material export request enum successfully',
+    );
+  }
+
   @Get('/my')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(
@@ -142,6 +153,25 @@ export class MaterialExportRequestController {
         warehouseManager.warehouseManagerId,
       ),
       'Manager approve material export request successfully',
+    );
+  }
+
+  @Post(':id/production-department-approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.PRODUCTION_DEPARTMENT)
+  async productionDepartmentApprove(
+    @Param('id') id: string,
+    @Body() dto: ProductionStaffDepartmentDto,
+    @GetUser() productionDepartment: AuthenUser,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportRequestService.productionDepartmentApprove(
+        id,
+        dto,
+        productionDepartment.productionDepartmentId,
+      ),
+      'Production department approve material export request successfully',
     );
   }
 }

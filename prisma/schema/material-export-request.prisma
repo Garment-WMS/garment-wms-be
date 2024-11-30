@@ -10,6 +10,8 @@ model MaterialExportRequest {
   description                 String?                       @map("description") @db.VarChar
   managerNote                 String?                       @map("manager_note") @db.VarChar
   rejectAt                    DateTime?                     @map("reject_at") @db.Timestamptz(6)
+  productionRejectReason      String?                       @map("production_reject_reason") @db.Text
+  productionRejectAt          DateTime?                     @map("production_reject_at") @db.Timestamptz(6)
   createdAt                   DateTime?                     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)

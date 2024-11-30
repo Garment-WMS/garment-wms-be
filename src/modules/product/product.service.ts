@@ -45,6 +45,7 @@ export class ProductService {
         },
         skip: page,
         take: limit,
+        orderBy: findOptions?.orderBy,
       }) as any,
       this.prismaService.product.count({
         where: rest?.where,

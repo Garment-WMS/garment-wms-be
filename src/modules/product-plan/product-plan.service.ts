@@ -212,6 +212,7 @@ export class ProductPlanService {
       this.prismaService.productionPlan.findMany({
         skip: page,
         take: limit,
+        orderBy: filterOption?.orderBy,
         where: {
           ...rest?.where,
         },
@@ -397,7 +398,7 @@ export class ProductPlanService {
       purchaseOrder.totalCancelledPoDelivery = totalCancelledPoDelivery;
       purchaseOrder.totalPendingPoDelivery = totalPendingPoDelivery;
     });
-    
+
     productPlan.productionPlanDetail.forEach((detail) => {
       totalQuantityToProduce += detail.quantityToProduce;
     });

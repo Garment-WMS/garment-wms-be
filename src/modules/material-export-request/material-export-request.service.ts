@@ -27,10 +27,20 @@ import { CreateNestedMaterialExportRequestDetailDto } from '../material-export-r
 import { TaskService } from '../task/task.service';
 import { CreateMaterialExportRequestDto } from './dto/create-material-export-request.dto';
 import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-request.dto';
+import {
+  ProductionDepartmentApproveAction,
+  ProductionStaffDepartmentDto,
+} from './dto/production-department-approve.dto';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
 
 @Injectable()
 export class MaterialExportRequestService {
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly taskService: TaskService,
+    private readonly discussionService: DiscussionService,
+  ) {}
+
   async getByUserToken(
     authenUser: AuthenUser,
     findOptions: GeneratedFindOptions<Prisma.MaterialExportRequestWhereInput>,
@@ -55,11 +65,6 @@ export class MaterialExportRequestService {
         throw new ForbiddenException('This role is not allowed');
     }
   }
-  constructor(
-    private readonly prismaService: PrismaService,
-    private readonly taskService: TaskService,
-    private readonly discussionService: DiscussionService,
-  ) {}
 
   async updateAwaitStatusToExportingStatus() {
     await this.prismaService.materialExportRequest.updateMany({
@@ -99,7 +104,6 @@ export class MaterialExportRequestService {
           dto.productFormulaId,
           quantityToProduce,
         );
-      Logger.debug('mapped');
     }
     const materialExportRequestInput: Prisma.MaterialExportRequestUncheckedCreateInput =
       {
@@ -347,6 +351,68 @@ export class MaterialExportRequestService {
         return rejectedMaterialExportRequest;
       default:
         throw new BadRequestException('Invalid manager action');
+    }
+  }
+
+  async getEnum() {
+    return {
+      status: $Enums.MaterialExportRequestStatus,
+    };
+  }
+
+  async productionDepartmentApprove(
+    materialExportRequestId: string,
+    productionStaffApproveDto: ProductionStaffDepartmentDto,
+    productionDepartmentId: string,
+  ) {
+    const allowMaterialExportRequest =
+      await this.prismaService.materialExportRequest.findUnique({
+        where: {
+          id: materialExportRequestId,
+          status: {
+            in: [MaterialExportRequestStatus.DELIVERED],
+          },
+        },
+      });
+
+    if (!allowMaterialExportRequest) {
+      throw new BadRequestException(
+        'Material Export Request status must be ' +
+          MaterialExportRequestStatus.DELIVERED,
+      );
+    }
+    // if (
+    //   allowMaterialExportRequest.productionDepartmentId !==
+    //   productionDepartmentId
+    // ) {
+    //   throw new BadRequestException('Only requester can approve');
+    // }
+
+    switch (productionStaffApproveDto.action) {
+      case ProductionDepartmentApproveAction.PRODUCTION_APPROVE:
+        return await this.prismaService.materialExportRequest.update({
+          where: {
+            id: materialExportRequestId,
+          },
+          data: {
+            status: MaterialExportRequestStatus.PRODUCTION_APPROVED,
+          },
+          include: materialExportRequestInclude,
+        });
+      case ProductionDepartmentApproveAction.PRODUCTION_REJECT:
+        return await this.prismaService.materialExportRequest.update({
+          where: {
+            id: materialExportRequestId,
+          },
+          data: {
+            status: MaterialExportRequestStatus.REJECTED,
+            productionRejectReason:
+              productionStaffApproveDto.productionRejectReason,
+          },
+          include: materialExportRequestInclude,
+        });
+      default:
+        throw new BadRequestException('Invalid action');
     }
   }
 }

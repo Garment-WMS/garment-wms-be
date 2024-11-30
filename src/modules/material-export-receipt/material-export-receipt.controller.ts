@@ -22,7 +22,6 @@ import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
 import { GetRecommendMaterialExportReceiptDto } from './dto/get-recommend-material-export-receipt.dto';
-import { ProductionStaffApproveDto } from './dto/production-staff-approve.dto';
 import { UpdateMaterialExportReceiptDto } from './dto/update-material-export-receipt.dto';
 import { WarehouseStaffExportDto } from './dto/warehouse-staff-export.dto';
 import { MaterialExportReceiptService } from './material-export-receipt.service';
@@ -166,19 +165,6 @@ export class MaterialExportReceiptController {
         WarehouseStaffExportDto,
       ),
       'Warehouse staff process successfully',
-    );
-  }
-
-  @Post('/production-staff-process')
-  async productionStaffProcess(
-    @Body() productionStaffApproveDto: ProductionStaffApproveDto,
-  ) {
-    return apiSuccess(
-      HttpStatus.OK,
-      await this.materialExportReceiptService.productionStaffApprove(
-        productionStaffApproveDto,
-      ),
-      'Production staff process successfully',
     );
   }
 

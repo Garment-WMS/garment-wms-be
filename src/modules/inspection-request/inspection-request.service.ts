@@ -39,6 +39,7 @@ export class InspectionRequestService {
         skip: offset,
         take: limit,
         include: inspectionRequestInclude,
+        orderBy: findOptions?.orderBy,
       }),
       this.prismaService.inspectionRequest.count({
         where: findOptions?.where,

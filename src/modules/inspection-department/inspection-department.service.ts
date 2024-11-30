@@ -23,6 +23,7 @@ export class InspectionDepartmentService {
         where: findOptions?.where,
         skip: offset,
         take: limit,
+        orderBy: findOptions?.orderBy,
         include: inspectionDepartmentInclude,
       }),
       this.prismaService.inspectionDepartment.count({

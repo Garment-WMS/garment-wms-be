@@ -22,10 +22,6 @@ import { TaskService } from '../task/task.service';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
 import { ExportAlgorithmParam } from './dto/export-algorithm-param.type';
 import { ExportAlgorithmResults } from './dto/export-algorithm-result.dto';
-import {
-  ProductionStaffApproveDto,
-  ProductionStaffCApproveAction,
-} from './dto/production-staff-approve.dto';
 import { UpdateMaterialExportReceiptDto } from './dto/update-material-export-receipt.dto';
 import {
   WarehouseStaffExportAction,
@@ -517,24 +513,6 @@ export class MaterialExportReceiptService {
       default:
         throw new Error('Invalid action');
     }
-  }
-
-  async productionStaffApprove(
-    productionStaffApproveDto: ProductionStaffApproveDto,
-  ) {
-    const materialExportRequest =
-      await this.prismaService.materialExportRequest.update({
-        where: { id: productionStaffApproveDto.materialExportRequestId },
-        data: {
-          status:
-            productionStaffApproveDto.action ===
-            ProductionStaffCApproveAction.PRODUCTION_APPROVED
-              ? $Enums.MaterialExportRequestStatus.PRODUCTION_APPROVED
-              : $Enums.MaterialExportRequestStatus.PRODUCTION_REJECTED,
-        },
-        include: materialExportRequestInclude,
-      });
-    return materialExportRequest;
   }
 
   async isAnyWaitOrInProgressReportPlan() {

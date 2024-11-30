@@ -32,7 +32,7 @@ export class InventoryReportService {
     private readonly productReceiptService: ProductReceiptService,
     private readonly importRequestService: ImportRequestService,
     private readonly materialExportReceiptService: MaterialExportReceiptService,
-    private readonly materialExportRequestService: MaterialExportRequestService
+    private readonly materialExportRequestService: MaterialExportRequestService,
   ) {}
 
   includeQuery: Prisma.InventoryReportInclude = {
@@ -93,7 +93,6 @@ export class InventoryReportService {
     },
   };
 
- 
   async handleApprovalInventoryReport(
     id: string,
     updateInventoryReportDetailDto: WarehouseManagerQuantityReportDetails,
@@ -148,11 +147,11 @@ export class InventoryReportService {
           to: new Date(),
         },
       });
-        await this.importRequestService.updateAwaitStatusToImportingStatus();
-        await this.importReceiptService.updateAwaitStatusToImportingStatus();
-        await this.materialExportReceiptService.updateAwaitStatusToExportingStatus();
-        await this.materialExportRequestService.updateAwaitStatusToExportingStatus();
-      }
+      await this.importRequestService.updateAwaitStatusToImportingStatus();
+      await this.importReceiptService.updateAwaitStatusToImportingStatus();
+      await this.materialExportReceiptService.updateAwaitStatusToExportingStatus();
+      await this.materialExportRequestService.updateAwaitStatusToExportingStatus();
+    }
 
     // const
 
@@ -267,6 +266,7 @@ export class InventoryReportService {
         include: this.includeQuery,
         skip: page,
         take: limit,
+        orderBy: findOptions?.orderBy,
       }),
       this.prismaService.inventoryReport.count({
         where: {
@@ -506,6 +506,7 @@ export class InventoryReportService {
         include: this.includeQuery,
         skip: page,
         take: limit,
+        orderBy: findOptions?.orderBy,
       }) as any,
       this.prismaService.inventoryReport.count({
         where: rest?.where,

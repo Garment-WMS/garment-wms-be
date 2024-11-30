@@ -89,6 +89,7 @@ export class MaterialVariantService {
       this.prismaService.materialVariant.findMany({
         skip: offset,
         take: limit,
+        orderBy: findOptions?.orderBy,
         where: {
           materialPackage: {
             some: {
@@ -152,6 +153,7 @@ export class MaterialVariantService {
       this.prismaService.materialExportReceiptDetail.findMany({
         skip: offset,
         take: limit,
+        orderBy: findOptions?.orderBy,
         where: {
           materialReceipt: {
             materialPackage: {
@@ -199,6 +201,7 @@ export class MaterialVariantService {
       this.prismaService.materialReceipt.findMany({
         skip: offset,
         take: limit,
+        orderBy: findOptions?.orderBy,
         where: {
           materialPackage: {
             materialVariantId: id,
@@ -207,7 +210,6 @@ export class MaterialVariantService {
         include: {
           materialPackage: true,
         },
-        orderBy: findOptions?.orderBy,
       }),
       this.prismaService.materialReceipt.count({
         where: {
