@@ -123,6 +123,18 @@ export class InventoryReportPlanController {
       user.warehouseManagerId,
     );
   }
+  @Patch(':id/await')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER)
+  awaitInventoryReportPlan(
+    @Param('id', CustomUUIDPipe) id: string,
+    @GetUser() user: AuthenUser,
+  ) {
+    return this.inventoryReportPlanService.awaitRecordInventoryReportPlan(
+      id,
+      user.warehouseManagerId,
+    );
+  }
 
   @Get(':id')
   findOne(@Param('id') id: string) {

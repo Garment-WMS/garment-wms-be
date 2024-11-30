@@ -764,6 +764,7 @@ export class ImportReceiptService {
     });
   }
   async test() {
+    console.log('asd');
     await this.importReceiptQueue.add('check-last-importing-receipt', {});
     return apiSuccess(200, {}, 'Test');
   }

@@ -49,11 +49,31 @@ export class InventoryReportPlanService {
     await this.startAwaitInventoryReportPlan();
   }
 
+  async awaitRecordInventoryReportPlan(id: string, warehouseManagerId: string) {
+    const inventoryReportPlan = await this.findById(id);
+    if (!inventoryReportPlan) {
+      throw new BadRequestException('Inventory report plan not found');
+    }
+
+    if (inventoryReportPlan.status !== InventoryReportPlanStatus.NOT_YET) {
+      throw new BadRequestException(
+        'Inventory report plan is already in progress',
+      );
+    }
+    await this.updateStatus(id, InventoryReportPlanStatus.AWAIT);
+    return apiSuccess(
+      HttpStatus.NO_CONTENT,
+      {},
+      'Inventory report plan started successfully',
+    );
+  }
+
   async startRecordInventoryReportPlan(id: string, warehouseManager: string) {
     const isAnyImportingImportRequest =
       await this.importRequestService.isAnyImportingImportRequest();
     const isAnyExportingExportRequest =
       await this.materialExportRequestService.isAnyExportingExportRequest();
+    // const isAnyImportingImportReceipt = await this.importReceiptService.isAnyImportingImportReceipt();
     if (
       isAnyImportingImportRequest.length > 0 ||
       isAnyExportingExportRequest.length > 0
@@ -63,6 +83,21 @@ export class InventoryReportPlanService {
         HttpStatus.CONFLICT,
         'Cannot start recording inventory report plan while there is importing import request',
         { isAnyImportingImportRequest, isAnyExportingExportRequest },
+      );
+    }
+
+    const inventoryReportPlan = await this.findById(id);
+    if (!inventoryReportPlan) {
+      throw new BadRequestException('Inventory report plan not found');
+    }
+    if (inventoryReportPlan.status === InventoryReportPlanStatus.FINISHED) {
+      throw new BadRequestException(
+        'Inventory report plan is already in progress',
+      );
+    }
+    if (inventoryReportPlan.status === InventoryReportPlanStatus.IN_PROGRESS) {
+      throw new BadRequestException(
+        'Inventory report plan is already in progress',
       );
     }
 
