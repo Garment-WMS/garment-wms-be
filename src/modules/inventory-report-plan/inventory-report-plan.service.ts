@@ -12,9 +12,11 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { ImportReceiptService } from '../import-receipt/import-receipt.service';
 import { ImportRequestService } from '../import-request/import-request.service';
 import { InventoryReportPlanDetailService } from '../inventory-report-plan-detail/inventory-report-plan-detail.service';
 import { InventoryReportService } from '../inventory-report/inventory-report.service';
+import { MaterialExportReceiptService } from '../material-export-receipt/material-export-receipt.service';
 import { MaterialExportRequestService } from '../material-export-request/material-export-request.service';
 import { MaterialVariantService } from '../material-variant/material-variant.service';
 import { ProductVariantService } from '../product-variant/product-variant.service';
@@ -24,8 +26,6 @@ import { CreateInventoryReportPlanDto } from './dto/create-inventory-report-plan
 import { InventoryReportPlanDto } from './dto/inventory-report-plan.dto';
 import { CreateOverAllInventoryReportPlanDto } from './dto/over-all-report-plan.dto';
 import { UpdateInventoryReportPlanDto } from './dto/update-inventory-report-plan.dto';
-import { ImportReceiptService } from '../import-receipt/import-receipt.service';
-import { MaterialExportReceiptService } from '../material-export-receipt/material-export-receipt.service';
 
 @Injectable()
 export class InventoryReportPlanService {
@@ -38,7 +38,7 @@ export class InventoryReportPlanService {
     private readonly importRequestService: ImportRequestService,
     private readonly materialExportRequestService: MaterialExportRequestService,
     private readonly taskService: TaskService,
-    private readonly importReceiptService: ImportReceiptService ,
+    private readonly importReceiptService: ImportReceiptService,
     private readonly materialExportReceiptService: MaterialExportReceiptService,
   ) {}
 
@@ -47,7 +47,6 @@ export class InventoryReportPlanService {
       await this.importRequestService.isAnyImportingImportRequest();
     const isAnyExportingExportRequest =
       await this.materialExportRequestService.isAnyExportingExportRequest();
-
     if (
       isAnyImportingImportRequest.length > 0 ||
       isAnyExportingExportRequest.length > 0
@@ -182,13 +181,12 @@ export class InventoryReportPlanService {
       });
     });
     await this.taskService.createMany(createTaskDto, this.prismaService);
-    
+
     return apiSuccess(
       HttpStatus.CREATED,
       result,
       'Inventory report plan created successfully',
     );
-  
   }
 
   async checkLastInventoryReportInPlan(inventoryReportId: string) {
@@ -210,7 +208,6 @@ export class InventoryReportPlanService {
       await this.importReceiptService.updateAwaitStatusToImportingStatus();
       await this.materialExportReceiptService.updateAwaitStatusToExportingStatus();
       await this.materialExportRequestService.updateAwaitStatusToExportingStatus();
-      
     }
     return result;
   }
@@ -259,7 +256,6 @@ export class InventoryReportPlanService {
     //     'All inventory report plan detail already processed',
     //   );
     // }
-    console.log(inventoryReportPlanDetailBelongToWarehouseStaff);
 
     const inventoryReportInput: InventoryReportPlanDto = {
       ...inventoryReportPlan,
@@ -289,16 +285,23 @@ export class InventoryReportPlanService {
       },
     });
 
-    if (inventoryReportPlan.status === InventoryReportPlanStatus.NOT_YET) {
+    if (
+      inventoryReportPlan.status === InventoryReportPlanStatus.NOT_YET ||
+      inventoryReportPlan.status === InventoryReportPlanStatus.AWAIT
+    ) {
       await prismaInstance.inventoryReportPlan.update({
         where: { id },
         data: {
           status: InventoryReportPlanStatus.IN_PROGRESS,
         },
       });
+    } else {
+      throw new BadRequestException(
+        'Inventory report plan is already in progress',
+      );
     }
 
-    return apiSuccess(204, {}, 'Inventory report plan processed successfully');
+    return apiSuccess(200, {}, 'Inventory report plan processed successfully');
   }
   findById(id: string) {
     if (!isUUID(id)) {
