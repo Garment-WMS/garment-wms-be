@@ -634,16 +634,20 @@ export class ImportRequestService {
     switch (authenUser.role) {
       case RoleCode.WAREHOUSE_MANAGER:
         findOptions.where = {
+          ...findOptions.where,
           warehouseManagerId: authenUser.warehouseManagerId,
         };
         return this.search(findOptions);
       case RoleCode.WAREHOUSE_STAFF:
         findOptions.where = {
+          ...findOptions.where,
           warehouseStaffId: authenUser.warehouseStaffId,
         };
+        console.log(findOptions);
         return this.search(findOptions);
       case RoleCode.PURCHASING_STAFF:
         findOptions.where = {
+          ...findOptions.where,
           purchasingStaffId: authenUser.purchasingStaffId,
         };
         return this.search(findOptions);
