@@ -305,7 +305,6 @@ export class PoDeliveryService {
       where: { id },
       data: {
         status,
-        
       },
     });
     if (result) {
@@ -320,10 +319,11 @@ export class PoDeliveryService {
 
       //If there is no other po delivery with PENDING STATUS, update the purchase order status to FINISHED
       if (resultWithSameStatus.length === 0) {
+        console.log('update po status', result);
         await prismaInstance.purchaseOrder.update({
           where: {
             id: result.purchaseOrderId,
-            status: $Enums.PurchaseOrderStatus.IN_PROGRESS,
+            // status: $Enums.PurchaseOrderStatus.IN_PROGRESS,
           },
           data: {
             status: $Enums.PurchaseOrderStatus.FINISHED,

@@ -203,6 +203,12 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
     include: {
       inspectionReport: {
         include: {
+          importReceipt: {
+            include: {
+              productReceipt: true,
+              materialReceipt: true,
+            },
+          },
           inspectionReportDetail: {
             include: {
               materialPackage: {
@@ -262,6 +268,12 @@ export const inspectionReportInclude: Prisma.InspectionReportInclude = {
 
   inspectionReportDetail: {
     include: inspectionReportDetailWithoutInspectionReportInclude,
+  },
+  importReceipt: {
+    include: {
+      materialReceipt: true,
+      productReceipt: true,
+    },
   },
 };
 

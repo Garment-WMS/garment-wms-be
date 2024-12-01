@@ -6,7 +6,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, ProductionBatch, ProductionBatchStatus } from '@prisma/client';
-import { productionBatchInclude } from 'prisma/prisma-include';
+import {
+  importRequestInclude,
+  productionBatchInclude,
+} from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
@@ -19,6 +22,13 @@ import { ProductPlanDetailService } from '../product-plan-detail/product-plan-de
 import { ProductionBatchMaterialVariantService } from '../production-batch-material-variant/production-batch-material-variant.service';
 import { CreateProductionBatchDto } from './dto/create-production-batch.dto';
 import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
+
+type ProductionBatchWithInclude = Prisma.ProductionBatchGetPayload<{
+  include: typeof productionBatchInclude;
+}> & { numberOfProducedProduct: number };
+type ImportRequestWithInclude = Prisma.ImportRequestGetPayload<{
+  include: typeof importRequestInclude;
+}>;
 
 @Injectable()
 export class ProductionBatchService {
@@ -209,9 +219,29 @@ export class ProductionBatchService {
   }
 
   async findUnique(id: string) {
-    const data = await this.prismaService.productionBatch.findFirst({
+    const data = (await this.prismaService.productionBatch.findFirst({
       where: { id },
       include: productionBatchInclude,
+    })) as ProductionBatchWithInclude;
+    data.numberOfProducedProduct = 0;
+    data?.importRequest.forEach((request: ImportRequestWithInclude) => {
+      if (request.inspectionRequest) {
+        request.inspectionRequest.forEach((inspectionRequest: any) => {
+          if (inspectionRequest.inspectionReport) {
+            if (
+              inspectionRequest.inspectionReport?.importReceipt &&
+              inspectionRequest.inspectionReport.importReceipt.status ===
+                'IMPORTED'
+            ) {
+              data.numberOfProducedProduct =
+                inspectionRequest.inspectionReport.importReceipt.productReceipt.reduce(
+                  (acc, current) => acc + current.quantityByUom,
+                  0,
+                );
+            }
+          }
+        });
+      }
     });
     if (!data) {
       throw new NotFoundException('Production batch not found');
