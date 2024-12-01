@@ -5,7 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { $Enums, Prisma, Task } from '@prisma/client';
+import { $Enums, Prisma } from '@prisma/client';
 import { taskInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -28,7 +28,7 @@ export class TaskService {
       data: taskCreateInput,
     });
 
-    this.mockExpectFinishAt(task);
+    // this.mockExpectFinishAt(task);
     await this.createMockTodos(task);
     return task;
   }
@@ -53,18 +53,18 @@ export class TaskService {
     return task;
   }
 
-  mockExpectFinishAt(task: Task | CreateTaskDto) {
-    const expectFinishedAt = new Date(task.startedAt);
-    switch (task.taskType) {
-      case $Enums.TaskType.INSPECTION:
-        expectFinishedAt.setMinutes(task.startedAt.getMinutes() + 30);
-        break;
-      case $Enums.TaskType.IMPORT:
-        expectFinishedAt.setMinutes(task.startedAt.getMinutes() + 15);
-        break;
-    }
-    return (task.expectedFinishedAt = expectFinishedAt);
-  }
+  // mockExpectFinishAt(task: Task | CreateTaskDto) {
+  //   const expectFinishedAt = new Date(task.startedAt);
+  //   switch (task.taskType) {
+  //     case $Enums.TaskType.INSPECTION:
+  //       expectFinishedAt.setMinutes(task.startedAt.getMinutes() + 30);
+  //       break;
+  //     case $Enums.TaskType.IMPORT:
+  //       expectFinishedAt.setMinutes(task.startedAt.getMinutes() + 15);
+  //       break;
+  //   }
+  //   return (task.expectedFinishedAt = expectFinishedAt);
+  // }
 
   async createMockTodos(...tasks: Prisma.TaskWhereUniqueInput[]) {
     let mockTodos: Prisma.TodoCreateManyInput[] = [];
