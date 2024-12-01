@@ -42,7 +42,7 @@ export class TaskController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.TaskWhereInput>(
         [],
-        [{ createdAt: 'desc' }, { id: 'asc' }],
+        [{ createdAt: 'desc' },
       ),
     )
     filterDto: FilterDto<Prisma.TaskWhereInput>,

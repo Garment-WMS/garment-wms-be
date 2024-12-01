@@ -42,21 +42,6 @@ export class PurchaseOrderController {
           {
             createdAt: 'desc',
           },
-          {
-            id: 'asc',
-          },
-          {
-            taxAmount: 'asc',
-          },
-          {
-            finishDate: 'asc',
-          },
-          {
-            orderDate: 'asc',
-          },
-          {
-            poNumber: 'asc',
-          },
         ],
       ),
     )

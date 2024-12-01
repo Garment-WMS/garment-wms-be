@@ -21,7 +21,7 @@ export class WarehouseStaffController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.WarehouseStaffWhereInput>(
         ['importRequest.id', 'importReceipt.id'],
-        [{ id: 'asc', createdAt: 'desc', updatedAt: 'desc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterDto: FilterDto<Prisma.WarehouseStaffWhereInput>,

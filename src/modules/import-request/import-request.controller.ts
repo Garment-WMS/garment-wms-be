@@ -79,7 +79,7 @@ export class ImportRequestController {
           'inspectionRequest.inspectionReport.code',
           'inspectionRequest.inspectionReport.importReceipt.id',
         ],
-        [{ createdAt: 'desc' }, { id: 'asc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterDto: FilterDto<Prisma.ImportRequestWhereInput>,
@@ -109,7 +109,7 @@ export class ImportRequestController {
           'inspectionRequest.inspectionReport.code',
           'inspectionRequest.inspectionReport.importReceipt.id',
         ],
-        [{ createdAt: 'desc' }, { id: 'asc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterDto: FilterDto<Prisma.ImportRequestWhereInput>,

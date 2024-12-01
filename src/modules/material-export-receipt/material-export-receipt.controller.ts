@@ -50,7 +50,7 @@ export class MaterialExportReceiptController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.MaterialExportReceiptWhereInput>(
         [],
-        [{ createdAt: 'desc' }, { id: 'asc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterDto: FilterDto<Prisma.MaterialExportReceiptWhereInput>,
@@ -68,7 +68,7 @@ export class MaterialExportReceiptController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.MaterialExportReceiptWhereInput>(
         [],
-        [{ createdAt: 'desc' }, { id: 'asc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterOptions: FilterDto<Prisma.MaterialExportReceiptWhereInput>,
@@ -89,7 +89,7 @@ export class MaterialExportReceiptController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.MaterialExportReceiptWhereInput>(
         [],
-        [{ createdAt: 'desc' }, { id: 'asc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterDto: FilterDto<Prisma.MaterialExportReceiptWhereInput>,

@@ -29,7 +29,7 @@ export class ProductReceiptController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.ProductReceiptScalarWhereInput>(
         [],
-        [{ code: 'asc' }, { createdAt: 'desc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterOptions: FilterDto<Prisma.ProductReceiptScalarWhereInput>,
@@ -41,7 +41,6 @@ export class ProductReceiptController {
   findByCode(@Query('code') code: string) {
     return this.productReceiptService.findByCode(code);
   }
-
 
   @Get(':id')
   findOne(@Param('id') id: string) {

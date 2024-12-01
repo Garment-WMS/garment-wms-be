@@ -95,7 +95,7 @@ export class ImportReceiptController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.ImportReceiptWhereInput>(
         ['inspectionReport.inspectionRequest.importRequestId'],
-        [{ createdAt: 'desc' }, { id: 'asc' }, { updatedAt: 'asc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterOptions: FilterDto<Prisma.ImportReceiptWhereInput>,

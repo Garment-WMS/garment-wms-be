@@ -107,7 +107,7 @@ export class ProductVariantController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.ProductReceiptScalarWhereInput>(
         [],
-        [{ code: 'asc' }, { createdAt: 'desc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterOptions: FilterDto<Prisma.ProductReceiptScalarWhereInput>,
@@ -125,7 +125,7 @@ export class ProductVariantController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.ProductReceiptScalarWhereInput>(
         [],
-        [{ code: 'asc' }, { createdAt: 'desc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterOptions: FilterDto<Prisma.ProductReceiptScalarWhereInput>,

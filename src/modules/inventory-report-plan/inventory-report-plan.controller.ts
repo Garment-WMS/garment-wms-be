@@ -66,7 +66,7 @@ export class InventoryReportPlanController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.InventoryReportPlanWhereInput>(
         [],
-        [{ createdAt: 'desc' }, { id: 'asc' }, { updatedAt: 'asc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterOptions: FilterDto<Prisma.InventoryReportPlanWhereInput>,
@@ -87,7 +87,7 @@ export class InventoryReportPlanController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.InventoryReportPlanWhereInput>(
         [],
-        [{ createdAt: 'desc' }, { id: 'asc' }, { updatedAt: 'asc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterOptions: FilterDto<Prisma.InventoryReportPlanWhereInput>,

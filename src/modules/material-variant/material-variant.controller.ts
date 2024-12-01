@@ -140,7 +140,7 @@ export class MaterialVariantController {
           'materialPackage.code',
           'materialPackage.name',
         ],
-        [{ code: 'asc' }, { createdAt: 'desc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterOptions: FilterDto<Prisma.MaterialReceiptScalarWhereInput>,
@@ -163,7 +163,7 @@ export class MaterialVariantController {
           'materialPackage.code',
           'materialPackage.name',
         ],
-        [{ code: 'asc' }, { createdAt: 'desc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterOptions: FilterDto<Prisma.MaterialReceiptScalarWhereInput>,

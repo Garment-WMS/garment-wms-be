@@ -42,15 +42,7 @@ export class InspectionRequestController {
           'inspectionReport.code',
           'inspectionReport.status',
         ],
-        [
-          { createdAt: 'desc' },
-          { id: 'asc' },
-          { status: 'asc' },
-          { inspectionDepartmentId: 'asc' },
-          { purchasingStaffId: 'asc' },
-          { warehouseManagerId: 'asc' },
-          { importRequestId: 'asc' },
-        ],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterOptions: FilterDto<Prisma.InspectionRequestWhereInput>,
@@ -78,7 +70,7 @@ export class InspectionRequestController {
           'inspectionReport.code',
           'inspectionReport.status',
         ],
-        [{ createdAt: 'desc' }, { id: 'asc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterDto: FilterDto<Prisma.InspectionRequestWhereInput>,

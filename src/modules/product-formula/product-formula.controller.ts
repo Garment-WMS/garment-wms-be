@@ -55,7 +55,7 @@ export class ProductFormulaController {
           'productSize.productVariantId',
           'productSize.productVariant.productId',
         ],
-        [{ createdAt: 'desc' }, { id: 'asc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterDto: FilterDto<Prisma.ProductFormulaWhereInput>,

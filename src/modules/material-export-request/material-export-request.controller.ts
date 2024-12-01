@@ -56,7 +56,7 @@ export class MaterialExportRequestController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.MaterialExportRequestWhereInput>(
         [],
-        [{ createdAt: 'desc' }, { id: 'asc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterDto: FilterDto<Prisma.MaterialExportRequestWhereInput>,
@@ -88,7 +88,7 @@ export class MaterialExportRequestController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.MaterialExportRequestWhereInput>(
         [],
-        [{ createdAt: 'desc' }, { id: 'asc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterOptions: FilterDto<Prisma.MaterialExportRequestWhereInput>,

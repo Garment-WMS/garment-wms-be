@@ -56,13 +56,7 @@ export class InspectionReportController {
         Prisma.InspectionReportWhereInput
       >(
         ['inspectionRequest.importRequestId', 'inspectionRequest.code'],
-        [
-          { createdAt: 'desc' },
-          { id: 'asc' },
-          { code: 'asc' },
-          { inspectionRequestId: 'asc' },
-          // { inspectionDepartmentId: 'asc' },
-        ],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterDto: FilterDto<Prisma.InspectionReportWhereInput>,
