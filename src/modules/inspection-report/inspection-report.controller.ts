@@ -108,4 +108,19 @@ export class InspectionReportController {
       'Inspection report deleted successfully',
     );
   }
+
+  @Post('/skip-by-inspection-request-id/:inspection-request-id')
+  async skipByInspectionRequestId(
+    @GetUser() user: AuthenUser,
+    @Param('inspection-request-id') inspectionRequestId: string,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.inspectionReportService.skipByInspectionRequestId(
+        inspectionRequestId,
+        user,
+      ),
+      'Inspection report skipped successfully',
+    );
+  }
 }

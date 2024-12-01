@@ -66,16 +66,16 @@ export class MaterialExportRequestService {
     }
   }
 
-  async updateAwaitStatusToExportingStatus() {
-    await this.prismaService.materialExportRequest.updateMany({
-      where: {
-        status: MaterialExportRequestStatus.AWAIT_TO_EXPORT,
-      },
-      data: {
-        status: MaterialExportRequestStatus.EXPORTING,
-      },
-    });
-  }
+  // async updateAwaitStatusToExportingStatus() {
+  //   await this.prismaService.materialExportRequest.updateMany({
+  //     where: {
+  //       status: MaterialExportRequestStatus.AWAIT_TO_EXPORT,
+  //     },
+  //     data: {
+  //       status: MaterialExportRequestStatus.EXPORTING,
+  //     },
+  //   });
+  // }
 
   async isAnyExportingExportRequest() {
     const result = await this.prismaService.materialExportRequest.findMany({

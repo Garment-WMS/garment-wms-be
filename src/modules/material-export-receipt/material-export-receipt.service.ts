@@ -6,7 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { $Enums, ExportReceiptStatus, Prisma, RoleCode } from '@prisma/client';
+import { $Enums, Prisma, RoleCode } from '@prisma/client';
 import {
   materialExportReceiptInclude,
   materialExportRequestInclude,
@@ -72,16 +72,16 @@ export class MaterialExportReceiptService {
     return data;
   }
 
-  async updateAwaitStatusToExportingStatus() {
-    await this.prismaService.materialExportReceipt.updateMany({
-      where: {
-        status: ExportReceiptStatus.AWAIT_TO_EXPORT,
-      },
-      data: {
-        status: ExportReceiptStatus.EXPORTING,
-      },
-    });
-  }
+  // async updateAwaitStatusToExportingStatus() {
+  //   await this.prismaService.materialExportReceipt.updateMany({
+  //     where: {
+  //       status: ExportReceiptStatus.AWAIT_TO_EXPORT,
+  //     },
+  //     data: {
+  //       status: ExportReceiptStatus.EXPORTING,
+  //     },
+  //   });
+  // }
 
   async create(createMaterialExportReceiptDto: CreateMaterialExportReceiptDto) {
     const input: Prisma.MaterialExportReceiptUncheckedCreateInput = {

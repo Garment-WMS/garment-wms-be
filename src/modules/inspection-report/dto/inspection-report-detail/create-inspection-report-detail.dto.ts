@@ -21,7 +21,7 @@ export class CreateInspectionReportDetailDto {
   @IsOptional()
   @IsUUID()
   @IsInspectionReportNotExist()
-  inspectionReportId: string;
+  inspectionReportId?: string;
 
   @ApiProperty({ required: true, type: 'number' })
   @IsOptional()
@@ -44,7 +44,7 @@ export class CreateInspectionReportDetailDto {
   @IsUUID()
   @IsMaterialPackageExist()
   @AtLeastOneExists(['materialPackageId', 'productSizeId'])
-  materialPackageId: string;
+  materialPackageId?: string;
 
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsOptional()
@@ -54,7 +54,7 @@ export class CreateInspectionReportDetailDto {
   )
   @IsUUID()
   @IsProductSizeExist()
-  productSizeId: string;
+  productSizeId?: string;
 
   @ApiProperty({ required: false, type: 'array', items: { type: 'object' } })
   @ValidateNested({ each: true })
@@ -67,5 +67,5 @@ export class CreateInspectionReportDetailDto {
   // @ValidateIf(
   //   (o: CreateInspectionReportDetailDto) => o.defectQuantityByPack > 0,
   // )
-  inspectionReportDetailDefect: CreateInspectionReportDetailDefectDto[];
+  inspectionReportDetailDefect?: CreateInspectionReportDetailDefectDto[];
 }

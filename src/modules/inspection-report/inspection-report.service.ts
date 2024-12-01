@@ -7,7 +7,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { $Enums, Prisma, PrismaClient } from '@prisma/client';
+import { $Enums, ImportRequest, Prisma, PrismaClient } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import {
   importRequestInclude,
@@ -24,7 +24,6 @@ import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ChatService } from '../chat/chat.service';
 import { CreateChatDto } from '../chat/dto/create-chat.dto';
-import { DiscussionService } from '../discussion/discussion.service';
 import { CreateImportReceiptDto } from '../import-receipt/dto/create-import-receipt.dto';
 import { ImportReceiptService } from '../import-receipt/import-receipt.service';
 import { TaskService } from '../task/task.service';
@@ -303,6 +302,48 @@ export class InspectionReportService {
     return inspectionReport ? true : false;
   }
 
+  async skipByInspectionRequestId(
+    inspectionRequestId: string,
+    user: AuthenUser,
+  ) {
+    const importRequest = await this.prismaService.importRequest.findFirst({
+      where: {
+        inspectionRequest: {
+          some: {
+            id: inspectionRequestId,
+            deletedAt: null,
+          },
+        },
+      },
+      include: {
+        importRequestDetail: {
+          include: {
+            materialPackage: true,
+            productSize: true,
+          },
+        },
+      },
+    });
+    if (importRequest.status !== 'INSPECTING') {
+      throw new BadRequestException(
+        'Only INSPECTING import requests are supported',
+      );
+    }
+    const dto: CreateInspectionReportDto = {
+      inspectionRequestId: inspectionRequestId,
+      inspectionReportDetail: importRequest.importRequestDetail.map(
+        (detail) => ({
+          materialPackageId: detail.materialPackageId,
+          productSizeId: detail.productSizeId,
+          quantityByPack: detail.quantityByPack,
+          approvedQuantityByPack: detail.quantityByPack,
+          defectQuantityByPack: 0,
+        }),
+      ),
+    };
+    const inspectionReport = await this.create(dto, user);
+  }
+
   async create(dto: CreateInspectionReportDto, user: AuthenUser) {
     //check inspection request valid
     if (
@@ -320,7 +361,9 @@ export class InspectionReportService {
       dto,
       importRequest,
     );
-    this.mapInspectionReportDetail(dto, importRequest);
+    dto.type = importRequest.type.startsWith('MATERIAL')
+      ? $Enums.InspectionReportType.MATERIAL
+      : $Enums.InspectionReportType.PRODUCT;
 
     //log inspection report detail
     dto.inspectionReportDetail.forEach((inspectionReportDetail) => {
@@ -376,16 +419,8 @@ export class InspectionReportService {
     );
     result.inspectionReport = await this.findUnique(result.inspectionReport.id);
     //auto create import receipt
-    const importReceipt = await this.createImportReceipt(
-      {
-        importRequestId: importRequest.id,
-        type: importRequest.type.startsWith('MATERIAL')
-          ? $Enums.ReceiptType.MATERIAL
-          : $Enums.ReceiptType.PRODUCT,
-        startAt: new Date(),
-      },
-      importRequest.warehouseManagerId,
-    );
+    const importReceipt =
+      await this.createImportReceiptAfterInspected(importRequest);
 
     const chat: CreateChatDto = {
       discussionId: importRequest?.discussion.id,
@@ -490,6 +525,25 @@ export class InspectionReportService {
     });
   }
 
+  async updateImportRequestStatusByImportRequestIdToAwaitToImport(
+    importRequestId: string,
+    prismaInstance: Omit<
+      PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+    >,
+  ) {
+    const prisma = prismaInstance || this.prismaService;
+
+    return await prisma.importRequest.update({
+      where: {
+        id: importRequestId,
+      },
+      data: {
+        status: $Enums.ImportRequestStatus.AWAIT_TO_IMPORT,
+      },
+    });
+  }
+
   async update(id: string, dto: UpdateInspectionReportDto) {
     // Extract the IDs of the details to be updated
     const detailIds = dto.inspectionReportDetail
@@ -547,20 +601,26 @@ export class InspectionReportService {
     });
   }
 
-  async createImportReceipt(
-    createImportReceiptDto: CreateImportReceiptDto,
-    managerId: string,
-  ) {
+  async createImportReceiptAfterInspected(importRequest: ImportRequest) {
+    const createImportReceiptDto: CreateImportReceiptDto = {
+      importRequestId: importRequest.id,
+      type: importRequest.type.startsWith('MATERIAL')
+        ? $Enums.ReceiptType.MATERIAL
+        : $Enums.ReceiptType.PRODUCT,
+      expectedStartAt: importRequest.importExpectedStartedAt,
+      expectedFinishAt: importRequest.importExpectedFinishedAt,
+      note: 'Import receipt was automatically created after inspection',
+    };
     switch (createImportReceiptDto.type) {
       case $Enums.ReceiptType.MATERIAL:
         return this.importReceiptService.createMaterialReceipt(
           createImportReceiptDto,
-          managerId,
+          importRequest.warehouseManagerId,
         );
       case $Enums.ReceiptType.PRODUCT:
         return this.importReceiptService.createProductReceipt(
           createImportReceiptDto,
-          managerId,
+          importRequest.warehouseManagerId,
         );
     }
   }

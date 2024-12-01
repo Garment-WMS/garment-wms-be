@@ -63,7 +63,7 @@ export class TaskService {
         expectFinishedAt.setMinutes(task.startedAt.getMinutes() + 15);
         break;
     }
-    return (task.expectFinishedAt = expectFinishedAt);
+    return (task.expectedFinishedAt = expectFinishedAt);
   }
 
   async createMockTodos(...tasks: Prisma.TaskWhereUniqueInput[]) {
@@ -217,6 +217,27 @@ export class TaskService {
     });
   }
 
+  async updateTaskStatusToInProgress(
+    taskWhereInput: Prisma.TaskWhereInput,
+    prismaInstance?: PrismaService,
+  ) {
+    const prismaService = prismaInstance || this.prismaService;
+    const taskToUpdate = await prismaService.task.findFirst({
+      where: taskWhereInput,
+      select: { id: true },
+    });
+    if (!taskToUpdate) {
+      Logger.error(
+        `Cannot auto start Task with ${JSON.stringify(taskWhereInput)} because of not found`,
+      );
+      return null;
+    }
+    return await this.prismaService.task.update({
+      where: { id: taskToUpdate.id },
+      data: { status: $Enums.TaskStatus.IN_PROGRESS, startedAt: new Date() },
+    });
+  }
+
   async updateTaskStatusToDone(taskWhereInput: Prisma.TaskWhereInput) {
     const taskToUpdate = await this.prismaService.task.findFirst({
       where: taskWhereInput,
@@ -230,7 +251,7 @@ export class TaskService {
     }
     return await this.prismaService.task.update({
       where: { id: taskToUpdate.id },
-      data: { status: $Enums.TaskStatus.DONE },
+      data: { status: $Enums.TaskStatus.DONE, finishedAt: new Date() },
     });
   }
 
@@ -281,7 +302,7 @@ export class TaskService {
                         },
                       },
                       {
-                        expectFinishedAt: {
+                        expectedFinishedAt: {
                           gte: expectedStartAt,
                           lte: expectedEndAt,
                         },
@@ -303,7 +324,7 @@ export class TaskService {
             },
             orderBy: [
               {
-                expectFinishedAt: 'asc',
+                expectedFinishedAt: 'asc',
               },
               {
                 startedAt: 'desc',
@@ -330,7 +351,7 @@ export class TaskService {
             },
             orderBy: [
               {
-                expectFinishedAt: 'asc',
+                expectedFinishedAt: 'asc',
               },
               {
                 startedAt: 'desc',
@@ -364,7 +385,7 @@ export class TaskService {
                         },
                       },
                       {
-                        expectFinishedAt: {
+                        expectedFinishedAt: {
                           gte: expectedStartAt,
                           lte: expectedEndAt,
                         },
@@ -386,7 +407,7 @@ export class TaskService {
             },
             orderBy: [
               {
-                expectFinishedAt: 'asc',
+                expectedFinishedAt: 'asc',
               },
               {
                 startedAt: 'desc',
@@ -413,7 +434,7 @@ export class TaskService {
             },
             orderBy: [
               {
-                expectFinishedAt: 'asc',
+                expectedFinishedAt: 'asc',
               },
               {
                 startedAt: 'desc',

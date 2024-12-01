@@ -3,6 +3,7 @@ import { ReceiptType } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsDate,
+  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -37,6 +38,20 @@ export class CreateImportReceiptDto {
   @IsDate()
   @Transform(({ value }) => new Date(value))
   @MinDate(new Date())
-  startAt: Date;
+  startAt?: Date;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsDateString()
+  expectedStartAt: Date;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsDate()
   finishAt?: Date;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsDateString()
+  expectedFinishAt: Date;
 }

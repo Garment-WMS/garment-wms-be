@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import {
   $Enums,
+  ImportRequest,
   ImportRequestStatus,
   Prisma,
   PrismaClient,
@@ -32,6 +33,7 @@ import { DiscussionService } from '../discussion/discussion.service';
 import { InspectionRequestService } from '../inspection-request/inspection-request.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { ProductionBatchService } from '../production-batch/production-batch.service';
+import { CreateTaskDto } from '../task/dto/create-task.dto';
 import { TaskService } from '../task/task.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { CreateProductImportRequestDto } from './dto/import-request/create-product-import-request.dto';
@@ -50,16 +52,16 @@ export class ImportRequestService {
     private readonly discussionService: DiscussionService,
     private readonly taskService: TaskService,
   ) {}
-  async updateAwaitStatusToImportingStatus() {
-    await this.prismaService.importRequest.updateMany({
-      where: {
-        status: ImportRequestStatus.AWAIT_TO_IMPORT,
-      },
-      data: {
-        status: ImportRequestStatus.IMPORTING,
-      },
-    });
-  }
+  // async updateAwaitStatusToImportingStatus() {
+  //   await this.prismaService.importRequest.updateMany({
+  //     where: {
+  //       status: ImportRequestStatus.AWAIT_TO_IMPORT,
+  //     },
+  //     data: {
+  //       status: ImportRequestStatus.IMPORTING,
+  //     },
+  //   });
+  // }
   async getLatest(from: any, to: any) {
     const fromDate = from ? new Date(from) : undefined;
     const toDate = to ? new Date(to) : undefined;
@@ -504,6 +506,22 @@ export class ImportRequestService {
           `Allowed action is ${$Enums.ImportRequestStatus.APPROVED} or ${$Enums.ImportRequestStatus.REJECTED}`,
         );
     }
+  }
+
+  async createTaskByImportRequestAfterApproved(
+    importRequest: ImportRequest,
+    warehouseId: string,
+  ) {
+    const createTaskDto: CreateTaskDto = {
+      taskType: 'IMPORT',
+      importReceiptId: importRequest.id,
+      warehouseStaffId: warehouseId,
+      status: $Enums.TaskStatus.OPEN,
+      expectedStartedAt: importRequest.importExpectedStartedAt,
+      expectedFinishedAt: importRequest.importExpectedFinishedAt,
+    };
+    const task = await this.taskService.create(createTaskDto);
+    return task;
   }
 
   async getImportRequestOfInspectionRequest(inspectionRequestId: string) {

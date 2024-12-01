@@ -140,6 +140,8 @@ export class InspectionRequestService {
       status: createInspectionRequestDto.status,
       note: createInspectionRequestDto.note,
       code: undefined,
+      expectedStartedAt: createInspectionRequestDto.expectedStartedAt,
+      expectedFinishedAt: createInspectionRequestDto.expectedFinishedAt,
       type: await this.getInspectionRequestTypeByImportRequestId(
         createInspectionRequestDto.importRequestId,
       ),
@@ -177,7 +179,9 @@ export class InspectionRequestService {
       importRequestId: importRequest.id,
       inspectionDepartmentId: managerProcess.inspectionDepartmentId,
       warehouseManagerId: warehouseManagerId,
-      note: managerProcess.InspectionNote,
+      note:
+        managerProcess.InspectionNote ||
+        'Inspection Request is automatically created by system',
       expectedStartedAt: managerProcess.inspectExpectedStartedAt,
       expectedFinishedAt: managerProcess.inspectExpectedFinishedAt,
     };
@@ -204,8 +208,8 @@ export class InspectionRequestService {
       inspectionDepartmentId: inspectionDepartmentId,
       inspectionRequestId: inspectionRequestId,
       status: 'OPEN',
-      exportStartedAt: expectedStartedAt,
-      expectFinishedAt: expectedFinishedAt,
+      expectedStartedAt: expectedStartedAt,
+      expectedFinishedAt: expectedFinishedAt,
     };
     const task = await this.taskService.create(createTaskDto);
     return task;

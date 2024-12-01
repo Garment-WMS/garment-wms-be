@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -16,6 +17,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Prisma, RoleCode } from '@prisma/client';
 import { GetUser } from 'src/common/decorator/get_user.decorator';
 import { Roles } from 'src/common/decorator/roles.decorator';
+import { apiSuccess } from 'src/common/dto/api-response';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { RolesGuard } from 'src/common/guard/roles.guard';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
@@ -118,6 +120,20 @@ export class ImportReceiptController {
     @GetUser() user: AuthenUser,
   ) {
     return this.importReceiptService.finishImportReceipt(id, user);
+  }
+
+  @Patch('/:id/importing')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_STAFF)
+  async startImportReceipt(
+    @Param('id', CustomUUIDPipe) id: string,
+    @GetUser() user: AuthenUser,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.importReceiptService.updateImportReceiptStatusToImporting(id),
+      'Start import receipt successfully',
+    );
   }
 
   @Patch(':id')

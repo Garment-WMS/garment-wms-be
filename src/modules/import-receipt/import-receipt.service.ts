@@ -11,8 +11,8 @@ import {
 } from '@nestjs/common';
 import {
   $Enums,
+  ImportReceipt,
   ImportReceiptStatus,
-  ImportRequestStatus,
   PoDeliveryStatus,
   Prisma,
   ProductionBatchStatus,
@@ -43,7 +43,6 @@ import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-m
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { ProductReceiptService } from '../product-receipt/product-receipt.service';
 import { ProductionBatchService } from '../production-batch/production-batch.service';
-import { CreateTaskDto } from '../task/dto/create-task.dto';
 import { TaskService } from '../task/task.service';
 import { CreateImportReceiptDto } from './dto/create-import-receipt.dto';
 import { UpdateImportReceiptDto } from './dto/update-import-receipt.dto';
@@ -73,16 +72,16 @@ export class ImportReceiptService {
     });
   }
 
-  async updateAwaitStatusToImportingStatus() {
-    await this.prismaService.importReceipt.updateMany({
-      where: {
-        status: ImportRequestStatus.AWAIT_TO_IMPORT,
-      },
-      data: {
-        status: ImportRequestStatus.IMPORTING,
-      },
-    });
-  }
+  // async updateAwaitStatusToImportingStatus() {
+  //   await this.prismaService.importReceipt.updateMany({
+  //     where: {
+  //       status: ImportRequestStatus.AWAIT_TO_IMPORT,
+  //     },
+  //     data: {
+  //       status: ImportRequestStatus.IMPORTING,
+  //     },
+  //   });
+  // }
 
   async getLatest(from: any, to: any) {
     const fromDate = from ? new Date(from) : undefined;
@@ -188,7 +187,7 @@ export class ImportReceiptService {
         },
       },
       code: createImportReceiptDto.code,
-      status: $Enums.ImportReceiptStatus.IMPORTING,
+      status: $Enums.ImportReceiptStatus.AWAIT_TO_IMPORT,
       type: 'PRODUCT',
       note: createImportReceiptDto.note,
       startedAt: createImportReceiptDto.startAt,
@@ -200,15 +199,13 @@ export class ImportReceiptService {
     //   createImportReceiptDto.materialReceipts,
     // );
 
-    const isAnyAwaitOrInProgressReportPlan =
-      await this.isAnyWaitOrInProgressReportPlan();
+    // const isAnyAwaitOrInProgressReportPlan =
+    //   await this.isAnyWaitOrInProgressReportPlan();
 
-    let importRequestStatus: ImportRequestStatus =
-      ImportRequestStatus.IMPORTING;
-    if (isAnyAwaitOrInProgressReportPlan) {
-      importRequestStatus = ImportRequestStatus.AWAIT_TO_IMPORT;
-      importReceiptInput.status = ImportReceiptStatus.AWAIT_TO_IMPORT;
-    }
+    // if (isAnyAwaitOrInProgressReportPlan) {
+    //   importRequestStatus = ImportRequestStatus.AWAIT_TO_IMPORT;
+    //   importReceiptInput.status = ImportReceiptStatus.AWAIT_TO_IMPORT;
+    // }
 
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
@@ -233,7 +230,7 @@ export class ImportReceiptService {
           //Update import request status to Approved
           await this.importRequestService.updateImportRequestStatus(
             inspectionReport.inspectionRequest.importRequestId,
-            importRequestStatus,
+            importReceipt.status,
             prismaInstance,
           );
         }
@@ -242,10 +239,7 @@ export class ImportReceiptService {
     );
     if (result) {
       try {
-        await this.createTaskByImportReceipt(
-          result.id,
-          inspectionReport.inspectionRequest.importRequest.warehouseStaffId,
-        );
+        await this.updateTaskByImportReceipt(result);
         await this.discussionService.updateImportReceiptDiscussion(
           result.id,
           createImportReceiptDto.importRequestId,
@@ -303,7 +297,7 @@ export class ImportReceiptService {
         },
       },
       code: createImportReceiptDto.code,
-      status: $Enums.ImportReceiptStatus.IMPORTING,
+      status: $Enums.ImportReceiptStatus.AWAIT_TO_IMPORT,
       type: 'MATERIAL',
       note: createImportReceiptDto.note,
       startedAt: createImportReceiptDto.startAt,
@@ -318,12 +312,12 @@ export class ImportReceiptService {
     const isAnyAwaitOrInProgressReportPlan =
       await this.isAnyWaitOrInProgressReportPlan();
 
-    let importRequestStatus: ImportRequestStatus =
-      ImportRequestStatus.IMPORTING;
-    if (isAnyAwaitOrInProgressReportPlan) {
-      importRequestStatus = ImportRequestStatus.AWAIT_TO_IMPORT;
-      importReceiptInput.status = ImportReceiptStatus.AWAIT_TO_IMPORT;
-    }
+    // let importRequestStatus: ImportRequestStatus =
+    //   ImportRequestStatus.IMPORTING;
+    // if (isAnyAwaitOrInProgressReportPlan) {
+    //   importRequestStatus = ImportRequestStatus.AWAIT_TO_IMPORT;
+    //   importReceiptInput.status = ImportReceiptStatus.AWAIT_TO_IMPORT;
+    // }
 
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
@@ -405,7 +399,7 @@ export class ImportReceiptService {
           //Update import request status to Approved
           await this.importRequestService.updateImportRequestStatus(
             inspectionReport.inspectionRequest.importRequestId,
-            importRequestStatus,
+            importReceipt.status,
             prismaInstance,
           );
         }
@@ -414,10 +408,7 @@ export class ImportReceiptService {
     );
     if (result) {
       try {
-        await this.createTaskByImportReceipt(
-          result.id,
-          inspectionReport.inspectionRequest.importRequest.warehouseStaffId,
-        );
+        await this.updateTaskByImportReceipt(result);
         await this.discussionService.updateImportReceiptDiscussion(
           result.id,
           createImportReceiptDto.importRequestId,
@@ -452,18 +443,47 @@ export class ImportReceiptService {
     return result.length > 0;
   }
 
-  async createTaskByImportReceipt(
-    importReceiptId: string,
-    warehouseId: string,
-  ) {
-    const createTaskDto: CreateTaskDto = {
-      taskType: 'IMPORT',
-      importReceiptId: importReceiptId,
-      warehouseStaffId: warehouseId,
-      status: $Enums.TaskStatus.OPEN,
-    };
-    const task = await this.taskService.create(createTaskDto);
-    return task;
+  async updateTaskByImportReceipt(importReceipt: ImportReceipt) {
+    // const createTaskDto: CreateTaskDto = {
+    //   taskType: 'IMPORT',
+    //   importReceiptId: importReceipt.id,
+    //   warehouseStaffId: warehouseId,
+    //   status: $Enums.TaskStatus.OPEN,
+    //   expectedStartedAt: importReceipt.expectedStartedAt,
+    //   expectedFinishedAt: importReceipt.expectFinishedAt,
+    // };
+
+    const task = await this.prismaService.task.findFirst({
+      where: {
+        importRequest: {
+          inspectionRequest: {
+            some: {
+              inspectionReport: {
+                importReceipt: {
+                  id: importReceipt.id,
+                },
+              },
+            },
+          },
+        },
+      },
+      select: { id: true },
+    });
+
+    if (!task) {
+      throw new ConflictException(
+        `Task import request of import receipt ${importReceipt.id} not found`,
+      );
+    }
+
+    const result = await this.prismaService.task.update({
+      where: { id: task.id },
+      data: {
+        exportReceiptId: importReceipt.id,
+      },
+    });
+
+    return result;
   }
 
   async validateImportRequest(importRequestId: string) {
@@ -517,7 +537,7 @@ export class ImportReceiptService {
     return importRequest;
   }
 
-  updateImportReceiptStatus(
+  async updateImportReceiptStatusToImportedOrRejected(
     importReceiptId: string,
     status: $Enums.ImportReceiptStatus,
   ) {
@@ -627,7 +647,7 @@ export class ImportReceiptService {
         } else {
           throw new Error('Receipt not found');
         }
-        const result = await this.updateImportReceiptStatus(
+        const result = await this.updateImportReceiptStatusToImportedOrRejected(
           importReceiptId,
           $Enums.ImportReceiptStatus.IMPORTED,
         );
@@ -657,6 +677,23 @@ export class ImportReceiptService {
       HttpStatus.INTERNAL_SERVER_ERROR,
       'Finish import receipt failed',
     );
+  }
+
+  async updateImportReceiptStatusToImporting(importReceiptId: string) {
+    const importRequest = await this.prismaService.importReceipt.update({
+      where: {
+        id: importReceiptId,
+      },
+      data: {
+        status: ImportReceiptStatus.IMPORTING,
+        startedAt: new Date(),
+      },
+    });
+    const task = await this.taskService.updateTaskStatusToInProgress({
+      importReceiptId: importReceiptId,
+    });
+
+    return { importRequest, task };
   }
 
   findUnique(id: string) {

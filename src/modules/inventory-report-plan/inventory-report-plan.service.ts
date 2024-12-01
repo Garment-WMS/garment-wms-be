@@ -244,7 +244,7 @@ export class InventoryReportPlanService {
         taskType: TaskType.INVENTORY,
         warehouseStaffId: staff.warehouseStaffId,
         inventoryReportPlanId: result.id,
-        expectFinishedAt: createInventoryReportPlanDto.to,
+        expectedFinishedAt: createInventoryReportPlanDto.to,
       });
     });
     await this.taskService.createMany(createTaskDto, this.prismaService);
@@ -270,12 +270,12 @@ export class InventoryReportPlanService {
       },
     });
 
-    if (result?.status == InventoryReportPlanStatus.FINISHED) {
-      await this.importRequestService.updateAwaitStatusToImportingStatus();
-      await this.importReceiptService.updateAwaitStatusToImportingStatus();
-      await this.materialExportReceiptService.updateAwaitStatusToExportingStatus();
-      await this.materialExportRequestService.updateAwaitStatusToExportingStatus();
-    }
+    // if (result?.status == InventoryReportPlanStatus.FINISHED) {
+    //   await this.importRequestService.updateAwaitStatusToImportingStatus();
+    //   await this.importReceiptService.updateAwaitStatusToImportingStatus();
+    //   await this.materialExportReceiptService.updateAwaitStatusToExportingStatus();
+    //   await this.materialExportRequestService.updateAwaitStatusToExportingStatus();
+    // }
     return result;
   }
 
