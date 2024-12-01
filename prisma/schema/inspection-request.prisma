@@ -13,7 +13,7 @@ model InspectionRequest {
   importRequestId        String?                 @map("import_request_id") @db.Uuid
   note                   String?                 @map("note")
   expectedStartedAt      DateTime?               @map("expected_started_at") @db.Timestamptz(6)
-  startedAt              DateTime?               @default(now()) @map("started_at") @db.Timestamptz(6)
+  startedAt              DateTime?               @map("started_at") @db.Timestamptz(6)
   expectedFinishedAt     DateTime?               @map("expected_finished_at") @db.Timestamptz(6)
   finishedAt             DateTime?               @map("finished_at") @db.Timestamptz(6)
   inspectionReport       InspectionReport?

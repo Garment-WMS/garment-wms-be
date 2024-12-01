@@ -2,7 +2,7 @@ model ProductReceipt {
   id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   productSizeId         String                  @map("product_size_id") @db.Uuid
   importReceiptId       String                  @map("import_receipt_id") @db.Uuid
-  code                  String?                 @map("code") @db.VarChar(255)
+  code                  String?                 @map("code") @db.VarChar
   status                ProductReceiptStatus    @default(AVAILABLE) @map("status")
   isDefect              Boolean                 @default(false) @map("is_defect") @db.Boolean
   expireDate            DateTime?               @map("expire_date") @db.Timestamptz(6)

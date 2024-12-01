@@ -146,7 +146,6 @@ export class PrismaService
     'Task',
     'Todo',
     'ProductFormula',
-    'ProductReceipt',
     'MaterialExportRequest',
     'MaterialExportReceipt',
   ];
