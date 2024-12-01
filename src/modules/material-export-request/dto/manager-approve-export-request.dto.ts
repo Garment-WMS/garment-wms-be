@@ -29,12 +29,6 @@ export class ManagerApproveExportRequestDto {
 
   @ApiProperty({ required: false })
   @IsString()
-  @IsNotEmpty()
-  @ValidateIf((o) => o.action === ManagerAction.REJECTED)
-  rejectionReason: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
   managerNote: string;
 
   @ApiProperty({ required: false })
@@ -51,10 +45,12 @@ export class ManagerApproveExportRequestDto {
   @ApiProperty({ required: false })
   @IsDateString()
   @IsNotEmpty()
+  @ValidateIf((o) => o.action === ManagerAction.APPROVED)
   exportExpectedStartedAt: Date;
 
   @ApiProperty({ required: false })
   @IsDateString()
   @IsNotEmpty()
+  @ValidateIf((o) => o.action === ManagerAction.APPROVED)
   exportExpectedFinishedAt: Date;
 }
