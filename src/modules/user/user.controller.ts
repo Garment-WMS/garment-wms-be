@@ -23,11 +23,18 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Get(':id')
+  getAccountById(@Param('id') id: string) {
+    return this.userService.getAccountById(id);
+  }
   @Get('role/:role')
   getAllUserByRole(@Param('role') role: RoleCode) {
     return this.userService.getAllUserByRole(role);
   }
-
+  @Get(':role/:id')
+  getUserById(@Param('id') id: string, @Param('role') role: RoleCode) {
+    return this.userService.getUserById(id, role);
+  }
   @Post('/avatar')
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))
@@ -37,9 +44,6 @@ export class UserController {
   ) {
     return this.userService.addAvatar(file, user);
   }
-  
-
-
 
   @Get('/my')
   @UseGuards(JwtAuthGuard)

@@ -13,6 +13,97 @@ import { ImageService } from '../image/image.service';
 
 @Injectable()
 export class UserService {
+  async getAccountById(id: string) {
+    const result = await this.prisma.account.findFirst({
+      where: {
+        id: id,
+      },
+      include: {
+        factoryDirector: true,
+        warehouseStaff: true,
+        inspectionDepartment: true,
+        purchasingStaff: true,
+        productionDepartment: true,
+        warehouseManager: true,
+      },
+    });
+    if (!result) {
+      return apiFailed(404, 'User not found');
+    }
+    return apiSuccess(200, result, 'Get user by id successfully');
+  }
+  async getUserById(id: string, role: string) {
+    let result;
+    switch (role) {
+      case RoleCode.FACTORY_DIRECTOR:
+        result = await this.prisma.factoryDirector.findFirst({
+          where: {
+            accountId: id,
+          },
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.WAREHOUSE_STAFF:
+        result = await this.prisma.warehouseStaff.findFirst({
+          where: {
+            accountId: id,
+          },
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.INSPECTION_DEPARTMENT:
+        result = await this.prisma.inspectionDepartment.findFirst({
+          where: {
+            accountId: id,
+          },
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.PURCHASING_STAFF:
+        result = await this.prisma.purchasingStaff.findFirst({
+          where: {
+            accountId: id,
+          },
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.PRODUCTION_DEPARTMENT:
+        result = await this.prisma.productionDepartment.findFirst({
+          where: {
+            accountId: id,
+          },
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.WAREHOUSE_MANAGER:
+        result = await this.prisma.warehouseManager.findFirst({
+          where: {
+            accountId: id,
+          },
+          include: {
+            account: true,
+          },
+        });
+        break;
+      default:
+        break;
+    }
+
+    if (!result) {
+      return apiFailed(404, 'User not found');
+    }
+    return apiSuccess(200, result, 'Get all user by role successfully');
+  }
   constructor(
     private prisma: PrismaService,
     private readonly imageService: ImageService,
@@ -95,23 +186,6 @@ export class UserService {
     if (!result) {
       return apiFailed(404, 'Role not found');
     }
-    // console.log('Role');
-    // await this.testQueue.add(
-    //   'create-receipt-adjustment',
-    //   {
-    //     data: {
-    //       warehouseManagerId: '01d7815f-9e07-4cf6-8b93-d9d734873eb6',
-    //       materialReceiptId: '9991fe8e-b235-43c2-a963-551fe6657ddd',
-    //       productReceiptId: null,
-    //       inventoryReportDetailId: '1931230b-3674-4acc-bd29-3f31b20ae2b5',
-    //       beforeAdjustQuantity: 2,
-    //       afterAdjustQuantity: 12,
-    //     },
-    //   },
-    //   {
-    //     delay: 1000,
-    //   },
-    // );
     return apiSuccess(200, result, 'Get all user by role successfully');
   }
 
