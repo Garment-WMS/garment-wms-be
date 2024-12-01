@@ -305,6 +305,8 @@ export class MaterialExportRequestService {
                 type: dto.materialExportReceipt.type,
                 materialExportRequestId: id,
                 warehouseStaffId: dto.warehouseStaffId,
+                expectedStartedAt: dto.exportExpectedStartedAt,
+                expectedFinishedAt: dto.exportExpectedFinishedAt,
                 materialExportReceiptDetail: {
                   createMany: {
                     data: dto.materialExportReceipt.materialExportReceiptDetail.map(
@@ -323,6 +325,8 @@ export class MaterialExportRequestService {
             materialExportReceiptId: materialExportReceipt.id,
             taskType: $Enums.TaskType.EXPORT,
             status: $Enums.TaskStatus.OPEN,
+            expectedStartedAt: materialExportReceipt.expectedStartedAt,
+            expectedFinishedAt: materialExportReceipt.expectedFinishedAt,
             warehouseStaffId: dto.warehouseStaffId,
           });
           await this.discussionService.updateExportReceipt(

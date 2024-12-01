@@ -18,6 +18,7 @@ import { apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { InventoryReportPlanService } from '../inventory-report-plan/inventory-report-plan.service';
 import { TaskService } from '../task/task.service';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
 import { ExportAlgorithmParam } from './dto/export-algorithm-param.type';
@@ -36,6 +37,7 @@ export class MaterialExportReceiptService {
     private readonly prismaService: PrismaService,
     private readonly exportAlgorithmService: ExportAlgorithmService,
     private readonly taskService: TaskService,
+    private readonly inventoryReportPlanService: InventoryReportPlanService,
   ) {}
 
   async getByUserToken(
@@ -190,42 +192,42 @@ export class MaterialExportReceiptService {
     }
 
     // const notEnoughMaterialExportRequestDetails = [];
-    for (const materialExportRequestDetail of materialExportRequest.materialExportRequestDetail) {
-      // const inventoryStockOfAMaterialVariant =
-      //   await this.prismaService.inventoryStock.findMany({
-      //     where: {
-      //       materialPackage: {
-      //         materialVariantId: materialExportRequestDetail.materialVariantId,
-      //       },
-      //     },
-      //   });
-      // const totalRemainQuantityByUom = inventoryStockOfAMaterialVariant.reduce(
-      //   (acc, item) => acc + item.quantityByUom,
-      //   0,
-      // );
-      // Logger.debug('totalRemainQuantityByUom', totalRemainQuantityByUom);
-      // Logger.debug(
-      //   'target quantity',
-      //   materialExportRequestDetail.quantityByUom,
-      // );
-      // if (
-      //   totalRemainQuantityByUom < materialExportRequestDetail.quantityByUom
-      // ) {
-      //   const notEnoughMaterialExportRequestDetail = {
-      //     ...materialExportRequestDetail,
-      //     remainQuantityByUom: totalRemainQuantityByUom,
-      //     missingQuantityByUom:
-      //       materialExportRequestDetail.quantityByUom -
-      //       totalRemainQuantityByUom,
-      //     isFullFilled: false,
-      //   };
-      //   delete materialExportRequestDetail.materialVariant.materialPackage;
-      //   notEnoughMaterialExportRequestDetails.push(
-      //     notEnoughMaterialExportRequestDetail,
-      //   );
-      //   continue;
-      // }
-    }
+    // for (const materialExportRequestDetail of materialExportRequest.materialExportRequestDetail) {
+    // const inventoryStockOfAMaterialVariant =
+    //   await this.prismaService.inventoryStock.findMany({
+    //     where: {
+    //       materialPackage: {
+    //         materialVariantId: materialExportRequestDetail.materialVariantId,
+    //       },
+    //     },
+    //   });
+    // const totalRemainQuantityByUom = inventoryStockOfAMaterialVariant.reduce(
+    //   (acc, item) => acc + item.quantityByUom,
+    //   0,
+    // );
+    // Logger.debug('totalRemainQuantityByUom', totalRemainQuantityByUom);
+    // Logger.debug(
+    //   'target quantity',
+    //   materialExportRequestDetail.quantityByUom,
+    // );
+    // if (
+    //   totalRemainQuantityByUom < materialExportRequestDetail.quantityByUom
+    // ) {
+    //   const notEnoughMaterialExportRequestDetail = {
+    //     ...materialExportRequestDetail,
+    //     remainQuantityByUom: totalRemainQuantityByUom,
+    //     missingQuantityByUom:
+    //       materialExportRequestDetail.quantityByUom -
+    //       totalRemainQuantityByUom,
+    //     isFullFilled: false,
+    //   };
+    //   delete materialExportRequestDetail.materialVariant.materialPackage;
+    //   notEnoughMaterialExportRequestDetails.push(
+    //     notEnoughMaterialExportRequestDetail,
+    //   );
+    //   continue;
+    // }
+    // }
 
     const exportAlgorithmParam: ExportAlgorithmParam =
       materialExportRequest.materialExportRequestDetail.map((detail) => ({
@@ -403,19 +405,19 @@ export class MaterialExportReceiptService {
   ) {
     switch (warehouseStaffExportDto.action) {
       case WarehouseStaffExportAction.EXPORTING:
-        const isAnyAwaitOrInProgressReportPlan: boolean =
-          await this.isAnyWaitOrInProgressReportPlan();
-        let materialExportRequestStatus: $Enums.MaterialExportRequestStatus =
-          $Enums.MaterialExportRequestStatus.EXPORTING;
-        let materialExportReceiptStatus: $Enums.MaterialExportRequestStatus =
-          $Enums.ExportReceiptStatus.EXPORTING;
-        if (isAnyAwaitOrInProgressReportPlan) {
-          materialExportRequestStatus =
-            $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT;
-          materialExportReceiptStatus =
-            $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT;
-        }
-
+        // const isAnyAwaitOrInProgressReportPlan: boolean =
+        //   await this.isAnyWaitOrInProgressReportPlan();
+        // let materialExportRequestStatus: $Enums.MaterialExportRequestStatus =
+        //   $Enums.MaterialExportRequestStatus.EXPORTING;
+        // let materialExportReceiptStatus: $Enums.MaterialExportRequestStatus =
+        //   $Enums.ExportReceiptStatus.EXPORTING;
+        // if (isAnyAwaitOrInProgressReportPlan) {
+        //   materialExportRequestStatus =
+        //     $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT;
+        //   materialExportReceiptStatus =
+        //     $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT;
+        // }
+        await this.inventoryReportPlanService.validateImportExportDuringInventoryReportPlan();
         const materialExportReceipt1 =
           await this.prismaService.materialExportReceipt.update({
             where: {
@@ -423,7 +425,7 @@ export class MaterialExportReceiptService {
                 warehouseStaffExportDto.materialExportRequestId,
             },
             data: {
-              status: materialExportReceiptStatus,
+              status: $Enums.MaterialExportRequestStatus.EXPORTING,
             },
             include: materialExportReceiptInclude,
           });
@@ -431,7 +433,7 @@ export class MaterialExportReceiptService {
           await this.prismaService.materialExportRequest.update({
             where: { id: warehouseStaffExportDto.materialExportRequestId },
             data: {
-              status: materialExportRequestStatus,
+              status: $Enums.MaterialExportRequestStatus.EXPORTING,
             },
           });
         return {
@@ -515,17 +517,17 @@ export class MaterialExportReceiptService {
     }
   }
 
-  async isAnyWaitOrInProgressReportPlan() {
-    const result = await this.prismaService.inventoryReportPlan.findMany({
-      where: {
-        status: {
-          in: [
-            $Enums.InventoryReportPlanStatus.AWAIT,
-            $Enums.InventoryReportPlanStatus.IN_PROGRESS,
-          ],
-        },
-      },
-    });
-    return result.length > 0;
-  }
+  // async isAnyWaitOrInProgressReportPlan() {
+  //   const result = await this.prismaService.inventoryReportPlan.findMany({
+  //     where: {
+  //       status: {
+  //         in: [
+  //           $Enums.InventoryReportPlanStatus.AWAIT,
+  //           $Enums.InventoryReportPlanStatus.IN_PROGRESS,
+  //         ],
+  //       },
+  //     },
+  //   });
+  //   return result.length > 0;
+  // }
 }

@@ -5,6 +5,7 @@ model MaterialExportRequest {
   productFormulaId            String?                       @map("product_formula_id") @db.Uuid
   warehouseManagerId          String?                       @map("warehouse_manager_id") @db.Uuid
   warehouseStaffId            String?                       @map("warehouse_staff_id") @db.Uuid
+  productionExpectExportDate  DateTime?                     @map("export_expected_date_time")
   productionDepartmentId      String                        @map("production_department_id") @db.Uuid
   status                      MaterialExportRequestStatus   @default(PENDING) @map("status")
   description                 String?                       @map("description") @db.VarChar

@@ -37,6 +37,7 @@ import { ChatService } from '../chat/chat.service';
 import { CreateChatDto } from '../chat/dto/create-chat.dto';
 import { DiscussionService } from '../discussion/discussion.service';
 import { ImportRequestService } from '../import-request/import-request.service';
+import { InventoryReportPlanService } from '../inventory-report-plan/inventory-report-plan.service';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
@@ -62,6 +63,7 @@ export class ImportReceiptService {
     private readonly productionBatchService: ProductionBatchService,
     private readonly taskService: TaskService,
     private readonly chatService: ChatService,
+    private readonly inventoryReportPlanService: InventoryReportPlanService,
     @InjectQueue('import-receipt') private importReceiptQueue: Queue,
   ) {}
 
@@ -459,8 +461,10 @@ export class ImportReceiptService {
     const task = await this.prismaService.task.findFirst({
       where: {
         importRequest: {
+          // status: 'INSPECTED',
           inspectionRequest: {
             some: {
+              // status: 'INSPECTED',
               inspectionReport: {
                 importReceipt: {
                   id: importReceipt.id,
@@ -475,7 +479,7 @@ export class ImportReceiptService {
 
     if (!task) {
       throw new ConflictException(
-        `Task import request of import receipt ${importReceipt.id} not found`,
+        `Cant update import receipt Task to done since import request of import receipt ${importReceipt.id} not found`,
       );
     }
 
@@ -683,6 +687,7 @@ export class ImportReceiptService {
   }
 
   async updateImportReceiptStatusToImporting(importReceiptId: string) {
+    await this.inventoryReportPlanService.validateImportExportDuringInventoryReportPlan();
     const importRequest = await this.prismaService.importReceipt.update({
       where: {
         id: importReceiptId,

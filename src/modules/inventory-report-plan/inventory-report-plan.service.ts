@@ -2,6 +2,7 @@ import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
+  $Enums,
   InventoryReportPlanStatus,
   InventoryReportPlanType,
   Prisma,
@@ -12,8 +13,8 @@ import { inventoryReportPlan } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { getPageMeta } from 'src/common/utils/utils';
-import { ImportReceiptService } from '../import-receipt/import-receipt.service';
 import { ImportRequestService } from '../import-request/import-request.service';
 import { InventoryReportPlanDetailService } from '../inventory-report-plan-detail/inventory-report-plan-detail.service';
 import { InventoryReportService } from '../inventory-report/inventory-report.service';
@@ -39,7 +40,7 @@ export class InventoryReportPlanService {
     private readonly importRequestService: ImportRequestService,
     private readonly materialExportRequestService: MaterialExportRequestService,
     private readonly taskService: TaskService,
-    private readonly importReceiptService: ImportReceiptService,
+    // private readonly importReceiptService: ImportReceiptService,
     private readonly materialExportReceiptService: MaterialExportReceiptService,
   ) {}
 
@@ -878,6 +879,34 @@ export class InventoryReportPlanService {
         200,
         result,
         'Inventory report plan deleted successfully',
+      );
+    }
+  }
+
+  async getInventoryReportPlanNow() {
+    const result = await this.prismaService.inventoryReportPlan.findMany({
+      where: {
+        status: {
+          in: [
+            $Enums.InventoryReportPlanStatus.AWAIT,
+            $Enums.InventoryReportPlanStatus.IN_PROGRESS,
+          ],
+        },
+      },
+    });
+    return result;
+  }
+
+  async validateImportExportDuringInventoryReportPlan() {
+    const inventoryReportPlan = await this.getInventoryReportPlanNow();
+    if (inventoryReportPlan) {
+      throw new CustomHttpException(
+        HttpStatus.CONFLICT,
+        apiFailed(
+          HttpStatus.CONFLICT,
+          'Import/export not allowed during inventory report plan',
+          inventoryReportPlan,
+        ),
       );
     }
   }

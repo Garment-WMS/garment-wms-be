@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { RoleCode } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
+  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -46,4 +47,14 @@ export class ManagerApproveExportRequestDto {
   @Type(() => CreateMaterialExportReceiptDto)
   @ValidateNested({ each: true })
   materialExportReceipt: CreateMaterialExportReceiptDto;
+
+  @ApiProperty({ required: false })
+  @IsDateString()
+  @IsNotEmpty()
+  exportExpectedStartedAt: Date;
+
+  @ApiProperty({ required: false })
+  @IsDateString()
+  @IsNotEmpty()
+  exportExpectedFinishedAt: Date;
 }

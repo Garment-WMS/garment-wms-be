@@ -8,7 +8,7 @@ model MaterialExportReceipt {
   note                        String?                       @map("note") @db.Text
   expectedStartedAt           DateTime?                     @map("expected_started_at") @db.Timestamptz(6)
   startedAt                   DateTime?                     @default(now()) @map("started_at") @db.Timestamptz(6)
-  expectFinishedAt            DateTime?                     @map("expect_finished_at") @db.Timestamptz(6)
+  expectedFinishedAt          DateTime?                     @map("expect_finished_at") @db.Timestamptz(6)
   finishedAt                  DateTime?                     @map("finished_at") @db.Timestamptz(6)
   createdAt                   DateTime?                     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
