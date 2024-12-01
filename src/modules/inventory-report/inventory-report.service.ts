@@ -147,10 +147,10 @@ export class InventoryReportService {
           to: new Date(),
         },
       });
-      await this.importRequestService.updateAwaitStatusToImportingStatus();
-      await this.importReceiptService.updateAwaitStatusToImportingStatus();
-      await this.materialExportReceiptService.updateAwaitStatusToExportingStatus();
-      await this.materialExportRequestService.updateAwaitStatusToExportingStatus();
+      // await this.importRequestService.updateAwaitStatusToImportingStatus();
+      // await this.importReceiptService.updateAwaitStatusToImportingStatus();
+      // await this.materialExportReceiptService.updateAwaitStatusToExportingStatus();
+      // await this.materialExportRequestService.updateAwaitStatusToExportingStatus();
     }
 
     // const

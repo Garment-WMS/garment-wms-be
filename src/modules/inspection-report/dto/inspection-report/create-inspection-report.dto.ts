@@ -43,5 +43,5 @@ export class CreateInspectionReportDto {
   @IsString()
   @IsNotEmpty()
   @IsEnum($Enums.InspectionReportType)
-  type: $Enums.InspectionReportType;
+  type?: $Enums.InspectionReportType;
 }

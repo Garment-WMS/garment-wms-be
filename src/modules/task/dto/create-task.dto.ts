@@ -16,6 +16,16 @@ export class CreateTaskDto {
   @ApiProperty()
   @IsOptional()
   @IsUUID()
+  importRequestId?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsUUID()
+  exportRequestId?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsUUID()
   importReceiptId?: string;
 
   @ApiProperty()
@@ -71,7 +81,7 @@ export class CreateTaskDto {
   @ApiProperty()
   @IsOptional()
   @IsDate()
-  exportStartedAt?: Date;
+  expectedStartedAt?: Date;
 
   @ApiProperty()
   @IsOptional()
@@ -81,7 +91,7 @@ export class CreateTaskDto {
   @ApiProperty()
   @IsOptional()
   @IsDate()
-  expectFinishedAt?: Date;
+  expectedFinishedAt?: Date;
 
   @ApiProperty()
   @IsOptional()
