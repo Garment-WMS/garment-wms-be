@@ -8,6 +8,7 @@ import {
   isNotEmpty,
   isNumber,
   isPhoneNumber,
+  isString,
   max,
   min,
 } from 'class-validator';
@@ -24,6 +25,9 @@ import {
   PO_INFO_HEADER,
   PO_INFO_TABLE,
   PO_SHEET_NAME,
+  PRODUCT_FORMULA_HEADER,
+  PRODUCT_FORMULA_SHEET_NAME,
+  PRODUCT_FORMULA_TABLE_NAME,
   PRODUCTION_BATCH_DETAIL_HEADER,
   PRODUCTION_BATCH_DETAIL_TABLE,
   PRODUCTION_BATCH_SHEET_NAME,
@@ -53,6 +57,7 @@ import { MaterialPackageService } from '../material-package/material-package.ser
 import { MaterialVariantService } from '../material-variant/material-variant.service';
 import { PoDeliveryMaterialDto } from '../po-delivery-material/dto/po-delivery-material.dto';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
+import { ArrayExcelProductFormula } from '../product-formula-material/dto/array-excel-product-formula.dto';
 import { CreateProductPlanDetailDto } from '../product-plan-detail/dto/create-product-plan-detail.dto';
 import { ProductPlanDetailService } from '../product-plan-detail/product-plan-detail.service';
 import { CreateProductPlanDto } from '../product-plan/dto/create-product-plan.dto';
@@ -2372,6 +2377,7 @@ export class ExcelService {
 
     //Check if header is valid
     const isHeaderValid = compareArray(header, PRODUCTION_BATCH_DETAIL_HEADER);
+    //Need to check return and to what did it catch it
     if (!isHeaderValid) {
       return apiFailed(
         HttpStatus.UNSUPPORTED_MEDIA_TYPE,
@@ -2671,6 +2677,278 @@ export class ExcelService {
         }
       }
     }
+  }
+
+  //Product Formula
+  async readProductFormulaExcel(file: Express.Multer.File) {
+    if (!file) {
+      return apiFailed(HttpStatus.BAD_REQUEST, 'No file uploaded');
+    }
+    if (
+      file.mimetype !==
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ) {
+      return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid file format');
+    }
+    const workbook = new Workbook();
+    await workbook.xlsx.load(file.buffer);
+    const productFormulaSheet = workbook.getWorksheet(
+      PRODUCT_FORMULA_SHEET_NAME,
+    );
+    if (!productFormulaSheet) {
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Invalid file format, worksheet not found',
+      );
+    }
+
+    const productFormula: ArrayExcelProductFormula[] = [];
+    let productFormulaError: Map<
+      string,
+      {
+        fieldName: string;
+        value: string;
+        text?: any;
+      }
+    > = new Map();
+    let errorResponse;
+    await this.validateProductFormulaSheet(
+      productFormulaSheet,
+      productFormula,
+      productFormulaError,
+      errorResponse,
+    );
+    console.log(productFormula);
+    console.log(productFormulaError);
+    console.log(errorResponse);
+    if (errorResponse) {
+      return errorResponse;
+    }
+
+    if (productFormulaError.size > 0) {
+      productFormulaError.forEach((value, key) => {
+        const cell = productFormulaSheet.getCell(key);
+
+        // Set the cell value to the error message
+        cell.value = { richText: [] };
+        cell.value.richText = [
+          //Use to add - between text
+          ...value?.text.reduce((acc, curr, index) => {
+            if (index > 0) {
+              acc.push({ text: ' - ', font: { color: { argb: 'FF0000' } } });
+            }
+            acc.push(curr);
+            return acc;
+          }, []),
+        ];
+      });
+      const timestamp = Date.now();
+      const fileName = `${timestamp}-${file.originalname}`;
+      const bufferResult = await workbook.xlsx.writeBuffer();
+      const nodeBuffer = Buffer.from(bufferResult);
+      const downloadUrl = await this.firebaseService.uploadBufferToStorage(
+        nodeBuffer,
+        fileName,
+      );
+      return apiFailed(
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        'There is error in the file',
+        downloadUrl,
+      );
+    }
+    return productFormula;
+  }
+
+  async validateProductFormulaSheet(
+    worksheet: Worksheet,
+    productFormula: ArrayExcelProductFormula[],
+    productFormulaError: Map<
+      string,
+      { fieldName: string; value: string; text?: any }
+    > = new Map(),
+    errorResponse,
+  ) {
+    const productFormulaTable = worksheet.getTable(
+      PRODUCT_FORMULA_TABLE_NAME,
+    ) as any;
+    if (!productFormulaTable) {
+      console.log('error getting product formula table');
+      errorResponse = apiFailed(
+        HttpStatus.BAD_REQUEST,
+        'Invalid file format, worksheet not found',
+      );
+      return;
+    }
+
+    const header = productFormulaTable.table.columns.map(
+      (column: any) => column.name,
+    );
+    const isHeaderValid = compareArray(header, PRODUCT_FORMULA_HEADER);
+    if (!isHeaderValid) {
+      console.log('error getting product formula header');
+      errorResponse = apiFailed(
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        'Invalid format, product formula header is not valid',
+      );
+      return;
+    }
+    const [startCell, endCell] = productFormulaTable.table.tableRef.split(':');
+    const startRow = parseInt(startCell.replace(/\D/g, ''), 10);
+    const endRow = parseInt(endCell.replace(/\D/g, ''), 10);
+
+    for (let i = startRow + 1; i <= endRow; i++) {
+      let materialVariantCode;
+      let materialVariant: any;
+      let isError = false;
+      let errorFlag = false;
+      const row = worksheet.getRow(i);
+      const itemCell = {
+        materialVariantCodeCell: row.getCell(1),
+        materialVariantNameCell: row.getCell(2),
+        quantityByUomCell: row.getCell(3),
+        unitOfMeasurementCell: row.getCell(4),
+      };
+
+      if (
+        isEmpty(itemCell.materialVariantCodeCell.value) &&
+        isEmpty(itemCell.materialVariantNameCell.value) &&
+        isEmpty(itemCell.quantityByUomCell.value) &&
+        isEmpty(itemCell.unitOfMeasurementCell.value)
+      ) {
+        continue;
+      } else {
+        if (
+          this.validateRequired(
+            itemCell.materialVariantCodeCell.value as string,
+            'Material Variant Code',
+            itemCell.materialVariantCodeCell.address,
+            productFormulaError,
+          )
+        ) {
+          materialVariant =
+            await this.materialVariantService.findByMaterialCodeWithoutResponse(
+              this.extractValueFromCellValue(itemCell.materialVariantCodeCell),
+            );
+          if (isEmpty(materialVariant)) {
+            const text = [
+              { text: `${itemCell.materialVariantCodeCell.value}` },
+              {
+                text: `[Material Variant not found]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              productFormulaError,
+              itemCell.materialVariantCodeCell.address,
+              'Material Variant',
+              itemCell.materialVariantCodeCell.value,
+              text,
+            );
+            errorFlag = true;
+            isError = true;
+          } else {
+            materialVariantCode = materialVariantCode?.code;
+          }
+        }
+        if (
+          this.validateRequired(
+            itemCell.materialVariantNameCell.value as string,
+            'Material Variant Name',
+            itemCell.materialVariantNameCell.address,
+            productFormulaError,
+          )
+        ) {
+          if (!isString(itemCell.materialVariantNameCell.value) && !errorFlag) {
+            const text = [
+              { text: `${itemCell.materialVariantNameCell.value}` },
+              {
+                text: `[Material Variant Name must be a string]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              productFormulaError,
+              itemCell.materialVariantNameCell.address,
+              'Material Variant Name',
+              itemCell.materialVariantNameCell.value,
+              text,
+            );
+            isError = true;
+            errorFlag = true;
+          }
+        } else {
+          isError = true;
+          errorFlag = true;
+        }
+        if (
+          this.validateRequired(
+            itemCell.quantityByUomCell.value as string,
+            'Quantity by UOM',
+            itemCell.quantityByUomCell.address,
+            productFormulaError,
+          )
+        ) {
+          if (!isNumber(itemCell.quantityByUomCell.value) && !errorFlag) {
+            const text = [
+              { text: `${itemCell.quantityByUomCell.value}` },
+              {
+                text: `[Quantity by UOM must be a number]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              productFormulaError,
+              itemCell.quantityByUomCell.address,
+              'Quantity by UOM',
+              itemCell.quantityByUomCell.value,
+              text,
+            );
+            isError = true;
+            errorFlag = true;
+          }
+        } else {
+          isError = true;
+          errorFlag = true;
+        }
+        if (
+          this.validateRequired(
+            itemCell.unitOfMeasurementCell.value as string,
+            'Unit of Measurement',
+            itemCell.unitOfMeasurementCell.address,
+            productFormulaError,
+          )
+        ) {
+          if (!isString(itemCell.unitOfMeasurementCell.value) && !errorFlag) {
+            const text = [
+              { text: `${itemCell.unitOfMeasurementCell.value}` },
+              {
+                text: `[Unit of Measurement must be a string]`,
+                font: { color: { argb: 'FF0000' } },
+              },
+            ];
+            this.addError(
+              productFormulaError,
+              itemCell.unitOfMeasurementCell.address,
+              'Unit of Measurement',
+              itemCell.unitOfMeasurementCell.value,
+              text,
+            );
+            isError = true;
+            errorFlag = true;
+          }
+        } else {
+          isError = true;
+          errorFlag = true;
+        }
+        if (!isError && !errorFlag) {
+          productFormula.push({
+            materialVariantId: materialVariant?.id,
+            quantityByUom: itemCell.quantityByUomCell.value as number,
+          });
+        }
+      }
+    }
+    console.log(productFormula);
   }
 }
 

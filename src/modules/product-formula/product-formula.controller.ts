@@ -9,6 +9,8 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -22,17 +24,27 @@ import { CreateNestedProductFormulaMaterial } from './dto/create-nested-product-
 import { CreateProductFormulaDto } from './dto/create-product-formula.dto';
 import { UpdateProductFormulaDto } from './dto/update-product-formula.dto';
 import { ProductFormulaService } from './product-formula.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('product-formula')
 @ApiTags('product-formula')
 export class ProductFormulaController {
+  constructor(private readonly productFormulaService: ProductFormulaService) {}
+
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true }))
   create(@Body() createProductFormulaDto: CreateProductFormulaDto) {
     return this.productFormulaService.create(createProductFormulaDto);
   }
 
-  constructor(private readonly productFormulaService: ProductFormulaService) {}
+  @Post('excel')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  @UseInterceptors(FileInterceptor('file'))
+  createByExcel(
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.productFormulaService.createByExcel(file);
+  }
 
   @Post(':id/product-formula-material')
   @UsePipes(new ValidationPipe({ whitelist: true }))

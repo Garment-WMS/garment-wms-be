@@ -87,3 +87,11 @@ export const PRODUCTION_PLAN_NOTE_TABLE = 'productionPlanNote';
 export const PRODUCTION_BATCH_SHEET_NAME = 'Production Batch';
 export const MATERIAL_REQUIREMENT_SHEET_NAME = 'Material Requirement';
 export const PRODUCTION_BATCH_INFO = 'productionBatchInfo';
+export const PRODUCT_FORMULA_SHEET_NAME = 'Product Formula';
+export const PRODUCT_FORMULA_TABLE_NAME = 'MaterialFormula';
+export const PRODUCT_FORMULA_HEADER = [
+  'Material Variant Code',
+  'Material Variant Name',
+  'Quantity By Uom',
+  'Unit of Measurement',
+];
