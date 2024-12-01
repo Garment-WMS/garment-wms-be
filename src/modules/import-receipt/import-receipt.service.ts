@@ -31,6 +31,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
+import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ChatService } from '../chat/chat.service';
@@ -410,16 +411,16 @@ export class ImportReceiptService {
       },
     );
     if (result) {
-      try {
-        await this.updateTaskByImportReceipt(result);
-        await this.discussionService.updateImportReceiptDiscussion(
-          result.id,
-          createImportReceiptDto.importRequestId,
-        );
-      } catch (e) {
-        Logger.error(e);
-        throw new ConflictException('Can not create Task automatically');
-      }
+      // try {
+      await this.updateTaskByImportReceipt(result);
+      await this.discussionService.updateImportReceiptDiscussion(
+        result.id,
+        createImportReceiptDto.importRequestId,
+      );
+      // } catch (e) {
+      //   Logger.error(e);
+      //   throw new ConflictException('Can not create Task automatically');
+      // }
 
       return apiSuccess(
         HttpStatus.CREATED,
@@ -446,6 +447,23 @@ export class ImportReceiptService {
     return result.length > 0;
   }
 
+  async getImportRequestByImportReceiptId(importReceiptId: string) {
+    const importRequest = await this.prismaService.importRequest.findFirst({
+      where: {
+        inspectionRequest: {
+          some: {
+            inspectionReport: {
+              importReceipt: {
+                id: importReceiptId,
+              },
+            },
+          },
+        },
+      },
+    });
+    return importRequest;
+  }
+
   async updateTaskByImportReceipt(importReceipt: ImportReceipt) {
     // const createTaskDto: CreateTaskDto = {
     //   taskType: 'IMPORT',
@@ -455,22 +473,13 @@ export class ImportReceiptService {
     //   expectedStartedAt: importReceipt.expectedStartedAt,
     //   expectedFinishedAt: importReceipt.expectFinishedAt,
     // };
+    const importRequest = await this.getImportRequestByImportReceiptId(
+      importReceipt.id,
+    );
 
     const task = await this.prismaService.task.findFirst({
       where: {
-        importRequest: {
-          // status: 'INSPECTED',
-          inspectionRequest: {
-            some: {
-              // status: 'INSPECTED',
-              inspectionReport: {
-                importReceipt: {
-                  id: importReceipt.id,
-                },
-              },
-            },
-          },
-        },
+        importRequestId: importRequest.id,
       },
       select: { id: true },
     });
@@ -687,10 +696,13 @@ export class ImportReceiptService {
   async updateImportReceiptStatusToImporting(importReceiptId: string) {
     const currentInventoryReportPlan = await this.getInventoryReportPlanNow();
     if (currentInventoryReportPlan.length > 0) {
-      return apiFailed(
+      throw new CustomHttpException(
         409,
-        'There are inventory report plan is in progress please wait for it to finish',
-        currentInventoryReportPlan,
+        apiFailed(
+          409,
+          'There are inventory report plan is in progress please wait for it to finish',
+          currentInventoryReportPlan,
+        ),
       );
     }
     const importRequest = await this.prismaService.importReceipt.update({

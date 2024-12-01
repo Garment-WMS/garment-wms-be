@@ -6,6 +6,7 @@ import {
   Get,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -152,5 +153,14 @@ export class ImportReceiptController {
   @Get('by-import-request/:importRequestId')
   getByImportRequest(@Param('importRequestId') importRequestId: string) {
     return this.importReceiptService.getByImportRequestId(importRequestId);
+  }
+
+  @Get('import-request/by-import-receipt/:importReceiptId')
+  getImportRequestByImportReceipt(
+    @Param('importReceiptId', ParseUUIDPipe) importReceiptId: string,
+  ) {
+    return this.importReceiptService.getImportRequestByImportReceiptId(
+      importReceiptId,
+    );
   }
 }

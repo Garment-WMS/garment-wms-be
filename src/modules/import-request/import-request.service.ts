@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -527,6 +528,7 @@ export class ImportRequestService {
       expectedFinishedAt: importRequest.importExpectedFinishedAt,
     };
     const task = await this.taskService.create(createTaskDto);
+    Logger.log('IMPORT REQUEST Task created', task);
     return task;
   }
 

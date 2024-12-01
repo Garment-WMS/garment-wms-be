@@ -196,13 +196,13 @@ export class InspectionReportService {
 
     importRequestDetailItemIdSet.forEach((id) => {
       if (!inspectionReportDetailItemSet.has(id)) {
-        redundantIds.push(id);
+        missingIds.push(id);
       }
     });
 
     inspectionReportDetailItemSet.forEach((id) => {
       if (!importRequestDetailItemIdSet.has(id)) {
-        missingIds.push(id);
+        redundantIds.push(id);
       }
     });
 
