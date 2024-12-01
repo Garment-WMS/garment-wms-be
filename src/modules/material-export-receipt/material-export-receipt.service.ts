@@ -442,9 +442,13 @@ export class MaterialExportReceiptService {
               status: $Enums.MaterialExportRequestStatus.EXPORTING,
             },
           });
+        const task1 = await this.taskService.updateTaskStatusToInProgress({
+          materialExportReceiptId: materialExportReceipt1.id,
+        });
         return {
           materialExportReceipt: materialExportReceipt1,
           materialExportRequest: materialExportRequest1,
+          task: task1,
         };
 
       case WarehouseStaffExportAction.EXPORTED:
@@ -466,9 +470,13 @@ export class MaterialExportReceiptService {
               status: WarehouseStaffExportAction.EXPORTED,
             },
           });
+        const task2 = await this.taskService.updateTaskStatusToDone({
+          materialExportReceiptId: materialExportReceipt2.id,
+        });
         return {
           materialExportReceipt: materialExportReceipt2,
           materialExportRequest: materialExportRequest2,
+          task: task2,
         };
 
       case WarehouseStaffExportAction.DELIVERING:
