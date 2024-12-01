@@ -405,6 +405,9 @@ export class ImportReceiptService {
         }
         return importReceipt;
       },
+      {
+        timeout: 100000,
+      },
     );
     if (result) {
       try {

@@ -199,6 +199,7 @@ export class ImportRequestService {
       },
       data: {
         status: requestStatus,
+        finishedAt: new Date(),
       },
     });
   }

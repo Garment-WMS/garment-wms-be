@@ -141,6 +141,7 @@ export class PoDeliveryService {
       },
       data: {
         status: PoDeliveryStatus,
+        deliverDate: new Date(),
       },
     });
   }
@@ -304,6 +305,7 @@ export class PoDeliveryService {
       where: { id },
       data: {
         status,
+        
       },
     });
     if (result) {
