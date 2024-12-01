@@ -37,7 +37,6 @@ import { ChatService } from '../chat/chat.service';
 import { CreateChatDto } from '../chat/dto/create-chat.dto';
 import { DiscussionService } from '../discussion/discussion.service';
 import { ImportRequestService } from '../import-request/import-request.service';
-import { InventoryReportPlanService } from '../inventory-report-plan/inventory-report-plan.service';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { PoDeliveryMaterialService } from '../po-delivery-material/po-delivery-material.service';
@@ -63,7 +62,6 @@ export class ImportReceiptService {
     private readonly productionBatchService: ProductionBatchService,
     private readonly taskService: TaskService,
     private readonly chatService: ChatService,
-    private readonly inventoryReportPlanService: InventoryReportPlanService,
     @InjectQueue('import-receipt') private importReceiptQueue: Queue,
   ) {}
 
@@ -687,7 +685,14 @@ export class ImportReceiptService {
   }
 
   async updateImportReceiptStatusToImporting(importReceiptId: string) {
-    await this.inventoryReportPlanService.validateImportExportDuringInventoryReportPlan();
+    const currentInventoryReportPlan = await this.getInventoryReportPlanNow();
+    if (currentInventoryReportPlan.length > 0) {
+      return apiFailed(
+        409,
+        'There are inventory report plan is in progress please wait for it to finish',
+        currentInventoryReportPlan,
+      );
+    }
     const importRequest = await this.prismaService.importReceipt.update({
       where: {
         id: importReceiptId,
@@ -931,5 +936,20 @@ export class ImportReceiptService {
       },
     });
     return importReceipt ? false : true;
+  }
+
+  //NOT DRY
+  async getInventoryReportPlanNow() {
+    const result = await this.prismaService.inventoryReportPlan.findMany({
+      where: {
+        status: {
+          in: [
+            $Enums.InventoryReportPlanStatus.AWAIT,
+            $Enums.InventoryReportPlanStatus.IN_PROGRESS,
+          ],
+        },
+      },
+    });
+    return result;
   }
 }
