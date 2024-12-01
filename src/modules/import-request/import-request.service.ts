@@ -519,7 +519,7 @@ export class ImportRequestService {
   ) {
     const createTaskDto: CreateTaskDto = {
       taskType: 'IMPORT',
-      importReceiptId: importRequest.id,
+      importRequestId: importRequest.id,
       warehouseStaffId: warehouseId,
       status: $Enums.TaskStatus.OPEN,
       expectedStartedAt: importRequest.importExpectedStartedAt,
