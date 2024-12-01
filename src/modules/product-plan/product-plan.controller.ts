@@ -45,7 +45,7 @@ export class ProductPlanController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.ProductionPlanWhereInput>(
         [],
-        [{ id: 'asc', createdAt: 'desc', updatedAt: 'desc' }],
+        [{ createdAt: 'desc' }],
       ),
     )
     filterDto: FilterDto<Prisma.ProductionPlanWhereInput>,

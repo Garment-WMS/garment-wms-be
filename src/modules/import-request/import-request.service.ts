@@ -489,7 +489,12 @@ export class ImportRequestService {
             managerProcess,
             importRequest,
           );
-        return { importRequest, inspectionRequest };
+
+        const task = await this.createTaskByImportRequestAfterApproved(
+          importRequest,
+          managerProcess.warehouseStaffId,
+        );
+        return { importRequest, inspectionRequest, task };
 
       case $Enums.ImportRequestStatus.REJECTED:
         return await this.prismaService.importRequest.update({

@@ -191,7 +191,7 @@ export class InspectionRequestService {
       inspectionRequest.inspectionDepartmentId,
       inspectionRequest.id,
       inspectionRequest.expectedStartedAt,
-      inspectionRequest.expectedStartedAt,
+      inspectionRequest.expectedFinishedAt,
     );
     Logger.log(task);
     return inspectionRequest;
