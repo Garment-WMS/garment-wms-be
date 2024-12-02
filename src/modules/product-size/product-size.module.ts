@@ -7,7 +7,7 @@ import { IsProductSizeExistValidator } from './validator/is-product-size-exist.v
 
 @Module({
   controllers: [ProductSizeController],
-  imports: [PrismaModule, ProductVariantModule],
+  imports: [PrismaModule],
   providers: [ProductSizeService, IsProductSizeExistValidator],
   exports: [ProductSizeService],
 })

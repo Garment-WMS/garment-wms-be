@@ -9,6 +9,9 @@ import {
 
 @ValidatorConstraint({ async: false })
 export class UniqueInArrayConstraint implements ValidatorConstraintInterface {
+  private duplicateProperty: string;
+  private duplicateValue: any;
+
   validate(value: any[], args: ValidationArguments) {
     const properties = args.constraints;
     if (!value || !Array.isArray(value) || value.length === 0) {
@@ -19,6 +22,8 @@ export class UniqueInArrayConstraint implements ValidatorConstraintInterface {
       for (const item of value) {
         if (uniqueValues.has(item[property])) {
           Logger.debug(`Duplicate value found: ${item[property]}`);
+          this.duplicateProperty = property;
+          this.duplicateValue = item[property];
           return false;
         }
         if (item[property] !== null && item[property] !== undefined) {
@@ -30,8 +35,7 @@ export class UniqueInArrayConstraint implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments) {
-    const [property] = args.constraints;
-    return `${property} must be unique within the array.`;
+    return `${this.duplicateProperty} with value '${this.duplicateValue}' must be unique within the array.`;
   }
 }
 

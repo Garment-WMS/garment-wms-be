@@ -629,6 +629,22 @@ export class MaterialVariantService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Image not uploaded');
   }
 
+  async addImageWithoutResponse(file: Express.Multer.File, id: string) {
+    const imageUrl = await this.imageService.addImageToFirebase(
+      file,
+      id,
+      PathConstants.MATERIAL_PATH,
+    );
+    let result;
+    if (imageUrl) {
+      const updateMaterialDto: UpdateMaterialDto = {
+        image: imageUrl,
+      };
+      result = await this.update(id, updateMaterialDto);
+    }
+    return result;
+  }
+
   async update(id: string, updateMaterialDto: UpdateMaterialDto) {
     const materialVariant = await this.findById(id);
     if (!materialVariant) {
@@ -660,7 +676,10 @@ export class MaterialVariantService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Material not updated');
   }
 
-  async create(createMaterialDto: CreateMaterialDto) {
+  async create(
+    createMaterialDto: CreateMaterialDto,
+    file?: Express.Multer.File,
+  ) {
     const { materialId, code, materialPackages, materialAttributes, ...rest } =
       createMaterialDto;
 
@@ -678,22 +697,53 @@ export class MaterialVariantService {
       data: materialInput,
       include: this.materialInclude,
     });
+    let errorResponse = [];
 
-    if (createMaterialDto.materialAttributes) {
-      const resultAttribute =
-        await this.materialAttributeService.createManyWithMaterialVariantId(
-          createMaterialDto.materialAttributes,
-          result.id,
-        );
-      result.materialAttribute = resultAttribute;
+    try {
+      if (createMaterialDto.materialAttributes) {
+        const resultAttribute =
+          await this.materialAttributeService.createManyWithMaterialVariantId(
+            createMaterialDto.materialAttributes,
+            result.id,
+          );
+        result.materialAttribute = resultAttribute;
+      }
+    } catch (e) {
+      errorResponse.push(e);
     }
-    if (createMaterialDto.materialPackages) {
-      const resultPackage =
-        await this.materialPackageService.createManyWithMaterialVariantId(
-          createMaterialDto.materialPackages,
-          result.id,
+
+    try {
+      if (createMaterialDto.materialPackages) {
+        const resultPackage =
+          await this.materialPackageService.createManyWithMaterialVariantId(
+            createMaterialDto.materialPackages,
+            result.id,
+          );
+        result.materialPackage = resultPackage;
+      }
+    } catch (e) {
+      errorResponse.push(e);
+    }
+
+    try {
+      if (file) {
+        const imageUrl = await this.addImageWithoutResponse(file, result.id);
+        if (imageUrl) {
+          result.image = imageUrl.image;
+        }
+      }
+    } catch (e) {
+      errorResponse.push(e);
+    }
+
+    if (errorResponse.length > 0) {
+      if (result) {
+        return apiFailed(
+          HttpStatus.BAD_REQUEST,
+          'Material created successfully but some error occured',
+          errorResponse,
         );
-      result.materialPackage = resultPackage;
+      }
     }
 
     if (result) {
