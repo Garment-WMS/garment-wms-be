@@ -6,6 +6,7 @@ import {
   Get,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -63,7 +64,7 @@ export class ProductionBatchController {
   }
 
   @Get(':id')
-  async findUnique(@Param('id') id: string) {
+  async findUnique(@Param('id', ParseUUIDPipe) id: string) {
     return apiSuccess(
       HttpStatus.OK,
       await this.productionBatchService.findUnique(id),
