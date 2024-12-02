@@ -13,6 +13,8 @@ export class Constant {
   public static readonly INSPECTING_TO_INSPECTED =
     'status:Inspecting->Inspected';
   public static readonly APPROVED_TO_INSPECTING = 'status:Approved->Inspecting';
+  public static readonly ARRIVED_TO_APPROVED = 'status:Arrived->Approved';
+  public static readonly ARRIVED_TO_CANCELED = 'status:Arrived->Canceled';
   public static readonly INSPECTED_TO_IMPORTING = 'status:Inspected->Importing';
 
   public static readonly months = [

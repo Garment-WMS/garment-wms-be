@@ -159,13 +159,17 @@ export class InspectionRequestService {
           data: {
             status: $Enums.ImportRequestStatus.INSPECTING,
           },
+          include: {
+            discussion: true,
+          },
         }),
       ]);
 
     const chat: CreateChatDto = {
-      discussionId: '',
-      message: '',
+      discussionId: importRequest.discussion.id,
+      message: Constant.APPROVED_TO_INSPECTING,
     };
+    await this.chatService.createBySystemWithoutResponse(chat);
 
     return inspectionRequest;
   }

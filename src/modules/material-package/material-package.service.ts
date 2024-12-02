@@ -36,6 +36,7 @@ export class MaterialPackageService {
       materialPackages.map((materialPackage) => {
         return {
           name: materialPackage.name,
+          code: undefined,
           packedHeight: materialPackage.packedHeight,
           packedLength: materialPackage.packedLength,
           packedWeight: materialPackage.packedWeight,

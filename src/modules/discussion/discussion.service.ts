@@ -93,10 +93,13 @@ export class DiscussionService {
 
   async create(
     createDiscussionDto: CreateDiscussionDto,
-    prismaInstance: PrismaService,
+    prismaInstance: PrismaService = this.prismaService,
   ) {
     return await prismaInstance.discussion.create({
       data: { ...createDiscussionDto },
+      include: {
+        chat: true,
+      },
     });
   }
 
