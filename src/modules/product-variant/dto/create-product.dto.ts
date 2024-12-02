@@ -9,6 +9,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import { UniqueInArray } from 'src/common/decorator/validator/unique-property.decorator';
 import { IsProductExist } from 'src/modules/product/validator/is-product-exist.validator';
 import { NestedProductAttributeDto } from './nested-product-attribute.dto';
 import { NestedProductSizeDto } from './nested-product-size.dto';
@@ -37,6 +38,7 @@ export class CreateProductDto {
   @IsArray()
   @Type(() => NestedProductSizeDto)
   @ValidateNested({ each: true })
+  @UniqueInArray(['name', 'size'])
   productSizes?: NestedProductSizeDto[];
 
   @ApiProperty()
@@ -44,5 +46,6 @@ export class CreateProductDto {
   @IsArray()
   @Type(() => NestedProductAttributeDto)
   @ValidateNested({ each: true })
+  @UniqueInArray(['name'])
   productAttributes?: NestedProductAttributeDto[];
 }

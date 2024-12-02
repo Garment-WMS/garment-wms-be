@@ -12,17 +12,16 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { CreateMaterialAttributeDto } from 'src/modules/material-attribute/dto/create-material-attribute.dto';
-import { CreateMaterialPackageDto } from 'src/modules/material-package/dto/create-material-variant.dto';
+import { UniqueInArray } from 'src/common/decorator/validator/unique-property.decorator';
 import { IsMaterialTypeExist } from 'src/modules/material/validator/is-material-type-exist.validator';
-import { NestedMaterialPackageDto } from './nested-material-package.dto';
 import { NestedMaterialAttributeDto } from './nested-material-attribute.dto';
+import { NestedMaterialPackageDto } from './nested-material-package.dto';
 
 export class CreateMaterialDto {
   @ApiProperty({})
   @IsNotEmpty()
-  // @IsUUID()
-  // @IsMaterialTypeExist()
+  @IsUUID()
+  @IsMaterialTypeExist()
   materialId: string;
 
   @ApiProperty({})
@@ -50,6 +49,7 @@ export class CreateMaterialDto {
   @IsArray()
   @Type(() => NestedMaterialPackageDto)
   @ValidateNested({ each: true })
+  @UniqueInArray(['name'])
   materialPackages?: NestedMaterialPackageDto[];
 
   @ApiProperty()
@@ -57,5 +57,6 @@ export class CreateMaterialDto {
   @IsArray()
   @Type(() => NestedMaterialAttributeDto)
   @ValidateNested({ each: true })
+  @UniqueInArray(['name'])
   materialAttributes?: NestedMaterialAttributeDto[];
 }

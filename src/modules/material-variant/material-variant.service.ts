@@ -697,28 +697,52 @@ export class MaterialVariantService {
       data: materialInput,
       include: this.materialInclude,
     });
+    let errorResponse = [];
 
-    if (createMaterialDto.materialAttributes) {
-      const resultAttribute =
-        await this.materialAttributeService.createManyWithMaterialVariantId(
-          createMaterialDto.materialAttributes,
-          result.id,
-        );
-      result.materialAttribute = resultAttribute;
-    }
-    if (createMaterialDto.materialPackages) {
-      const resultPackage =
-        await this.materialPackageService.createManyWithMaterialVariantId(
-          createMaterialDto.materialPackages,
-          result.id,
-        );
-      result.materialPackage = resultPackage;
+    try {
+      if (createMaterialDto.materialAttributes) {
+        const resultAttribute =
+          await this.materialAttributeService.createManyWithMaterialVariantId(
+            createMaterialDto.materialAttributes,
+            result.id,
+          );
+        result.materialAttribute = resultAttribute;
+      }
+    } catch (e) {
+      errorResponse.push(e);
     }
 
-    if (file) {
-      const imageUrl = await this.addImageWithoutResponse(file, result.id);
-      if (imageUrl) {
-        result.image = imageUrl.image;
+    try {
+      if (createMaterialDto.materialPackages) {
+        const resultPackage =
+          await this.materialPackageService.createManyWithMaterialVariantId(
+            createMaterialDto.materialPackages,
+            result.id,
+          );
+        result.materialPackage = resultPackage;
+      }
+    } catch (e) {
+      errorResponse.push(e);
+    }
+
+    try {
+      if (file) {
+        const imageUrl = await this.addImageWithoutResponse(file, result.id);
+        if (imageUrl) {
+          result.image = imageUrl.image;
+        }
+      }
+    } catch (e) {
+      errorResponse.push(e);
+    }
+
+    if (errorResponse.length > 0) {
+      if (result) {
+        return apiFailed(
+          HttpStatus.BAD_REQUEST,
+          'Material created successfully but some error occured',
+          errorResponse,
+        );
       }
     }
 
