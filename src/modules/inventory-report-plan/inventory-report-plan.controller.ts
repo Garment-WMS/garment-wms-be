@@ -74,6 +74,11 @@ export class InventoryReportPlanController {
     return this.inventoryReportPlanService.findAll(filterOptions.findOptions);
   }
 
+  @Get('in-progress')
+  findAllInProgress() {
+    return this.inventoryReportPlanService.findAllInProgress();
+  }
+
   // @Get(':id')
   // findById(@Param('id', CustomUUIDPipe) id: string) {
   //   return this.inventoryReportPlanService.findById(id);

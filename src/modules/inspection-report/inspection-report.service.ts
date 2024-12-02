@@ -388,11 +388,13 @@ export class InspectionReportService {
         //   },
         // },
       };
+
     let result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const inspectionReport = await prismaInstance.inspectionReport.create({
           data: inspectionReportCreateInput,
         });
+
         const inspectionReportDetails =
           await this.createInspectionReportDetails(
             dto.inspectionReportDetail,
@@ -418,15 +420,17 @@ export class InspectionReportService {
       },
     );
     result.inspectionReport = await this.findUnique(result.inspectionReport.id);
-    //auto create import receipt
-    const importReceipt =
-      await this.createImportReceiptAfterInspected(importRequest);
 
     const chat: CreateChatDto = {
       discussionId: importRequest?.discussion.id,
       message: Constant.INSPECTING_TO_INSPECTED,
     };
     await this.chatService.create(chat, user);
+
+    //auto create import receipt
+    const importReceipt =
+      await this.createImportReceiptAfterInspected(importRequest);
+
     return {
       ...result,
       importReceipt,
@@ -617,6 +621,7 @@ export class InspectionReportService {
           createImportReceiptDto,
           importRequest.warehouseManagerId,
         );
+        
       case $Enums.ReceiptType.PRODUCT:
         return this.importReceiptService.createProductReceipt(
           createImportReceiptDto,

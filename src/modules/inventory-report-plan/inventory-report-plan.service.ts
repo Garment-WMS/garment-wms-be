@@ -48,6 +48,20 @@ export class InventoryReportPlanService {
     await this.startAwaitInventoryReportPlan();
   }
 
+  async findAllInProgress() {
+    const inventoryReportPlans =
+      await this.prismaService.inventoryReportPlan.findMany({
+        where: {
+          status: InventoryReportPlanStatus.IN_PROGRESS,
+        },
+      });
+    return apiSuccess(
+      HttpStatus.OK,
+      inventoryReportPlans,
+      'Get all inventory report plan in progress successfully',
+    );
+  }
+
   async awaitRecordInventoryReportPlan(id: string, warehouseManagerId: string) {
     const inventoryReportPlan = await this.findById(id);
     if (!inventoryReportPlan) {

@@ -240,6 +240,11 @@ export class ImportReceiptService {
     );
     if (result) {
       try {
+        const chat: CreateChatDto = {
+          discussionId: importRequest?.discussion.id,
+          message: Constant.INSPECTED_TO_AWAIT_TO_IMPORT,
+        };
+        await this.chatService.createBySystemWithoutResponse(chat);
         await this.updateTaskByImportReceipt(result);
         await this.discussionService.updateImportReceiptDiscussion(
           result.id,
@@ -412,6 +417,13 @@ export class ImportReceiptService {
     );
     if (result) {
       // try {
+
+      const chat: CreateChatDto = {
+        discussionId: importRequest?.discussion.id,
+        message: Constant.INSPECTED_TO_AWAIT_TO_IMPORT,
+      };
+      await this.chatService.createBySystemWithoutResponse(chat);
+
       await this.updateTaskByImportReceipt(result);
       await this.discussionService.updateImportReceiptDiscussion(
         result.id,
@@ -713,10 +725,19 @@ export class ImportReceiptService {
         status: ImportReceiptStatus.IMPORTING,
         startedAt: new Date(),
       },
+      include: {
+        discussion: true,
+      },
     });
     const task = await this.taskService.updateTaskStatusToInProgress({
       importReceiptId: importReceiptId,
     });
+
+    const chat: CreateChatDto = {
+      discussionId: importRequest?.discussion.id,
+      message: Constant.AWAIT_TO_IMPORT_TO_IMPORTING,
+    };
+    await this.chatService.createBySystemWithoutResponse(chat);
 
     return { importRequest, task };
   }

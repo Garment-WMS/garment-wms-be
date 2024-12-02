@@ -12,6 +12,10 @@ export class Constant {
   public static readonly POD_CODE_PREFIX = 'PO-DEL';
   public static readonly INSPECTING_TO_INSPECTED =
     'status:Inspecting->Inspected';
+  public static readonly INSPECTED_TO_AWAIT_TO_IMPORT =
+    'status:Inspected->Await to import';
+  public static readonly AWAIT_TO_IMPORT_TO_IMPORTING =
+    'status:Await to import->Importing';
   public static readonly APPROVED_TO_INSPECTING = 'status:Approved->Inspecting';
   public static readonly ARRIVED_TO_APPROVED = 'status:Arrived->Approved';
   public static readonly ARRIVED_TO_CANCELED = 'status:Arrived->Canceled';
