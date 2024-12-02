@@ -11,13 +11,7 @@ import {
 } from 'class-validator';
 import { IsMaterialVariantExist } from 'src/modules/material-variant/validation/is-material-exist.validation';
 
-export class CreateMaterialPackageDto {
-  @ApiProperty({})
-  @IsNotEmpty()
-  @IsUUID()
-  @IsMaterialVariantExist()
-  materialVariantId: string;
-
+export class NestedMaterialPackageDto {
   @ApiProperty({})
   @IsNotEmpty()
   @IsString()

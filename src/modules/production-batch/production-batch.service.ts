@@ -154,7 +154,7 @@ export class ProductionBatchService {
               id: createProductionBatchInput[0].productionPlanDetailId,
             },
           },
-          code: createProductionBatchInput[0].code,
+          code: undefined,
           name: createProductionBatchInput[0].name,
           description: createProductionBatchInput[0].description,
           quantityToProduce: createProductionBatchInput[0].quantityToProduce,
@@ -167,6 +167,7 @@ export class ProductionBatchService {
             data: productionBatchInput,
             // include: productionBatchInclude,
           });
+        console.log(productionBatchResult);
         if (productionBatchResult) {
           await this.productionBatchMaterialVariantService.createMany(
             productionBatchResult.id,

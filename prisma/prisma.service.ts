@@ -167,9 +167,12 @@ export class PrismaService
       const prefix = this.getPrefix(modelName, delimiter);
 
       // Find the maximum existing code number
+      console.log('modelName', modelName);
       const lastRecord = await this[modelName].findFirst({
-        code: {
-          not: null,
+        where: {
+          code: {
+            not: null,
+          },
         },
         orderBy: { code: 'desc' },
         select: { code: true },

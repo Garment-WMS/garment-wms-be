@@ -1,12 +1,30 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { NestedMaterialAttributeDto } from '../material-variant/dto/nested-material-attribute.dto';
 import { ArrayMaterialAttribute } from './dto/array-material-attribute.dto';
 import { UpdateMaterialAttributeDto } from './dto/update-material-attribute.dto';
 
 @Injectable()
 export class MaterialAttributeService {
   constructor(private readonly prismaService: PrismaService) {}
+  createManyWithMaterialVariantId(
+    materialAttributes: NestedMaterialAttributeDto[],
+    id: string,
+  ) {
+    const materialAttributesInput: Prisma.MaterialAttributeCreateManyInput[] =
+      materialAttributes.map((materialAttribute) => {
+        return {
+          name: materialAttribute.name,
+          value: materialAttribute.value,
+          materialVariantId: id,
+        };
+      });
+    return this.prismaService.materialAttribute.createManyAndReturn({
+      data: materialAttributesInput,
+    });
+  }
   async create(createMaterialAttributeDto: ArrayMaterialAttribute) {
     const result = await this.prismaService.materialAttribute.createMany({
       data: createMaterialAttributeDto.materialAttributes,

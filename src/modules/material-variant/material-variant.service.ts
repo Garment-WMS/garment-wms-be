@@ -14,6 +14,8 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ImageService } from '../image/image.service';
+import { MaterialAttributeService } from '../material-attribute/material-attribute.service';
+import { MaterialPackageService } from '../material-package/material-package.service';
 import { ChartDto } from './dto/chart.dto';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { MaterialStock } from './dto/stock-material.dto';
@@ -24,6 +26,8 @@ export class MaterialVariantService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly imageService: ImageService,
+    private readonly materialPackageService: MaterialPackageService,
+    private readonly materialAttributeService: MaterialAttributeService,
   ) {}
 
   materialInclude: Prisma.MaterialVariantInclude = {
@@ -657,7 +661,8 @@ export class MaterialVariantService {
   }
 
   async create(createMaterialDto: CreateMaterialDto) {
-    const { materialId, code, ...rest } = createMaterialDto;
+    const { materialId, code, materialPackages, materialAttributes, ...rest } =
+      createMaterialDto;
 
     const materialInput: Prisma.MaterialVariantCreateInput = {
       ...rest,
@@ -671,7 +676,26 @@ export class MaterialVariantService {
 
     const result = await this.prismaService.materialVariant.create({
       data: materialInput,
+      include: this.materialInclude,
     });
+
+    if (createMaterialDto.materialAttributes) {
+      const resultAttribute =
+        await this.materialAttributeService.createManyWithMaterialVariantId(
+          createMaterialDto.materialAttributes,
+          result.id,
+        );
+      result.materialAttribute = resultAttribute;
+    }
+    if (createMaterialDto.materialPackages) {
+      const resultPackage =
+        await this.materialPackageService.createManyWithMaterialVariantId(
+          createMaterialDto.materialPackages,
+          result.id,
+        );
+      result.materialPackage = resultPackage;
+    }
+
     if (result) {
       return apiSuccess(
         HttpStatus.CREATED,
@@ -679,7 +703,6 @@ export class MaterialVariantService {
         'Material created successfully',
       );
     }
-
     return apiFailed(HttpStatus.BAD_REQUEST, 'Material not created');
   }
 
