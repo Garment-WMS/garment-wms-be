@@ -107,7 +107,7 @@ export class PoDeliveryService {
       where: {
         purchaseOrderId: PoId,
         status: {
-          in: [PoDeliveryStatus.PENDING, PoDeliveryStatus.FINISHED],
+          in: [PoDeliveryStatus.IMPORTING, PoDeliveryStatus.FINISHED],
         },
       },
     }));
