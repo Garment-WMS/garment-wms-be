@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsInt,
@@ -42,6 +42,7 @@ export class CreateMaterialDto {
   @IsNotEmpty()
   @IsInt()
   @Min(0)
+  @Transform(({ value }) => (value === undefined || value === null ? 0 : value))
   reorderLevel: number;
 
   @ApiProperty({})
