@@ -341,7 +341,7 @@ export class ProductVariantService {
       include: this.includeQuery,
     });
 
-    if (createProductDto.productAttributes.length > 0) {
+    if (createProductDto.productAttributes) {
       const productAttribute = await this.productAttributeService.createMany(
         createProductDto.productAttributes,
         result.id,
@@ -349,7 +349,7 @@ export class ProductVariantService {
       result.productAttribute = productAttribute;
     }
 
-    if (createProductDto.productSizes.length > 0) {
+    if (createProductDto.productSizes) {
       const productSize = await this.productSizeService.createMany(
         createProductDto.productSizes,
         result,
