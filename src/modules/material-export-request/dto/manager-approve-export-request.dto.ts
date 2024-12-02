@@ -29,6 +29,7 @@ export class ManagerApproveExportRequestDto {
 
   @ApiProperty({ required: false })
   @IsString()
+  @IsOptional()
   managerNote: string;
 
   @ApiProperty({ required: false })
