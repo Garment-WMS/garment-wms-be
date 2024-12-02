@@ -22,7 +22,7 @@ import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateMaterialExportRequestDto } from './dto/create-material-export-request.dto';
 import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-request.dto';
-import { ProductionStaffDepartmentDto } from './dto/production-department-approve.dto';
+import { ProductionStaffDepartmentProcessDto } from './dto/production-department-approve.dto';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
 import { MaterialExportRequestService } from './material-export-request.service';
 
@@ -156,18 +156,16 @@ export class MaterialExportRequestController {
     );
   }
 
-  @Post(':id/production-department-approve')
+  @Post('/production-department-process')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.PRODUCTION_DEPARTMENT)
   async productionDepartmentApprove(
-    @Param('id') id: string,
-    @Body() dto: ProductionStaffDepartmentDto,
+    @Body() dto: ProductionStaffDepartmentProcessDto,
     @GetUser() productionDepartment: AuthenUser,
   ) {
     return apiSuccess(
       HttpStatus.OK,
       await this.materialExportRequestService.productionDepartmentApprove(
-        id,
         dto,
         productionDepartment.productionDepartmentId,
       ),

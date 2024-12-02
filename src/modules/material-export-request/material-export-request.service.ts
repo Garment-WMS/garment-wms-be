@@ -25,7 +25,7 @@ import { CreateMaterialExportRequestDto } from './dto/create-material-export-req
 import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-request.dto';
 import {
   ProductionDepartmentApproveAction,
-  ProductionStaffDepartmentDto,
+  ProductionStaffDepartmentProcessDto,
 } from './dto/production-department-approve.dto';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
 
@@ -76,7 +76,7 @@ export class MaterialExportRequestService {
   async isAnyExportingExportRequest() {
     const result = await this.prismaService.materialExportRequest.findMany({
       where: {
-        status: MaterialExportRequestStatus.DELIVERING,
+        status: MaterialExportRequestStatus.EXPORTING,
       },
     });
     return result;
@@ -371,16 +371,15 @@ export class MaterialExportRequestService {
   }
 
   async productionDepartmentApprove(
-    materialExportRequestId: string,
-    productionStaffApproveDto: ProductionStaffDepartmentDto,
+    productionStaffApproveDto: ProductionStaffDepartmentProcessDto,
     productionDepartmentId: string,
   ) {
     const allowMaterialExportRequest =
       await this.prismaService.materialExportRequest.findUnique({
         where: {
-          id: materialExportRequestId,
+          id: productionStaffApproveDto.materialExportRequestId,
           status: {
-            in: [MaterialExportRequestStatus.DELIVERED],
+            in: [MaterialExportRequestStatus.EXPORTED],
           },
         },
       });
@@ -388,7 +387,7 @@ export class MaterialExportRequestService {
     if (!allowMaterialExportRequest) {
       throw new BadRequestException(
         'Material Export Request status must be ' +
-          MaterialExportRequestStatus.DELIVERED,
+          MaterialExportRequestStatus.EXPORTED,
       );
     }
     // if (
@@ -399,20 +398,20 @@ export class MaterialExportRequestService {
     // }
 
     switch (productionStaffApproveDto.action) {
-      case ProductionDepartmentApproveAction.PRODUCTION_APPROVE:
+      case ProductionDepartmentApproveAction.PRODUCTION_APPROVED:
         return await this.prismaService.materialExportRequest.update({
           where: {
-            id: materialExportRequestId,
+            id: productionStaffApproveDto.materialExportRequestId,
           },
           data: {
             status: MaterialExportRequestStatus.PRODUCTION_APPROVED,
           },
           include: materialExportRequestInclude,
         });
-      case ProductionDepartmentApproveAction.PRODUCTION_REJECT:
+      case ProductionDepartmentApproveAction.PRODUCTION_REJECTED:
         return await this.prismaService.materialExportRequest.update({
           where: {
-            id: materialExportRequestId,
+            id: productionStaffApproveDto.materialExportRequestId,
           },
           data: {
             status: MaterialExportRequestStatus.REJECTED,

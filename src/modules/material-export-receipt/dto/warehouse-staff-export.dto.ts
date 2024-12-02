@@ -4,8 +4,6 @@ import { IsMaterialExportRequestExist } from 'src/modules/material-export-reques
 export enum WarehouseStaffExportAction {
   EXPORTING = 'EXPORTING',
   EXPORTED = 'EXPORTED',
-  DELIVERING = 'DELIVERING',
-  DELIVERED = 'DELIVERED',
 }
 
 export class WarehouseStaffExportDto {

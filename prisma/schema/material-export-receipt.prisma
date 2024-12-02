@@ -4,7 +4,7 @@ model MaterialExportReceipt {
   materialExportRequestId     String?                       @unique @map("material_export_request_id") @db.Uuid
   warehouseStaffId            String                        @map("warehouse_staff_id") @db.Uuid
   type                        MaterialExportReceiptType     @default(PRODUCTION) @map("type")
-  status                      ExportReceiptStatus           @default(EXPORTING) @map("status")
+  status                      ExportReceiptStatus           @default(AWAIT_TO_EXPORT) @map("status")
   note                        String?                       @map("note") @db.Text
   expectedStartedAt           DateTime?                     @map("expected_started_at") @db.Timestamptz(6)
   startedAt                   DateTime?                     @default(now()) @map("started_at") @db.Timestamptz(6)
@@ -26,8 +26,6 @@ enum ExportReceiptStatus {
   AWAIT_TO_EXPORT
   EXPORTING
   EXPORTED
-  DELIVERING
-  DELIVERED
   CANCELLED
 
   @@map("export_receipt_status")

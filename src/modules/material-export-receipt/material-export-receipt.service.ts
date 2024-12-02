@@ -3,13 +3,11 @@ import {
   ForbiddenException,
   HttpStatus,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { $Enums, Prisma, RoleCode } from '@prisma/client';
 import {
   materialExportReceiptInclude,
-  materialExportRequestInclude,
   materialInclude,
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
@@ -88,6 +86,7 @@ export class MaterialExportReceiptService {
       type: createMaterialExportReceiptDto.type,
       note: createMaterialExportReceiptDto.note,
       warehouseStaffId: createMaterialExportReceiptDto.warehouseStaffId,
+      status: $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT,
       materialExportReceiptDetail: {
         createMany: {
           data: createMaterialExportReceiptDto.materialExportReceiptDetail.map(
@@ -477,54 +476,6 @@ export class MaterialExportReceiptService {
           materialExportReceipt: materialExportReceipt2,
           materialExportRequest: materialExportRequest2,
           task: task2,
-        };
-
-      case WarehouseStaffExportAction.DELIVERING:
-        const materialExportReceipt3 =
-          await this.prismaService.materialExportReceipt.update({
-            where: { id: warehouseStaffExportDto.materialExportRequestId },
-            data: {
-              status: $Enums.ExportReceiptStatus.DELIVERING,
-            },
-          });
-        const materialExportRequest3 =
-          await this.prismaService.materialExportRequest.update({
-            where: { id: warehouseStaffExportDto.materialExportRequestId },
-            data: {
-              status: $Enums.MaterialExportRequestStatus.DELIVERING,
-            },
-            include: materialExportRequestInclude,
-          });
-        return {
-          materialExportReceipt: materialExportReceipt3,
-          materialExportRequest: materialExportRequest3,
-        };
-
-      case WarehouseStaffExportAction.DELIVERED:
-        const materialExportReceipt4 =
-          await this.prismaService.materialExportReceipt.update({
-            where: { id: warehouseStaffExportDto.materialExportRequestId },
-            data: {
-              status: $Enums.ExportReceiptStatus.DELIVERED,
-            },
-            include: materialExportReceiptInclude,
-          });
-        const materialExportRequest4 =
-          await this.prismaService.materialExportRequest.update({
-            where: { id: warehouseStaffExportDto.materialExportRequestId },
-            data: {
-              status: $Enums.MaterialExportRequestStatus.DELIVERED,
-            },
-            include: materialExportRequestInclude,
-          });
-        const task = await this.taskService.updateTaskStatusToDone({
-          materialExportReceiptId:
-            warehouseStaffExportDto.materialExportRequestId,
-        });
-        Logger.log('updateTaskStatusToDone', task);
-        return {
-          materialExportReceipt: materialExportReceipt4,
-          materialExportRequest: materialExportRequest4,
         };
       default:
         throw new Error('Invalid action');
