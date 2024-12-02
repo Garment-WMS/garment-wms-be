@@ -430,10 +430,28 @@ export class PurchaseOrderService {
             account: true,
           },
         },
+
         productionPlan: true,
         supplier: true,
         poDelivery: {
           include: {
+            importRequest: {
+              include: {
+                inspectionRequest: {
+                  include: {
+                    inspectionReport: {
+                      include: {
+                        importReceipt: {
+                          include: {
+                            materialReceipt: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
             poDeliveryDetail: {
               include: {
                 materialPackage: {

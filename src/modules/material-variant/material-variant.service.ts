@@ -822,7 +822,6 @@ export class MaterialVariantService {
       result.numberOfMaterialPackage = result.materialPackage.length
         ? result.materialPackage.length
         : 0;
-
       result.onHand = result?.materialPackage?.reduce(
         (totalAcc, materialVariantEl) => {
           let variantTotal = 0;

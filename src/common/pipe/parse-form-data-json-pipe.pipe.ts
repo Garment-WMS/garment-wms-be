@@ -17,7 +17,7 @@ export class BodyInterceptor implements NestInterceptor {
       console.log('body', body);
       request.body.createMaterialDto = body;
     } catch (err) {
-      throw new BadRequestException(err.message);
+      throw new BadRequestException(err);
     }
 
     return next.handle();
