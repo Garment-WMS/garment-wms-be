@@ -334,8 +334,10 @@ export class ProductVariantService {
   }
 
   async create(createProductDto: CreateProductDto, file?: Express.Multer.File) {
+    const { productAttributes, productSizes, code, ...rest } = createProductDto;
+
     const result = await this.prismaService.productVariant.create({
-      data: createProductDto,
+      data: rest,
       include: this.includeQuery,
     });
 
@@ -350,7 +352,7 @@ export class ProductVariantService {
     if (createProductDto.productSizes.length > 0) {
       const productSize = await this.productSizeService.createMany(
         createProductDto.productSizes,
-        result.id,
+        result,
       );
       result.productSize = productSize;
     }

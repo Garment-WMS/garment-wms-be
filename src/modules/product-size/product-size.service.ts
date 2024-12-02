@@ -1,6 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, ProductVariant } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -43,7 +43,10 @@ export class ProductSizeService {
     },
   };
 
-  async createMany(productSizes: NestedProductSizeDto[], id: string) {
+  async createMany(
+    productSizes: NestedProductSizeDto[],
+    productVariant: ProductVariant,
+  ) {
     const productSizesInput: Prisma.ProductSizeCreateManyInput[] =
       productSizes.map((productSize) => {
         return {
@@ -52,8 +55,8 @@ export class ProductSizeService {
           length: productSize.length,
           weight: productSize.weight,
           width: productSize.width,
-          name: productSize.name,
-          productVariantId: id,
+          name: `${productVariant.name} - ${productSize.size.toUpperCase().trim()}`,
+          productVariantId: productVariant.id,
         };
       });
     return this.prismaService.productSize.createManyAndReturn({

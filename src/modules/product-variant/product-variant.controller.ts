@@ -43,7 +43,7 @@ export class ProductVariantController {
     @UploadedFile() file: Express.Multer.File,
     @Body('createProductDto') createProductDto: CreateProductDto,
   ) {
-    return this.productVariantService.create(createProductDto,file);
+    return this.productVariantService.create(createProductDto, file);
   }
 
   @Get()
