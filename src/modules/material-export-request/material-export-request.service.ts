@@ -12,10 +12,7 @@ import {
   Prisma,
   RoleCode,
 } from '@prisma/client';
-import {
-  materialExportRequestInclude,
-  productFormulaInclude,
-} from 'prisma/prisma-include';
+import { materialExportRequestInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
@@ -23,7 +20,6 @@ import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { DiscussionService } from '../discussion/discussion.service';
 import { ManagerAction } from '../import-request/dto/import-request/manager-process.dto';
-import { CreateNestedMaterialExportRequestDetailDto } from '../material-export-request-detail/dto/create-nested-material-export-request-detail.dto';
 import { TaskService } from '../task/task.service';
 import { CreateMaterialExportRequestDto } from './dto/create-material-export-request.dto';
 import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-request.dto';
@@ -86,24 +82,36 @@ export class MaterialExportRequestService {
     return result;
   }
   async create(dto: CreateMaterialExportRequestDto) {
-    const productionBatch =
-      await this.prismaService.productionBatch.findUniqueOrThrow({
-        where: {
-          id: dto.productionBatchId,
-        },
-        select: {
-          quantityToProduce: true,
-        },
-      });
-
-    const quantityToProduce = productionBatch.quantityToProduce;
-
     if (!dto.materialExportRequestDetail) {
-      dto.materialExportRequestDetail =
-        await this.mapMaterialExportRequestDetailByFormula(
-          dto.productFormulaId,
-          quantityToProduce,
+      const productionBatch =
+        await this.prismaService.productionBatch.findUniqueOrThrow({
+          where: {
+            id: dto.productionBatchId,
+          },
+          include: {
+            productionBatchMaterialVariant: true,
+          },
+        });
+
+      if (!productionBatch) {
+        throw new NotFoundException('Production batch not found');
+      }
+
+      if (
+        !productionBatch.productionBatchMaterialVariant ||
+        productionBatch.productionBatchMaterialVariant.length === 0
+      ) {
+        throw new BadRequestException('Production batch material is empty');
+      }
+
+      const materialExportRequestDetail =
+        productionBatch.productionBatchMaterialVariant.map(
+          (productionBatchMaterial) => ({
+            materialVariantId: productionBatchMaterial.materialVariantId,
+            quantityByUom: productionBatchMaterial.quantityByUom,
+          }),
         );
+      dto.materialExportRequestDetail = materialExportRequestDetail;
     }
     const materialExportRequestInput: Prisma.MaterialExportRequestUncheckedCreateInput =
       {
@@ -111,7 +119,6 @@ export class MaterialExportRequestService {
         productionDepartmentId: dto.productionDepartmentId,
         description: dto.description,
         status: dto.status,
-        productFormulaId: dto.productFormulaId,
         materialExportRequestDetail: {
           createMany: {
             data: dto.materialExportRequestDetail.map((detail) => ({
@@ -142,34 +149,34 @@ export class MaterialExportRequestService {
     return result;
   }
 
-  async mapMaterialExportRequestDetailByFormula(
-    productFormulaId: string,
-    productQuantity: number,
-  ) {
-    const productFormula = await this.prismaService.productFormula.findUnique({
-      where: {
-        id: productFormulaId,
-      },
-      include: productFormulaInclude,
-    });
-    if (!productFormula) {
-      throw new NotFoundException('Product formula not found');
-    }
-    if (!productFormula.productFormulaMaterial) {
-      throw new BadRequestException('Product formula material not found');
-    }
-    const materialExportRequestDetail =
-      productFormula.productFormulaMaterial.map((productFormulaMaterial) => {
-        const materialExportRequestDetail: CreateNestedMaterialExportRequestDetailDto =
-          {
-            materialVariantId: productFormulaMaterial.materialVariantId,
-            quantityByUom:
-              productFormulaMaterial.quantityByUom * productQuantity,
-          };
-        return materialExportRequestDetail;
-      });
-    return materialExportRequestDetail;
-  }
+  // async mapMaterialExportRequestDetailByFormula(
+  //   productFormulaId: string,
+  //   productQuantity: number,
+  // ) {
+  //   const productFormula = await this.prismaService.productFormula.findUnique({
+  //     where: {
+  //       id: productFormulaId,
+  //     },
+  //     include: productFormulaInclude,
+  //   });
+  //   if (!productFormula) {
+  //     throw new NotFoundException('Product formula not found');
+  //   }
+  //   if (!productFormula.productFormulaMaterial) {
+  //     throw new BadRequestException('Product formula material not found');
+  //   }
+  //   const materialExportRequestDetail =
+  //     productFormula.productFormulaMaterial.map((productFormulaMaterial) => {
+  //       const materialExportRequestDetail: CreateNestedMaterialExportRequestDetailDto =
+  //         {
+  //           materialVariantId: productFormulaMaterial.materialVariantId,
+  //           quantityByUom:
+  //             productFormulaMaterial.quantityByUom * productQuantity,
+  //         };
+  //       return materialExportRequestDetail;
+  //     });
+  //   return materialExportRequestDetail;
+  // }
 
   async search(
     findOptions: GeneratedFindOptions<Prisma.MaterialExportRequestWhereInput>,
@@ -229,7 +236,6 @@ export class MaterialExportRequestService {
       productionDepartmentId: dto.productionDepartmentId,
       description: dto.description,
       status: dto.status,
-      productFormulaId: dto.productFormulaId,
       materialExportRequestDetail: {
         upsert: dto.materialExportRequestDetail.map((detail) => ({
           where: {

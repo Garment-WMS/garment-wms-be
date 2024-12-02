@@ -12,16 +12,11 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { CreateNestedMaterialExportRequestDetailDto } from 'src/modules/material-export-request-detail/dto/create-nested-material-export-request-detail.dto';
-import { IsProductFormulaExist } from 'src/modules/product-formula/validator/is-product-formula-exist.validator';
 import { IsProductionBatchExist } from 'src/modules/production-batch/validator/is-production-batch-exist.validator';
 import { IsUserRoleExist } from 'src/modules/user/validator/is-user-of-role-exist.validator';
 
 export class CreateMaterialExportRequestDto {
   // implements Prisma.MaterialExportRequestUncheckedCreateInput
-  @ApiProperty({ required: true, type: 'string', format: 'uuid' })
-  @IsOptional()
-  @IsProductFormulaExist()
-  productFormulaId: string;
 
   @ApiProperty({ required: true, type: 'string', format: 'uuid' })
   @IsUUID()

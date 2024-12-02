@@ -2,7 +2,7 @@ model MaterialExportRequest {
   id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   code                        String?                       @map("code") @db.VarChar(255)
   productionBatchId           String                        @map("production_batch_id") @db.Uuid
-  productFormulaId            String?                       @map("product_formula_id") @db.Uuid
+  // productFormulaId            String?                       @map("product_formula_id") @db.Uuid
   warehouseManagerId          String?                       @map("warehouse_manager_id") @db.Uuid
   warehouseStaffId            String?                       @map("warehouse_staff_id") @db.Uuid
   productionExpectExportDate  DateTime?                     @map("export_expected_date_time")
@@ -17,7 +17,7 @@ model MaterialExportRequest {
   updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
   productionBatch             ProductionBatch               @relation(fields: [productionBatchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productFormula              ProductFormula?               @relation(fields: [productFormulaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  // productFormula              ProductFormula?               @relation(fields: [productFormulaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warehouseManager            WarehouseManager?             @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productionDepartment        ProductionDepartment          @relation(fields: [productionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warehouseStaff              WarehouseStaff?               @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)

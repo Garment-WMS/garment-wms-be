@@ -453,9 +453,6 @@ export const materialExportRequestInclude: Prisma.MaterialExportRequestInclude =
     materialExportRequestDetail: {
       include: materialExportRequestDetailInclude,
     },
-    productFormula: {
-      include: productFormulaInclude,
-    },
     productionBatch: {
       include: productionBatchInclude,
     },
