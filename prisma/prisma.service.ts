@@ -160,7 +160,9 @@ export class PrismaService
   generateCodeMiddleware: Prisma.Middleware = async (params, next) => {
     const delimiter: string = '-';
     if (
-      (params.action === 'create' || params.action === 'createMany') &&
+      (params.action === 'create' ||
+        params.action === 'createMany' ||
+        params.action === 'createManyAndReturn') &&
       this.modelsWithCode.includes(params.model)
     ) {
       const modelName = params.model;

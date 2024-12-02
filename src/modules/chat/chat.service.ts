@@ -19,6 +19,28 @@ export class ChatService {
     return apiSuccess(HttpStatus.CREATED, newChat, 'Chat created successfully');
   }
 
+  async createWithoutResponse(createChatDto: CreateChatDto, user: AuthenUser) {
+    const newChat = await this.prismaService.chat.create({
+      data: {
+        discussionId: createChatDto.discussionId,
+        message: createChatDto.message,
+        senderId: user.userId,
+      },
+    });
+    return newChat;
+  }
+
+  async createBySystemWithoutResponse(createChatDto: CreateChatDto) {
+    const newChat = await this.prismaService.chat.create({
+      data: {
+        discussionId: createChatDto.discussionId,
+        message: createChatDto.message,
+        isSystem: true,
+      },
+    });
+    return newChat;
+  }
+
   findAll() {
     return `This action returns all chat`;
   }

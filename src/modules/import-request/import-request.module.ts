@@ -14,6 +14,8 @@ import { IsImportRequestExistPipe } from './pipe/is-import-request-exist.pipe';
 import { IsImportReqStatusCanCreateInspectionReqValidator } from './validator/is-import-req-can-create-inspetion-req';
 import { IsImportRequestExistValidator } from './validator/is-import-request-exist.validator';
 import { IsPoDeliveryDoesNotHaveActiveImportRequestValidator } from './validator/is-po-delivery-has-active-import-request';
+import { ChatModule } from '../chat/chat.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
@@ -24,7 +26,9 @@ import { IsPoDeliveryDoesNotHaveActiveImportRequestValidator } from './validator
     ProductReceiptModule,
     MaterialReceiptModule,
     ProductionBatchModule,
+    ChatModule,
     TaskModule,
+    UserModule,
   ],
   controllers: [ImportRequestController],
   providers: [
