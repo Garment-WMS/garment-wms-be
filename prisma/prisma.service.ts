@@ -169,11 +169,11 @@ export class PrismaService
       // Find the maximum existing code number
       console.log('modelName', modelName);
       const lastRecord = await this[modelName].findFirst({
-        where: {
-          code: {
-            not: null,
-          },
-        },
+        // where: {
+        //   code: {
+        //     not: null,
+        //   },
+        // },
         orderBy: { code: 'desc' },
         select: { code: true },
       });
