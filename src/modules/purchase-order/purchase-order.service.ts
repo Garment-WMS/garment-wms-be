@@ -57,6 +57,11 @@ export class PurchaseOrderService {
   async getAllPurchaseOrders() {
     const result = (await this.prismaService.purchaseOrder.findMany({
       include: {
+        purchasingStaff: {
+          include: {
+            account: true,
+          },
+        },
         productionPlan: true,
         supplier: true,
         poDelivery: {
@@ -229,6 +234,11 @@ export class PurchaseOrderService {
         },
         orderBy: filterOption?.orderBy,
         include: {
+          purchasingStaff: {
+            include: {
+              account: true,
+            },
+          },
           productionPlan: true,
           supplier: true,
           poDelivery: {
@@ -415,6 +425,11 @@ export class PurchaseOrderService {
     return this.prismaService.purchaseOrder.findUnique({
       where: { id },
       include: {
+        purchasingStaff: {
+          include: {
+            account: true,
+          },
+        },
         productionPlan: true,
         supplier: true,
         poDelivery: {
