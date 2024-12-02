@@ -24,6 +24,7 @@ import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { CreateProductImportRequestDto } from './dto/import-request/create-product-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
+import { ProductionDepartmentCreateReturnImportRequestDto } from './dto/import-request/production-department-create-return-import-request.dto';
 import { PurchasingStaffProcessDto } from './dto/import-request/purchasing-staff-process.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 import { ImportRequestService } from './import-request.service';
@@ -43,7 +44,7 @@ export class ImportRequestController {
   ) {
     return apiSuccess(
       HttpStatus.CREATED,
-      await this.importRequestService.create(
+      await this.importRequestService.createMaterialImportRequest(
         purchasingStaff,
         createImportRequestDto,
       ),
@@ -63,6 +64,23 @@ export class ImportRequestController {
       await this.importRequestService.createProductImportRequest(
         user.productionDepartmentId,
         createImportRequestDto,
+      ),
+      'Import request created successfully',
+    );
+  }
+
+  @Post('/material-return')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.PRODUCTION_DEPARTMENT)
+  async createReturnImportRequest(
+    @GetUser() productionDepartment: AuthenUser,
+    @Body() dto: ProductionDepartmentCreateReturnImportRequestDto,
+  ) {
+    return apiSuccess(
+      HttpStatus.CREATED,
+      await this.importRequestService.productionDepartmentCreateReturnImportRequest(
+        dto,
+        productionDepartment.productionDepartmentId,
       ),
       'Import request created successfully',
     );

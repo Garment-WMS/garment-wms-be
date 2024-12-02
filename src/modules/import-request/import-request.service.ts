@@ -21,6 +21,7 @@ import { isNotEmpty } from 'class-validator';
 import {
   importRequestInclude,
   importRequestIncludeUnique,
+  materialPackageInclude,
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -42,6 +43,7 @@ import { UserService } from '../user/user.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { CreateProductImportRequestDto } from './dto/import-request/create-product-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
+import { ProductionDepartmentCreateReturnImportRequestDto } from './dto/import-request/production-department-create-return-import-request.dto';
 import { PurchasingStaffProcessDto } from './dto/import-request/purchasing-staff-process.dto';
 import { ReassignImportRequestDto } from './dto/import-request/reassign-import-request.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
@@ -257,7 +259,10 @@ export class ImportRequestService {
     });
   }
 
-  async create(purchasingStaff: AuthenUser, dto: CreateImportRequestDto) {
+  async createMaterialImportRequest(
+    purchasingStaff: AuthenUser,
+    dto: CreateImportRequestDto,
+  ) {
     const activeImportReq = await this.getActiveImportReqOfPoDelivery(
       dto.poDeliveryId,
     );
@@ -327,12 +332,40 @@ export class ImportRequestService {
         return resultOut;
       },
     );
+    // const discussion = await this.discussionService.create({
+    //   importRequestId: result.id,
+    // });
+    // if (discussion) {
+    //   const account = await this.userService.findOne({
+    //     id: purchasingStaff.userId,
+    //   });
+    //   const chat: CreateChatDto = {
+    //     discussionId: discussion.id,
+    //     message: `Import request created by ${account.firstName} ${account.lastName}`,
+    //   };
+    //   const chatResult =
+    //     await this.chatService.createBySystemWithoutResponse(chat);
+    //   discussion.chat.push(chatResult);
+    // }
+    // result.discussion = discussion;
+    result.discussion =
+      await this.autoCreateDiscussionAfterImportRequestCreated(
+        result,
+        purchasingStaff.userId,
+      );
+    return result;
+  }
+
+  async autoCreateDiscussionAfterImportRequestCreated(
+    importRequest: ImportRequest,
+    userId: string,
+  ) {
     const discussion = await this.discussionService.create({
-      importRequestId: result.id,
+      importRequestId: importRequest.id,
     });
     if (discussion) {
       const account = await this.userService.findOne({
-        id: purchasingStaff.userId,
+        id: userId,
       });
       const chat: CreateChatDto = {
         discussionId: discussion.id,
@@ -342,7 +375,86 @@ export class ImportRequestService {
         await this.chatService.createBySystemWithoutResponse(chat);
       discussion.chat.push(chatResult);
     }
-    result.discussion = discussion;
+    return discussion;
+  }
+
+  async productionDepartmentCreateReturnImportRequest(
+    dto: ProductionDepartmentCreateReturnImportRequestDto,
+    productionDepartmentId: string,
+  ) {
+    const materialExportRequest =
+      await this.prismaService.materialExportRequest.findUnique({
+        where: {
+          id: dto.materialExportRequestId,
+        },
+        include: {
+          materialExportReceipt: {
+            include: {
+              materialExportReceiptDetail: {
+                include: {
+                  materialReceipt: {
+                    include: {
+                      materialPackage: { include: materialPackageInclude },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    if (!materialExportRequest) {
+      throw new NotFoundException("Material export request doesn't exist");
+    }
+    if (
+      materialExportRequest.status !==
+      $Enums.MaterialExportRequestStatus.PRODUCTION_REJECTED
+    ) {
+      throw new BadRequestException(
+        'Material export request must be production rejected',
+      );
+    }
+
+    const importRequestDetails = new Map<string, number>();
+
+    materialExportRequest.materialExportReceipt.materialExportReceiptDetail.forEach(
+      (detail) => {
+        if (
+          importRequestDetails.get(detail.materialReceipt.materialPackageId)
+        ) {
+          importRequestDetails.set(
+            detail.materialReceipt.materialPackageId,
+            importRequestDetails.get(detail.materialReceipt.materialPackageId) +
+              detail.quantityByPack,
+          );
+        } else {
+          importRequestDetails.set(
+            detail.materialReceipt.materialPackageId,
+            detail.quantityByPack,
+          );
+        }
+      },
+    );
+    const createImportRequestInput: Prisma.ImportRequestCreateInput = {
+      productionDepartment: {
+        connect: { id: productionDepartmentId },
+      },
+      status: $Enums.ImportRequestStatus.ARRIVED,
+      description: 'Import request for return material',
+      type: $Enums.ImportRequestType.MATERIAL_RETURN,
+      importRequestDetail: {
+        createMany: {
+          data: Array.from(importRequestDetails).map(([key, value]) => ({
+            materialPackageId: key,
+            quantityByPack: value,
+          })),
+        },
+      },
+    };
+    const result = await this.prismaService.importRequest.create({
+      data: createImportRequestInput,
+      include: importRequestInclude,
+    });
     return result;
   }
 

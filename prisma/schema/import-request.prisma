@@ -1,38 +1,40 @@
 model ImportRequest {
-  id                        String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  warehouseStaffId          String?               @map("warehouse_staff_id") @db.Uuid
-  poDeliveryId              String?               @map("po_delivery_id") @db.Uuid
-  purchasingStaffId         String?               @map("purchasing_staff_id") @db.Uuid
-  warehouseManagerId        String?               @map("warehouse_manager_id") @db.Uuid
-  productionDepartmentId    String?               @map("production_department_id") @db.Uuid
-  productionBatchId         String?               @map("production_batch_id") @db.Uuid
-  status                    ImportRequestStatus   @default(ARRIVED)
-  code                      String?               @map("code") @db.VarChar
-  type                      ImportRequestType     @map("import_request_type")
-  inspectExpectedStartedAt  DateTime?             @map("inspect_expected_started_at") @db.Timestamptz(6)
-  inspectExpectedFinishedAt DateTime?             @map("inspect_expected_finished_at") @db.Timestamptz(6)
-  importExpectedStartedAt   DateTime?             @map("import_expected_started_at") @db.Timestamptz(6)
-  importExpectedFinishedAt  DateTime?             @map("import_expected_finished_at") @db.Timestamptz(6)
-  startedAt                 DateTime?             @map("started_at") @db.Timestamptz(6)
-  finishedAt                DateTime?             @map("finished_at") @db.Timestamptz(6)
-  cancelledAt               DateTime?             @map("cancelled_at") @db.Timestamptz(6)
-  cancelReason              String?               @map("cancelled_reason") @db.VarChar
-  description               String?               @map("description") @db.VarChar
-  managerNote               String?               @map("manager_note") @db.VarChar
-  rejectAt                  DateTime?             @map("reject_at") @db.Timestamptz(6)
-  createdAt                 DateTime?             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                 DateTime?             @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt                 DateTime?             @map("deleted_at") @db.Timestamptz(6)
-  poDelivery                PoDelivery?           @relation(fields: [poDeliveryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  purchasingStaff           PurchasingStaff?      @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  warehouseManager          WarehouseManager?     @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  warehouseStaff            WarehouseStaff?       @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productionBatch           ProductionBatch?      @relation(fields: [productionBatchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productionDepartment      ProductionDepartment? @relation(fields: [productionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  importRequestDetail       ImportRequestDetail[]
-  inspectionRequest         InspectionRequest[]
-  discussion                Discussion?
-  task                      Task[]
+  id                                    String                 @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  warehouseStaffId                      String?                @map("warehouse_staff_id") @db.Uuid
+  poDeliveryId                          String?                @map("po_delivery_id") @db.Uuid
+  purchasingStaffId                     String?                @map("purchasing_staff_id") @db.Uuid
+  warehouseManagerId                    String?                @map("warehouse_manager_id") @db.Uuid
+  productionDepartmentId                String?                @map("production_department_id") @db.Uuid
+  productionBatchId                     String?                @map("production_batch_id") @db.Uuid
+  materialExportRequestId               String?                @map("material_export_request_id") @db.Uuid
+  status                                ImportRequestStatus    @default(ARRIVED)
+  code                                  String?                @map("code") @db.VarChar
+  type                                  ImportRequestType      @map("import_request_type")
+  inspectExpectedStartedAt              DateTime?              @map("inspect_expected_started_at") @db.Timestamptz(6)
+  inspectExpectedFinishedAt             DateTime?              @map("inspect_expected_finished_at") @db.Timestamptz(6)
+  importExpectedStartedAt               DateTime?              @map("import_expected_started_at") @db.Timestamptz(6)
+  importExpectedFinishedAt              DateTime?              @map("import_expected_finished_at") @db.Timestamptz(6)
+  startedAt                             DateTime?              @map("started_at") @db.Timestamptz(6)
+  finishedAt                            DateTime?              @map("finished_at") @db.Timestamptz(6)
+  cancelledAt                           DateTime?              @map("cancelled_at") @db.Timestamptz(6)
+  cancelReason                          String?                @map("cancelled_reason") @db.VarChar
+  description                           String?                @map("description") @db.VarChar
+  managerNote                           String?                @map("manager_note") @db.VarChar
+  rejectAt                              DateTime?              @map("reject_at") @db.Timestamptz(6)
+  createdAt                             DateTime?              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                             DateTime?              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                             DateTime?              @map("deleted_at") @db.Timestamptz(6)
+  poDelivery                            PoDelivery?            @relation(fields: [poDeliveryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  purchasingStaff                       PurchasingStaff?       @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouseManager                      WarehouseManager?      @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouseStaff                        WarehouseStaff?        @relation(fields: [warehouseStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productionBatch                       ProductionBatch?       @relation(fields: [productionBatchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productionDepartment                  ProductionDepartment?  @relation(fields: [productionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  importRequestDetail                   ImportRequestDetail[]
+  inspectionRequest                     InspectionRequest[]
+  discussion                            Discussion?
+  task                                  Task[]
+  materialExportRequestProductionReject MaterialExportRequest? @relation(fields: [materialExportRequestId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("import_request")
 }
