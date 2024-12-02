@@ -103,14 +103,15 @@ export class PoDeliveryService {
   }
 
   async IsImportingOrFinishedPoDeliveryExist(PoId: string) {
-    return !!(await this.pirsmaService.poDelivery.findMany({
+    const poDeliveries = await this.pirsmaService.poDelivery.findMany({
       where: {
         purchaseOrderId: PoId,
         status: {
-          in: [PoDeliveryStatus.PENDING, PoDeliveryStatus.FINISHED],
+          in: [PoDeliveryStatus.IMPORTING, PoDeliveryStatus.FINISHED],
         },
       },
-    }));
+    });
+    return poDeliveries.length > 0;
   }
 
   async checkIsPoDeliveryStatus(poDeliveryId: string) {
