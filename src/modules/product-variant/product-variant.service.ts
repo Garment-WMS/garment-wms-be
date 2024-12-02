@@ -8,7 +8,9 @@ import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { ProductAttributeService } from 'src/product-attribute/product-attribute.service';
 import { ImageService } from '../image/image.service';
+import { ProductSizeService } from '../product-size/product-size.service';
 import { ChartDto } from './dto/chart-dto.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductStock } from './dto/product-stock.dto';
@@ -18,6 +20,8 @@ import { UpdateProductDto } from './dto/update-product.dto';
 export class ProductVariantService {
   constructor(
     private prismaService: PrismaService,
+    private readonly productSizeService: ProductSizeService,
+    private readonly productAttributeService: ProductAttributeService,
     private readonly imageService: ImageService,
   ) {}
 
@@ -313,10 +317,51 @@ export class ProductVariantService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Image not uploaded');
   }
 
-  async create(createProductDto: CreateProductDto) {
+  async addImageWithoutResponse(file: Express.Multer.File, id: string) {
+    const imageUrl = await this.imageService.addImageToFirebase(
+      file,
+      id,
+      PathConstants.PRODUCT_PATH,
+    );
+    let result;
+    if (imageUrl) {
+      const updateProductDto: UpdateProductDto = {
+        image: imageUrl,
+      };
+      result = await this.update(id, updateProductDto);
+    }
+    return result;
+  }
+
+  async create(createProductDto: CreateProductDto, file?: Express.Multer.File) {
     const result = await this.prismaService.productVariant.create({
       data: createProductDto,
+      include: this.includeQuery,
     });
+
+    if (createProductDto.productAttributes.length > 0) {
+      const productAttribute = await this.productAttributeService.createMany(
+        createProductDto.productAttributes,
+        result.id,
+      );
+      result.productAttribute = productAttribute;
+    }
+
+    if (createProductDto.productSizes.length > 0) {
+      const productSize = await this.productSizeService.createMany(
+        createProductDto.productSizes,
+        result.id,
+      );
+      result.productSize = productSize;
+    }
+
+    if (file) {
+      const imageUrl = await this.addImageWithoutResponse(file, result.id);
+      if (imageUrl) {
+        result.image = imageUrl.image;
+      }
+    }
+
     if (result) {
       return apiSuccess(
         HttpStatus.CREATED,

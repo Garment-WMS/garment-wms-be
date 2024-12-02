@@ -21,8 +21,8 @@ import { NestedMaterialAttributeDto } from './nested-material-attribute.dto';
 export class CreateMaterialDto {
   @ApiProperty({})
   @IsNotEmpty()
-  @IsUUID()
-  @IsMaterialTypeExist()
+  // @IsUUID()
+  // @IsMaterialTypeExist()
   materialId: string;
 
   @ApiProperty({})

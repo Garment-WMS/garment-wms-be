@@ -5,16 +5,13 @@ import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
-import { ProductVariantService } from '../product-variant/product-variant.service';
+import { NestedProductSizeDto } from '../product-variant/dto/nested-product-size.dto';
 import { CreateProductVariantDto } from './dto/create-product-variant.dto';
 import { UpdateProductVariantDto } from './dto/update-product-variant.dto';
 
 @Injectable()
 export class ProductSizeService {
-  constructor(
-    private prismaService: PrismaService,
-    private productVariantService: ProductVariantService,
-  ) {}
+  constructor(private prismaService: PrismaService) {}
 
   includeQuery: Prisma.ProductSizeInclude = {
     inventoryStock: true,
@@ -46,6 +43,23 @@ export class ProductSizeService {
     },
   };
 
+  async createMany(productSizes: NestedProductSizeDto[], id: string) {
+    const productSizesInput: Prisma.ProductSizeCreateManyInput[] =
+      productSizes.map((productSize) => {
+        return {
+          size: productSize.size,
+          height: productSize.height,
+          length: productSize.length,
+          weight: productSize.weight,
+          width: productSize.width,
+          name: productSize.name,
+          productVariantId: id,
+        };
+      });
+    return this.prismaService.productSize.createManyAndReturn({
+      data: productSizesInput,
+    });
+  }
   async findQuery(query: any) {
     const result = await this.prismaService.productSize.findFirst({
       where: query,
@@ -56,10 +70,11 @@ export class ProductSizeService {
 
   async create(createProductVariantDto: CreateProductVariantDto) {
     if (!createProductVariantDto.name) {
-      const productVariant = await this.productVariantService.findById(
-        createProductVariantDto.productVariantId,
-      );
-
+      const productVariant = await this.prismaService.productVariant.findFirst({
+        where: {
+          id: createProductVariantDto.productVariantId,
+        },
+      });
       if (!productVariant) {
         return apiFailed(HttpStatus.BAD_REQUEST, 'Product Variant not found');
       }

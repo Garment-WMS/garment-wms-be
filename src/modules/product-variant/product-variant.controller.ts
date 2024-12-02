@@ -22,6 +22,7 @@ import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { ChartDto } from './dto/chart-dto.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { ProductVariantInterceptor } from './pipe/parse-form-data-json-pipe-for-product-variant.pipe';
 import { ProductVariantService } from './product-variant.service';
 
 @ApiTags('Product')
@@ -33,6 +34,16 @@ export class ProductVariantController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   create(@Body() createProductDto: CreateProductDto) {
     return this.productVariantService.create(createProductDto);
+  }
+
+  @Post('/form-data')
+  @UseInterceptors(FileInterceptor('file'), ProductVariantInterceptor)
+  @UsePipes(new ValidationPipe({}))
+  createWithFormData(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('createProductDto') createProductDto: CreateProductDto,
+  ) {
+    return this.productVariantService.create(createProductDto,file);
   }
 
   @Get()

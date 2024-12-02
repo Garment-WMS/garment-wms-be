@@ -19,10 +19,11 @@ import { Prisma } from '@prisma/client';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { HttpCacheInterceptor } from 'src/common/interceptor/cache.interceptor';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
+import { BodyInterceptor } from 'src/common/pipe/parse-form-data-json-pipe.pipe';
 import { ChartDto } from './dto/chart.dto';
-import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { MaterialVariantService } from './material-variant.service';
+import { CreateMaterialDto } from './dto/create-material.dto';
 
 @Controller('material-variant')
 @UseInterceptors(HttpCacheInterceptor)
@@ -54,9 +55,20 @@ export class MaterialVariantController {
   }
 
   @Post()
-  @UsePipes(new ValidationPipe({ whitelist: true }))
-  create(@Body() createMaterialDto: CreateMaterialDto) {
+  @UsePipes(new ValidationPipe({}))
+  create(@Body('createMaterialDto') createMaterialDto: any) {
     return this.materialVariantService.create(createMaterialDto);
+  }
+
+  @Post('/form-data')
+  @UseInterceptors(FileInterceptor('file'), BodyInterceptor)
+  @UsePipes(new ValidationPipe({}))
+  createFormData(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('createMaterialDto')
+    createMaterialDto: CreateMaterialDto,
+  ) {
+    return this.materialVariantService.create(createMaterialDto,file);
   }
 
   @Post('chart')

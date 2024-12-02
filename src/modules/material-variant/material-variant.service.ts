@@ -629,6 +629,22 @@ export class MaterialVariantService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Image not uploaded');
   }
 
+  async addImageWithoutResponse(file: Express.Multer.File, id: string) {
+    const imageUrl = await this.imageService.addImageToFirebase(
+      file,
+      id,
+      PathConstants.MATERIAL_PATH,
+    );
+    let result;
+    if (imageUrl) {
+      const updateMaterialDto: UpdateMaterialDto = {
+        image: imageUrl,
+      };
+      result = await this.update(id, updateMaterialDto);
+    }
+    return result;
+  }
+
   async update(id: string, updateMaterialDto: UpdateMaterialDto) {
     const materialVariant = await this.findById(id);
     if (!materialVariant) {
@@ -660,7 +676,10 @@ export class MaterialVariantService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Material not updated');
   }
 
-  async create(createMaterialDto: CreateMaterialDto) {
+  async create(
+    createMaterialDto: CreateMaterialDto,
+    file?: Express.Multer.File,
+  ) {
     const { materialId, code, materialPackages, materialAttributes, ...rest } =
       createMaterialDto;
 
@@ -694,6 +713,13 @@ export class MaterialVariantService {
           result.id,
         );
       result.materialPackage = resultPackage;
+    }
+
+    if (file) {
+      const imageUrl = await this.addImageWithoutResponse(file, result.id);
+      if (imageUrl) {
+        result.image = imageUrl.image;
+      }
     }
 
     if (result) {
