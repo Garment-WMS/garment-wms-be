@@ -82,37 +82,37 @@ export class MaterialExportRequestService {
     return result;
   }
   async create(dto: CreateMaterialExportRequestDto) {
-    if (!dto.materialExportRequestDetail) {
-      const productionBatch =
-        await this.prismaService.productionBatch.findUniqueOrThrow({
-          where: {
-            id: dto.productionBatchId,
-          },
-          include: {
-            productionBatchMaterialVariant: true,
-          },
-        });
+    // if (!dto.materialExportRequestDetail) {
+    const productionBatch =
+      await this.prismaService.productionBatch.findUniqueOrThrow({
+        where: {
+          id: dto.productionBatchId,
+        },
+        include: {
+          productionBatchMaterialVariant: true,
+        },
+      });
 
-      if (!productionBatch) {
-        throw new NotFoundException('Production batch not found');
-      }
-
-      if (
-        !productionBatch.productionBatchMaterialVariant ||
-        productionBatch.productionBatchMaterialVariant.length === 0
-      ) {
-        throw new BadRequestException('Production batch material is empty');
-      }
-
-      const materialExportRequestDetail =
-        productionBatch.productionBatchMaterialVariant.map(
-          (productionBatchMaterial) => ({
-            materialVariantId: productionBatchMaterial.materialVariantId,
-            quantityByUom: productionBatchMaterial.quantityByUom,
-          }),
-        );
-      dto.materialExportRequestDetail = materialExportRequestDetail;
+    if (!productionBatch) {
+      throw new NotFoundException('Production batch not found');
     }
+
+    if (
+      !productionBatch.productionBatchMaterialVariant ||
+      productionBatch.productionBatchMaterialVariant.length === 0
+    ) {
+      throw new BadRequestException('Production batch material is empty');
+    }
+
+    const materialExportRequestDetail =
+      productionBatch.productionBatchMaterialVariant.map(
+        (productionBatchMaterial) => ({
+          materialVariantId: productionBatchMaterial.materialVariantId,
+          quantityByUom: productionBatchMaterial.quantityByUom,
+        }),
+      );
+    dto.materialExportRequestDetail = materialExportRequestDetail;
+    // }
     const materialExportRequestInput: Prisma.MaterialExportRequestUncheckedCreateInput =
       {
         productionBatchId: dto.productionBatchId,
