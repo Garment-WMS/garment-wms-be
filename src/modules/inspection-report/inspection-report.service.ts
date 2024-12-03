@@ -342,6 +342,7 @@ export class InspectionReportService {
       ),
     };
     const inspectionReport = await this.create(dto, user);
+    return inspectionReport;
   }
 
   async create(dto: CreateInspectionReportDto, user: AuthenUser) {
@@ -506,6 +507,7 @@ export class InspectionReportService {
       },
       data: {
         status: $Enums.InspectionRequestStatus.INSPECTED,
+        finishedAt: new Date(),
       },
     });
   }
@@ -621,7 +623,7 @@ export class InspectionReportService {
           createImportReceiptDto,
           importRequest.warehouseManagerId,
         );
-        
+
       case $Enums.ReceiptType.PRODUCT:
         return this.importReceiptService.createProductReceipt(
           createImportReceiptDto,
