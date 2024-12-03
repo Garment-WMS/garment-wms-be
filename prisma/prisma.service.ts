@@ -179,6 +179,7 @@ export class PrismaService
         orderBy: { code: 'desc' },
         select: { code: true },
       });
+      console.log('lastRecord', lastRecord);
 
       let lastNumber = 0;
       if (lastRecord && lastRecord.code) {
@@ -193,7 +194,10 @@ export class PrismaService
           const nextNumber = (lastNumber + 1).toString().padStart(6, '0');
           params.args.data.code = `${prefix}${delimiter}${nextNumber}`;
         }
-      } else if (params.action === 'createMany') {
+      } else if (
+        params.action === 'createMany' ||
+        params.action === 'createManyAndReturn'
+      ) {
         if (params.args.data && Array.isArray(params.args.data)) {
           params.args.data.forEach((item, index) => {
             if (item.code === undefined) {

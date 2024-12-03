@@ -41,11 +41,12 @@ export class TaskService {
       (task) => {
         return {
           ...task,
+          code: undefined,
         };
       },
     );
-
-    const task = await prismaInstance.task.createManyAndReturn({
+    console.log(taskCreateInput);
+    const task = await this.prismaService.task.createManyAndReturn({
       data: taskCreateInput,
     });
 

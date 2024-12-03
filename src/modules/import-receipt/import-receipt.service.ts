@@ -242,7 +242,7 @@ export class ImportReceiptService {
       try {
         const chat: CreateChatDto = {
           discussionId: importRequest?.discussion.id,
-          message: Constant.INSPECTED_TO_AWAIT_TO_IMPORT,
+          message: Constant.IMPORT_RECEIPT_INSPECTED_TO_AWAIT_TO_IMPORT,
         };
         await this.chatService.createBySystemWithoutResponse(chat);
         await this.updateTaskByImportReceipt(result);
@@ -420,7 +420,7 @@ export class ImportReceiptService {
 
       const chat: CreateChatDto = {
         discussionId: importRequest?.discussion.id,
-        message: Constant.INSPECTED_TO_AWAIT_TO_IMPORT,
+        message: Constant.IMPORT_RECEIPT_INSPECTED_TO_AWAIT_TO_IMPORT,
       };
       await this.chatService.createBySystemWithoutResponse(chat);
 

@@ -10,10 +10,10 @@ export class Constant {
   public static readonly DEFAULT_LIMIT = 100;
   public static readonly PO_CODE_PREFIX = 'PO';
   public static readonly POD_CODE_PREFIX = 'PO-DEL';
-  public static readonly INSPECTING_TO_INSPECTED =
-    'status:Inspecting->Inspected';
-  public static readonly INSPECTED_TO_AWAIT_TO_IMPORT =
-    'status:Inspected->Await to import';
+  public static readonly IMPORT_REQUEST_INSPECTING_TO_INSPECTED =
+    'status:Inspecting->Inspected [Import Request]';
+  public static readonly IMPORT_RECEIPT_INSPECTED_TO_AWAIT_TO_IMPORT =
+    'status:Inspected->Await to import [Import Receipt]';
   public static readonly AWAIT_TO_IMPORT_TO_IMPORTING =
     'status:Await to import->Importing';
   public static readonly APPROVED_TO_INSPECTING = 'status:Approved->Inspecting';
@@ -22,6 +22,12 @@ export class Constant {
   public static readonly INSPECTED_TO_IMPORTING = 'status:Inspected->Importing';
   public static readonly IMPORTING_TO_IMPORTED: string =
     'status:Importing->Imported';
+
+  public static readonly AWAIT_TO_EXPORT_TO_EXPORTING: string =
+    'status:Await to Export->Exporting';
+  static AWAIT_TO_EXPORT_TO_REJECT: string = 'status:Await to Export->Rejected';
+  static PENDING_TO_APPROVE: string = 'status:Pending->Approved';
+  static PENDING_TO_REJECT: string = 'status:Pending->Rejected';
 
   public static readonly months = [
     { 1: 'January' },

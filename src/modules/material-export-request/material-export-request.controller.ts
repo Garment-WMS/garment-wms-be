@@ -46,6 +46,7 @@ export class MaterialExportRequestController {
       HttpStatus.CREATED,
       await this.materialExportRequestService.create(
         createMaterialExportRequestDto,
+        productionDepartment
       ),
       'Material export request created successfully',
     );
@@ -150,7 +151,7 @@ export class MaterialExportRequestController {
       await this.materialExportRequestService.managerApprove(
         id,
         dto,
-        warehouseManager.warehouseManagerId,
+        warehouseManager,
       ),
       'Manager approve material export request successfully',
     );
