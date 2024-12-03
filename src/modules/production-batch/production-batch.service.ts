@@ -158,7 +158,7 @@ export class ProductionBatchService {
           name: createProductionBatchInput[0].name,
           description: createProductionBatchInput[0].description,
           quantityToProduce: createProductionBatchInput[0].quantityToProduce,
-          status: 'EXECUTING',
+          status: ProductionBatchStatus.PENDING,
         };
         // throw new Error('Method not implemented.');
 
