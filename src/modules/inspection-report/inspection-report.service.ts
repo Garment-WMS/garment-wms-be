@@ -424,7 +424,7 @@ export class InspectionReportService {
 
     const chat: CreateChatDto = {
       discussionId: importRequest?.discussion.id,
-      message: Constant.INSPECTING_TO_INSPECTED,
+      message: Constant.IMPORT_REQUEST_INSPECTING_TO_INSPECTED,
     };
     await this.chatService.create(chat, user);
 

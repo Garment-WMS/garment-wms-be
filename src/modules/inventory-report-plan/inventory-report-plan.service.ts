@@ -257,10 +257,11 @@ export class InventoryReportPlanService {
         taskType: TaskType.INVENTORY,
         warehouseStaffId: staff.warehouseStaffId,
         inventoryReportPlanId: result.id,
+        expectedStartedAt: createInventoryReportPlanDto.from,
         expectedFinishedAt: createInventoryReportPlanDto.to,
       });
     });
-    await this.taskService.createMany(createTaskDto, this.prismaService);
+    await this.taskService.createMany(createTaskDto);
 
     return apiSuccess(
       HttpStatus.CREATED,
@@ -607,9 +608,11 @@ export class InventoryReportPlanService {
             taskType: TaskType.INVENTORY,
             warehouseStaffId: staff.warehouseStaffId,
             inventoryReportPlanId: inventoryPlanResult.id,
+            expectedStartedAt: createInventoryReportPlanDto.from,
+            expectedFinishedAt: createInventoryReportPlanDto.to,
           });
         });
-        await this.taskService.createMany(createTaskDto, prismaInstance);
+        await this.taskService.createMany(createTaskDto);
         return inventoryPlanResult;
       },
       {

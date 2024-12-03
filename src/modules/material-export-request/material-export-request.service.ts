@@ -141,26 +141,24 @@ export class MaterialExportRequestService {
           include: materialExportRequestInclude,
         });
 
-        const discussion = await this.discussionService.create(
-          {
-            exportRequestId: result.id,
-          },
-          prismaInstance,
-        );
-        const account = await this.prismaService.account.findUnique({
-          where: {
-            id: user.userId,
-          },
-        });
-        const chat: CreateChatDto = {
-          discussionId: discussion.id,
-          message: `Export material request created by ${account.firstName} ${account.lastName}`,
-        };
-        await this.chatService.createBySystemWithoutResponse(chat);
-        result.discussion = discussion;
         return result;
       },
     );
+    const discussion = await this.discussionService.create({
+      exportRequestId: result.id,
+    });
+    const account = await this.prismaService.account.findUnique({
+      where: {
+        id: user.userId,
+      },
+    });
+    const chat: CreateChatDto = {
+      discussionId: discussion.id,
+      message: `Export material request created by ${account.firstName} ${account.lastName}`,
+    };
+    await this.chatService.createBySystemWithoutResponse(chat);
+    result.discussion = discussion;
+
     return result;
   }
 
@@ -358,7 +356,7 @@ export class MaterialExportRequestService {
             discussionId: materialExportRequest.discussion.id,
             message: Constant.PENDING_TO_APPROVE,
           };
-          await this.chatService.createWithoutResponse(chat,warehouseManager);
+          await this.chatService.createWithoutResponse(chat, warehouseManager);
         } catch (error) {
           Logger.error('Cannot create task', error);
         }
@@ -378,11 +376,11 @@ export class MaterialExportRequestService {
             },
             include: materialExportRequestInclude,
           });
-          const chat: CreateChatDto = {
-            discussionId: materialExportRequest.discussion.id,
-            message: Constant.PENDING_TO_REJECT,
-          };
-          await this.chatService.createWithoutResponse(chat,warehouseManager);
+        const chat: CreateChatDto = {
+          discussionId: materialExportRequest.discussion.id,
+          message: Constant.PENDING_TO_REJECT,
+        };
+        await this.chatService.createWithoutResponse(chat, warehouseManager);
         return rejectedMaterialExportRequest;
       default:
         throw new BadRequestException('Invalid manager action');
