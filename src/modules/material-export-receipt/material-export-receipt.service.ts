@@ -14,6 +14,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
+import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { TaskService } from '../task/task.service';
@@ -417,10 +418,13 @@ export class MaterialExportReceiptService {
         const currentInventoryReportPlan =
           await this.getInventoryReportPlanNow();
         if (currentInventoryReportPlan.length > 0) {
-          return apiFailed(
+          throw new CustomHttpException(
             409,
-            'There are inventory report plan is in progress please wait for it to finish',
-            currentInventoryReportPlan,
+            apiFailed(
+              409,
+              'There are inventory report plan is in progress please wait for it to finish',
+              currentInventoryReportPlan,
+            ),
           );
         }
         const materialExportReceipt1 =
