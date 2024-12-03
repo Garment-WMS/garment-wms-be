@@ -104,6 +104,8 @@ export class MaterialExportRequestService {
       throw new BadRequestException('Production batch material is empty');
     }
 
+    //todo check production batch status and production batch export request is PRODUCTION_REJECTED
+
     const materialExportRequestDetail =
       productionBatch.productionBatchMaterialVariant.map(
         (productionBatchMaterial) => ({
