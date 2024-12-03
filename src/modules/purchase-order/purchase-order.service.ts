@@ -346,9 +346,11 @@ export class PurchaseOrderService {
     let totalImportQuantity = 0;
     let totalQuantityToImport = 0;
     let totalFailImportQuantity = 0;
+    let totalAwaitToImportQuantity = 0;
 
     const poDeliveryStats = purchaseOrder.poDelivery.reduce(
       (acc, poDelivery) => {
+        // console.log( acc.totalPoDelivery++);
         acc.totalPoDelivery++;
 
         switch (poDelivery.status) {
@@ -356,6 +358,17 @@ export class PurchaseOrderService {
             acc.totalFinishedPoDelivery++;
             break;
           case PoDeliveryStatus.IMPORTING:
+            // if (
+            //   poDelivery?.importRequest.status ===
+            //   ImportRequestStatus.AWAIT_TO_IMPORT
+            // ) {
+            //   totalAwaitToImportQuantity += poDelivery.poDeliveryDetail.reduce(
+            //     (acc, poDeliveryDetail) => {
+            //       return acc + poDeliveryDetail.quantityByPack;
+            //     },
+            //     0,
+            //   );
+            // }
             acc.totalInProgressPoDelivery++;
             break;
           case PoDeliveryStatus.CANCELLED:
@@ -374,9 +387,9 @@ export class PurchaseOrderService {
             totalFailImportQuantity +=
               poDeliveryDetail.quantityByPack -
               poDeliveryDetail.actualImportQuantity;
+            totalImportQuantity += poDeliveryDetail.actualImportQuantity;
           }
           if (!poDelivery.isExtra) {
-            totalImportQuantity += poDeliveryDetail.actualImportQuantity;
             totalQuantityToImport += poDeliveryDetail.quantityByPack;
           }
         });
