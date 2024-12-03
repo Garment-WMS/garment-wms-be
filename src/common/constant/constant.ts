@@ -20,6 +20,8 @@ export class Constant {
   public static readonly ARRIVED_TO_APPROVED = 'status:Arrived->Approved';
   public static readonly ARRIVED_TO_CANCELED = 'status:Arrived->Canceled';
   public static readonly INSPECTED_TO_IMPORTING = 'status:Inspected->Importing';
+  public static readonly IMPORTING_TO_IMPORTED: string =
+    'status:Importing->Imported';
 
   public static readonly months = [
     { 1: 'January' },

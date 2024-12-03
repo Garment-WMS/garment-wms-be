@@ -673,6 +673,7 @@ export class ImportReceiptService {
         } else {
           throw new Error('Receipt not found');
         }
+
         const result = await this.updateImportReceiptStatusToImportedOrRejected(
           importReceiptId,
           $Enums.ImportReceiptStatus.IMPORTED,
@@ -683,13 +684,12 @@ export class ImportReceiptService {
         return result;
       },
     );
-
     const chat: CreateChatDto = {
       discussionId: importReceipt.discussion.id,
-      message: Constant.INSPECTED_TO_IMPORTING,
+      message: Constant.IMPORTING_TO_IMPORTED,
     };
     await this.chatService.create(chat, user);
-    console.log('Created chat');
+
     await this.importReceiptQueue.add('check-last-importing-receipt', {});
 
     if (result) {
