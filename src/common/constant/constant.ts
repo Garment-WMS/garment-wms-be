@@ -23,6 +23,12 @@ export class Constant {
   public static readonly IMPORTING_TO_IMPORTED: string =
     'status:Importing->Imported';
 
+  public static readonly AWAIT_TO_EXPORT_TO_EXPORTING: string =
+    'status:Await to Export->Exporting';
+  static AWAIT_TO_EXPORT_TO_REJECT: string = 'status:Await to Export->Rejected';
+  static PENDING_TO_APPROVE: string = 'status:Pending->Approved';
+  static PENDING_TO_REJECT: string = 'status:Pending->Rejected';
+
   public static readonly months = [
     { 1: 'January' },
     { 2: 'February' },

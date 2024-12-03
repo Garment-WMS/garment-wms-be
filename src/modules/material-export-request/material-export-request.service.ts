@@ -18,6 +18,8 @@ import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { ChatService } from '../chat/chat.service';
+import { CreateChatDto } from '../chat/dto/create-chat.dto';
 import { DiscussionService } from '../discussion/discussion.service';
 import { ManagerAction } from '../import-request/dto/import-request/manager-process.dto';
 import { TaskService } from '../task/task.service';
@@ -35,6 +37,7 @@ export class MaterialExportRequestService {
     private readonly prismaService: PrismaService,
     private readonly taskService: TaskService,
     private readonly discussionService: DiscussionService,
+    private readonly chatService: ChatService,
   ) {}
 
   async getByUserToken(
@@ -81,7 +84,7 @@ export class MaterialExportRequestService {
     });
     return result;
   }
-  async create(dto: CreateMaterialExportRequestDto) {
+  async create(dto: CreateMaterialExportRequestDto, user: AuthenUser) {
     // if (!dto.materialExportRequestDetail) {
     const productionBatch =
       await this.prismaService.productionBatch.findUniqueOrThrow({
@@ -144,6 +147,16 @@ export class MaterialExportRequestService {
           },
           prismaInstance,
         );
+        const account = await this.prismaService.account.findUnique({
+          where: {
+            id: user.userId,
+          },
+        });
+        const chat: CreateChatDto = {
+          discussionId: discussion.id,
+          message: `Export material request created by ${account.firstName} ${account.lastName}`,
+        };
+        await this.chatService.createBySystemWithoutResponse(chat);
         result.discussion = discussion;
         return result;
       },
@@ -274,7 +287,7 @@ export class MaterialExportRequestService {
   async managerApprove(
     id: string,
     dto: ManagerApproveExportRequestDto,
-    warehouseManagerId: string,
+    warehouseManager: AuthenUser,
   ) {
     const allowApproveStatus: $Enums.MaterialExportRequestStatus[] = [
       $Enums.MaterialExportRequestStatus.PENDING,
@@ -285,7 +298,7 @@ export class MaterialExportRequestService {
         `Cannot approve material export request with status ${materialExportRequest.status}`,
       );
     }
-    dto.warehouseManagerId = warehouseManagerId;
+    dto.warehouseManagerId = warehouseManager.warehouseManagerId;
     dto.materialExportReceipt.materialExportRequestId = id;
     dto.materialExportReceipt.warehouseStaffId = dto.warehouseStaffId;
     dto.materialExportReceipt.type =
@@ -341,6 +354,11 @@ export class MaterialExportRequestService {
             materialExportReceipt.id,
             materialExportReceipt.materialExportRequestId,
           );
+          const chat: CreateChatDto = {
+            discussionId: materialExportRequest.discussion.id,
+            message: Constant.PENDING_TO_APPROVE,
+          };
+          await this.chatService.createWithoutResponse(chat,warehouseManager);
         } catch (error) {
           Logger.error('Cannot create task', error);
         }
@@ -360,6 +378,11 @@ export class MaterialExportRequestService {
             },
             include: materialExportRequestInclude,
           });
+          const chat: CreateChatDto = {
+            discussionId: materialExportRequest.discussion.id,
+            message: Constant.PENDING_TO_REJECT,
+          };
+          await this.chatService.createWithoutResponse(chat,warehouseManager);
         return rejectedMaterialExportRequest;
       default:
         throw new BadRequestException('Invalid manager action');

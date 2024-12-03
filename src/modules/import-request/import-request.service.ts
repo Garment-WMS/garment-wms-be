@@ -369,7 +369,7 @@ export class ImportRequestService {
       });
       const chat: CreateChatDto = {
         discussionId: discussion.id,
-        message: `Import request created by ${account.firstName} ${account.lastName}`,
+        message: `Import material request created by ${account.firstName} ${account.lastName}`,
       };
       const chatResult =
         await this.chatService.createBySystemWithoutResponse(chat);
