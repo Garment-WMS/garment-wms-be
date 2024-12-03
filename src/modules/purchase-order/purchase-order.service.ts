@@ -168,7 +168,6 @@ export class PurchaseOrderService {
     }
     return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to cancel Purchase Order');
   }
-
   async getPurchaseOrderStatistics() {
     const [total, inProgress, finished, cancelled] =
       await this.prismaService.$transaction([
@@ -658,6 +657,7 @@ export class PurchaseOrderService {
         await prisma.purchaseOrder.update({
           where: { id },
           data: {
+            finishDate: new Date(),
             status: PurchaseOrderStatus.FINISHED,
           },
         });

@@ -327,6 +327,7 @@ export class PoDeliveryService {
             // status: $Enums.PurchaseOrderStatus.IN_PROGRESS,
           },
           data: {
+            finishDate: new Date(),
             status: $Enums.PurchaseOrderStatus.FINISHED,
           },
         });
