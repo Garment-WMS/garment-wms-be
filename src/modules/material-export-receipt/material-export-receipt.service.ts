@@ -106,6 +106,16 @@ export class MaterialExportReceiptService {
       },
     };
 
+    //update material export request to await to export
+    await this.prismaService.materialExportRequest.update({
+      where: {
+        id: createMaterialExportReceiptDto.materialExportRequestId,
+      },
+      data: {
+        status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
+      },
+    });
+
     return this.prismaService.materialExportReceipt.create({
       data: input,
       include: materialExportReceiptInclude,
