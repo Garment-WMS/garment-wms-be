@@ -147,7 +147,59 @@ export class PoDeliveryService {
     });
   }
 
-  includeQuery: Prisma.PoDeliveryInclude = {};
+  includeQuery: Prisma.PoDeliveryInclude = {
+    poDeliveryDetail: {
+      include: {
+        materialPackage: {
+          include: {
+            materialVariant: {
+              include: {
+                material: {
+                  include: {
+                    materialUom: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    importRequest: {
+      include: {
+        inspectionRequest: {
+          include: {
+            inspectionReport: {
+              include: {
+                importReceipt: {
+                  include: {
+                    materialReceipt: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        importRequestDetail: {
+          include: {
+            materialPackage: {
+              include: {
+                materialVariant: {
+                  include: {
+                    material: {
+                      include: {
+                        materialUom: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  };
 
   async createPoDelivery(
     CreatePoDelivery: Partial<PoDeliveryDto>,
