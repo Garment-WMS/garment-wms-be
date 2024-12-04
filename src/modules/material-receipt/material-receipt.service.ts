@@ -165,14 +165,12 @@ export class MaterialReceiptService {
   async updateMaterialReceiptQuantity(
     id: string,
     quantityByPack: number,
-    prismaInstance: PrismaClient = this.prismaService,
+    prismaInstance: PrismaService = this.prismaService,
   ) {
     const materialReceipt = await this.findById(id);
     if (!materialReceipt) {
       throw new Error('Material Receipt not found');
     }
-    return prismaInstance.$transaction(
-      async (prismaInstance: PrismaService) => {
         await prismaInstance.materialReceipt.update({
           where: {
             id,
@@ -192,9 +190,7 @@ export class MaterialReceiptService {
           remainQuantityByPack,
           prismaInstance,
         );
-        return null;
-      },
-    );
+
   }
 
   create(createMaterialReceiptDto: CreateMaterialReceiptDto) {
