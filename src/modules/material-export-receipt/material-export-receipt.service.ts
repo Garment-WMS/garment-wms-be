@@ -551,7 +551,7 @@ export class MaterialExportReceiptService {
           },
         },
       });
-    const inventoryReportPlan =
+    const inventoryReportPlanInProgress =
       await this.prismaService.inventoryReportPlan.findMany({
         where: {
           status: {
@@ -559,18 +559,6 @@ export class MaterialExportReceiptService {
               $Enums.InventoryReportPlanStatus.AWAIT,
               $Enums.InventoryReportPlanStatus.IN_PROGRESS,
             ],
-          },
-          inventoryReportPlanDetail: {
-            some: {
-              materialVariant: {
-                id: {
-                  in: materialExportReceipt.materialExportReceiptDetail.map(
-                    (detail) =>
-                      detail.materialReceipt.materialPackage.materialVariant.id,
-                  ),
-                },
-              },
-            },
           },
         },
         include: {
@@ -583,16 +571,66 @@ export class MaterialExportReceiptService {
           },
         },
       });
-    Logger.debug(inventoryReportPlan);
+    const materialVariantIdsInPlan = new Set<string>();
+    inventoryReportPlanInProgress.forEach((plan) => {
+      plan.inventoryReportPlanDetail.forEach((detail) => {
+        materialVariantIdsInPlan.add(detail.materialVariantId);
+      });
+    });
+    const collisionMaterialVariant =
+      materialExportReceipt.materialExportReceiptDetail
+        .map((detail) => {
+          return detail.materialReceipt.materialPackage.materialVariant;
+        })
+        .filter((variant) => materialVariantIdsInPlan.has(variant.id));
 
-    const collisionMaterialVariant = inventoryReportPlan.map(
-      (inventoryReportPlan) => {
-        return inventoryReportPlan.inventoryReportPlanDetail.map((detail) => {
-          return detail.materialVariant;
-        });
-      },
-    );
-    return { inventoryReportPlan, collisionMaterialVariant };
+    // const inventoryReportPlan =
+    //   await this.prismaService.inventoryReportPlan.findMany({
+    //     where: {
+    //       status: {
+    //         in: [
+    //           $Enums.InventoryReportPlanStatus.AWAIT,
+    //           $Enums.InventoryReportPlanStatus.IN_PROGRESS,
+    //         ],
+    //       },
+    //       inventoryReportPlanDetail: {
+    //         some: {
+    //           materialVariant: {
+    //             id: {
+    //               in: materialExportReceipt.materialExportReceiptDetail.map(
+    //                 (detail) =>
+    //                   detail.materialReceipt.materialPackage.materialVariant.id,
+    //               ),
+    //             },
+    //           },
+    //         },
+    //       },
+    //     },
+    //     include: {
+    //       inventoryReportPlanDetail: {
+    //         include: {
+    //           materialVariant: {
+    //             include: materialVariantInclude,
+    //           },
+    //         },
+    //       },
+    //     },
+    //   });
+
+    // const collisionMaterialVariant = inventoryReportPlan.map(
+    //   (inventoryReportPlan) => {
+    //     return inventoryReportPlan.inventoryReportPlanDetail.map((detail) => {
+    //       return detail.materialVariant;
+    //     });
+    //   },
+    // );
+    Logger.debug(collisionMaterialVariant);
+    Logger.debug(JSON.stringify(collisionMaterialVariant));
+    Logger.debug(JSON.stringify(inventoryReportPlanInProgress));
+    return {
+      inventoryReportPlan: inventoryReportPlanInProgress,
+      collisionMaterialVariant,
+    };
   }
 
   // //NOT DRY

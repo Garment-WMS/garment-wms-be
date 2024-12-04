@@ -41,7 +41,7 @@ model ImportRequest {
 
 enum ImportRequestStatus {
   ARRIVED //purchasing staff
-  CANCELED //purchasing staff
+  CANCELLED //purchasing staff
   REJECTED //warehouse manager
   APPROVED //warehouse manager
   INSPECTING //inspection department

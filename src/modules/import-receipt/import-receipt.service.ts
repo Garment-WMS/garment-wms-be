@@ -564,7 +564,7 @@ export class ImportReceiptService {
       );
     }
 
-    if (importRequest.status === $Enums.ImportRequestStatus.CANCELED) {
+    if (importRequest.status === $Enums.ImportRequestStatus.CANCELLED) {
       throw new BadRequestException(
         'Import receipt cannot be created. The import request has been canceled.',
       );
