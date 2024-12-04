@@ -68,6 +68,7 @@ import { UserModule } from './modules/user/user.module';
 import { UtilModule } from './modules/util/util.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
 import { ProductAttributeModule } from './product-attribute/product-attribute.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -164,6 +165,7 @@ import { ProductAttributeModule } from './product-attribute/product-attribute.mo
     DashboardModule,
     UtilModule,
     ProductAttributeModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],

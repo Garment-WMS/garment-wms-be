@@ -52,6 +52,7 @@ export class AuthController {
   @Post('/sign-in')
   @UsePipes(new ValidationPipe())
   warehouseStaffLogin(@Body() body: LoginAuthDTO) {
+    console.log('body', body);
     return this.authService.loginGeneral(body, body.role);
   }
 

@@ -1,0 +1,14 @@
+model Notification {
+    id              String   @id @default(uuid()) // Unique identifier for the notification
+    accountId       String // ID of the user who receives the notification
+    title           String // Notification title or subject
+    message         String // Notification content
+    type            String // Type of notification (e.g., 'info', 'warning', 'error', 'success')
+    isRead          Boolean  @default(false) // Whether the notification has been read
+    createdAt       DateTime @default(now()) // Timestamp of creation
+    updatedAt       DateTime @updatedAt // Timestamp of the last update
+    data            Json? // Additional data as JSON (e.g., links, metadata)
+    relatedEntity   String? // Optional reference to a related entity (e.g., 'Order', 'Message')
+    relatedEntityId String? // Optional ID of the related entity
+    account         Account  @relation(fields: [accountId], references: [id]) // Relation to User model
+}

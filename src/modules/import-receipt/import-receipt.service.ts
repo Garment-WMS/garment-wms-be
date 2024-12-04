@@ -311,21 +311,7 @@ export class ImportReceiptService {
       finishedAt: createImportReceiptDto.finishAt,
     };
 
-    // this.validateMaterialReceipt(
-    //   inspectionReport.inspectionReportDetail,
-    //   createImportReceiptDto.materialReceipts,
-    // );
-
-    //Alway await to import so no longer need to check
-    // const isAnyAwaitOrInProgressReportPlan =
-    //   await this.isAnyWaitOrInProgressReportPlan();
-
-    // let importRequestStatus: ImportRequestStatus =
-    //   ImportRequestStatus.IMPORTING;
-    // if (isAnyAwaitOrInProgressReportPlan) {
-    //   importRequestStatus = ImportRequestStatus.AWAIT_TO_IMPORT;
-    //   importReceiptInput.status = ImportReceiptStatus.AWAIT_TO_IMPORT;
-    // }
+    console.log('importReceiptInput', importReceiptInput);
 
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
@@ -341,9 +327,9 @@ export class ImportReceiptService {
               prismaInstance,
               // createImportReceiptDto.materialReceipts,
             );
-
+          console.log('ImportReceipt', result);
           //TODO: Validate this method when no there is no approved material
-          if (result.length < 0) {
+          if (result.length === 0) {
             await prismaInstance.importReceipt.delete({
               where: {
                 id: importReceipt.id,
@@ -355,93 +341,158 @@ export class ImportReceiptService {
               $Enums.ImportRequestStatus.REJECTED,
               prismaInstance,
             );
+          } else {
+            await this.importRequestService.updateImportRequestStatus(
+              inspectionReport.inspectionRequest.importRequestId,
+              importReceipt.status,
+              prismaInstance,
+            );
           }
 
           let poDeliveryExtra;
           //Compare number of imported materials with number of approved material
-          for (
-            let i = 0;
-            i < inspectionReport.inspectionReportDetail.length;
-            i++
-          ) {
-            await this.prismaService.poDeliveryDetail.updateMany({
-              where: {
-                AND: [
-                  {
-                    poDeliveryId: importRequest.poDeliveryId,
-                  },
-                  {
-                    materialPackageId:
-                      inspectionReport.inspectionReportDetail[i]
-                        .materialPackageId,
-                  },
-                ],
-              },
-              data: {
-                actualImportQuantity:
-                  inspectionReport.inspectionReportDetail[i]
-                    .approvedQuantityByPack,
-              },
-            });
+          // for (
+          //   let i = 0;
+          //   i < inspectionReport.inspectionReportDetail.length;
+          //   i++
+          // ) {
+          //   await this.prismaService.poDeliveryDetail.updateMany({
+          //     where: {
+          //       AND: [
+          //         {
+          //           poDeliveryId: importRequest.poDeliveryId,
+          //         },
+          //         {
+          //           materialPackageId:
+          //             inspectionReport.inspectionReportDetail[i]
+          //               .materialPackageId,
+          //         },
+          //       ],
+          //     },
+          //     data: {
+          //       actualImportQuantity:
+          //         inspectionReport.inspectionReportDetail[i]
+          //           .approvedQuantityByPack,
+          //     },
+          //   });
 
-            //Create the extra PO delivery for the rejected material
-            //TODO: Can use job queue to handle this to avoid bottleneck issues
-            let poDelivery: any = importRequest.poDelivery;
-            //Has to cast to any because issue with includeQuery ( Typescript error not mine, if include raw still work )
-            let poDeliveryDetail = poDelivery.poDeliveryDetail as any;
-            let expectedImportQuantity = poDeliveryDetail.find(
-              (detail) =>
-                detail.materialPackageId ===
-                inspectionReport.inspectionReportDetail[i].materialPackageId,
-            ).quantityByPack;
-            if (
-              inspectionReport.inspectionReportDetail[i]
-                .approvedQuantityByPack !== expectedImportQuantity
-            ) {
-              poDeliveryExtra =
-                await this.poDeliveryService.findExtraPoDelivery(
-                  importRequest.poDelivery.purchaseOrderId,
-                );
-              if (!poDeliveryExtra) {
-                poDeliveryExtra = await this.poDeliveryService.createPoDelivery(
+          //   //Create the extra PO delivery for the rejected material
+          //   //TODO: Can use job queue to handle this to avoid bottleneck issues
+          //   let poDelivery: any = importRequest.poDelivery;
+          //   //Has to cast to any because issue with includeQuery ( Typescript error not mine, if include raw still work )
+          //   let poDeliveryDetail = poDelivery.poDeliveryDetail as any;
+          //   let expectedImportQuantity = poDeliveryDetail.find(
+          //     (detail) =>
+          //       detail.materialPackageId ===
+          //       inspectionReport.inspectionReportDetail[i].materialPackageId,
+          //   ).quantityByPack;
+          //   if (
+          //     inspectionReport.inspectionReportDetail[i]
+          //       .approvedQuantityByPack !== expectedImportQuantity
+          //   ) {
+          //     poDeliveryExtra =
+          //       await this.poDeliveryService.findExtraPoDelivery(
+          //         importRequest.poDelivery.purchaseOrderId,
+          //       );
+          //     if (!poDeliveryExtra) {
+          //       poDeliveryExtra = await this.poDeliveryService.createPoDelivery(
+          //         {
+          //           purchaseOrderId: importRequest.poDelivery.purchaseOrderId,
+          //           isExtra: true,
+          //           status: PoDeliveryStatus.PENDING,
+          //         },
+          //         prismaInstance,
+          //       );
+          //     }
+          //     await this.poDeliveryDetailsService.createPoDeliveryMaterial(
+          //       {
+          //         poDelivery: {
+          //           connect: { id: poDeliveryExtra.id },
+          //         },
+          //         materialPackage: {
+          //           connect: {
+          //             id: inspectionReport.inspectionReportDetail[i]
+          //               .materialPackageId,
+          //           },
+          //         },
+          //         quantityByPack:
+          //           expectedImportQuantity -
+          //           inspectionReport.inspectionReportDetail[i]
+          //             .approvedQuantityByPack,
+          //         totalAmount: 0,
+          //       },
+          //       poDeliveryExtra.id,
+          //       inspectionReport.inspectionReportDetail[i].materialPackageId,
+          //       prismaInstance,
+          //     );
+          //   }
+          // }
+
+          const updatePromises = inspectionReport.inspectionReportDetail.map(
+            async (detail) => {
+              // Perform the updateMany operation
+              await this.prismaService.poDeliveryDetail.updateMany({
+                where: {
+                  AND: [
+                    { poDeliveryId: importRequest.poDeliveryId },
+                    { materialPackageId: detail.materialPackageId },
+                  ],
+                },
+                data: {
+                  actualImportQuantity: detail.approvedQuantityByPack,
+                },
+              });
+
+              // Create the extra PO delivery for rejected material if necessary
+              let poDelivery: any = importRequest.poDelivery;
+              let poDeliveryDetail = poDelivery.poDeliveryDetail as any;
+              let expectedImportQuantity = poDeliveryDetail.find(
+                (d) => d.materialPackageId === detail.materialPackageId,
+              ).quantityByPack;
+
+              if (detail.approvedQuantityByPack !== expectedImportQuantity) {
+                poDeliveryExtra =
+                  await this.poDeliveryService.findExtraPoDelivery(
+                    importRequest.poDelivery.purchaseOrderId,
+                  );
+                if (!poDeliveryExtra) {
+                  poDeliveryExtra =
+                    await this.poDeliveryService.createPoDelivery(
+                      {
+                        purchaseOrderId:
+                          importRequest.poDelivery.purchaseOrderId,
+                        isExtra: true,
+                        status: PoDeliveryStatus.PENDING,
+                      },
+                      prismaInstance,
+                    );
+                }
+
+                // Create PoDeliveryMaterial
+                await this.poDeliveryDetailsService.createPoDeliveryMaterial(
                   {
-                    purchaseOrderId: importRequest.poDelivery.purchaseOrderId,
-                    isExtra: true,
-                    status: PoDeliveryStatus.PENDING,
+                    poDelivery: {
+                      connect: { id: poDeliveryExtra.id },
+                    },
+                    materialPackage: {
+                      connect: {
+                        id: detail.materialPackageId,
+                      },
+                    },
+                    quantityByPack:
+                      expectedImportQuantity - detail.approvedQuantityByPack,
+                    totalAmount: 0,
                   },
+                  poDeliveryExtra.id,
+                  detail.materialPackageId,
                   prismaInstance,
                 );
               }
-              await this.poDeliveryDetailsService.createPoDeliveryMaterial(
-                {
-                  poDelivery: {
-                    connect: { id: poDeliveryExtra.id },
-                  },
-                  materialPackage: {
-                    connect: {
-                      id: inspectionReport.inspectionReportDetail[i]
-                        .materialPackageId,
-                    },
-                  },
-                  quantityByPack:
-                    expectedImportQuantity -
-                    inspectionReport.inspectionReportDetail[i]
-                      .approvedQuantityByPack,
-                  totalAmount: 0,
-                },
-                poDeliveryExtra.id,
-                inspectionReport.inspectionReportDetail[i].materialPackageId,
-                prismaInstance,
-              );
-            }
-          }
-
-          //Update import request status to Approved
-          await this.importRequestService.updateImportRequestStatus(
-            inspectionReport.inspectionRequest.importRequestId,
-            importReceipt.status,
-            prismaInstance,
+            },
           );
+          // Wait for all the operations to complete concurrently
+          await Promise.all(updatePromises);
+          //Update import request status to Approved
         }
         return importReceipt;
       },
@@ -449,7 +500,7 @@ export class ImportReceiptService {
         timeout: 100000,
       },
     );
-
+    console.log('result', result);
     if (!result) {
       const chat: CreateChatDto = {
         discussionId: importRequest?.discussion.id,
@@ -464,25 +515,21 @@ export class ImportReceiptService {
     };
     await this.chatService.createBySystemWithoutResponse(chat);
 
-    await this.updateTaskByImportReceipt(result);
-    await this.discussionService.updateImportReceiptDiscussion(
-      result.id,
-      createImportReceiptDto.importRequestId,
-    );
+    if (result) {
+      await this.updateTaskByImportReceipt(result);
+      await this.discussionService.updateImportReceiptDiscussion(
+        result.id,
+        createImportReceiptDto.importRequestId,
+      );
+    }
     // } catch (e) {
     //   Logger.error(e);
     //   throw new ConflictException('Can not create Task automatically');
     // }
-
     return apiSuccess(
       HttpStatus.CREATED,
       result,
       'Create import receipt successfully',
-    );
-
-    return apiFailed(
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      'Create import receipt failed',
     );
   }
   async isAnyWaitOrInProgressReportPlan() {

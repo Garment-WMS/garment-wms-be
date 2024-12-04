@@ -147,59 +147,7 @@ export class PoDeliveryService {
     });
   }
 
-  includeQuery: Prisma.PoDeliveryInclude = {
-    poDeliveryDetail: {
-      include: {
-        materialPackage: {
-          include: {
-            materialVariant: {
-              include: {
-                material: {
-                  include: {
-                    materialUom: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    importRequest: {
-      include: {
-        inspectionRequest: {
-          include: {
-            inspectionReport: {
-              include: {
-                importReceipt: {
-                  include: {
-                    materialReceipt: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        importRequestDetail: {
-          include: {
-            materialPackage: {
-              include: {
-                materialVariant: {
-                  include: {
-                    material: {
-                      include: {
-                        materialUom: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  };
+  includeQuery: Prisma.PoDeliveryInclude = {};
 
   async createPoDelivery(
     CreatePoDelivery: Partial<PoDeliveryDto>,
@@ -242,8 +190,8 @@ export class PoDeliveryService {
 
   async getOnePoDelivery(id: string) {
     const result = await this.findPoDeliveryId(id);
-
     if (result) {
+      getPoDeliveryStatistic(result);
       return apiSuccess(HttpStatus.OK, result, 'Get po delivery successfully');
     }
     return apiSuccess(HttpStatus.NOT_FOUND, null, 'Po delivery not found');
@@ -257,7 +205,59 @@ export class PoDeliveryService {
       where: {
         id: id,
       },
-      include: this.includeQuery,
+      include: {
+        poDeliveryDetail: {
+          include: {
+            materialPackage: {
+              include: {
+                materialVariant: {
+                  include: {
+                    material: {
+                      include: {
+                        materialUom: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        importRequest: {
+          include: {
+            inspectionRequest: {
+              include: {
+                inspectionReport: {
+                  include: {
+                    importReceipt: {
+                      include: {
+                        materialReceipt: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            importRequestDetail: {
+              include: {
+                materialPackage: {
+                  include: {
+                    materialVariant: {
+                      include: {
+                        material: {
+                          include: {
+                            materialUom: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
   }
 
@@ -482,3 +482,30 @@ export const extractNumberFromCode = (code: string): number => {
   }
   throw new Error('Invalid code format');
 };
+
+export function getPoDeliveryStatistic(poDelivery) {
+  if (!poDelivery) {
+    return poDelivery;
+  }
+  const materialSummary = poDelivery.poDeliveryDetail?.reduce(
+    (summary, detail) => {
+      const materialId = detail.materialPackageId;
+      if (summary[materialId]) {
+        summary[materialId].quantityByPack += detail.quantityByPack;
+        summary[materialId].actualImportQuantity += detail.actualImportQuantity;
+      } else {
+        summary[materialId] = {
+          ...detail,
+        };
+      }
+      return summary;
+    },
+    {},
+  );
+
+  const poDeliveryWithMaterialSummary = {
+    ...poDelivery,
+    materialSummary: Object.values(materialSummary),
+  };
+  return poDeliveryWithMaterialSummary;
+}

@@ -329,10 +329,9 @@ export class PurchaseOrderService {
     purchaseOrder.totalInProgressPoDelivery = totalInProgressPoDelivery;
     purchaseOrder.totalCancelledPoDelivery = totalCancelledPoDelivery;
     purchaseOrder.totalPendingPoDelivery = totalPendingPoDelivery;
-
-    if (!purchaseOrder) {
-      return apiFailed(HttpStatus.NOT_FOUND, 'Purchase Order not found');
-    }
+    purchaseOrder.poMaterialSummary = getPoDeliveryStatistic(
+      purchaseOrder.poDelivery,
+    );
     // Return success response with data
     return apiSuccess(
       HttpStatus.OK,
@@ -691,4 +690,32 @@ export class PurchaseOrderService {
     const nextCode = `${Constant.PO_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
     return nextCode;
   }
+}
+
+export function getPoDeliveryStatistic(poDelivery) {
+  console.log(poDelivery);
+  if (!poDelivery) {
+    return poDelivery;
+  }
+  const materialSummary = poDelivery.reduce((summary, delivery) => {
+    delivery.poDeliveryDetail?.forEach((detail) => {
+      const materialId = detail.materialPackageId;
+      if (summary[materialId]) {
+        summary[materialId].quantityByPack += detail.quantityByPack;
+        summary[materialId].actualImportQuantity += detail.actualImportQuantity;
+      } else {
+        summary[materialId] = {
+          ...detail.materialPackage,
+          quantityByPack: detail.quantityByPack,
+          actualImportQuantity: detail.actualImportQuantity,
+        };
+      }
+    });
+    return summary;
+  }, {});
+
+  const poDeliveryWithMaterialSummary = {
+    materialSummary: Object.values(materialSummary),
+  };
+  return poDeliveryWithMaterialSummary;
 }

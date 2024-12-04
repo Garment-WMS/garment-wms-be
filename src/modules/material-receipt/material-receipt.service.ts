@@ -157,7 +157,6 @@ export class MaterialReceiptService {
     createdMaterialReceipts =
       await prismaInstance.materialReceipt.createManyAndReturn({
         data: materialReceipts,
-        include: materialReceiptIncludeWithoutImportReceipt,
       });
     return createdMaterialReceipts;
   }

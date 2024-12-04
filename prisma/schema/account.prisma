@@ -25,6 +25,7 @@ model Account {
   Chat                 Chat[]
 
   @@map("accounts")
+  Notification Notification[]
 }
 
 enum Gender {
