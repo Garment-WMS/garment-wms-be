@@ -738,7 +738,10 @@ export class ImportReceiptService {
     );
   }
 
-  async updateImportReceiptStatusToImporting(importReceiptId: string) {
+  async updateImportReceiptStatusToImporting(
+    importReceiptId: string,
+    user: AuthenUser,
+  ) {
     const { inventoryReportPlan, collisionMaterialVariant } =
       await this.getInventoryReportPlanCollisionWithImportReceipt(
         importReceiptId,
