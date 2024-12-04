@@ -21,6 +21,7 @@ import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ChatService } from '../chat/chat.service';
 import { CreateChatDto } from '../chat/dto/create-chat.dto';
+import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { TaskService } from '../task/task.service';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
 import { ExportAlgorithmParam } from './dto/export-algorithm-param.type';
@@ -40,6 +41,7 @@ export class MaterialExportReceiptService {
     private readonly exportAlgorithmService: ExportAlgorithmService,
     private readonly taskService: TaskService,
     private readonly chatService: ChatService,
+    private readonly inventoryStockService: InventoryStockService,
   ) {}
 
   async getByUserToken(
@@ -106,20 +108,59 @@ export class MaterialExportReceiptService {
       },
     };
 
-    //update material export request to await to export
-    await this.prismaService.materialExportRequest.update({
-      where: {
-        id: createMaterialExportReceiptDto.materialExportRequestId,
-      },
-      data: {
-        status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
-      },
-    });
+    // const [materialExportReceipt, materialExportRequest] =
+    //   await this.prismaService.$transaction([
+    //     this.prismaService.materialExportReceipt.create({
+    //       data: input,
+    //       include: materialExportReceiptInclude,
+    //     }),
+    //     this.prismaService.materialExportRequest.update({
+    //       where: {
+    //         id: createMaterialExportReceiptDto.materialExportRequestId,
+    //       },
+    //       data: {
+    //         status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
+    //       },
+    //     }),
+    //   ]);
 
-    return this.prismaService.materialExportReceipt.create({
-      data: input,
-      include: materialExportReceiptInclude,
-    });
+    const { materialExportReceipt, materialExportRequest, inventoryStock } =
+      await this.prismaService.$transaction(
+        async (prismaInstance: PrismaService) => {
+          const materialExportReceipt =
+            await prismaInstance.materialExportReceipt.create({
+              data: input,
+              include: materialExportReceiptInclude,
+            });
+          const materialExportRequest =
+            await prismaInstance.materialExportRequest.update({
+              where: {
+                id: createMaterialExportReceiptDto.materialExportRequestId,
+              },
+              data: {
+                status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
+              },
+            });
+          const inventoryStockPromises =
+            materialExportReceipt.materialExportReceiptDetail.map(
+              async (detail) => {
+                return this.inventoryStockService.updateMaterialStockQuantity(
+                  detail.materialReceiptId,
+                  detail.quantityByPack,
+                  prismaInstance,
+                );
+              },
+            );
+          const inventoryStock = await Promise.all(inventoryStockPromises);
+          return {
+            materialExportReceipt,
+            materialExportRequest,
+            inventoryStock,
+          };
+        },
+      );
+
+    return materialExportReceipt;
   }
 
   async getLatest(from: any, to: any) {
