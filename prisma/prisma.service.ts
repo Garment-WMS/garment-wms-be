@@ -55,11 +55,21 @@ export class PrismaService
           async create({ args, model, operation, query }) {
             if (args.data.status === 'ARRIVED') {
             }
-            return query(args);
+            const result = await query(args);
+            Logger.log(result.id);
+            //send notification
+            return result;
           },
           async update({ args, model, operation, query }) {
-            if (args.data.status === 'APPROVED') {
+            switch (args.data.status) {
+              case 'APPROVED':
+                //send notification
+                break;
+              case 'REJECTED':
+                //send notification
+                break;
             }
+
             return query(args);
           },
         },
