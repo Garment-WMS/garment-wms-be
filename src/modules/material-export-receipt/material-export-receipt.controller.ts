@@ -164,7 +164,7 @@ export class MaterialExportReceiptController {
   ) {
     return apiSuccess(
       HttpStatus.OK,
-      await this.materialExportReceiptService.warehouseStaffExport(
+      await this.materialExportReceiptService.warehouseStaffExporting(
         WarehouseStaffExportDto,
         user,
       ),

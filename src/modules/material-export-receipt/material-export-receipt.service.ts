@@ -3,12 +3,14 @@ import {
   ForbiddenException,
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { $Enums, Prisma, RoleCode } from '@prisma/client';
 import {
   materialExportReceiptInclude,
   materialInclude,
+  materialVariantInclude,
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -406,7 +408,7 @@ export class MaterialExportReceiptService {
     return `This action removes a #${id} materialExportReceipt`;
   }
 
-  async warehouseStaffExport(
+  async warehouseStaffExporting(
     warehouseStaffExportDto: WarehouseStaffExportDto,
     warehouseStaff: AuthenUser,
   ) {
@@ -424,15 +426,17 @@ export class MaterialExportReceiptService {
         //   materialExportReceiptStatus =
         //     $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT;
         // }
-        const currentInventoryReportPlan =
-          await this.getInventoryReportPlanNow();
-        if (currentInventoryReportPlan.length > 0) {
+        const { inventoryReportPlan, collisionMaterialVariant } =
+          await this.getInventoryReportPlanCollisionWithExportReceipt(
+            warehouseStaffExportDto.materialExportRequestId,
+          );
+        if (inventoryReportPlan.length > 0) {
           throw new CustomHttpException(
             409,
             apiFailed(
               409,
               'There are inventory report plan is in progress please wait for it to finish',
-              currentInventoryReportPlan,
+              { inventoryReportPlan, collisionMaterialVariant },
             ),
           );
         }
@@ -515,7 +519,75 @@ export class MaterialExportReceiptService {
     }
   }
 
-  // async isAnyWaitOrInProgressReportPlan() {
+  //todo: fix this
+  async getInventoryReportPlanCollisionWithExportReceipt(
+    materialExportReceiptId: string,
+  ) {
+    const materialExportReceipt =
+      await this.prismaService.materialExportReceipt.findUnique({
+        where: { id: materialExportReceiptId },
+        include: {
+          materialExportReceiptDetail: {
+            include: {
+              materialReceipt: {
+                include: {
+                  materialPackage: {
+                    include: {
+                      materialVariant: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    const inventoryReportPlan =
+      await this.prismaService.inventoryReportPlan.findMany({
+        where: {
+          status: {
+            in: [
+              $Enums.InventoryReportPlanStatus.AWAIT,
+              $Enums.InventoryReportPlanStatus.IN_PROGRESS,
+            ],
+          },
+          inventoryReportPlanDetail: {
+            some: {
+              materialVariant: {
+                id: {
+                  in: materialExportReceipt.materialExportReceiptDetail.map(
+                    (detail) =>
+                      detail.materialReceipt.materialPackage.materialVariant.id,
+                  ),
+                },
+              },
+            },
+          },
+        },
+        include: {
+          inventoryReportPlanDetail: {
+            include: {
+              materialVariant: {
+                include: materialVariantInclude,
+              },
+            },
+          },
+        },
+      });
+    Logger.debug(inventoryReportPlan);
+
+    const collisionMaterialVariant = inventoryReportPlan.map(
+      (inventoryReportPlan) => {
+        return inventoryReportPlan.inventoryReportPlanDetail.map((detail) => {
+          return detail.materialVariant;
+        });
+      },
+    );
+    return { inventoryReportPlan, collisionMaterialVariant };
+  }
+
+  // //NOT DRY
+  // async getInventoryReportPlanNow(materialVariants: MaterialVariant[]) {
   //   const result = await this.prismaService.inventoryReportPlan.findMany({
   //     where: {
   //       status: {
@@ -526,21 +598,6 @@ export class MaterialExportReceiptService {
   //       },
   //     },
   //   });
-  //   return result.length > 0;
+  //   return result;
   // }
-
-  //NOT DRY
-  async getInventoryReportPlanNow() {
-    const result = await this.prismaService.inventoryReportPlan.findMany({
-      where: {
-        status: {
-          in: [
-            $Enums.InventoryReportPlanStatus.AWAIT,
-            $Enums.InventoryReportPlanStatus.IN_PROGRESS,
-          ],
-        },
-      },
-    });
-    return result;
-  }
 }
