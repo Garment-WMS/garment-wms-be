@@ -35,6 +35,8 @@ export class Constant {
     'status:Exported->Production Approved';
   static EXPORT_REQUEST_EXPORTED_PRODUCTION_REJECTED: string =
     'status:Exported->Production Rejected';
+  static IMPORT_REQUEST_INSPECTED_TO_CANCELLED: string =
+    'status:Inspected->Cancelled';
 
   public static readonly months = [
     { 1: 'January' },

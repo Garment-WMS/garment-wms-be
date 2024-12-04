@@ -55,6 +55,7 @@ export class ProductReceiptService {
       },
       data: {
         remainQuantityByUom: quantityByUom,
+        ...(quantityByUom === 0 && { status: ProductReceiptStatus.USED }),
       },
     });
 

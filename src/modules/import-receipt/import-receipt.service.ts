@@ -329,7 +329,7 @@ export class ImportReceiptService {
 
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
-        const importReceipt = await prismaInstance.importReceipt.create({
+        let importReceipt = await prismaInstance.importReceipt.create({
           data: importReceiptInput,
         });
         if (importReceipt) {
@@ -349,6 +349,7 @@ export class ImportReceiptService {
                 id: importReceipt.id,
               },
             });
+            importReceipt = null;
             await this.importRequestService.updateImportRequestStatus(
               inspectionReport.inspectionRequest.importRequestId,
               $Enums.ImportRequestStatus.REJECTED,
@@ -448,31 +449,37 @@ export class ImportReceiptService {
         timeout: 100000,
       },
     );
-    if (result) {
-      // try {
 
+    if (!result) {
       const chat: CreateChatDto = {
         discussionId: importRequest?.discussion.id,
-        message: Constant.IMPORT_RECEIPT_INSPECTED_TO_AWAIT_TO_IMPORT,
+        message: Constant.IMPORT_REQUEST_INSPECTED_TO_CANCELLED,
       };
       await this.chatService.createBySystemWithoutResponse(chat);
-
-      await this.updateTaskByImportReceipt(result);
-      await this.discussionService.updateImportReceiptDiscussion(
-        result.id,
-        createImportReceiptDto.importRequestId,
-      );
-      // } catch (e) {
-      //   Logger.error(e);
-      //   throw new ConflictException('Can not create Task automatically');
-      // }
-
-      return apiSuccess(
-        HttpStatus.CREATED,
-        result,
-        'Create import receipt successfully',
-      );
     }
+
+    const chat: CreateChatDto = {
+      discussionId: importRequest?.discussion.id,
+      message: Constant.IMPORT_RECEIPT_INSPECTED_TO_AWAIT_TO_IMPORT,
+    };
+    await this.chatService.createBySystemWithoutResponse(chat);
+
+    await this.updateTaskByImportReceipt(result);
+    await this.discussionService.updateImportReceiptDiscussion(
+      result.id,
+      createImportReceiptDto.importRequestId,
+    );
+    // } catch (e) {
+    //   Logger.error(e);
+    //   throw new ConflictException('Can not create Task automatically');
+    // }
+
+    return apiSuccess(
+      HttpStatus.CREATED,
+      result,
+      'Create import receipt successfully',
+    );
+
     return apiFailed(
       HttpStatus.INTERNAL_SERVER_ERROR,
       'Create import receipt failed',

@@ -171,26 +171,26 @@ export class MaterialReceiptService {
     if (!materialReceipt) {
       throw new Error('Material Receipt not found');
     }
-        await prismaInstance.materialReceipt.update({
-          where: {
-            id,
-          },
-          data: {
-            remainQuantityByPack: quantityByPack,
-          },
-        });
+    await prismaInstance.materialReceipt.update({
+      where: {
+        id,
+      },
+      data: {
+        remainQuantityByPack: quantityByPack,
+        ...(quantityByPack === 0 && { status: MaterialReceiptStatus.USED }),
+      },
+    });
 
-        const remainQuantityByPack = await this.getRemainQuantityByPack(
-          materialReceipt.materialPackageId,
-          prismaInstance,
-        );
+    const remainQuantityByPack = await this.getRemainQuantityByPack(
+      materialReceipt.materialPackageId,
+      prismaInstance,
+    );
 
-        await this.inventoryStockService.updateMaterialStockQuantity(
-          materialReceipt.materialPackageId,
-          remainQuantityByPack,
-          prismaInstance,
-        );
-
+    await this.inventoryStockService.updateMaterialStockQuantity(
+      materialReceipt.materialPackageId,
+      remainQuantityByPack,
+      prismaInstance,
+    );
   }
 
   create(createMaterialReceiptDto: CreateMaterialReceiptDto) {
