@@ -32,5 +32,6 @@ import { RefreshTokenStrategy } from './strategy/refresh-token.stategy';
     MailService,
     OtpService,
   ],
+  exports: [AuthService],
 })
 export class AuthModule {}

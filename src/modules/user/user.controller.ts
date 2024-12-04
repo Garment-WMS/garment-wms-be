@@ -13,6 +13,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import { RoleCode } from '@prisma/client';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { NotificationService } from 'src/notification/notification.service';
 import { GetUser } from '../../common/decorator/get_user.decorator';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
@@ -21,7 +22,9 @@ import { UserService } from './user.service';
 @Controller('account')
 @ApiTags('Account')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+  ) {}
 
   @Get(':id')
   getAccountById(@Param('id') id: string) {
@@ -35,6 +38,7 @@ export class UserController {
   getUserById(@Param('id') id: string, @Param('role') role: RoleCode) {
     return this.userService.getUserById(id, role);
   }
+
   @Post('/avatar')
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))

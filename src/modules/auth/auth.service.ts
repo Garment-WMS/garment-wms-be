@@ -605,4 +605,10 @@ export class AuthService {
   async verifyOtp(email: string, otp: string) {
     return this.otpService.verifyOTP(email, otp);
   }
+
+  async validateJwt(jwt: string) {
+    return this.jwtService.verify(jwt, {
+      secret: this.config.get('JWT_SECRET'),
+    });
+  }
 }
