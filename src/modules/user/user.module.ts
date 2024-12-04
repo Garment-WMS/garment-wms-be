@@ -6,6 +6,7 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { IsUserRoleExistValidator } from './validator/is-user-of-role-exist.validator';
 import { ReceiptAdjustmentModule } from '../receipt-adjustment/receipt-adjustment.module';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
   controllers: [UserController],

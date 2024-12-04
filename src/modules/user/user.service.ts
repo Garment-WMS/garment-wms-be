@@ -10,6 +10,7 @@ import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ImageService } from '../image/image.service';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class UserService {

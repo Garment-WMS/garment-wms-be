@@ -1,10 +1,18 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'prisma/prisma.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
+import { NotificationGateway } from './notification.gateway';
 
 @Injectable()
 export class NotificationService {
-  create(createNotificationDto: CreateNotificationDto) {
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly notificationGateway: NotificationGateway,
+  ) {}
+
+  async create(createNotificationDto: CreateNotificationDto) {
+    this.notificationGateway.server.emit('newNotification', createNotificationDto);
     return 'This action adds a new notification';
   }
 

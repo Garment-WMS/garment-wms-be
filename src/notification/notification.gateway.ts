@@ -1,34 +1,85 @@
-import { WebSocketGateway, SubscribeMessage, MessageBody } from '@nestjs/websockets';
-import { NotificationService } from './notification.service';
-import { CreateNotificationDto } from './dto/create-notification.dto';
-import { UpdateNotificationDto } from './dto/update-notification.dto';
+import {
+  MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from '@nestjs/websockets';
+import { Notification as NotificationPrisma } from '@prisma/client';
+import { Server, Socket } from 'socket.io';
+import { AuthService } from 'src/modules/auth/auth.service';
 
-@WebSocketGateway()
-export class NotificationGateway {
-  constructor(private readonly notificationService: NotificationService) {}
+@WebSocketGateway({
+  namespace: 'notification',
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['token'],
+    credentials: true,
+  },
+})
+export class NotificationGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
+  constructor(private readonly authService: AuthService) {}
 
-  @SubscribeMessage('createNotification')
-  create(@MessageBody() createNotificationDto: CreateNotificationDto) {
-    return this.notificationService.create(createNotificationDto);
+  @WebSocketServer()
+  server: Server;
+
+  private userSockets: Map<string, string> = new Map();
+
+  async handleConnection(client: Socket, ...args: any[]) {
+    const jwtToken = client.handshake.headers['token'] as string;
+    if (!jwtToken) {
+      client.disconnect();
+      return;
+    }
+
+    try {
+      const user = await this.authService.validateJwt(jwtToken);
+      this.userSockets.set(user.userId, client.id);
+      client.data.user = user; // Store user info on the socket
+    } catch (errors) {
+      client.disconnect();
+    }
+  }
+  handleDisconnect(client: Socket) {
+    const user = client.data.user;
+    if (user) {
+      this.userSockets.delete(user.id);
+    }
   }
 
-  @SubscribeMessage('findAllNotification')
-  findAll() {
-    return this.notificationService.findAll();
+  @SubscribeMessage('newNotification')
+  create(@MessageBody() notification: any) {
+    const recipientSocketId = this.userSockets.get(notification.accountId);
+    if (recipientSocketId) {
+      this.server.to(recipientSocketId).emit('newNotification', notification);
+    }
+    return notification;
   }
 
-  @SubscribeMessage('findOneNotification')
-  findOne(@MessageBody() id: number) {
-    return this.notificationService.findOne(id);
-  }
+  // @SubscribeMessage('findAllNotification')
+  // findAll() {
+  //   return this.notificationService.findAll();
+  // }
 
-  @SubscribeMessage('updateNotification')
-  update(@MessageBody() updateNotificationDto: UpdateNotificationDto) {
-    return this.notificationService.update(updateNotificationDto.id, updateNotificationDto);
-  }
+  // @SubscribeMessage('findOneNotification')
+  // findOne(@MessageBody() id: number) {
+  //   return this.notificationService.findOne(id);
+  // }
 
-  @SubscribeMessage('removeNotification')
-  remove(@MessageBody() id: number) {
-    return this.notificationService.remove(id);
-  }
+  // @SubscribeMessage('updateNotification')
+  // update(@MessageBody() updateNotificationDto: UpdateNotificationDto) {
+  //   return this.notificationService.update(
+  //     updateNotificationDto.id,
+  //     updateNotificationDto,
+  //   );
+  // }
+
+  // @SubscribeMessage('removeNotification')
+  // remove(@MessageBody() id: number) {
+  //   return this.notificationService.remove(id);
+  // }
 }

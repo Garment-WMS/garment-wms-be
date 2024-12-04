@@ -1,14 +1,23 @@
 model Notification {
-    id              String   @id @default(uuid()) // Unique identifier for the notification
-    accountId       String // ID of the user who receives the notification
-    title           String // Notification title or subject
-    message         String // Notification content
-    type            String // Type of notification (e.g., 'info', 'warning', 'error', 'success')
-    isRead          Boolean  @default(false) // Whether the notification has been read
-    createdAt       DateTime @default(now()) // Timestamp of creation
-    updatedAt       DateTime @updatedAt // Timestamp of the last update
-    data            Json? // Additional data as JSON (e.g., links, metadata)
-    relatedEntity   String? // Optional reference to a related entity (e.g., 'Order', 'Message')
-    relatedEntityId String? // Optional ID of the related entity
-    account         Account  @relation(fields: [accountId], references: [id]) // Relation to User model
+    id        String           @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+    accountId String           @map("account_id") @db.Uuid
+    title     String           @map("title") @db.VarChar()
+    message   String           @map("message") @db.VarChar()
+    path      String           @map("path") @db.VarChar()
+    type      NotificationType @default(ANY) @map("type")
+    isRead    Boolean          @default(false) @map("is_read")
+    readAt    DateTime?        @map("read_at") @db.Timestamptz(6)
+    createdAt DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt DateTime?        @updatedAt @map("updated_at") @db.Timestamptz(6)
+    deletedAt DateTime?        @map("deleted_at") @db.Timestamptz(6)
+    account   Account          @relation(fields: [accountId], references: [id]) // Relation to User model
+}
+
+enum NotificationType {
+    IMPORT_REQUEST
+    IMPORT_RECEIPT
+    MATERIAL_EXPORT_REQUEST
+    MATERIAL_EXPORT_RECEIPT
+    INVENTORY_REPORT
+    ANY
 }

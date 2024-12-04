@@ -21,7 +21,6 @@ import { Logout } from './dto/logout.dto';
 import { ResetPasswordDTO } from './dto/reset-password.dto';
 import { SendResetPasswordDTO } from './dto/send-reset-password.dto';
 import { SignUpDTO } from './dto/sign-up.dto';
-import { TestDto } from './dto/test-validator.dto';
 import { VerifyOtpDTO } from './dto/verify-otp.dto';
 import { JwtAuthGuard } from './strategy/jwt-auth.guard';
 import { RefreshJwtAuthGuard } from './strategy/refresh-jwt-auth.guard';
@@ -44,8 +43,8 @@ export class AuthController {
   }
 
   @Post('/test-validator')
-  testAuthValidator(@Body() user: TestDto) {
-    return user;
+  async testAuthValidator(@Body() user: string) {
+    return await this.authService.validateJwt(user);
   }
 
   //SIGN IN FLOW
