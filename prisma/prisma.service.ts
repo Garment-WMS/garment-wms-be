@@ -6,7 +6,8 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ImportRequest, Prisma, PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService
@@ -15,7 +16,7 @@ export class PrismaService
 {
   private readonly logger = new Logger(PrismaService.name);
 
-  constructor() {
+  constructor(private readonly eventEmitter: EventEmitter2) {
     super({
       log: [
         {
@@ -166,6 +167,37 @@ export class PrismaService
     'MaterialExportReceipt',
   ];
 
+  modelsNeedNotification: Prisma.ModelName[] = [
+    'ImportRequest',
+    'ImportReceipt',
+    'InspectionRequest',
+    'InspectionReport',
+    'InventoryReport',
+    'InventoryReportPlan',
+    'InventoryReportPlanDetail',
+    'MaterialInspectionCriteria',
+    'MaterialVariant',
+    'Material',
+    'MaterialPackage',
+    'ProductInspectionCriteria',
+    'ProductSize',
+    'ProductVariant',
+    'Product',
+    'ProductionBatch',
+    'ProductionPlan',
+    'ProductReceipt',
+    'MaterialReceipt',
+    'PoDelivery',
+    'Supplier',
+    'PurchaseOrder',
+    'ProductionPlanDetail',
+    'Task',
+    'Todo',
+    'ProductFormula',
+    'MaterialExportRequest',
+    'MaterialExportReceipt',
+  ];
+
   getPrefix(modelName: string, delimiter: string): string {
     return modelName
       .match(/[A-Z][a-z]*|[A-Z]+(?![a-z])/g)
@@ -173,6 +205,61 @@ export class PrismaService
       .join(delimiter);
   }
 
+  // generateCodeMiddleware: Prisma.Middleware = async (params, next) => {
+  //   const delimiter: string = '-';
+  //   if (
+  //     (params.action === 'create' ||
+  //       params.action === 'createMany' ||
+  //       params.action === 'createManyAndReturn') &&
+  //     this.modelsWithCode.includes(params.model)
+  //   ) {
+  //     const modelName = params.model;
+  //     const prefix = this.getPrefix(modelName, delimiter);
+
+  //     // Find the maximum existing code number
+  //     console.log('modelName', modelName);
+  //     const lastRecord = await this[modelName].findFirst({
+  //       // where: {
+  //       //   code: {
+  //       //     not: null,
+  //       //   },
+  //       // },
+  //       orderBy: { code: 'desc' },
+  //       select: { code: true },
+  //     });
+  //     console.log('lastRecord', lastRecord);
+
+  //     let lastNumber = 0;
+  //     if (lastRecord && lastRecord.code) {
+  //       const match = lastRecord.code.match(/\d+$/);
+  //       if (match) {
+  //         lastNumber = parseInt(match[0], 10);
+  //       }
+  //     }
+
+  //     if (params.action === 'create') {
+  //       if (params.args.data && params.args.data.code === undefined) {
+  //         const nextNumber = (lastNumber + 1).toString().padStart(6, '0');
+  //         params.args.data.code = `${prefix}${delimiter}${nextNumber}`;
+  //       }
+  //     } else if (
+  //       params.action === 'createMany' ||
+  //       params.action === 'createManyAndReturn'
+  //     ) {
+  //       if (params.args.data && Array.isArray(params.args.data)) {
+  //         params.args.data.forEach((item, index) => {
+  //           if (item.code === undefined) {
+  //             const nextNumber = (lastNumber + index + 1)
+  //               .toString()
+  //               .padStart(6, '0');
+  //             item.code = `${prefix}${delimiter}${nextNumber}`;
+  //           }
+  //         });
+  //       }
+  //     }
+  //   }
+  //   return next(params);
+  // };
   generateCodeMiddleware: Prisma.Middleware = async (params, next) => {
     const delimiter: string = '-';
     if (
@@ -184,18 +271,10 @@ export class PrismaService
       const modelName = params.model;
       const prefix = this.getPrefix(modelName, delimiter);
 
-      // Find the maximum existing code number
-      console.log('modelName', modelName);
       const lastRecord = await this[modelName].findFirst({
-        // where: {
-        //   code: {
-        //     not: null,
-        //   },
-        // },
         orderBy: { code: 'desc' },
         select: { code: true },
       });
-      console.log('lastRecord', lastRecord);
 
       let lastNumber = 0;
       if (lastRecord && lastRecord.code) {
@@ -226,7 +305,26 @@ export class PrismaService
         }
       }
     }
-    return next(params);
+
+    // Execute the operation
+    const result = await next(params);
+
+    // Perform "after" logic here
+    if (
+      params.action === 'create' &&
+      this.modelsNeedNotification.includes(params.model)
+    ) {
+      if (params.model === 'ImportRequest') {
+        const createdEntity = result as ImportRequest;
+        this.eventEmitter.emit(
+          'notification.importRequest.created',
+          createdEntity,
+        );
+      }
+      // Perform additional operations like logging, sending notifications, etc.
+    }
+
+    return result;
   };
 
   async onModuleDestroy() {
