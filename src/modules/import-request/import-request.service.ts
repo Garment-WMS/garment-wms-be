@@ -151,7 +151,7 @@ export class ImportRequestService {
         where: { status: $Enums.ImportRequestStatus.ARRIVED },
       }),
       this.prismaService.importRequest.count({
-        where: { status: $Enums.ImportRequestStatus.CANCELED },
+        where: { status: $Enums.ImportRequestStatus.CANCELLED },
       }),
       this.prismaService.importRequest.count({
         where: { status: $Enums.ImportRequestStatus.INSPECTING },
@@ -237,7 +237,7 @@ export class ImportRequestService {
         poDeliveryId,
         status: {
           notIn: [
-            $Enums.ImportRequestStatus.CANCELED,
+            $Enums.ImportRequestStatus.CANCELLED,
             $Enums.ImportRequestStatus.REJECTED,
           ],
         },
@@ -251,7 +251,7 @@ export class ImportRequestService {
         productionBatchId,
         status: {
           notIn: [
-            $Enums.ImportRequestStatus.CANCELED,
+            $Enums.ImportRequestStatus.CANCELLED,
             $Enums.ImportRequestStatus.REJECTED,
           ],
         },
@@ -530,7 +530,7 @@ export class ImportRequestService {
       select: { status: true },
     });
     if (
-      purchasingStaffProcessDto.action == $Enums.ImportRequestStatus.CANCELED
+      purchasingStaffProcessDto.action == $Enums.ImportRequestStatus.CANCELLED
     ) {
       const allowCancel: $Enums.ImportRequestStatus[] = [
         $Enums.ImportRequestStatus.ARRIVED,
@@ -545,13 +545,13 @@ export class ImportRequestService {
       return await this.prismaService.importRequest.update({
         where: { id: id },
         data: {
-          status: $Enums.ImportRequestStatus.CANCELED,
+          status: $Enums.ImportRequestStatus.CANCELLED,
           cancelReason: purchasingStaffProcessDto.cancelReason,
         },
       });
     } else {
       throw new BadRequestException(
-        `Allowed action is ${$Enums.ImportRequestStatus.CANCELED}`,
+        `Allowed action is ${$Enums.ImportRequestStatus.CANCELLED}`,
       );
     }
   }

@@ -3,7 +3,7 @@ import { IsEnum, IsNotEmpty } from 'class-validator';
 import { UpdateImportRequestDto } from './update-import-request.dto';
 
 export enum PurchasingStaffAction {
-  CANCELED = 'CANCELED',
+  CANCELLED = 'CANCELLED',
 }
 
 export class PurchasingStaffProcessDto extends PickType(
