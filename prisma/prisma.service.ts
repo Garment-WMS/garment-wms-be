@@ -49,7 +49,23 @@ export class PrismaService
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-
+    this.$extends({
+      query: {
+        importRequest: {
+          async create({ args, model, operation, query }) {
+            if (args.data.status === 'ARRIVED') {
+            }
+            return query(args);
+          },
+          async update({ args, model, operation, query }) {
+            if (args.data.status === 'APPROVED') {
+            }
+            return query(args);
+          },
+        },
+      },
+    });
+    this.notification.create;
     this.$use(this.softDeleteMiddleware);
     this.$use(this.findNotDeletedMiddleware);
     this.$use(this.generateCodeMiddleware);
