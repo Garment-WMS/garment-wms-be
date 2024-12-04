@@ -693,7 +693,6 @@ export class PurchaseOrderService {
 }
 
 export function getPoDeliveryStatistic(poDelivery) {
-  console.log(poDelivery);
   if (!poDelivery) {
     return poDelivery;
   }
@@ -714,8 +713,5 @@ export function getPoDeliveryStatistic(poDelivery) {
     return summary;
   }, {});
 
-  const poDeliveryWithMaterialSummary = {
-    materialSummary: Object.values(materialSummary),
-  };
-  return poDeliveryWithMaterialSummary;
+  return Object.values(materialSummary);
 }
