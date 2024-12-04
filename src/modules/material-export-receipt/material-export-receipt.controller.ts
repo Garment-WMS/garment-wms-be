@@ -156,13 +156,17 @@ export class MaterialExportReceiptController {
   }
 
   @Post('/warehouse-staff-process')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_STAFF)
   async warehouseStaffProcess(
     @Body() WarehouseStaffExportDto: WarehouseStaffExportDto,
+    @GetUser() user: AuthenUser,
   ) {
     return apiSuccess(
       HttpStatus.OK,
       await this.materialExportReceiptService.warehouseStaffExport(
         WarehouseStaffExportDto,
+        user,
       ),
       'Warehouse staff process successfully',
     );

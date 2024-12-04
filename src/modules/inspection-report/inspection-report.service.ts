@@ -377,17 +377,6 @@ export class InspectionReportService {
         code: dto.code,
         inspectionRequestId: dto.inspectionRequestId,
         type: dto.type,
-        // inspectionReportDetail: {
-        //   createMany: {
-        //     data: dto.inspectionReportDetail.map((detail) => ({
-        //       materialPackageId: detail.materialPackageId,
-        //       productSizeId: detail.productSizeId,
-        //       quantityByPack: detail.quantityByPack,
-        //       approvedQuantityByPack: detail.approvedQuantityByPack,
-        //       defectQuantityByPack: detail.defectQuantityByPack,
-        //     })),
-        //   },
-        // },
       };
 
     let result = await this.prismaService.$transaction(

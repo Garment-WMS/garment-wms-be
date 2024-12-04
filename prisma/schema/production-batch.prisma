@@ -25,12 +25,13 @@ model ProductionBatch {
 
 enum ProductionBatchStatus {
   PENDING
-  WAITING_FOR_EXPORTING_MATERIAL
+  EXECUTING
+  // WAITING_FOR_EXPORTING_MATERIAL
   MANUFACTURING
   IMPORTING
   // IMPORTED
   FINISHED
-  CANCELED
+  CANCELLED
 
   @@map("production_batch_status")
 }

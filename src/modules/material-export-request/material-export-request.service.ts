@@ -395,7 +395,7 @@ export class MaterialExportRequestService {
 
   async productionDepartmentApprove(
     productionStaffApproveDto: ProductionStaffDepartmentProcessDto,
-    productionDepartmentId: string,
+    productionDepartment: AuthenUser,
   ) {
     const allowMaterialExportRequest =
       await this.prismaService.materialExportRequest.findUnique({
@@ -422,7 +422,7 @@ export class MaterialExportRequestService {
 
     switch (productionStaffApproveDto.action) {
       case ProductionDepartmentApproveAction.PRODUCTION_APPROVED:
-        return await this.prismaService.materialExportRequest.update({
+        const result = await this.prismaService.materialExportRequest.update({
           where: {
             id: productionStaffApproveDto.materialExportRequestId,
           },
@@ -431,8 +431,18 @@ export class MaterialExportRequestService {
           },
           include: materialExportRequestInclude,
         });
+
+        const chat: CreateChatDto = {
+          discussionId: result.discussion.id,
+          message: Constant.EXPORT_REQUEST_EXPORTED_PRODUCTION_APPROVED,
+        };
+        await this.chatService.createWithoutResponse(
+          chat,
+          productionDepartment,
+        );
+        return result;
       case ProductionDepartmentApproveAction.PRODUCTION_REJECTED:
-        return await this.prismaService.materialExportRequest.update({
+        const result2 = await this.prismaService.materialExportRequest.update({
           where: {
             id: productionStaffApproveDto.materialExportRequestId,
           },
@@ -443,6 +453,15 @@ export class MaterialExportRequestService {
           },
           include: materialExportRequestInclude,
         });
+        const chat2: CreateChatDto = {
+          discussionId: result2.discussion.id,
+          message: Constant.EXPORT_REQUEST_EXPORTED_PRODUCTION_REJECTED,
+        };
+        await this.chatService.createWithoutResponse(
+          chat2,
+          productionDepartment,
+        );
+        return result2;
       default:
         throw new BadRequestException('Invalid action');
     }

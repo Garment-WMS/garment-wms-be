@@ -132,7 +132,7 @@ export class ImportReceiptController {
   ) {
     return apiSuccess(
       HttpStatus.OK,
-      await this.importReceiptService.updateImportReceiptStatusToImporting(id),
+      await this.importReceiptService.updateImportReceiptStatusToImporting(id,user),
       'Start import receipt successfully',
     );
   }

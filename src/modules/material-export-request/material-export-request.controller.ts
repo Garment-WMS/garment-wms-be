@@ -168,7 +168,7 @@ export class MaterialExportRequestController {
       HttpStatus.OK,
       await this.materialExportRequestService.productionDepartmentApprove(
         dto,
-        productionDepartment.productionDepartmentId,
+        productionDepartment,
       ),
       'Production department approve material export request successfully',
     );

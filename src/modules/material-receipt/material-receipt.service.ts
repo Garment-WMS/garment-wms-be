@@ -137,31 +137,28 @@ export class MaterialReceiptService {
     let createdMaterialReceipts = [];
     let materialReceipts: Prisma.MaterialReceiptCreateManyInput[] = [];
     for (let i = 0; i < inspectionReportDetail.length; i++) {
-      const result = await this.poDeliveryService.getExpiredDate(
-        poDeliveryId,
-        inspectionReportDetail[0].materialPackageId,
-        prismaInstance,
-      );
-      materialReceipts.push({
-        importReceiptId: id,
-        materialPackageId: inspectionReportDetail[i].materialPackageId,
-        remainQuantityByPack: inspectionReportDetail[i].approvedQuantityByPack,
-        quantityByPack: inspectionReportDetail[i].approvedQuantityByPack,
-        expireDate: result.expiredDate,
-      });
+      if (inspectionReportDetail[i].approvedQuantityByPack !== 0) {
+        const result = await this.poDeliveryService.getExpiredDate(
+          poDeliveryId,
+          inspectionReportDetail[0].materialPackageId,
+          prismaInstance,
+        );
+        materialReceipts.push({
+          importReceiptId: id,
+          materialPackageId: inspectionReportDetail[i].materialPackageId,
+          remainQuantityByPack:
+            inspectionReportDetail[i].approvedQuantityByPack,
+          quantityByPack: inspectionReportDetail[i].approvedQuantityByPack,
+          expireDate: result.expiredDate,
+        });
+      }
     }
 
-    await prismaInstance.materialReceipt.createMany({
-      data: materialReceipts,
-    });
-
-    createdMaterialReceipts = await prismaInstance.materialReceipt.findMany({
-      where: {
-        importReceiptId: id,
-      },
-      include: materialReceiptIncludeWithoutImportReceipt,
-    });
-
+    createdMaterialReceipts =
+      await prismaInstance.materialReceipt.createManyAndReturn({
+        data: materialReceipts,
+        include: materialReceiptIncludeWithoutImportReceipt,
+      });
     return createdMaterialReceipts;
   }
 

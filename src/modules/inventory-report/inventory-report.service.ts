@@ -108,16 +108,15 @@ export class InventoryReportService {
       );
     }
 
-    let result = [];
-    for (const inventoryRecordDetail of updateInventoryReportDetailDto.details) {
-      const updateResult =
-        await this.inventoryReportDetailService.handleApprovalInventoryReportDetail(
+    const result = await Promise.all(
+      updateInventoryReportDetailDto.details.map((inventoryRecordDetail) =>
+        this.inventoryReportDetailService.handleApprovalInventoryReportDetail(
           inventoryRecordDetail.inventoryReportDetailId,
           inventoryRecordDetail,
           warehouseManagerId,
-        );
-      result.push(updateResult);
-    }
+        ),
+      ),
+    );
 
     const isInventoryReportDetailDone =
       await this.inventoryReportDetailService.checkLastApprovalInventoryReport(
@@ -192,16 +191,15 @@ export class InventoryReportService {
       throw new BadRequestException('Inventory report not found');
     }
 
-    let result = [];
-    for (const inventoryRecordDetail of updateInventoryReportDetailDto.details) {
-      const updateResult =
-        await this.inventoryReportDetailService.handleRecordInventoryReportDetail(
+    const result = await Promise.all(
+      updateInventoryReportDetailDto.details.map((inventoryRecordDetail) =>
+        this.inventoryReportDetailService.handleRecordInventoryReportDetail(
           inventoryRecordDetail.inventoryReportDetailId,
           inventoryRecordDetail,
           warehouseStaffId,
-        );
-      result.push(updateResult);
-    }
+        ),
+      ),
+    );
 
     const isInventoryReportDetailDone =
       await this.inventoryReportDetailService.checkLastInventoryReport(id);

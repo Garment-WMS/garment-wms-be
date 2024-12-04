@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from 'prisma/prisma.module';
+import { ChatModule } from '../chat/chat.module';
 import { IsMaterialExportRequestExistValidator } from '../material-export-request/validator/is-material-export-request-exist.validator';
 import { TaskModule } from '../task/task.module';
 import { ExportAlgorithmService } from './export-algorithm.service';
@@ -7,7 +8,7 @@ import { MaterialExportReceiptController } from './material-export-receipt.contr
 import { MaterialExportReceiptService } from './material-export-receipt.service';
 
 @Module({
-  imports: [PrismaModule, TaskModule],
+  imports: [PrismaModule, TaskModule, ChatModule],
   controllers: [MaterialExportReceiptController],
   providers: [
     MaterialExportReceiptService,

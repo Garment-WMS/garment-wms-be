@@ -17,6 +17,8 @@ import { DataResponse } from 'src/common/dto/data-response';
 import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { ChatService } from '../chat/chat.service';
+import { CreateChatDto } from '../chat/dto/create-chat.dto';
 import { TaskService } from '../task/task.service';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
 import { ExportAlgorithmParam } from './dto/export-algorithm-param.type';
@@ -35,6 +37,7 @@ export class MaterialExportReceiptService {
     private readonly prismaService: PrismaService,
     private readonly exportAlgorithmService: ExportAlgorithmService,
     private readonly taskService: TaskService,
+    private readonly chatService: ChatService,
   ) {}
 
   async getByUserToken(
@@ -405,7 +408,7 @@ export class MaterialExportReceiptService {
 
   async warehouseStaffExport(
     warehouseStaffExportDto: WarehouseStaffExportDto,
-    // warehouseStaff: AuthenUser,
+    warehouseStaff: AuthenUser,
   ) {
     switch (warehouseStaffExportDto.action) {
       case WarehouseStaffExportAction.EXPORTING:
@@ -450,10 +453,20 @@ export class MaterialExportReceiptService {
             data: {
               status: $Enums.MaterialExportRequestStatus.EXPORTING,
             },
+            include: {
+              discussion: true,
+            },
           });
         const task1 = await this.taskService.updateTaskStatusToInProgress({
           materialExportReceiptId: materialExportReceipt1.id,
         });
+
+        const chat: CreateChatDto = {
+          discussionId: materialExportRequest1.discussion.id,
+          message: Constant.EXPORT_RECEIPT_AWAIT_TO_EXPORT_TO_EXPORTING,
+        };
+        await this.chatService.createWithoutResponse(chat, warehouseStaff);
+
         return {
           materialExportReceipt: materialExportReceipt1,
           materialExportRequest: materialExportRequest1,
@@ -478,10 +491,20 @@ export class MaterialExportReceiptService {
             data: {
               status: WarehouseStaffExportAction.EXPORTED,
             },
+            include: {
+              discussion: true,
+            },
           });
         const task2 = await this.taskService.updateTaskStatusToDone({
           materialExportReceiptId: materialExportReceipt2.id,
         });
+
+        const chat2: CreateChatDto = {
+          discussionId: materialExportRequest2.discussion.id,
+          message: Constant.EXPORT_RECEIPT_AWAIT_TO_EXPORT_TO_EXPORTED,
+        };
+        await this.chatService.createWithoutResponse(chat2, warehouseStaff);
+
         return {
           materialExportReceipt: materialExportReceipt2,
           materialExportRequest: materialExportRequest2,

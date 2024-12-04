@@ -92,11 +92,11 @@ export class ProductionBatchService {
       return;
     }
     // if (productionBatch.status === 'WAITING_FOR_EXPORTING_MATERIAL') {
-    //   throw new BadRequestException(
-    //     'Production Batch is waiting for exported material',
-    //   );
-    // }
-    if (productionBatch.status === 'WAITING_FOR_EXPORTING_MATERIAL') {
+      // }
+      //   throw new BadRequestException(
+      //     'Production Batch is waiting for exported material',
+      //   );
+    if (productionBatch.status === 'EXECUTING') {
       throw new BadRequestException(
         'Production Batch is waiting for imported material',
       );
@@ -111,7 +111,7 @@ export class ProductionBatchService {
     if (productionBatch.status === 'FINISHED') {
       throw new BadRequestException('Production Batch is finished');
     }
-    if (productionBatch.status === 'CANCELED') {
+    if (productionBatch.status === 'CANCELLED') {
       throw new BadRequestException('Production Batch is finished');
     }
     return productionBatch;
