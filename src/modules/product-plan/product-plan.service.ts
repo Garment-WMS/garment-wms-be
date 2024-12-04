@@ -1,6 +1,11 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma, PrismaClient, ProductionStatus } from '@prisma/client';
+import {
+  Prisma,
+  PrismaClient,
+  ProductionBatchStatus,
+  ProductionStatus,
+} from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -226,34 +231,35 @@ export class ProductPlanService {
     ]);
 
     result.forEach((productionPlan) => {
-      let totalQuantityToProduce = 0;
-      let totalProducedQuantity = 0;
-      let totalDefectQuantity = 0;
-      productionPlan.productionPlanDetail.forEach((detail) => {
-        totalQuantityToProduce += detail.quantityToProduce;
-      });
-      productionPlan.totalQuantityToProduce = totalQuantityToProduce;
-      productionPlan.productionPlanDetail.forEach((detail) => {
-        if (detail.productionBatch.length > 0) {
-          detail.productionBatch.forEach((batch) => {
-            // if (batch.status === ProductionStatus.FINISHED) {
-            batch.importRequest.forEach((request) => {
-              request.inspectionRequest.forEach((inspection) => {
-                inspection.inspectionReport?.importReceipt?.productReceipt.forEach(
-                  (productReceipt) => {
-                    if (productReceipt.isDefect) {
-                      totalDefectQuantity += productReceipt.quantityByUom;
-                    } else {
-                      totalProducedQuantity += productReceipt.quantityByUom;
-                    }
-                  },
-                );
-              });
-            });
-            // }
-          });
-        }
-      });
+      // let totalQuantityToProduce = 0;
+      // let totalProducedQuantity = 0;
+      // let totalDefectQuantity = 0;
+      // productionPlan.productionPlanDetail.forEach((detail) => {
+      //   totalQuantityToProduce += detail.quantityToProduce;
+      // });
+      // productionPlan.totalQuantityToProduce = totalQuantityToProduce;
+      // productionPlan.productionPlanDetail.forEach((detail) => {
+      //   if (detail.productionBatch.length > 0) {
+      //     detail.productionBatch.forEach((batch) => {
+      //       // if (batch.status === ProductionStatus.FINISHED) {
+      //       batch.importRequest.forEach((request) => {
+      //         request.inspectionRequest.forEach((inspection) => {
+      //           inspection.inspectionReport?.importReceipt?.productReceipt.forEach(
+      //             (productReceipt) => {
+      //               if (productReceipt.isDefect) {
+      //                 totalDefectQuantity += productReceipt.quantityByUom;
+      //               } else {
+      //                 totalProducedQuantity += productReceipt.quantityByUom;
+      //               }
+      //             },
+      //           );
+      //         });
+      //       });
+      //       // }
+      //     });
+      //   }
+      // });
+      getProductPlanStatistics(productionPlan);
       productionPlan.purchaseOrder.forEach((purchaseOrder: any) => {
         const [
           totalImportQuantity,
@@ -276,9 +282,9 @@ export class ProductPlanService {
         purchaseOrder.totalPendingPoDelivery = totalPendingPoDelivery;
       });
 
-      productionPlan.totalQuantityToProduce = totalQuantityToProduce;
-      productionPlan.totalProducedQuantity = totalProducedQuantity;
-      productionPlan.totalDefectQuantity = totalDefectQuantity;
+      // productionPlan.totalQuantityToProduce = totalQuantityToProduce;
+      // productionPlan.totalProducedQuantity = totalProducedQuantity;
+      // productionPlan.totalDefectQuantity = totalDefectQuantity;
     });
 
     return apiSuccess(
@@ -374,59 +380,7 @@ export class ProductPlanService {
       },
     );
 
-    let totalQuantityToProduce = 0;
-    let totalProducedQuantity = 0;
-    let totalDefectQuantity = 0;
-    productPlan.purchaseOrder.forEach((purchaseOrder: any) => {
-      const [
-        totalImportQuantity,
-        totalFailImportQuantity,
-        totalQuantityToImport,
-        totalPoDelivery,
-        totalFinishedPoDelivery,
-        totalInProgressPoDelivery,
-        totalCancelledPoDelivery,
-        totalPendingPoDelivery,
-      ] = getPurchaseOrderStatistic(purchaseOrder);
-
-      purchaseOrder.totalImportQuantity = totalImportQuantity;
-      purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
-      purchaseOrder.totalQuantityToImport = totalQuantityToImport;
-      purchaseOrder.totalPoDelivery = totalPoDelivery;
-      purchaseOrder.totalFinishedPoDelivery = totalFinishedPoDelivery;
-      purchaseOrder.totalInProgressPoDelivery = totalInProgressPoDelivery;
-      purchaseOrder.totalCancelledPoDelivery = totalCancelledPoDelivery;
-      purchaseOrder.totalPendingPoDelivery = totalPendingPoDelivery;
-    });
-
-    productPlan.productionPlanDetail.forEach((detail) => {
-      totalQuantityToProduce += detail.quantityToProduce;
-    });
-    productPlan.totalQuantityToProduce = totalQuantityToProduce;
-    productPlan.productionPlanDetail.forEach((detail) => {
-      if (detail?.productionBatch) {
-        detail.productionBatch.forEach((batch) => {
-          // if (batch.status === ProductionStatus.FINISHED) {
-          batch.importRequest.forEach((request) => {
-            request.inspectionRequest.forEach((inspection) => {
-              inspection.inspectionReport?.importReceipt.productReceipt.forEach(
-                (productReceipt) => {
-                  if (productReceipt.isDefect) {
-                    totalDefectQuantity += productReceipt.quantityByUom;
-                  } else {
-                    totalProducedQuantity += productReceipt.quantityByUom;
-                  }
-                },
-              );
-            });
-          });
-          // }
-        });
-      }
-    });
-
-    productPlan.totalProducedQuantity = totalProducedQuantity;
-    productPlan.totalDefectQuantity = totalDefectQuantity;
+    getProductPlanStatistics(productPlan);
 
     return apiSuccess(
       HttpStatus.OK,
@@ -442,4 +396,78 @@ export class ProductPlanService {
   remove(id: number) {
     return `This action removes a #${id} productPlan`;
   }
+}
+
+function getProductPlanStatistics(productPlan: any) {
+  let totalQuantityToProduce = 0;
+  let totalProducedQuantity = 0;
+  let totalDefectQuantity = 0;
+  let totalManufacturingQuantity = 0;
+  productPlan.purchaseOrder.forEach((purchaseOrder: any) => {
+    const [
+      totalImportQuantity,
+      totalFailImportQuantity,
+      totalQuantityToImport,
+      totalPoDelivery,
+      totalFinishedPoDelivery,
+      totalInProgressPoDelivery,
+      totalCancelledPoDelivery,
+      totalPendingPoDelivery,
+    ] = getPurchaseOrderStatistic(purchaseOrder);
+
+    purchaseOrder.totalImportQuantity = totalImportQuantity;
+    purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
+    purchaseOrder.totalQuantityToImport = totalQuantityToImport;
+    purchaseOrder.totalPoDelivery = totalPoDelivery;
+    purchaseOrder.totalFinishedPoDelivery = totalFinishedPoDelivery;
+    purchaseOrder.totalInProgressPoDelivery = totalInProgressPoDelivery;
+    purchaseOrder.totalCancelledPoDelivery = totalCancelledPoDelivery;
+    purchaseOrder.totalPendingPoDelivery = totalPendingPoDelivery;
+  });
+
+  productPlan.productionPlanDetail.forEach((detail) => {
+    totalQuantityToProduce += detail.quantityToProduce;
+  });
+  productPlan.totalQuantityToProduce = totalQuantityToProduce;
+  productPlan.productionPlanDetail.forEach((detail) => {
+    let productPlanDetailDefectQuantity = 0;
+    let productPlanDetailProducedQuantity = 0;
+    let productPlanManufacturingQuantity = 0;
+    if (detail?.productionBatch) {
+      detail.productionBatch.forEach((batch) => {
+        // if (batch.status === ProductionStatus.FINISHED) {
+        batch.importRequest.forEach((request) => {
+          request.inspectionRequest.forEach((inspection) => {
+            inspection.inspectionReport?.importReceipt?.productReceipt.forEach(
+              (productReceipt) => {
+                if (batch.status === ProductionBatchStatus.MANUFACTURING) {
+                  productPlanManufacturingQuantity += batch.quantityToProduce;
+                  totalManufacturingQuantity += batch.quantityToProduce;
+                } else {
+                  if (productReceipt.isDefect) {
+                    totalDefectQuantity += productReceipt.quantityByUom;
+                    productPlanDetailDefectQuantity +=
+                      productReceipt.quantityByUom;
+                  } else {
+                    productPlanDetailProducedQuantity +=
+                      productReceipt.quantityByUom;
+                    totalProducedQuantity += productReceipt.quantityByUom;
+                  }
+                }
+              },
+            );
+          });
+        });
+        // }
+      });
+    }
+    detail.productPlanDetailDefectQuantity = productPlanDetailDefectQuantity;
+    detail.productPlanDetailProducedQuantity =
+      productPlanDetailProducedQuantity;
+  });
+
+  productPlan.totalProducedQuantity = totalProducedQuantity;
+  productPlan.totalDefectQuantity = totalDefectQuantity;
+  productPlan.totalManufacturingQuantity = totalManufacturingQuantity;
+  return productPlan;
 }

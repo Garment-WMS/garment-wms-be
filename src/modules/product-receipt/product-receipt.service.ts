@@ -49,30 +49,26 @@ export class ProductReceiptService {
     if (!productReceipt) {
       throw new BadRequestException('Material Receipt not found');
     }
-    return prismaInstance.$transaction(
-      async (prismaInstance: PrismaService) => {
-        await prismaInstance.productReceipt.update({
-          where: {
-            id,
-          },
-          data: {
-            remainQuantityByUom: quantityByUom,
-          },
-        });
-
-        const remainQuantityByUom = await this.getRemainQuantityByProductSize(
-          productReceipt.productSizeId,
-          prismaInstance,
-        );
-
-        await this.inventoryStockService.updateProductStockQuantity(
-          productReceipt.productSizeId,
-          remainQuantityByUom,
-          prismaInstance,
-        );
-        return null;
+    await prismaInstance.productReceipt.update({
+      where: {
+        id,
       },
+      data: {
+        remainQuantityByUom: quantityByUom,
+      },
+    });
+
+    const remainQuantityByUom = await this.getRemainQuantityByProductSize(
+      productReceipt.productSizeId,
+      this.prismaService,
     );
+
+    await this.inventoryStockService.updateProductStockQuantity(
+      productReceipt.productSizeId,
+      remainQuantityByUom,
+      this.prismaService,
+    );
+    return null;
   }
   async getRemainQuantityByProductSize(
     productSizeId: string,

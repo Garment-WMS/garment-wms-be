@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ReceiptAdjustmentStatus } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
@@ -60,9 +60,10 @@ export class InventoryReportDetailService {
       );
     }
 
-    if (inventoryReportDetail.managerQuantityConfirm) {
-      throw new BadRequestException('Inventory Report Detail already recorded');
-    }
+    //TODO: enable later
+    // if (inventoryReportDetail.managerQuantityConfirm) {
+    //   throw new BadRequestException('Inventory Report Detail already recorded');
+    // }
     const result = await this.prismaService.inventoryReportDetail.update({
       where: {
         id: inventoryReportDetailId,
@@ -98,22 +99,14 @@ export class InventoryReportDetailService {
         warehouseManagerId: warehouseManagerId,
         materialReceiptId: inventoryReportDetail.materialReceiptId,
         productReceiptId: inventoryReportDetail.productReceiptId,
+        status: ReceiptAdjustmentStatus.ADJUSTED,
         inventoryReportDetailId: result.id,
         beforeAdjustQuantity: inventoryReportDetail.expectedQuantity,
         afterAdjustQuantity: result.managerQuantityConfirm,
         reason: inventoryRecordDetail.note,
       };
-      console.log(createReceiptAdjustmentDto);
-
       await this.receiptAdjustmentService.create(createReceiptAdjustmentDto);
-
-      // BUG: Not work
-      // await this.receiptAdjustQueue.add(
-      //   'create-receipt-adjustment',
-      //   createReceiptAdjustmentDto,
-      // );
     }
-
     return result;
   }
 

@@ -91,13 +91,33 @@ export class MaterialExportRequestService {
         where: {
           id: dto.productionBatchId,
         },
-        include: {
+        select: {
           productionBatchMaterialVariant: true,
+          materialExportRequest: {
+            where: {
+              status: {
+                notIn: [
+                  MaterialExportRequestStatus.REJECTED,
+                  MaterialExportRequestStatus.PRODUCTION_REJECTED,
+                  MaterialExportRequestStatus.RETURNED,
+                  MaterialExportRequestStatus.CANCELLED,
+                ],
+              },
+            },
+          },
         },
       });
 
     if (!productionBatch) {
       throw new NotFoundException('Production batch not found');
+    }
+    if (
+      productionBatch.materialExportRequest &&
+      productionBatch.materialExportRequest.length > 0
+    ) {
+      throw new BadRequestException(
+        'Production batch already has active export request',
+      );
     }
 
     if (

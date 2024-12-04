@@ -87,17 +87,17 @@ export class InventoryReportPlanService {
     const isAnyExportingExportRequest =
       await this.materialExportRequestService.isAnyExportingExportRequest();
     // const isAnyImportingImportReceipt = await this.importReceiptService.isAnyImportingImportReceipt();
-    if (
-      isAnyImportingImportRequest.length > 0 ||
-      isAnyExportingExportRequest.length > 0
-    ) {
-      // await this.updateStatus(id, InventoryReportPlanStatus.AWAIT);
-      return apiFailed(
-        HttpStatus.CONFLICT,
-        'Cannot start recording inventory report plan while there is importing import request',
-        { isAnyImportingImportRequest, isAnyExportingExportRequest },
-      );
-    }
+    // if (
+    //   isAnyImportingImportRequest.length > 0 ||
+    //   isAnyExportingExportRequest.length > 0
+    // ) {
+    //   // await this.updateStatus(id, InventoryReportPlanStatus.AWAIT);
+    //   return apiFailed(
+    //     HttpStatus.CONFLICT,
+    //     'Cannot start recording inventory report plan while there is importing import request',
+    //     { isAnyImportingImportRequest, isAnyExportingExportRequest },
+    //   );
+    // }
 
     const inventoryReportPlan = await this.findById(id);
     if (!inventoryReportPlan) {
