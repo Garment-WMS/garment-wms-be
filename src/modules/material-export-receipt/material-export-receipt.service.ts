@@ -426,9 +426,18 @@ export class MaterialExportReceiptService {
         //   materialExportReceiptStatus =
         //     $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT;
         // }
+        const materialExportReceipt =
+          await this.prismaService.materialExportReceipt.findUnique({
+            where: {
+              materialExportRequestId:
+                warehouseStaffExportDto.materialExportRequestId,
+            },
+            include: materialExportReceiptInclude,
+          });
+
         const { inventoryReportPlan, collisionMaterialVariant } =
           await this.getInventoryReportPlanCollisionWithExportReceipt(
-            warehouseStaffExportDto.materialExportRequestId,
+            materialExportReceipt.id,
           );
         if (inventoryReportPlan.length > 0) {
           throw new CustomHttpException(
