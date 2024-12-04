@@ -2,12 +2,16 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { AuthenUser } from 'src/modules/auth/dto/authen-user.dto';
+import { NotificationService } from 'src/notification/notification.service';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
 
 @Injectable()
 export class ChatService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly notificationService: NotificationService,
+  ) {}
   async create(createChatDto: CreateChatDto, user: AuthenUser) {
     const newChat = await this.prismaService.chat.create({
       data: {

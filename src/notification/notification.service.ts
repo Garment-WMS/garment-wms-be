@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
@@ -10,9 +11,16 @@ export class NotificationService {
     private readonly prismaService: PrismaService,
     private readonly notificationGateway: NotificationGateway,
   ) {}
+  @OnEvent('notification.importRequest.created')
+  async handleNotificationImportRequestCreatedEvent(payload: any) {
+    console.log('Notification Import Request Created Event', payload);
+  }
 
   async create(createNotificationDto: CreateNotificationDto) {
-    this.notificationGateway.server.emit('newNotification', createNotificationDto);
+    this.notificationGateway.server.emit(
+      'newNotification',
+      createNotificationDto,
+    );
     return 'This action adds a new notification';
   }
 
