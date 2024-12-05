@@ -372,7 +372,7 @@ export class InspectionReportService {
         `Inspection report detail: ${JSON.stringify(inspectionReportDetail)}`,
       );
     });
-    console.log("dto input",dto);
+    console.log('dto input', dto);
     const inspectionReportCreateInput: Prisma.InspectionReportUncheckedCreateInput =
       {
         code: dto.code,
@@ -402,9 +402,9 @@ export class InspectionReportService {
             importRequest.id,
             prismaInstance,
           );
-          console.log("inspectionReport",inspectionReport);
-          console.log("inspectionReportDetails",inspectionReportDetails);
-          // throw new BadRequestException('Test');
+        console.log('inspectionReport', inspectionReport);
+        console.log('inspectionReportDetails', inspectionReportDetails);
+        // throw new BadRequestException('Test');
 
         return {
           inspectionReport,
@@ -440,22 +440,20 @@ export class InspectionReportService {
     >,
   ) {
     // Create related inspection report detail defects
-    const input: Prisma.InspectionReportDetailUncheckedCreateInput[] = dto.map(
-      (detail) => ({
-        approvedQuantityByPack: detail.approvedQuantityByPack,
-        defectQuantityByPack: detail.defectQuantityByPack,
-        quantityByPack: detail.quantityByPack,
-        materialPackageId: detail.materialPackageId,
-        productSizeId: detail.productSizeId,
-        inspectionReportId: inspectionReportId,
-        inspectionReportDetailDefect: {
-          create: detail.inspectionReportDetailDefect?.map((defect) => ({
-            defectId: defect.defectId,
-            quantityByPack: defect.quantityByPack,
-          })),
-        },
-      }),
-    );
+    const input = dto.map((detail) => ({
+      approvedQuantityByPack: detail.approvedQuantityByPack,
+      defectQuantityByPack: detail.defectQuantityByPack,
+      quantityByPack: detail.quantityByPack,
+      materialPackageId: detail.materialPackageId,
+      productSizeId: detail.productSizeId,
+      inspectionReportId: inspectionReportId,
+      inspectionReportDetailDefect: {
+        createMany: detail.inspectionReportDetailDefect?.map((defect) => ({
+          defectId: defect.defectId,
+          quantityByPack: defect.quantityByPack,
+        })),
+      },
+    }));
     const prisma = prismaInstance || this.prismaService;
 
     // Create inspection report details
