@@ -435,8 +435,6 @@ export class MaterialExportReceiptService {
       }),
     );
 
-    //get exceed
-
     if (isAllFullFilled) {
       return apiSuccess(
         200,

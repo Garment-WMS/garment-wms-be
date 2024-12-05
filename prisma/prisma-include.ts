@@ -299,7 +299,11 @@ export const inspectionRequestInclude: Prisma.InspectionRequestInclude = {
     include: warehouseManagerInclude,
   },
   inspectionReport: {
-    include: inspectionReportInclude,
+    include: {
+      inspectionReportDetail: {
+        include: inspectionReportDetailWithoutInspectionReportInclude,
+      },
+    },
   },
 };
 
