@@ -5,6 +5,7 @@ import {
   ArrayNotEmpty,
   ArrayUnique,
   IsArray,
+  IsDateString,
   IsEnum,
   IsOptional,
   IsString,
@@ -36,6 +37,16 @@ export class CreateMaterialExportReceiptDto {
   @IsEnum($Enums.MaterialExportReceiptType)
   @IsOptional()
   type: $Enums.MaterialExportReceiptType;
+
+  @ApiProperty()
+  @IsDateString()
+  @IsOptional()
+  expectedStartedAt: Date;
+
+  @ApiProperty()
+  @IsDateString()
+  @IsOptional()
+  expectedFinishedAt: Date;
 
   @ApiProperty()
   @ValidateNested({

@@ -111,56 +111,43 @@ export class MaterialExportReceiptService {
           },
         };
 
-        const [materialExportReceipt, materialExportRequest, materialReceipt] =
-          await Promise.all([
-            prismaInstance.materialExportReceipt.create({
-              data: input,
-              include: {
-                materialExportReceiptDetail: {
-                  include: {
-                    materialReceipt: {
-                      include: {
-                        materialPackage: {
-                          include: materialPackageInclude,
-                        },
+        const [materialExportReceipt, materialReceipt] = await Promise.all([
+          prismaInstance.materialExportReceipt.create({
+            data: input,
+            include: {
+              materialExportReceiptDetail: {
+                include: {
+                  materialReceipt: {
+                    include: {
+                      materialPackage: {
+                        include: materialPackageInclude,
                       },
                     },
                   },
                 },
               },
-            }),
-            prismaInstance.materialExportRequest.update({
-              where: {
-                id: createMaterialExportReceiptDto.materialExportRequestId,
-              },
-              data: {
-                status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
-              },
-              select: {
-                id: true,
-                status: true,
-              },
-            }),
-            Promise.all(
-              createMaterialExportReceiptDto.materialExportReceiptDetail.map(
-                (detail) =>
-                  prismaInstance.materialReceipt.update({
-                    where: {
-                      id: detail.materialReceiptId,
+            },
+          }),
+          Promise.all(
+            createMaterialExportReceiptDto.materialExportReceiptDetail.map(
+              (detail) =>
+                prismaInstance.materialReceipt.update({
+                  where: {
+                    id: detail.materialReceiptId,
+                  },
+                  data: {
+                    remainQuantityByPack: {
+                      decrement: detail.quantityByPack,
                     },
-                    data: {
-                      remainQuantityByPack: {
-                        decrement: detail.quantityByPack,
-                      },
-                    },
-                    select: {
-                      id: true,
-                      remainQuantityByPack: true,
-                    },
-                  }),
-              ),
+                  },
+                  select: {
+                    id: true,
+                    remainQuantityByPack: true,
+                  },
+                }),
             ),
-          ]);
+          ),
+        ]);
 
         const inventoryStock = await Promise.all(
           materialExportReceipt.materialExportReceiptDetail.map((detail) =>
@@ -174,7 +161,6 @@ export class MaterialExportReceiptService {
 
         return {
           materialExportReceipt,
-          materialExportRequest,
           inventoryStock,
           materialReceipt,
         };
