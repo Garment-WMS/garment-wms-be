@@ -238,6 +238,24 @@ export class TaskService {
     });
   }
 
+  async updateManyTaskStatusToInProgress(
+    taskWhereInput: Prisma.TaskWhereInput,
+    prismaInstance?: PrismaService,
+  ) {
+    const prismaService = prismaInstance || this.prismaService;
+
+    return await prismaService.task.updateMany({
+      where: {
+        AND: [
+          taskWhereInput,
+          { status: $Enums.TaskStatus.OPEN }
+        ],
+      },
+      data: { status: $Enums.TaskStatus.IN_PROGRESS, startedAt: new Date() },
+    });
+  }
+
+
   async updateTaskStatusToDone(taskWhereInput: Prisma.TaskWhereInput) {
     const taskToUpdate = await this.prismaService.task.findFirst({
       where: taskWhereInput,

@@ -8,6 +8,11 @@ model InventoryReportPlan {
     note                      String?                     @map("note") @db.VarChar()
     from                      DateTime?                   @map("from") @db.Timestamptz(6)
     to                        DateTime?                   @map("to") @db.Timestamptz(6)
+    startedAt                 DateTime?                   @map("started_at") @db.Timestamptz(6)
+    finishedAt                DateTime?                   @map("finished_at") @db.Timestamptz(6)
+    cancelledAt               DateTime?                   @map("cancelledAt") @db.Timestamptz(6)
+    cancelledBy               String?                     @map("canceled_by") @db.VarChar()
+    cancelledReason           String?                     @map("cancelled_reason") @db.VarChar()
     createdAt                 DateTime                    @default(now())
     updatedAt                 DateTime                    @updatedAt
     deletedAt                 DateTime?                   @map("deleted_at") @db.Timestamptz(6)
