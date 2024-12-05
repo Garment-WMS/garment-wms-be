@@ -135,7 +135,7 @@ export class MaterialExportReceiptService {
           Promise.all(
             createMaterialExportReceiptDto.materialExportReceiptDetail.map(
               (detail) =>
-                this.inventoryStockService.updateMaterialStockQuantity(
+                this.inventoryStockService.updateMaterialStock(
                   detail.materialReceiptId,
                   detail.quantityByPack,
                   prismaInstance,
