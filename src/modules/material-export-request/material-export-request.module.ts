@@ -7,6 +7,8 @@ import { TaskModule } from '../task/task.module';
 import { MaterialExportRequestController } from './material-export-request.controller';
 import { MaterialExportRequestService } from './material-export-request.service';
 import { IsMaterialExportRequestExistValidator } from './validator/is-material-export-request-exist.validator';
+import { ChatModule } from '../chat/chat.module';
+import { ProductionBatchModule } from '../production-batch/production-batch.module';
 
 @Module({
   imports: [
@@ -15,6 +17,7 @@ import { IsMaterialExportRequestExistValidator } from './validator/is-material-e
     TaskModule,
     DiscussionModule,
     ChatModule,
+    ProductionBatchModule,
   ],
   controllers: [MaterialExportRequestController],
   providers: [
