@@ -34,10 +34,10 @@ export class PurchaseOrderService {
       for (let i = 0; i < purchaseOrders.length; i++) {
         const po = purchaseOrders[i];
         const newCode = this.generatePurchaseOrderCode(i + 1);
-        
+
         await this.prismaService.purchaseOrder.update({
           where: { id: po.id },
-          data: { code: newCode },
+          data: { poNumber: newCode },
         });
 
         updatedCount++;
@@ -46,13 +46,13 @@ export class PurchaseOrderService {
       return apiSuccess(
         HttpStatus.OK,
         { updatedCount },
-        `Successfully updated ${updatedCount} purchase order codes.`
+        `Successfully updated ${updatedCount} purchase order codes.`,
       );
     } catch (error) {
       console.error('Error updating purchase order codes:', error);
       return apiFailed(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'An error occurred while updating purchase order codes.'
+        'An error occurred while updating purchase order codes.',
       );
     }
   }
@@ -585,6 +585,15 @@ export class PurchaseOrderService {
         const purchaseOrder = await prisma.purchaseOrder.create({
           data: createPurchaseOrder,
         });
+        if (purchaseOrder) {
+          await prisma.purchaseOrder.update({
+            where: { id: purchaseOrder.id },
+            data: {
+              poNumber: purchaseOrder.code,
+            },
+          });
+        }
+
         let poDeliveryCode = null;
         for (let i = 0; i < excelData.poDelivery.length; i++) {
           const poDelivery: Partial<PoDeliveryDto> = excelData.poDelivery[i];

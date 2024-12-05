@@ -48,4 +48,26 @@ export class PoDeliveryMaterialService {
       },
     });
   }
+
+  async createPoDeliveryMaterialExtra(
+    createPoDeliveryMaterial: Prisma.PoDeliveryDetailCreateInput,
+    poDeliveryId: string,
+    materialPackageId: string,
+    prismaInstance: PrismaService = this.prismaService,
+  ) {
+    return prismaInstance.poDeliveryDetail.upsert({
+      where: {
+        poDeliveryId_materialPackageId: {
+          poDeliveryId: poDeliveryId,
+          materialPackageId: materialPackageId,
+        },
+      },
+      create: createPoDeliveryMaterial,
+      update: {
+        quantityByPack: {
+          increment: createPoDeliveryMaterial.quantityByPack,
+        },
+      },
+    });
+  }
 }

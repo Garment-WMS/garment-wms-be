@@ -18,8 +18,11 @@ export class PoDeliveryService {
     private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
   ) {}
 
-  findExtraPoDelivery(purchaseOrderId: string) {
-    return this.pirsmaService.poDelivery.findFirst({
+  findExtraPoDelivery(
+    purchaseOrderId: string,
+    prismaInstance: PrismaService = this.pirsmaService,
+  ) {
+    return prismaInstance.poDelivery.findFirst({
       where: {
         purchaseOrderId,
         isExtra: true,
