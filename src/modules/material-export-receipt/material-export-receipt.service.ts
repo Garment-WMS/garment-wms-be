@@ -90,77 +90,89 @@ export class MaterialExportReceiptService {
   // }
 
   async create(createMaterialExportReceiptDto: CreateMaterialExportReceiptDto) {
-    const input: Prisma.MaterialExportReceiptUncheckedCreateInput = {
-      type: createMaterialExportReceiptDto.type,
-      note: createMaterialExportReceiptDto.note,
-      warehouseStaffId: createMaterialExportReceiptDto.warehouseStaffId,
-      status: $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT,
-      materialExportReceiptDetail: {
-        createMany: {
-          data: createMaterialExportReceiptDto.materialExportReceiptDetail.map(
-            (detail) => ({
-              materialReceiptId: detail.materialReceiptId,
-              quantityByPack: detail.quantityByPack,
-            }),
-          ),
-          skipDuplicates: true,
-        },
-      },
-    };
+    const result = await this.prismaService.$transaction(
+      async (prismaInstance: PrismaService) => {
+        const input: Prisma.MaterialExportReceiptUncheckedCreateInput = {
+          type: createMaterialExportReceiptDto.type,
+          note: createMaterialExportReceiptDto.note,
+          warehouseStaffId: createMaterialExportReceiptDto.warehouseStaffId,
+          status: $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT,
+          materialExportReceiptDetail: {
+            createMany: {
+              data: createMaterialExportReceiptDto.materialExportReceiptDetail.map(
+                (detail) => ({
+                  materialReceiptId: detail.materialReceiptId,
+                  quantityByPack: detail.quantityByPack,
+                }),
+              ),
+              skipDuplicates: true,
+            },
+          },
+        };
 
-    // const [materialExportReceipt, materialExportRequest] =
-    //   await this.prismaService.$transaction([
-    //     this.prismaService.materialExportReceipt.create({
-    //       data: input,
-    //       include: materialExportReceiptInclude,
-    //     }),
-    //     this.prismaService.materialExportRequest.update({
-    //       where: {
-    //         id: createMaterialExportReceiptDto.materialExportRequestId,
-    //       },
-    //       data: {
-    //         status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
-    //       },
-    //     }),
-    //   ]);
-
-    const { materialExportReceipt, materialExportRequest, inventoryStock } =
-      await this.prismaService.$transaction(
-        async (prismaInstance: PrismaService) => {
-          const materialExportReceipt =
-            await prismaInstance.materialExportReceipt.create({
-              data: input,
-              include: materialExportReceiptInclude,
-            });
-          const materialExportRequest =
-            await prismaInstance.materialExportRequest.update({
-              where: {
-                id: createMaterialExportReceiptDto.materialExportRequestId,
-              },
-              data: {
-                status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
-              },
-            });
-          const inventoryStockPromises =
-            materialExportReceipt.materialExportReceiptDetail.map(
-              async (detail) => {
-                return this.inventoryStockService.updateMaterialStockQuantity(
+        const [
+          materialExportReceipt,
+          materialExportRequest,
+          inventoryStock,
+          materialReceipt,
+        ] = await Promise.all([
+          prismaInstance.materialExportReceipt.create({
+            data: input,
+            include: materialExportReceiptInclude,
+          }),
+          prismaInstance.materialExportRequest.update({
+            where: {
+              id: createMaterialExportReceiptDto.materialExportRequestId,
+            },
+            data: {
+              status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
+            },
+            select: {
+              id: true,
+              status: true,
+            },
+          }),
+          Promise.all(
+            createMaterialExportReceiptDto.materialExportReceiptDetail.map(
+              (detail) =>
+                this.inventoryStockService.updateMaterialStockQuantity(
                   detail.materialReceiptId,
                   detail.quantityByPack,
                   prismaInstance,
-                );
-              },
-            );
-          const inventoryStock = await Promise.all(inventoryStockPromises);
-          return {
-            materialExportReceipt,
-            materialExportRequest,
-            inventoryStock,
-          };
-        },
-      );
+                ),
+            ),
+          ),
+          Promise.all(
+            createMaterialExportReceiptDto.materialExportReceiptDetail.map(
+              (detail) =>
+                prismaInstance.materialReceipt.update({
+                  where: {
+                    id: detail.materialReceiptId,
+                  },
+                  data: {
+                    remainQuantityByPack: {
+                      decrement: detail.quantityByPack,
+                    },
+                  },
+                  select: {
+                    id: true,
+                    remainQuantityByPack: true,
+                  },
+                }),
+            ),
+          ),
+        ]);
 
-    return materialExportReceipt;
+        return {
+          materialExportReceipt,
+          materialExportRequest,
+          inventoryStock,
+          materialReceipt,
+        };
+      },
+    );
+
+    return result;
   }
 
   async getLatest(from: any, to: any) {
@@ -422,6 +434,8 @@ export class MaterialExportReceiptService {
         }));
       }),
     );
+
+    //get exceed
 
     if (isAllFullFilled) {
       return apiSuccess(
