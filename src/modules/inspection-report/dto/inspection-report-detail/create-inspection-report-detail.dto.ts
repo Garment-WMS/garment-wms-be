@@ -7,6 +7,7 @@ import {
   IsInt,
   IsOptional,
   IsUUID,
+  Min,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
@@ -26,7 +27,8 @@ export class CreateInspectionReportDetailDto {
   @ApiProperty({ required: true, type: 'number' })
   @IsOptional()
   @IsInt()
-  quantityByPack?: number;
+  @Min(0)
+  quantityByPack: number;
 
   @ApiProperty({ required: true, type: 'number' })
   @IsInt()
