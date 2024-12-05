@@ -7,7 +7,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ImportRequest, Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService
@@ -41,6 +41,7 @@ export class PrismaService
 
   async onModuleInit() {
     try {
+      
       await this.$connect();
       this.logger.log('Database connected');
     } catch (error) {
@@ -54,7 +55,12 @@ export class PrismaService
       query: {
         importRequest: {
           async create({ args, model, operation, query }) {
+            console.log('importRequest.create', args);
             if (args.data.status === 'ARRIVED') {
+              this.eventEmitter.emit(
+                'notification.importRequest.created',
+                args,
+              );
             }
             const result = await query(args);
             Logger.log(result.id);
@@ -324,13 +330,13 @@ export class PrismaService
       params.action === 'create' &&
       this.modelsNeedNotification.includes(params.model)
     ) {
-      if (params.model === 'ImportRequest') {
-        const createdEntity = result as ImportRequest;
-        this.eventEmitter.emit(
-          'notification.importRequest.created',
-          createdEntity,
-        );
-      }
+      // if (params.model === 'ImportRequest') {
+      //   const createdEntity = result as ImportRequest;
+      //   this.eventEmitter.emit(
+      //     'notification.importRequest.created',
+      //     createdEntity,
+      //   );
+      // }
       // Perform additional operations like logging, sending notifications, etc.
     }
 

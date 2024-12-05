@@ -45,7 +45,6 @@ export class TaskService {
         };
       },
     );
-    console.log(taskCreateInput);
     const task = await this.prismaService.task.createManyAndReturn({
       data: taskCreateInput,
     });

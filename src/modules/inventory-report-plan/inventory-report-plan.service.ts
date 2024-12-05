@@ -27,6 +27,11 @@ import { InventoryReportPlanDto } from './dto/inventory-report-plan.dto';
 import { CreateOverAllInventoryReportPlanDto } from './dto/over-all-report-plan.dto';
 import { UpdateInventoryReportPlanDto } from './dto/update-inventory-report-plan.dto';
 
+interface InventoryReportPlanPayload
+  extends Prisma.InventoryReportPlanGetPayload<{
+    include: typeof inventoryReportPlan;
+  }> {}
+
 @Injectable()
 export class InventoryReportPlanService {
   constructor(
@@ -62,6 +67,16 @@ export class InventoryReportPlanService {
     );
   }
 
+  async findAllInProgressWithoutResponse() {
+    const inventoryReportPlans =
+      await this.prismaService.inventoryReportPlan.findMany({
+        where: {
+          status: InventoryReportPlanStatus.IN_PROGRESS,
+        },
+      });
+    return inventoryReportPlans;
+  }
+
   async awaitRecordInventoryReportPlan(id: string, warehouseManagerId: string) {
     const inventoryReportPlan = await this.findById(id);
     if (!inventoryReportPlan) {
@@ -73,6 +88,16 @@ export class InventoryReportPlanService {
         'Inventory report plan is already in progress',
       );
     }
+
+    const isAnyInventoryInProgressOrAwait =
+      await this.getAllInventoryReportPlanInProgressOrAwait();
+
+      if(isAnyInventoryInProgressOrAwait.length > 0) {
+        throw new BadRequestException(
+          'There is already an inventory report plan in progress or await',
+        );
+      }
+
     await this.updateStatus(id, InventoryReportPlanStatus.AWAIT);
     return apiSuccess(
       HttpStatus.NO_CONTENT,
@@ -80,24 +105,42 @@ export class InventoryReportPlanService {
       'Inventory report plan started successfully',
     );
   }
+  getAllInventoryReportPlanInProgressOrAwait() {
+    return this.prismaService.inventoryReportPlan.findMany({
+      where: {
+        OR: [
+          { status: InventoryReportPlanStatus.IN_PROGRESS },
+          { status: InventoryReportPlanStatus.AWAIT },
+        ],
+      },
+    });
+  }
 
   async startRecordInventoryReportPlan(id: string, warehouseManager: string) {
+    const inventoryReportPlanInProgress =
+      await this.findAllInProgressWithoutResponse();
+    if (inventoryReportPlanInProgress.length > 0) {
+      throw new BadRequestException(
+        'There is already an inventory report plan in progress',
+      );
+    }
+
     const isAnyImportingImportRequest =
       await this.importRequestService.isAnyImportingImportRequest();
     const isAnyExportingExportRequest =
       await this.materialExportRequestService.isAnyExportingExportRequest();
     // const isAnyImportingImportReceipt = await this.importReceiptService.isAnyImportingImportReceipt();
-    // if (
-    //   isAnyImportingImportRequest.length > 0 ||
-    //   isAnyExportingExportRequest.length > 0
-    // ) {
-    //   // await this.updateStatus(id, InventoryReportPlanStatus.AWAIT);
-    //   return apiFailed(
-    //     HttpStatus.CONFLICT,
-    //     'Cannot start recording inventory report plan while there is importing import request',
-    //     { isAnyImportingImportRequest, isAnyExportingExportRequest },
-    //   );
-    // }
+    if (
+      isAnyImportingImportRequest.length > 0 ||
+      isAnyExportingExportRequest.length > 0
+    ) {
+      // await this.updateStatus(id, InventoryReportPlanStatus.AWAIT);
+      return apiFailed(
+        HttpStatus.CONFLICT,
+        'Cannot start recording inventory report plan while there is importing import request',
+        { isAnyImportingImportRequest, isAnyExportingExportRequest },
+      );
+    }
 
     const inventoryReportPlan = await this.findById(id);
     if (!inventoryReportPlan) {
@@ -134,13 +177,15 @@ export class InventoryReportPlanService {
     const uniqueStaffIds = Array.from(new Set(staffIds));
     await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
-        for (let i = 0; i < uniqueStaffIds.length; i++) {
-          await this.processInventoryReportPlan(
-            id,
-            uniqueStaffIds[i],
-            prismaInstance,
-          );
-        }
+        await Promise.all(
+          uniqueStaffIds.map((staffId) =>
+            this.improveProcessInventoryReportPlan(
+              inventoryReportPlan,
+              staffId,
+              prismaInstance,
+            ),
+          ),
+        );
 
         return apiSuccess(
           HttpStatus.NO_CONTENT,
@@ -317,27 +362,6 @@ export class InventoryReportPlanService {
         }
       });
 
-    // if (
-    //   !inventoryReportPlanDetailBelongToWarehouseStaff ||
-    //   !inventoryReportPlanDetailBelongToWarehouseStaff.length
-    // ) {
-    //   return apiFailed(
-    //     403,
-    //     'You are not allowed to process this inventory report plan',
-    //   );
-    // }
-
-    // if (
-    //   !inventoryReportPlanDetailBelongToWarehouseStaff.some(
-    //     (el) => el.inventoryReportId === null,
-    //   )
-    // ) {
-    //   return apiFailed(
-    //     400,
-    //     'All inventory report plan detail already processed',
-    //   );
-    // }
-
     const inventoryReportInput: InventoryReportPlanDto = {
       ...inventoryReportPlan,
       inventoryReportPlanDetail:
@@ -372,6 +396,65 @@ export class InventoryReportPlanService {
     ) {
       await prismaInstance.inventoryReportPlan.update({
         where: { id },
+        data: {
+          status: InventoryReportPlanStatus.IN_PROGRESS,
+        },
+      });
+    } else {
+      throw new BadRequestException(
+        'Inventory report plan is already in progress',
+      );
+    }
+
+    return apiSuccess(200, {}, 'Inventory report plan processed successfully');
+  }
+
+  async improveProcessInventoryReportPlan(
+    inventoryReportPlan: InventoryReportPlanPayload,
+    warehouseStaffId: string,
+    prismaInstance: PrismaService = this.prismaService,
+  ) {
+    const inventoryReportPlanDetailBelongToWarehouseStaff =
+      inventoryReportPlan.inventoryReportPlanDetail.filter((el) => {
+        if (el.warehouseStaffId === warehouseStaffId) {
+          return el;
+        }
+      });
+
+    const inventoryReportInput: InventoryReportPlanDto = {
+      ...inventoryReportPlan,
+      inventoryReportPlanDetail:
+        inventoryReportPlanDetailBelongToWarehouseStaff,
+    };
+
+    const inventoryReport =
+      await this.inventoryReportService.createInventoryReport(
+        inventoryReportInput,
+        warehouseStaffId,
+        prismaInstance,
+      );
+    if (!inventoryReport) {
+      throw new BadRequestException('Create inventory report failed');
+    }
+    const result = await prismaInstance.inventoryReportPlanDetail.updateMany({
+      where: {
+        id: {
+          in: inventoryReportPlanDetailBelongToWarehouseStaff.map(
+            (el) => el.id,
+          ),
+        },
+      },
+      data: {
+        inventoryReportId: inventoryReport.id,
+      },
+    });
+
+    if (
+      inventoryReportPlan.status === InventoryReportPlanStatus.NOT_YET ||
+      inventoryReportPlan.status === InventoryReportPlanStatus.AWAIT
+    ) {
+      await prismaInstance.inventoryReportPlan.update({
+        where: { id: inventoryReportPlan.id },
         data: {
           status: InventoryReportPlanStatus.IN_PROGRESS,
         },
@@ -595,31 +678,29 @@ export class InventoryReportPlanService {
         inventoryPlanResult.inventoryReportPlanDetail =
           inventoryPlanDetailResult;
 
-        const createTaskDto: CreateTaskDto[] = [];
-
-        const staffList = inventoryPlanDetailResult.reduce(
-          (acc, plan) => acc.concat(plan.warehouseStaffId),
-          [] as string[],
-        );
-
-        staffList.forEach((staff: any) => {
-          createTaskDto.push({
-            status: 'OPEN',
-            taskType: TaskType.INVENTORY,
-            warehouseStaffId: staff.warehouseStaffId,
-            inventoryReportPlanId: inventoryPlanResult.id,
-            expectedStartedAt: createInventoryReportPlanDto.from,
-            expectedFinishedAt: createInventoryReportPlanDto.to,
-          });
-        });
-        await this.taskService.createMany(createTaskDto);
         return inventoryPlanResult;
       },
       {
         timeout: 100000,
       },
     );
+    const createTaskDto: CreateTaskDto[] = [];
 
+    const staffList = result.inventoryReportPlanDetail.reduce(
+      (acc, plan) => acc.concat(plan.warehouseStaffId),
+      [] as string[],
+    );
+    staffList.forEach((staff: any) => {
+      createTaskDto.push({
+        status: 'OPEN',
+        taskType: TaskType.INVENTORY,
+        warehouseStaffId: staff,
+        inventoryReportPlanId: result.id,
+        expectedStartedAt: createInventoryReportPlanDto.from,
+        expectedFinishedAt: createInventoryReportPlanDto.to,
+      });
+    });
+    await this.taskService.createMany(createTaskDto);
     if (result) {
       return apiSuccess(
         HttpStatus.CREATED,

@@ -118,6 +118,7 @@ export class InventoryReportService {
       ),
     );
 
+    //TODO: Fix Bug Check Last Inventory report detail 
     const isInventoryReportDetailDone =
       await this.inventoryReportDetailService.checkLastApprovalInventoryReport(
         id,

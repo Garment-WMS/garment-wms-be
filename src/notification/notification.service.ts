@@ -4,16 +4,19 @@ import { PrismaService } from 'prisma/prisma.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { NotificationGateway } from './notification.gateway';
+import { UserService } from 'src/modules/user/user.service';
 
 @Injectable()
 export class NotificationService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly notificationGateway: NotificationGateway,
+    private readonly userService: UserService,
   ) {}
   @OnEvent('notification.importRequest.created')
   async handleNotificationImportRequestCreatedEvent(payload: any) {
-    console.log('Notification Import Request Created Event', payload);
+    const allManager = await this.userService.getAllUserByRole('WAREHOUSE_MANAGER');
+    
   }
 
   async create(createNotificationDto: CreateNotificationDto) {
