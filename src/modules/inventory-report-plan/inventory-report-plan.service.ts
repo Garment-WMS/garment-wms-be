@@ -120,8 +120,10 @@ export class InventoryReportPlanService {
     const inventoryReportPlanInProgress =
       await this.findAllInProgressWithoutResponse();
     if (inventoryReportPlanInProgress.length > 0) {
-      throw new BadRequestException(
+      return apiFailed(
+        HttpStatus.BAD_REQUEST,
         'There is already an inventory report plan in progress',
+        inventoryReportPlanInProgress,
       );
     }
 

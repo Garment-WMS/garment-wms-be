@@ -456,8 +456,6 @@ export class InspectionReportService {
         },
       }),
     );
-    console.log("input",input);
-
     const prisma = prismaInstance || this.prismaService;
 
     // Create inspection report details
