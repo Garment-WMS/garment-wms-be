@@ -489,7 +489,7 @@ export class MaterialExportRequestService {
             id: productionStaffApproveDto.materialExportRequestId,
           },
           data: {
-            status: MaterialExportRequestStatus.REJECTED,
+            status: MaterialExportRequestStatus.PRODUCTION_REJECTED,
             productionRejectReason:
               productionStaffApproveDto.productionRejectReason,
           },
