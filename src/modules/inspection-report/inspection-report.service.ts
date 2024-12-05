@@ -440,49 +440,62 @@ export class InspectionReportService {
     >,
   ) {
     // Create related inspection report detail defects
-    const input = dto.map((detail) => ({
-      approvedQuantityByPack: detail.approvedQuantityByPack,
-      defectQuantityByPack: detail.defectQuantityByPack,
-      quantityByPack: detail.quantityByPack,
-      materialPackageId: detail.materialPackageId,
-      productSizeId: detail.productSizeId,
-      inspectionReportId: inspectionReportId,
-      inspectionReportDetailDefect: {
-        createMany: detail.inspectionReportDetailDefect?.map((defect) => ({
-          defectId: defect.defectId,
-          quantityByPack: defect.quantityByPack,
-        })),
-      },
-    }));
+    const input: Prisma.InspectionReportDetailUncheckedCreateInput[] = dto.map(
+      (detail) => ({
+        approvedQuantityByPack: detail.approvedQuantityByPack,
+        defectQuantityByPack: detail.defectQuantityByPack,
+        quantityByPack: detail.quantityByPack,
+        materialPackageId: detail.materialPackageId,
+        productSizeId: detail.productSizeId,
+        inspectionReportId: inspectionReportId,
+      }),
+    );
+
     const prisma = prismaInstance || this.prismaService;
 
     // Create inspection report details
     const createdDetails =
       await prisma.inspectionReportDetail.createManyAndReturn({
-        data: input,
+        data: dto.map((detail) => ({
+          approvedQuantityByPack: detail.approvedQuantityByPack,
+          defectQuantityByPack: detail.defectQuantityByPack,
+          quantityByPack: detail.quantityByPack,
+          materialPackageId: detail.materialPackageId,
+          productSizeId: detail.productSizeId,
+          inspectionReportId: inspectionReportId,
+        })),
+
         skipDuplicates: true,
       });
 
-    // Create related inspection report detail defects
-    // for (const detail of dto) {
-    //   if (detail.inspectionReportDetailDefect) {
-    //     const createdDetail = createdDetails.find(
-    //       (d) =>
-    //         d.materialPackageId === detail.materialPackageId &&
-    //         d.inspectionReportId === inspectionReportId,
-    //     );
+    //Create related inspection report detail defects
+    const inspectionReportDetailDefectCreatePromises: Prisma.PrismaPromise<Prisma.BatchPayload>[] =
+      [];
+    for (const detail of dto) {
+      if (detail.inspectionReportDetailDefect) {
+        const createdDetail = createdDetails.find(
+          (d) =>
+            (d.materialPackageId === detail.materialPackageId ||
+              d.productSizeId === detail.productSizeId) &&
+            d.inspectionReportId === inspectionReportId,
+        );
 
-    //     if (createdDetail) {
-    //       await prisma.inspectionReportDetailDefect.createMany({
-    //         data: detail.inspectionReportDetailDefect.map((defect) => ({
-    //           defectId: defect.defectId,
-    //           quantityByPack: defect.quantityByPack,
-    //           inspectionReportDetailId: createdDetail.id,
-    //         })),
-    //       });
-    //     }
-    //   }
-    // }
+        if (createdDetail) {
+          inspectionReportDetailDefectCreatePromises.push(
+            prisma.inspectionReportDetailDefect.createMany({
+              data: detail.inspectionReportDetailDefect.map((defect) => ({
+                defectId: defect.defectId,
+                quantityByPack: defect.quantityByPack,
+                inspectionReportDetailId: createdDetail.id,
+              })),
+            }),
+          );
+        }
+      }
+    }
+    const inspectionReportDetailDefects = await Promise.all(
+      inspectionReportDetailDefectCreatePromises,
+    );
 
     return createdDetails;
   }
