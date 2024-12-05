@@ -92,11 +92,11 @@ export class InventoryReportPlanService {
     const isAnyInventoryInProgressOrAwait =
       await this.getAllInventoryReportPlanInProgressOrAwait();
 
-      if(isAnyInventoryInProgressOrAwait.length > 0) {
-        throw new BadRequestException(
-          'There is already an inventory report plan in progress or await',
-        );
-      }
+    if (isAnyInventoryInProgressOrAwait.length > 0) {
+      throw new BadRequestException(
+        'There is already an inventory report plan in progress or await',
+      );
+    }
 
     await this.updateStatus(id, InventoryReportPlanStatus.AWAIT);
     return apiSuccess(
@@ -187,6 +187,23 @@ export class InventoryReportPlanService {
           ),
         );
 
+        if (
+          inventoryReportPlan.status === InventoryReportPlanStatus.NOT_YET ||
+          inventoryReportPlan.status === InventoryReportPlanStatus.AWAIT
+        ) {
+          await prismaInstance.inventoryReportPlan.update({
+            where: { id: inventoryReportPlan.id },
+            data: {
+              status: InventoryReportPlanStatus.IN_PROGRESS,
+              startedAt: new Date(),
+            },
+          });
+        } else {
+          throw new BadRequestException(
+            'Inventory report plan is already in progress',
+          );
+        }
+
         return apiSuccess(
           HttpStatus.NO_CONTENT,
           {},
@@ -197,6 +214,10 @@ export class InventoryReportPlanService {
         timeout: 100000,
       },
     );
+
+    await this.taskService.updateManyTaskStatusToInProgress({
+      inventoryReportPlanId: id,
+    });
 
     return apiSuccess(
       HttpStatus.NO_CONTENT,
@@ -294,13 +315,21 @@ export class InventoryReportPlanService {
         maxWait: 100000,
       },
     );
+    const staffListUnique = Array.from(
+      new Set(
+        staffList.reduce(
+          (acc, plan) => acc.concat(plan.warehouseStaffId),
+          [] as string[],
+        ),
+      ),
+    );
 
     const createTaskDto: CreateTaskDto[] = [];
-    staffList.forEach((staff: any) => {
+    staffListUnique.forEach((warehouseStaffId: string) => {
       createTaskDto.push({
         status: 'OPEN',
         taskType: TaskType.INVENTORY,
-        warehouseStaffId: staff.warehouseStaffId,
+        warehouseStaffId: warehouseStaffId,
         inventoryReportPlanId: result.id,
         expectedStartedAt: createInventoryReportPlanDto.from,
         expectedFinishedAt: createInventoryReportPlanDto.to,
@@ -448,22 +477,6 @@ export class InventoryReportPlanService {
         inventoryReportId: inventoryReport.id,
       },
     });
-
-    if (
-      inventoryReportPlan.status === InventoryReportPlanStatus.NOT_YET ||
-      inventoryReportPlan.status === InventoryReportPlanStatus.AWAIT
-    ) {
-      await prismaInstance.inventoryReportPlan.update({
-        where: { id: inventoryReportPlan.id },
-        data: {
-          status: InventoryReportPlanStatus.IN_PROGRESS,
-        },
-      });
-    } else {
-      throw new BadRequestException(
-        'Inventory report plan is already in progress',
-      );
-    }
 
     return apiSuccess(200, {}, 'Inventory report plan processed successfully');
   }
@@ -686,9 +699,13 @@ export class InventoryReportPlanService {
     );
     const createTaskDto: CreateTaskDto[] = [];
 
-    const staffList = result.inventoryReportPlanDetail.reduce(
-      (acc, plan) => acc.concat(plan.warehouseStaffId),
-      [] as string[],
+    const staffList = Array.from(
+      new Set(
+        result.inventoryReportPlanDetail.reduce(
+          (acc, plan) => acc.concat(plan.warehouseStaffId),
+          [] as string[],
+        ),
+      ),
     );
     staffList.forEach((staff: any) => {
       createTaskDto.push({
@@ -731,7 +748,15 @@ export class InventoryReportPlanService {
           {
             to: from ? { gte: from } : undefined,
           },
-        ].filter(Boolean), // Remove empty conditions
+          {
+            status: {
+              notIn: [
+                InventoryReportPlanStatus.CANCELLED,
+                InventoryReportPlanStatus.FINISHED,
+              ],
+            },
+          },
+        ].filter(Boolean),
       },
     });
     return result;

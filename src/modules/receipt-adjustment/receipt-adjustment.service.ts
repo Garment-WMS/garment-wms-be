@@ -17,6 +17,7 @@ export class ReceiptAdjustmentService {
       afterAdjustQuantity: createReceiptAdjustmentDto.afterAdjustQuantity,
       reason: createReceiptAdjustmentDto.reason,
       adjustedAt: new Date(),
+      status: createReceiptAdjustmentDto.status,
       inventoryReportDetail: {
         connect: { id: createReceiptAdjustmentDto.inventoryReportDetailId },
       },
@@ -31,13 +32,9 @@ export class ReceiptAdjustmentService {
         },
       }),
     };
-
-    console.log(CreateReceiptAdjustmentDto);
-
     const result = await this.prismaService.receiptAdjustment.create({
       data: createReceiptAdjustmentInput,
     });
-
     return result;
   }
 

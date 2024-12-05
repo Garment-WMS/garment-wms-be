@@ -60,10 +60,9 @@ export class InventoryReportDetailService {
       );
     }
 
-    //TODO: enable later
-    // if (inventoryReportDetail.managerQuantityConfirm) {
-    //   throw new BadRequestException('Inventory Report Detail already recorded');
-    // }
+    if (inventoryReportDetail.managerQuantityConfirm) {
+      throw new BadRequestException('Inventory Report Detail already recorded');
+    }
     const result = await this.prismaService.inventoryReportDetail.update({
       where: {
         id: inventoryReportDetailId,
@@ -105,6 +104,8 @@ export class InventoryReportDetailService {
         afterAdjustQuantity: result.managerQuantityConfirm,
         reason: inventoryRecordDetail.note,
       };
+
+      //TODO: Can implement background job here
       await this.receiptAdjustmentService.create(createReceiptAdjustmentDto);
     }
     return result;
@@ -299,6 +300,7 @@ export class InventoryReportDetailService {
           managerQuantityConfirm: null,
         },
       });
+    console.log(isAllInventoryReportDetailRecorded);
     if (isAllInventoryReportDetailRecorded.length > 0) {
       return false;
     }
