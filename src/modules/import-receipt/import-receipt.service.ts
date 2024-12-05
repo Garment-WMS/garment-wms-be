@@ -196,19 +196,6 @@ export class ImportReceiptService {
       finishedAt: createImportReceiptDto.finishAt,
     };
 
-    // this.validateMaterialReceipt(
-    //   inspectionReport.inspectionReportDetail,
-    //   createImportReceiptDto.materialReceipts,
-    // );
-
-    // const isAnyAwaitOrInProgressReportPlan =
-    //   await this.isAnyWaitOrInProgressReportPlan();
-
-    // if (isAnyAwaitOrInProgressReportPlan) {
-    //   importRequestStatus = ImportRequestStatus.AWAIT_TO_IMPORT;
-    //   importReceiptInput.status = ImportReceiptStatus.AWAIT_TO_IMPORT;
-    // }
-
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const importReceipt = await prismaInstance.importReceipt.create({
@@ -327,7 +314,6 @@ export class ImportReceiptService {
               prismaInstance,
               // createImportReceiptDto.materialReceipts,
             );
-          console.log('ImportReceipt', result);
           //TODO: Validate this method when no there is no approved material
           if (result.length === 0) {
             await prismaInstance.importReceipt.delete({

@@ -138,36 +138,33 @@ export class ProductReceiptService {
     const productReceipts: Prisma.ProductReceiptCreateManyInput[] = [];
 
     for (const inspectionReportDetailItem of inspectionReportDetail) {
-      const productReceipt: Prisma.ProductReceiptCreateManyInput = {
-        importReceiptId: importReceiptId,
-        productSizeId: inspectionReportDetailItem.productSizeId,
-        quantityByUom: inspectionReportDetailItem.quantityByPack,
-        remainQuantityByUom: inspectionReportDetailItem.quantityByPack,
-        status: ProductReceiptStatus.IMPORTING,
-        code: undefined,
-      };
-      productReceipts.push(productReceipt);
-
       if (inspectionReportDetailItem.defectQuantityByPack > 0) {
         const defectProductReceipt: Prisma.ProductReceiptCreateManyInput = {
           importReceiptId: importReceiptId,
           productSizeId: inspectionReportDetailItem.productSizeId,
           quantityByUom: inspectionReportDetailItem.defectQuantityByPack,
           remainQuantityByUom: inspectionReportDetailItem.defectQuantityByPack,
+          isDefect: true,
           status: ProductReceiptStatus.IMPORTING,
           code: undefined,
         };
         productReceipts.push(defectProductReceipt);
+      } else {
+        const productReceipt: Prisma.ProductReceiptCreateManyInput = {
+          importReceiptId: importReceiptId,
+          productSizeId: inspectionReportDetailItem.productSizeId,
+          quantityByUom: inspectionReportDetailItem.approvedQuantityByPack,
+          remainQuantityByUom:
+            inspectionReportDetailItem.approvedQuantityByPack,
+          status: ProductReceiptStatus.IMPORTING,
+          code: undefined,
+        };
+        productReceipts.push(productReceipt);
       }
     }
 
     const result = await prismaInstance.productReceipt.createManyAndReturn({
-      data: productReceipts.map((item) => {
-        return {
-          ...item,
-          code: undefined, //todo
-        };
-      }),
+      data: productReceipts,
     });
     return result;
   }

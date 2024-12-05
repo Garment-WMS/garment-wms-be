@@ -205,7 +205,6 @@ export class ProductionBatchService {
         where: findOptions?.where,
       }),
     ]);
-
     const dataResponse: DataResponse = {
       data,
       pageMeta: getPageMeta(total, offset, limit),
