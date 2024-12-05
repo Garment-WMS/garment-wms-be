@@ -431,6 +431,10 @@ export class MaterialExportReceiptService {
             },
           }),
           quantityByPack: needMaterialReceipt.quantityByPack,
+          targetQuantityUom: detail.targetQuantityUom,
+          missingQuantityUom: detail.missingQuantityUom,
+          exceedQuantityUom: detail.exceedQuantityUom,
+          exceedPercentage: detail.exceedPercentage,
         }));
       }),
     );
