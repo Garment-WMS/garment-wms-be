@@ -15,9 +15,9 @@ export class CreatePurchaseOrderDto {
   @IsUUID()
   previousId: UUID;
 
-  @IsNotEmpty()
-  @IsString()
-  PONumber: string;
+  // @IsNotEmpty()
+  // @IsString()
+  // PONumber: string;
 
   @IsNotEmpty()
   @IsUUID()

@@ -22,6 +22,46 @@ import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 
 @Injectable()
 export class PurchaseOrderService {
+  async updateAllPurchaseOrderCodes(): Promise<ApiResponse> {
+    try {
+      const purchaseOrders = await this.prismaService.purchaseOrder.findMany({
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+
+      let updatedCount = 0;
+      for (let i = 0; i < purchaseOrders.length; i++) {
+        const po = purchaseOrders[i];
+        const newCode = this.generatePurchaseOrderCode(i + 1);
+        
+        await this.prismaService.purchaseOrder.update({
+          where: { id: po.id },
+          data: { code: newCode },
+        });
+
+        updatedCount++;
+      }
+
+      return apiSuccess(
+        HttpStatus.OK,
+        { updatedCount },
+        `Successfully updated ${updatedCount} purchase order codes.`
+      );
+    } catch (error) {
+      console.error('Error updating purchase order codes:', error);
+      return apiFailed(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        'An error occurred while updating purchase order codes.'
+      );
+    }
+  }
+
+  private generatePurchaseOrderCode(number: number): string {
+    const prefix = 'PUR-ORD';
+    const paddedNumber = number.toString().padStart(6, '0');
+    return `${prefix}-${paddedNumber}`;
+  }
   constructor(
     private readonly prismaService: PrismaService,
     private readonly excelService: ExcelService,
@@ -503,7 +543,7 @@ export class PurchaseOrderService {
         });
       });
 
-      const PoNumber = await this.generateNextPoNumber();
+      // const PoNumber = await this.generateNextPoNumber();
       const createPurchaseOrderData =
         excelData as Partial<CreatePurchaseOrderDto>;
 
@@ -538,7 +578,7 @@ export class PurchaseOrderService {
         finishDate: undefined,
         shippingAmount: createPurchaseOrderData.shippingAmount,
         otherAmount: createPurchaseOrderData.otherAmount,
-        poNumber: PoNumber,
+        // poNumber: PoNumber,
       };
 
       purchaseOrder = await this.prismaService.$transaction(async (prisma) => {
@@ -675,21 +715,21 @@ export class PurchaseOrderService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Invalid status');
   }
 
-  async generateNextPoNumber() {
-    const lastPo: any = await this.prismaService.$queryRaw<
-      { poNumber: string }[]
-    >`SELECT "PO_number" FROM "purchase_order" ORDER BY CAST(SUBSTRING("PO_number", 4) AS INT) DESC LIMIT 1`;
+  // async generateNextPoNumber() {
+  //   const lastPo: any = await this.prismaService.$queryRaw<
+  //     { poNumber: string }[]
+  //   >`SELECT "PO_number" FROM "purchase_order" ORDER BY CAST(SUBSTRING("PO_number", 4) AS INT) DESC LIMIT 1`;
 
-    const poNumber = lastPo[0]?.PO_number;
-    let nextCodeNumber = 1;
-    if (poNumber) {
-      const currentCodeNumber = parseInt(poNumber.replace(/^PO-?/, ''), 10);
-      nextCodeNumber = currentCodeNumber + 1;
-    }
+  //   const poNumber = lastPo[0]?.PO_number;
+  //   let nextCodeNumber = 1;
+  //   if (poNumber) {
+  //     const currentCodeNumber = parseInt(poNumber.replace(/^PO-?/, ''), 10);
+  //     nextCodeNumber = currentCodeNumber + 1;
+  //   }
 
-    const nextCode = `${Constant.PO_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
-    return nextCode;
-  }
+  //   const nextCode = `${Constant.PO_CODE_PREFIX}-${nextCodeNumber.toString().padStart(6, '0')}`;
+  //   return nextCode;
+  // }
 }
 
 export function getPoDeliveryStatistic(poDelivery) {

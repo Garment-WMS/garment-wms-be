@@ -32,8 +32,6 @@ import { PurchaseOrderService } from './purchase-order.service';
 export class PurchaseOrderController {
   constructor(private readonly purchaseOrderService: PurchaseOrderService) {}
 
-  
-
   @Get()
   @UsePipes(new ValidationPipe())
   getPurchaseOrders(
@@ -80,6 +78,11 @@ export class PurchaseOrderController {
         user.purchasingStaffId,
       );
     return fileResult;
+  }
+
+  @Patch('generate_code')
+  async generatePurchaseOrderCode() {
+    return this.purchaseOrderService.updateAllPurchaseOrderCodes();
   }
 
   @Delete(':id')

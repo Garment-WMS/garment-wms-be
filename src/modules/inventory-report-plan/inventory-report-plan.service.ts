@@ -257,6 +257,18 @@ export class InventoryReportPlanService {
     createInventoryReportPlanDto: CreateOverAllInventoryReportPlanDto,
     warehouseManagerId: string,
   ) {
+    const isInventoryPlanValid = await this.validateInventoryReportPlan(
+      createInventoryReportPlanDto,
+    );
+
+    if (isInventoryPlanValid.length > 0) {
+      return apiFailed(
+        400,
+        'Inventory report plan in time range already exists',
+        isInventoryPlanValid,
+      );
+    }
+
     const allVariants = [
       ...(await this.materialVariantService.findAllMaterialHasReceipt()),
       ...(await this.productVariantService.findProductHasReceipt()),
@@ -654,10 +666,11 @@ export class InventoryReportPlanService {
       createInventoryReportPlanDto,
     );
 
-    if (isInventoryPlanValid) {
+    if (isInventoryPlanValid.length > 0) {
       return apiFailed(
         400,
         'Inventory report plan in time range already exists',
+        isInventoryPlanValid,
       );
     }
 
@@ -731,13 +744,15 @@ export class InventoryReportPlanService {
   }
 
   async validateInventoryReportPlan(
-    createInventoryReportPlanDto: CreateInventoryReportPlanDto,
+    createInventoryReportPlanDto:
+      | CreateInventoryReportPlanDto
+      | CreateOverAllInventoryReportPlanDto,
   ) {
     const inventoryPlanInTimeRange = await this.getAllReportPlanInTimeRange(
       createInventoryReportPlanDto.from,
       createInventoryReportPlanDto.to,
     );
-    return !!inventoryPlanInTimeRange.length;
+    return inventoryPlanInTimeRange;
   }
 
   async getAllReportPlanInTimeRange(from: Date, to?: Date) {

@@ -7,6 +7,7 @@ import { MaterialExportRequestController } from './material-export-request.contr
 import { MaterialExportRequestService } from './material-export-request.service';
 import { IsMaterialExportRequestExistValidator } from './validator/is-material-export-request-exist.validator';
 import { ChatModule } from '../chat/chat.module';
+import { ProductionBatchModule } from '../production-batch/production-batch.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ChatModule } from '../chat/chat.module';
     TaskModule,
     DiscussionModule,
     ChatModule,
+    ProductionBatchModule,
   ],
   controllers: [MaterialExportRequestController],
   providers: [
