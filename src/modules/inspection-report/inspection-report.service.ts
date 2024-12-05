@@ -459,7 +459,8 @@ export class InspectionReportService {
         data: dto.map((detail) => ({
           approvedQuantityByPack: detail.approvedQuantityByPack,
           defectQuantityByPack: detail.defectQuantityByPack,
-          quantityByPack: detail.quantityByPack,
+          quantityByPack:
+            detail.approvedQuantityByPack + detail.defectQuantityByPack,
           materialPackageId: detail.materialPackageId,
           productSizeId: detail.productSizeId,
           inspectionReportId: inspectionReportId,
