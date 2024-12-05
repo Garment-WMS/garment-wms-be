@@ -10,6 +10,7 @@ import { $Enums, Prisma, RoleCode } from '@prisma/client';
 import {
   materialExportReceiptInclude,
   materialInclude,
+  materialPackageInclude,
   materialVariantInclude,
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
@@ -110,58 +111,66 @@ export class MaterialExportReceiptService {
           },
         };
 
-        const [
-          materialExportReceipt,
-          materialExportRequest,
-          inventoryStock,
-          materialReceipt,
-        ] = await Promise.all([
-          prismaInstance.materialExportReceipt.create({
-            data: input,
-            include: materialExportReceiptInclude,
-          }),
-          prismaInstance.materialExportRequest.update({
-            where: {
-              id: createMaterialExportReceiptDto.materialExportRequestId,
-            },
-            data: {
-              status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
-            },
-            select: {
-              id: true,
-              status: true,
-            },
-          }),
-          Promise.all(
-            createMaterialExportReceiptDto.materialExportReceiptDetail.map(
-              (detail) =>
-                this.inventoryStockService.updateMaterialStock(
-                  detail.materialReceiptId,
-                  detail.quantityByPack,
-                  prismaInstance,
-                ),
-            ),
-          ),
-          Promise.all(
-            createMaterialExportReceiptDto.materialExportReceiptDetail.map(
-              (detail) =>
-                prismaInstance.materialReceipt.update({
-                  where: {
-                    id: detail.materialReceiptId,
-                  },
-                  data: {
-                    remainQuantityByPack: {
-                      decrement: detail.quantityByPack,
+        const [materialExportReceipt, materialExportRequest, materialReceipt] =
+          await Promise.all([
+            prismaInstance.materialExportReceipt.create({
+              data: input,
+              include: {
+                materialExportReceiptDetail: {
+                  include: {
+                    materialReceipt: {
+                      include: {
+                        materialPackage: {
+                          include: materialPackageInclude,
+                        },
+                      },
                     },
                   },
-                  select: {
-                    id: true,
-                    remainQuantityByPack: true,
-                  },
-                }),
+                },
+              },
+            }),
+            prismaInstance.materialExportRequest.update({
+              where: {
+                id: createMaterialExportReceiptDto.materialExportRequestId,
+              },
+              data: {
+                status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
+              },
+              select: {
+                id: true,
+                status: true,
+              },
+            }),
+            Promise.all(
+              createMaterialExportReceiptDto.materialExportReceiptDetail.map(
+                (detail) =>
+                  prismaInstance.materialReceipt.update({
+                    where: {
+                      id: detail.materialReceiptId,
+                    },
+                    data: {
+                      remainQuantityByPack: {
+                        decrement: detail.quantityByPack,
+                      },
+                    },
+                    select: {
+                      id: true,
+                      remainQuantityByPack: true,
+                    },
+                  }),
+              ),
+            ),
+          ]);
+
+        const inventoryStock = await Promise.all(
+          materialExportReceipt.materialExportReceiptDetail.map((detail) =>
+            this.inventoryStockService.updateMaterialStock(
+              detail.materialReceipt.materialPackageId,
+              detail.quantityByPack,
+              prismaInstance,
             ),
           ),
-        ]);
+        );
 
         return {
           materialExportReceipt,
