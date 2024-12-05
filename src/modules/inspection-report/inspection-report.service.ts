@@ -435,6 +435,7 @@ export class InspectionReportService {
       '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
     >,
   ) {
+    // Create related inspection report detail defects
     const input: Prisma.InspectionReportDetailUncheckedCreateInput[] = dto.map(
       (detail) => ({
         approvedQuantityByPack: detail.approvedQuantityByPack,
@@ -443,6 +444,12 @@ export class InspectionReportService {
         materialPackageId: detail.materialPackageId,
         productSizeId: detail.productSizeId,
         inspectionReportId: inspectionReportId,
+        inspectionReportDetailDefect: {
+          create: detail.inspectionReportDetailDefect?.map((defect) => ({
+            defectId: defect.defectId,
+            quantityByPack: defect.quantityByPack,
+          })),
+        },
       }),
     );
 
@@ -456,25 +463,25 @@ export class InspectionReportService {
       });
 
     // Create related inspection report detail defects
-    for (const detail of dto) {
-      if (detail.inspectionReportDetailDefect) {
-        const createdDetail = createdDetails.find(
-          (d) =>
-            d.materialPackageId === detail.materialPackageId &&
-            d.inspectionReportId === inspectionReportId,
-        );
+    // for (const detail of dto) {
+    //   if (detail.inspectionReportDetailDefect) {
+    //     const createdDetail = createdDetails.find(
+    //       (d) =>
+    //         d.materialPackageId === detail.materialPackageId &&
+    //         d.inspectionReportId === inspectionReportId,
+    //     );
 
-        if (createdDetail) {
-          await prisma.inspectionReportDetailDefect.createMany({
-            data: detail.inspectionReportDetailDefect.map((defect) => ({
-              defectId: defect.defectId,
-              quantityByPack: defect.quantityByPack,
-              inspectionReportDetailId: createdDetail.id,
-            })),
-          });
-        }
-      }
-    }
+    //     if (createdDetail) {
+    //       await prisma.inspectionReportDetailDefect.createMany({
+    //         data: detail.inspectionReportDetailDefect.map((defect) => ({
+    //           defectId: defect.defectId,
+    //           quantityByPack: defect.quantityByPack,
+    //           inspectionReportDetailId: createdDetail.id,
+    //         })),
+    //       });
+    //     }
+    //   }
+    // }
 
     return createdDetails;
   }
