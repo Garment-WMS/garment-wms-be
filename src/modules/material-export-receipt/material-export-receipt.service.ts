@@ -153,7 +153,8 @@ export class MaterialExportReceiptService {
           materialExportReceipt.materialExportReceiptDetail.map((detail) =>
             this.inventoryStockService.updateMaterialStock(
               detail.materialReceipt.materialPackageId,
-              detail.quantityByPack,
+              //minus quantity by pack
+              -detail.quantityByPack,
               prismaInstance,
             ),
           ),
