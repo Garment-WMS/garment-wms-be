@@ -331,6 +331,7 @@ export class InspectionReportService {
     }
     const dto: CreateInspectionReportDto = {
       inspectionRequestId: inspectionRequestId,
+      type: importRequest.type.startsWith('MATERIAL') ? 'MATERIAL' : 'PRODUCT',
       inspectionReportDetail: importRequest.importRequestDetail.map(
         (detail) => ({
           materialPackageId: detail.materialPackageId,
