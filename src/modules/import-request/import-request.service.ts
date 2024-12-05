@@ -589,7 +589,7 @@ export class ImportRequestService {
         const importRequest = await this.prismaService.importRequest.update({
           where: { id: id },
           data: {
-            status: $Enums.ImportRequestStatus.APPROVED,
+            status: $Enums.ImportRequestStatus.INSPECTING,
             managerNote: managerProcess.managerNote,
             warehouseStaffId: managerProcess.warehouseStaffId,
             warehouseManagerId: account.warehouseManagerId,

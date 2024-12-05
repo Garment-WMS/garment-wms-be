@@ -331,7 +331,7 @@ export class MaterialExportRequestService {
               },
               data: {
                 warehouseManagerId: dto.warehouseManagerId,
-                status: $Enums.MaterialExportRequestStatus.APPROVED,
+                status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
                 managerNote: dto.managerNote,
                 warehouseStaffId: dto.warehouseStaffId,
                 updatedAt: new Date(),
