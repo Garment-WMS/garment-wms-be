@@ -77,6 +77,7 @@ export class ExportAlgorithmService {
         needMaterialReceipts.push(needMaterialReceipt);
         remainingTargetQuantityUom -= quantityUomToUse;
       }
+
       let exceedQuantityUom: number = needMaterialVariants.targetQuantityUom;
       for (const needMaterialReceipt of needMaterialReceipts) {
         exceedQuantityUom -=
@@ -85,6 +86,7 @@ export class ExportAlgorithmService {
       exceedQuantityUom = Math.abs(exceedQuantityUom);
       const exceedPercentage =
         (exceedQuantityUom / needMaterialVariants.targetQuantityUom) * 100;
+
       result.push({
         materialVariantId: needMaterialVariants.materialVariantId,
         targetQuantityUom: needMaterialVariants.targetQuantityUom,

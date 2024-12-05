@@ -50,20 +50,16 @@ export class PrismaService
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+    const eventEmitter = this.eventEmitter;
     this.$extends({
       query: {
         importRequest: {
           async create({ args, model, operation, query }) {
             console.log('importRequest.create', args);
-            if (args.data.status === 'ARRIVED') {
-              this.eventEmitter.emit(
-                'notification.importRequest.created',
-                args,
-              );
-            }
             const result = await query(args);
-            Logger.log(result.id);
-            //send notification
+            if (result.status === 'ARRIVED') {
+              eventEmitter.emit('notification.importRequest.created', result);
+            }
             return result;
           },
           async update({ args, model, operation, query }) {
