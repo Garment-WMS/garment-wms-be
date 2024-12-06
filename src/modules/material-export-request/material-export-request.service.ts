@@ -248,7 +248,23 @@ export class MaterialExportRequestService {
         where: {
           id: id,
         },
-        include: materialExportRequestInclude,
+        include: {
+          ...materialExportRequestInclude,
+          materialExportReceipt: {
+            include: {
+              task: {
+                include: {
+                  warehouseStaff: {
+                    include: {
+                      account: true,
+                    },
+                  },
+                  todo: true,
+                },
+              },
+            },
+          },
+        },
       });
     if (!materialExportRequest) {
       throw new NotFoundException('Material Export Request not found');
@@ -495,6 +511,7 @@ export class MaterialExportRequestService {
           },
           include: materialExportRequestInclude,
         });
+        //create import request MATERIAL_RETURN
         const chat2: CreateChatDto = {
           discussionId: result2.discussion.id,
           message: Constant.EXPORT_REQUEST_EXPORTED_PRODUCTION_REJECTED,

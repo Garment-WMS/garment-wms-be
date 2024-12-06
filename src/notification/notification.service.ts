@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Prisma } from '@prisma/client';
 import {
@@ -9,7 +9,6 @@ import {
 import { PrismaService } from 'prisma/prisma.service';
 import { UserService } from 'src/modules/user/user.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
-import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { NotificationGateway } from './notification.gateway';
 
 @Injectable()
@@ -26,6 +25,7 @@ export class NotificationService {
       RenameAndNestPayloadKeys<Prisma.$ImportRequestPayload<DefaultArgs>>
     >,
   ) {
+    Logger.debug('Handling notification.importRequest.created event');
     const warehouseManagers = await this.prismaService.account.findMany({
       where: {
         warehouseManager: {
@@ -39,7 +39,7 @@ export class NotificationService {
           data: {
             title: `New Import Request ${importRequest.code}`,
             message: `New Import Request ${importRequest.code} has been created by purchasing staff and waiting for approval`,
-            path: importRequest.id,
+            path: `/import-request/${importRequest.id}`,
             accountId: warehouseManager.id,
           },
         });
@@ -57,18 +57,18 @@ export class NotificationService {
   }
 
   findAll() {
-    return `This action returns all notification`;
+    return this.prismaService.notification.findMany();
+  }
+
+  findByUserId(userId: string) {
+    return this.prismaService.notification.findMany({
+      where: {
+        accountId: userId,
+      },
+    });
   }
 
   findOne(id: number) {
     return `This action returns a #${id} notification`;
-  }
-
-  update(id: number, updateNotificationDto: UpdateNotificationDto) {
-    return `This action updates a #${id} notification`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} notification`;
   }
 }

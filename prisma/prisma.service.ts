@@ -59,6 +59,7 @@ export class PrismaService
             const result = await query(args);
             if (result.status === 'ARRIVED') {
               eventEmitter.emit('notification.importRequest.created', result);
+              Logger.debug('Emit notification.importRequest.created event');
             }
             return result;
           },
@@ -77,7 +78,7 @@ export class PrismaService
         },
       },
     });
-    this.notification.create;
+
     this.$use(this.softDeleteMiddleware);
     this.$use(this.findNotDeletedMiddleware);
     this.$use(this.generateCodeMiddleware);
