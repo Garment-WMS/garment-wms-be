@@ -91,6 +91,7 @@ export class NotificationService {
       },
       data: {
         isRead: true,
+        readAt: new Date(),
       },
     });
   }
