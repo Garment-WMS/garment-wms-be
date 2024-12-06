@@ -125,6 +125,7 @@ export class ProductionBatchService {
     if (excelData instanceof ApiResponse) {
       return excelData;
     }
+    console.log(excelData);
     const createProductBatchData = excelData as CreateProductionBatchDto[];
     const createProductionBatchInput: Prisma.ProductionBatchCreateManyInput[] =
       createProductBatchData.map((item) => {

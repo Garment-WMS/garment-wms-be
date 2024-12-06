@@ -77,7 +77,7 @@ export const PRODUCTION_PLAN_DETAIL_HEADER = [
   'Note',
 ];
 export const PRODUCTION_BATCH_DETAIL_HEADER = [
-  'Production Plan Detail Code',
+  'Product Size Code',
   'Name',
   'Quantity To Produce',
   'Description',
@@ -87,3 +87,10 @@ export const PRODUCTION_PLAN_NOTE_TABLE = 'productionPlanNote';
 export const PRODUCTION_BATCH_SHEET_NAME = 'Production Batch';
 export const MATERIAL_REQUIREMENT_SHEET_NAME = 'Material Requirement';
 export const PRODUCTION_BATCH_INFO = 'productionBatchInfo';
+export const PRODUCTION_BATCH_INFO_TABLE = 'productBatchInfoTable';
+export const PRODUCTION_BATCH_INFO_HEADER = [
+  'Production Plan Detail Code',
+  'Product Batch Name',
+  'From',
+  'To',
+];

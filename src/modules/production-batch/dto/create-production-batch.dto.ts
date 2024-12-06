@@ -20,6 +20,9 @@ export class CreateProductionBatchDto
   @IsProductionPlanDetailExist()
   productionPlanDetailId: string;
 
+  @ApiProperty({ required: true })
+  productionPlanDetail?: any;
+
   code: string = undefined;
 
   @ApiProperty({ required: true })
@@ -46,9 +49,12 @@ export class CreateProductionBatchDto
   expectedFinishDate?: string | Date;
 
   @ApiProperty({ required: false })
+  @IsDateString()
+  expectedStartDate?: string | Date;
+
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  productionBatchMaterials?: CreateProductionBatchMaterialVariantDto[]
-
+  productionBatchMaterials?: CreateProductionBatchMaterialVariantDto[];
 }
