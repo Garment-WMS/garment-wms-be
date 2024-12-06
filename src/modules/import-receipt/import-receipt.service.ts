@@ -299,7 +299,8 @@ export class ImportReceiptService {
     };
 
     console.log('importReceiptInput', importReceiptInput);
-
+    let poDeliveryExtra;
+    const poDeliveryExtraEl = [];
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         let importReceipt = await prismaInstance.importReceipt.create({
@@ -335,149 +336,147 @@ export class ImportReceiptService {
             );
           }
 
-          let poDeliveryExtra;
-          //Compare number of imported materials with number of approved material
-          // for (
-          //   let i = 0;
-          //   i < inspectionReport.inspectionReportDetail.length;
-          //   i++
-          // ) {
-          //   await this.prismaService.poDeliveryDetail.updateMany({
-          //     where: {
-          //       AND: [
-          //         {
-          //           poDeliveryId: importRequest.poDeliveryId,
-          //         },
-          //         {
-          //           materialPackageId:
-          //             inspectionReport.inspectionReportDetail[i]
-          //               .materialPackageId,
-          //         },
-          //       ],
-          //     },
-          //     data: {
-          //       actualImportQuantity:
-          //         inspectionReport.inspectionReportDetail[i]
-          //           .approvedQuantityByPack,
-          //     },
-          //   });
-
-          //   //Create the extra PO delivery for the rejected material
-          //   //TODO: Can use job queue to handle this to avoid bottleneck issues
-          //   let poDelivery: any = importRequest.poDelivery;
-          //   //Has to cast to any because issue with includeQuery ( Typescript error not mine, if include raw still work )
-          //   let poDeliveryDetail = poDelivery.poDeliveryDetail as any;
-          //   let expectedImportQuantity = poDeliveryDetail.find(
-          //     (detail) =>
-          //       detail.materialPackageId ===
-          //       inspectionReport.inspectionReportDetail[i].materialPackageId,
-          //   ).quantityByPack;
-          //   if (
-          //     inspectionReport.inspectionReportDetail[i]
-          //       .approvedQuantityByPack !== expectedImportQuantity
-          //   ) {
-          //     poDeliveryExtra =
-          //       await this.poDeliveryService.findExtraPoDelivery(
-          //         importRequest.poDelivery.purchaseOrderId,
-          //       );
-          //     if (!poDeliveryExtra) {
-          //       poDeliveryExtra = await this.poDeliveryService.createPoDelivery(
-          //         {
-          //           purchaseOrderId: importRequest.poDelivery.purchaseOrderId,
-          //           isExtra: true,
-          //           status: PoDeliveryStatus.PENDING,
-          //         },
-          //         prismaInstance,
-          //       );
-          //     }
-          //     await this.poDeliveryDetailsService.createPoDeliveryMaterial(
-          //       {
-          //         poDelivery: {
-          //           connect: { id: poDeliveryExtra.id },
-          //         },
-          //         materialPackage: {
-          //           connect: {
-          //             id: inspectionReport.inspectionReportDetail[i]
-          //               .materialPackageId,
-          //           },
-          //         },
-          //         quantityByPack:
-          //           expectedImportQuantity -
-          //           inspectionReport.inspectionReportDetail[i]
-          //             .approvedQuantityByPack,
-          //         totalAmount: 0,
-          //       },
-          //       poDeliveryExtra.id,
-          //       inspectionReport.inspectionReportDetail[i].materialPackageId,
-          //       prismaInstance,
-          //     );
-          //   }
-          // }
-
-          const updatePromises = inspectionReport.inspectionReportDetail.map(
-            async (detail) => {
-              // Perform the updateMany operation
-              await this.prismaService.poDeliveryDetail.updateMany({
-                where: {
-                  AND: [
-                    { poDeliveryId: importRequest.poDeliveryId },
-                    { materialPackageId: detail.materialPackageId },
-                  ],
-                },
-                data: {
-                  actualImportQuantity: detail.approvedQuantityByPack,
-                },
-              });
-
-              // Create the extra PO delivery for rejected material if necessary
-              let poDelivery: any = importRequest.poDelivery;
-              let poDeliveryDetail = poDelivery.poDeliveryDetail as any;
-              let expectedImportQuantity = poDeliveryDetail.find(
-                (d) => d.materialPackageId === detail.materialPackageId,
-              ).quantityByPack;
-
-              if (detail.approvedQuantityByPack !== expectedImportQuantity) {
-                poDeliveryExtra =
-                  await this.poDeliveryService.findExtraPoDelivery(
-                    importRequest.poDelivery.purchaseOrderId,
-                  );
-                if (!poDeliveryExtra) {
-                  poDeliveryExtra =
-                    await this.poDeliveryService.createPoDelivery(
-                      {
-                        purchaseOrderId:
-                          importRequest.poDelivery.purchaseOrderId,
-                        isExtra: true,
-                        status: PoDeliveryStatus.PENDING,
-                      },
-                      prismaInstance,
-                    );
-                }
-
-                // Create PoDeliveryMaterial
-                await this.poDeliveryDetailsService.createPoDeliveryMaterial(
+          // Compare number of imported materials with number of approved material
+          for (
+            let i = 0;
+            i < inspectionReport.inspectionReportDetail.length;
+            i++
+          ) {
+            await this.prismaService.poDeliveryDetail.updateMany({
+              where: {
+                AND: [
                   {
-                    poDelivery: {
-                      connect: { id: poDeliveryExtra.id },
-                    },
-                    materialPackage: {
-                      connect: {
-                        id: detail.materialPackageId,
-                      },
-                    },
-                    quantityByPack:
-                      expectedImportQuantity - detail.approvedQuantityByPack,
-                    totalAmount: 0,
+                    poDeliveryId: importRequest.poDeliveryId,
                   },
-                  poDeliveryExtra.id,
-                  detail.materialPackageId,
+                  {
+                    materialPackageId:
+                      inspectionReport.inspectionReportDetail[i]
+                        .materialPackageId,
+                  },
+                ],
+              },
+              data: {
+                actualImportQuantity:
+                  inspectionReport.inspectionReportDetail[i]
+                    .approvedQuantityByPack,
+              },
+            });
+
+            //Create the extra PO delivery for the rejected material
+            //TODO: Can use job queue to handle this to avoid bottleneck issues
+            let poDelivery: any = importRequest.poDelivery;
+            //Has to cast to any because issue with includeQuery ( Typescript error not mine, if include raw still work )
+            let poDeliveryDetail = poDelivery.poDeliveryDetail as any;
+            let expectedImportQuantity = poDeliveryDetail.find(
+              (detail) =>
+                detail.materialPackageId ===
+                inspectionReport.inspectionReportDetail[i].materialPackageId,
+            ).quantityByPack;
+            if (
+              inspectionReport.inspectionReportDetail[i]
+                .approvedQuantityByPack !== expectedImportQuantity
+            ) {
+              poDeliveryExtra =
+                await this.poDeliveryService.findExtraPoDelivery(
+                  importRequest.poDelivery.purchaseOrderId,
+                );
+              if (!poDeliveryExtra) {
+                poDeliveryExtra = await this.poDeliveryService.createPoDelivery(
+                  {
+                    purchaseOrderId: importRequest.poDelivery.purchaseOrderId,
+                    isExtra: true,
+                    status: PoDeliveryStatus.PENDING,
+                  },
                   prismaInstance,
                 );
               }
-            },
-          );
-          // Wait for all the operations to complete concurrently
-          await Promise.all(updatePromises);
+              await this.poDeliveryDetailsService.createPoDeliveryMaterial(
+                {
+                  poDelivery: {
+                    connect: { id: poDeliveryExtra.id },
+                  },
+                  materialPackage: {
+                    connect: {
+                      id: inspectionReport.inspectionReportDetail[i]
+                        .materialPackageId,
+                    },
+                  },
+                  quantityByPack:
+                    expectedImportQuantity -
+                    inspectionReport.inspectionReportDetail[i]
+                      .approvedQuantityByPack,
+                  totalAmount: 0,
+                },
+                poDeliveryExtra.id,
+                inspectionReport.inspectionReportDetail[i].materialPackageId,
+                prismaInstance,
+              );
+            }
+          }
+
+          // const updatePromises = inspectionReport.inspectionReportDetail.map(
+          //   async (detail) => {
+          //     // Perform the updateMany operation
+          //     await this.prismaService.poDeliveryDetail.updateMany({
+          //       where: {
+          //         AND: [
+          //           { poDeliveryId: importRequest.poDeliveryId },
+          //           { materialPackageId: detail.materialPackageId },
+          //         ],
+          //       },
+          //       data: {
+          //         actualImportQuantity: detail.approvedQuantityByPack,
+          //       },
+          //     });
+
+          //     // Create the extra PO delivery for rejected material if necessary
+          //     let poDelivery: any = importRequest.poDelivery;
+          //     let poDeliveryDetail = poDelivery.poDeliveryDetail as any;
+          //     let expectedImportQuantity = poDeliveryDetail.find(
+          //       (d) => d.materialPackageId === detail.materialPackageId,
+          //     ).quantityByPack;
+
+          //     if (detail.approvedQuantityByPack !== expectedImportQuantity) {
+          //       poDeliveryExtraEl.push(
+          //         {
+          //           poDelivery: {
+          //             connect: { id: poDeliveryExtra.id },
+          //           },
+          //           materialPackage: {
+          //             connect: {
+          //               id: detail.materialPackageId,
+          //             },
+          //           },
+          //           quantityByPack:
+          //             expectedImportQuantity - detail.approvedQuantityByPack,
+          //           totalAmount: 0,
+          //         },
+          //         // detail.materialPackageId,
+          //       );
+          //       // Create PoDeliveryMaterial
+          //       // await this.poDeliveryDetailsService.createPoDeliveryMaterial(
+          //       //   {
+          //       //     poDelivery: {
+          //       //       connect: { id: poDeliveryExtra.id },
+          //       //     },
+          //       //     materialPackage: {
+          //       //       connect: {
+          //       //         id: detail.materialPackageId,
+          //       //       },
+          //       //     },
+          //       //     quantityByPack:
+          //       //       expectedImportQuantity - detail.approvedQuantityByPack,
+          //       //     totalAmount: 0,
+          //       //   },
+          //       //   poDeliveryExtra.id,
+          //       //   detail.materialPackageId,
+          //       //   prismaInstance,
+          //       // );
+          //     }
+          //   },
+          // );
+          // // Wait for all the operations to complete concurrently
+          // await Promise.all(updatePromises);
           //Update import request status to Approved
         }
         return importReceipt;
@@ -486,6 +485,7 @@ export class ImportReceiptService {
         timeout: 100000,
       },
     );
+    
     console.log('result', result);
     if (!result) {
       const chat: CreateChatDto = {
@@ -495,6 +495,19 @@ export class ImportReceiptService {
       await this.chatService.createBySystemWithoutResponse(chat);
     }
 
+    // if(poDeliveryExtraEl.length > 0) {
+    //   poDeliveryExtra = await this.poDeliveryService.findExtraPoDelivery(
+    //     importRequest.poDelivery.purchaseOrderId,
+    //   );
+    //   if (!poDeliveryExtra) {
+    //     poDeliveryExtra = await this.poDeliveryService.createPoDelivery({
+    //       purchaseOrderId: importRequest.poDelivery.purchaseOrderId,
+    //       isExtra: true,
+    //       status: PoDeliveryStatus.PENDING,
+    //     });
+    //   }
+    //   await this.poDeliveryDetailsService.createPoDeliveryMaterial(poDeliveryExtraEl, poDeliveryExtra.id);
+    // }
     const chat: CreateChatDto = {
       discussionId: importRequest?.discussion.id,
       message: Constant.IMPORT_RECEIPT_INSPECTED_TO_AWAIT_TO_IMPORT,
