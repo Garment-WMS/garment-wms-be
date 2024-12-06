@@ -379,6 +379,7 @@ export class InspectionReportService {
         code: dto.code,
         inspectionRequestId: dto.inspectionRequestId,
         type: dto.type,
+        finishedAt: new Date(),
       };
 
     let result = await this.prismaService.$transaction(

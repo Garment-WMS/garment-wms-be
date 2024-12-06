@@ -432,7 +432,7 @@ function getProductPlanStatistics(productPlan: any) {
   productPlan.productionPlanDetail.forEach((detail) => {
     let productPlanDetailDefectQuantity = 0;
     let productPlanDetailProducedQuantity = 0;
-    let productPlanManufacturingQuantity = 0;
+    let productPlanDetailManufacturingQuantity = 0;
     if (detail?.productionBatch) {
       detail.productionBatch.forEach((batch) => {
         // if (batch.status === ProductionStatus.FINISHED) {
@@ -441,7 +441,8 @@ function getProductPlanStatistics(productPlan: any) {
             inspection.inspectionReport?.importReceipt?.productReceipt.forEach(
               (productReceipt) => {
                 if (batch.status === ProductionBatchStatus.MANUFACTURING) {
-                  productPlanManufacturingQuantity += batch.quantityToProduce;
+                  productPlanDetailManufacturingQuantity +=
+                    batch.quantityToProduce;
                   totalManufacturingQuantity += batch.quantityToProduce;
                 } else {
                   if (productReceipt.isDefect) {
@@ -461,6 +462,8 @@ function getProductPlanStatistics(productPlan: any) {
         // }
       });
     }
+    detail.productPlanDetailManufacturingQuantity =
+      productPlanDetailManufacturingQuantity;
     detail.productPlanDetailDefectQuantity = productPlanDetailDefectQuantity;
     detail.productPlanDetailProducedQuantity =
       productPlanDetailProducedQuantity;
