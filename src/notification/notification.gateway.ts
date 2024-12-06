@@ -6,7 +6,6 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Notification as NotificationPrisma } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { AuthService } from 'src/modules/auth/auth.service';
 
@@ -30,7 +29,10 @@ export class NotificationGateway
   private userSockets: Map<string, string> = new Map();
 
   async handleConnection(client: Socket, ...args: any[]) {
-    const jwtToken = client.handshake.headers['token'] as string;
+    // const jwtToken = client.handshake.query.token as string;
+    const jwtToken = client.handshake.auth.token;
+    console.log(client);
+    console.log('jwt', jwtToken);
     if (!jwtToken) {
       client.disconnect();
       return;
@@ -39,6 +41,7 @@ export class NotificationGateway
     try {
       const user = await this.authService.validateJwt(jwtToken);
       this.userSockets.set(user.userId, client.id);
+      console.log('user', user);
       client.data.user = user; // Store user info on the socket
     } catch (errors) {
       client.disconnect();
