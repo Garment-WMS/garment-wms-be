@@ -23,6 +23,7 @@ import { CreateChatDto } from '../chat/dto/create-chat.dto';
 import { DiscussionService } from '../discussion/discussion.service';
 import { ManagerAction } from '../import-request/dto/import-request/manager-process.dto';
 import { MaterialExportReceiptService } from '../material-export-receipt/material-export-receipt.service';
+import { ProductionBatchService } from '../production-batch/production-batch.service';
 import { TaskService } from '../task/task.service';
 import { CreateMaterialExportRequestDto } from './dto/create-material-export-request.dto';
 import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-request.dto';
@@ -40,6 +41,7 @@ export class MaterialExportRequestService {
     private readonly discussionService: DiscussionService,
     private readonly chatService: ChatService,
     private readonly materialExportReceiptService: MaterialExportReceiptService,
+    private readonly productionBatchService: ProductionBatchService,
   ) {}
 
   async getByUserToken(
@@ -163,6 +165,12 @@ export class MaterialExportRequestService {
           include: materialExportRequestInclude,
         });
 
+        const result2 = await this.productionBatchService.updateStatus(
+          result.productionBatchId,
+          $Enums.ProductionBatchStatus.EXECUTING,
+          prismaInstance,
+        );
+        console.log(result2);
         return result;
       },
     );
