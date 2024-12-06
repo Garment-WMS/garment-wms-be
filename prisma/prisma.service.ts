@@ -7,7 +7,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { ImportRequest, Prisma, PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService
@@ -326,13 +326,13 @@ export class PrismaService
       params.action === 'create' &&
       this.modelsNeedNotification.includes(params.model)
     ) {
-      // if (params.model === 'ImportRequest') {
-      //   const createdEntity = result as ImportRequest;
-      //   this.eventEmitter.emit(
-      //     'notification.importRequest.created',
-      //     createdEntity,
-      //   );
-      // }
+      if (params.model === 'ImportRequest') {
+        const createdEntity = result as ImportRequest;
+        this.eventEmitter.emit(
+          'notification.importRequest.created',
+          createdEntity,
+        );
+      }
       // Perform additional operations like logging, sending notifications, etc.
     }
 

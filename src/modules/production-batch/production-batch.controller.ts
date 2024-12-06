@@ -24,6 +24,7 @@ import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { RolesGuard } from 'src/common/guard/roles.guard';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
+import { CancelProductBatchDto } from './dto/cancel-product-batch.dto';
 import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
 import { ProductionBatchService } from './production-batch.service';
 
@@ -89,10 +90,16 @@ export class ProductionBatchController {
   @Roles(RoleCode.PRODUCTION_DEPARTMENT)
   async cancelProductionBatch(
     @Param('id') id: string,
+    @Body() cancelProductBatchDto: CancelProductBatchDto,
+    @GetUser() user: AuthenUser,
   ) {
     return apiSuccess(
       HttpStatus.OK,
-      await this.productionBatchService.cancelProductionBatch(id),
+      await this.productionBatchService.cancelProductionBatch(
+        id,
+        user,
+        cancelProductBatchDto,
+      ),
       'Production batch updated successfully',
     );
   }
