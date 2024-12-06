@@ -547,6 +547,7 @@ export class ImportRequestService {
         data: {
           status: $Enums.ImportRequestStatus.CANCELLED,
           cancelReason: purchasingStaffProcessDto.cancelReason,
+          cancelledAt: new Date(),
         },
       });
     } else {
