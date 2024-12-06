@@ -485,7 +485,7 @@ export class ImportReceiptService {
         timeout: 100000,
       },
     );
-    
+
     console.log('result', result);
     if (!result) {
       const chat: CreateChatDto = {
@@ -591,7 +591,7 @@ export class ImportReceiptService {
     const result = await this.prismaService.task.update({
       where: { id: task.id },
       data: {
-        exportReceiptId: importReceipt.id,
+        importReceiptId: importReceipt.id,
       },
     });
 
