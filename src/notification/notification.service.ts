@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Prisma } from '@prisma/client';
 import {
@@ -8,7 +8,6 @@ import {
 } from '@prisma/client/runtime/library';
 import { PrismaService } from 'prisma/prisma.service';
 import { UserService } from 'src/modules/user/user.service';
-import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationGateway } from './notification.gateway';
 
 @Injectable()
@@ -48,19 +47,23 @@ export class NotificationService {
     await Promise.all(createNotificationPromises);
   }
 
-  async create(createNotificationDto: CreateNotificationDto) {
+  async create(
+    notificationUncheckedCreateInput: Prisma.NotificationUncheckedCreateInput,
+  ) {
     this.notificationGateway.server.emit(
       'newNotification',
-      createNotificationDto,
+      notificationUncheckedCreateInput,
     );
-    return 'This action adds a new notification';
+    return this.prismaService.notification.create({
+      data: notificationUncheckedCreateInput,
+    });
   }
 
-  findAll() {
+  async findAll() {
     return this.prismaService.notification.findMany();
   }
 
-  findByUserId(userId: string) {
+  async findByUserId(userId: string) {
     return this.prismaService.notification.findMany({
       where: {
         accountId: userId,
@@ -68,7 +71,27 @@ export class NotificationService {
     });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} notification`;
+  async findUnique(id: string) {
+    const notification = await this.prismaService.notification.findUnique({
+      where: {
+        id,
+      },
+    });
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+    return notification;
+  }
+
+  async findUniqueAndUpdateRead(id: string) {
+    const notification = await this.findUnique(id);
+    return this.prismaService.notification.update({
+      where: {
+        id,
+      },
+      data: {
+        isRead: true,
+      },
+    });
   }
 }
