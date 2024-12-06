@@ -24,14 +24,8 @@ export class NotificationService {
       RenameAndNestPayloadKeys<Prisma.$ImportRequestPayload<DefaultArgs>>
     >,
   ) {
-    Logger.debug('Handling notification.importRequest.created event');
-    const warehouseManagers = await this.prismaService.account.findMany({
-      where: {
-        warehouseManager: {
-          NOT: null,
-        },
-      },
-    });
+    console.log('importRequest', importRequest);
+    const warehouseManagers = await this.prismaService.warehouseManager.findMany();
     const createNotificationPromises = warehouseManagers.map(
       async (warehouseManager) => {
         return this.prismaService.notification.create({
@@ -39,25 +33,23 @@ export class NotificationService {
             title: `New Import Request ${importRequest.code}`,
             message: `New Import Request ${importRequest.code} has been created by purchasing staff and waiting for approval`,
             path: `/import-request/${importRequest.id}`,
-            accountId: warehouseManager.id,
+            accountId: warehouseManager.accountId,
           },
         });
       },
     );
-    await Promise.all(createNotificationPromises);
-  }
-
-  async create(
-    notificationUncheckedCreateInput: Prisma.NotificationUncheckedCreateInput,
-  ) {
-    this.notificationGateway.server.emit(
-      'newNotification',
-      notificationUncheckedCreateInput,
-    );
-    return this.prismaService.notification.create({
-      data: notificationUncheckedCreateInput,
+    const result = await Promise.all(createNotificationPromises);
+    console.log('result', result);
+    result.map((createNotificationPromises) => {
+      this.notificationGateway.create(createNotificationPromises);
     });
   }
+
+  // async create(
+  //   notificationUncheckedCreateInput: Prisma.NotificationUncheckedCreateInput,
+  // ) {
+  //   await this.notificationGateway.create(notificationUncheckedCreateInput);
+  // }
 
   async findAll() {
     return this.prismaService.notification.findMany();

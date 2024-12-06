@@ -6,6 +6,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { Notification } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { AuthService } from 'src/modules/auth/auth.service';
 
@@ -38,8 +39,9 @@ export class NotificationGateway
 
     try {
       const user = await this.authService.validateJwt(jwtToken);
-      this.userSockets.set(user.userId, client.id);
       console.log('user', user);
+      console.log('user', user.userId);
+      this.userSockets.set(user.userId, client.id);
       client.data.user = user; // Store user info on the socket
     } catch (errors) {
       client.disconnect();
@@ -53,34 +55,13 @@ export class NotificationGateway
   }
 
   @SubscribeMessage('newNotification')
-  create(@MessageBody() notification: any) {
+  create(@MessageBody() notification: Notification) {
     const recipientSocketId = this.userSockets.get(notification.accountId);
+    console.log('recipientSocketId', recipientSocketId);
     if (recipientSocketId) {
       this.server.to(recipientSocketId).emit('newNotification', notification);
     }
     return notification;
   }
 
-  // @SubscribeMessage('findAllNotification')
-  // findAll() {
-  //   return this.notificationService.findAll();
-  // }
-
-  // @SubscribeMessage('findOneNotification')
-  // findOne(@MessageBody() id: number) {
-  //   return this.notificationService.findOne(id);
-  // }
-
-  // @SubscribeMessage('updateNotification')
-  // update(@MessageBody() updateNotificationDto: UpdateNotificationDto) {
-  //   return this.notificationService.update(
-  //     updateNotificationDto.id,
-  //     updateNotificationDto,
-  //   );
-  // }
-
-  // @SubscribeMessage('removeNotification')
-  // remove(@MessageBody() id: number) {
-  //   return this.notificationService.remove(id);
-  // }
 }
