@@ -23,6 +23,8 @@ import { ProductPlanDetailService } from '../product-plan-detail/product-plan-de
 import { ProductionBatchMaterialVariantService } from '../production-batch-material-variant/production-batch-material-variant.service';
 import { CreateProductionBatchDto } from './dto/create-production-batch.dto';
 import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
+import { CancelProductBatchDto } from './dto/cancel-product-batch.dto';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
 
 type ProductionBatchWithInclude = Prisma.ProductionBatchGetPayload<{
   include: typeof productionBatchInclude;
@@ -39,7 +41,11 @@ export class ProductionBatchService {
     private readonly productPlanDetailService: ProductPlanDetailService,
     private readonly productionBatchMaterialVariantService: ProductionBatchMaterialVariantService,
   ) {}
-  async cancelProductionBatch(id: string) {
+  async cancelProductionBatch(
+    id: string,
+    user: AuthenUser,
+    cancelProductBatchDto: CancelProductBatchDto,
+  ) {
     const productBatch = await this.findById(id);
     if (productBatch.status === 'CANCELLED') {
       throw new BadRequestException('Production Batch is already cancelled');
@@ -62,7 +68,15 @@ export class ProductionBatchService {
       throw new BadRequestException('Production Batch is not pending');
     }
 
-    const result = await this.updateStatus(id, 'CANCELLED');
+    const result = await this.prismaService.productionBatch.update({
+      where: { id: id },
+      data: {
+        status: ProductionBatchStatus.CANCELLED,
+        cancelledReason: cancelProductBatchDto.cancelledReason,
+        cancelledAt: new Date(),
+        cancelledBy: user.productionDepartmentId,
+      },
+    });
     if (result) {
       return apiSuccess(
         HttpStatus.OK,
