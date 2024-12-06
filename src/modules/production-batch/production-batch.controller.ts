@@ -84,6 +84,19 @@ export class ProductionBatchController {
     );
   }
 
+  @Patch(':id/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.PRODUCTION_DEPARTMENT)
+  async cancelProductionBatch(
+    @Param('id') id: string,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.productionBatchService.cancelProductionBatch(id),
+      'Production batch updated successfully',
+    );
+  }
+
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return apiSuccess(

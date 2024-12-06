@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, ProductionBatch, ProductionBatchStatus } from '@prisma/client';
+import { isUUID } from 'class-validator';
 import {
   importRequestInclude,
   productionBatchInclude,
@@ -38,6 +39,42 @@ export class ProductionBatchService {
     private readonly productPlanDetailService: ProductPlanDetailService,
     private readonly productionBatchMaterialVariantService: ProductionBatchMaterialVariantService,
   ) {}
+  async cancelProductionBatch(id: string) {
+    const productBatch = await this.findById(id);
+    if (productBatch.status === 'CANCELLED') {
+      throw new BadRequestException('Production Batch is already cancelled');
+    }
+    if (productBatch.status === 'FINISHED') {
+      throw new BadRequestException('Production Batch is already finished');
+    }
+    if (productBatch.status === 'IMPORTING') {
+      throw new BadRequestException('Production Batch is importing');
+    }
+    if (productBatch.status === 'EXECUTING') {
+      throw new BadRequestException(
+        'Production Batch is waiting for imported material',
+      );
+    }
+    if (productBatch.status === 'MANUFACTURING') {
+      throw new BadRequestException('Production Batch is manufacturing');
+    }
+    if (productBatch.status !== 'PENDING') {
+      throw new BadRequestException('Production Batch is not pending');
+    }
+
+    const result = await this.updateStatus(id, 'CANCELLED');
+    if (result) {
+      return apiSuccess(
+        HttpStatus.OK,
+        result,
+        'Production Batch cancelled successfully',
+      );
+    }
+    return apiFailed(
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      'Failed to cancel Production Batch',
+    );
+  }
 
   updateProductBatchStatus(
     productionBatchId: string,
@@ -92,10 +129,10 @@ export class ProductionBatchService {
       return;
     }
     // if (productionBatch.status === 'WAITING_FOR_EXPORTING_MATERIAL') {
-      // }
-      //   throw new BadRequestException(
-      //     'Production Batch is waiting for exported material',
-      //   );
+    // }
+    //   throw new BadRequestException(
+    //     'Production Batch is waiting for exported material',
+    //   );
     if (productionBatch.status === 'EXECUTING') {
       throw new BadRequestException(
         'Production Batch is waiting for imported material',
@@ -219,6 +256,9 @@ export class ProductionBatchService {
   }
 
   async findUnique(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid UUID');
+    }
     const data = (await this.prismaService.productionBatch.findFirst({
       where: { id },
       include: productionBatchInclude,
@@ -243,6 +283,20 @@ export class ProductionBatchService {
         });
       }
     });
+    if (!data) {
+      throw new NotFoundException('Production batch not found');
+    }
+    return data;
+  }
+
+  async findById(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid UUID');
+    }
+    const data = (await this.prismaService.productionBatch.findFirst({
+      where: { id },
+      include: productionBatchInclude,
+    })) as ProductionBatchWithInclude;
     if (!data) {
       throw new NotFoundException('Production batch not found');
     }
