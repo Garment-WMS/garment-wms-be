@@ -29,9 +29,7 @@ export class NotificationGateway
   private userSockets: Map<string, string> = new Map();
 
   async handleConnection(client: Socket, ...args: any[]) {
-    // const jwtToken = client.handshake.query.token as string;
-    const jwtToken = client.handshake.auth.token;
-    console.log(client);
+    const jwtToken = client.handshake.headers['token'] as string;
     console.log('jwt', jwtToken);
     if (!jwtToken) {
       client.disconnect();
