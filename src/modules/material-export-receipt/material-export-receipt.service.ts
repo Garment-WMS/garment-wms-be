@@ -239,22 +239,22 @@ export class MaterialExportReceiptService {
         },
         include: {
           materialExportRequestDetail: {
-            where: {
-              materialVariant: {
-                materialPackage: {
-                  every: {
-                    materialReceipt: {
-                      every: {
-                        status: 'AVAILABLE',
-                        remainQuantityByPack: {
-                          gt: 0,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            // where: {
+            //   materialVariant: {
+            //     materialPackage: {
+            //       every: {
+            //         materialReceipt: {
+            //           every: {
+            //             status: 'AVAILABLE',
+            //             remainQuantityByPack: {
+            //               gt: 0,
+            //             },
+            //           },
+            //         },
+            //       },
+            //     },
+            //   },
+            // },
             include: {
               materialVariant: {
                 include: {
