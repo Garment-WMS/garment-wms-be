@@ -95,4 +95,11 @@ export class NotificationService {
       },
     });
   }
+
+  async test() {
+    return this.notificationGateway.server.emit(
+      'newNotification',
+      'Message emit from notification service',
+    );
+  }
 }

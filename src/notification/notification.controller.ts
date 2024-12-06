@@ -1,5 +1,4 @@
 import {
-  Body,
   Controller,
   Get,
   Param,
@@ -45,7 +44,7 @@ export class NotificationController {
   }
 
   @Post()
-  create(@Body() createNotificationDto: any) {
-    return this.notificationService.create(createNotificationDto);
+  test() {
+    return this.notificationService.test();
   }
 }
