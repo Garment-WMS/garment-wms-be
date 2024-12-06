@@ -239,6 +239,22 @@ export class MaterialExportReceiptService {
         },
         include: {
           materialExportRequestDetail: {
+            where: {
+              materialVariant: {
+                materialPackage: {
+                  every: {
+                    materialReceipt: {
+                      every: {
+                        status: 'AVAILABLE',
+                        remainQuantityByPack: {
+                          gt: 0,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
             include: {
               materialVariant: {
                 include: {
@@ -297,34 +313,37 @@ export class MaterialExportReceiptService {
         targetQuantityUom: detail.quantityByUom,
         allMaterialReceipts: detail.materialVariant.materialPackage?.flatMap(
           (materialPackage) => {
-            return materialPackage.materialReceipt
-              .filter(
-                (materialReceipt) =>
-                  materialReceipt.status ===
-                  $Enums.MaterialReceiptStatus.AVAILABLE,
-              )
-              .map((materialReceipt) => {
-                let date = new Date();
-                switch (exportAlgorithmEnum) {
-                  case ExportAlgorithmEnum.FIFO:
-                    date = materialReceipt.importDate;
-                    break;
-                  case ExportAlgorithmEnum.LIFO:
-                    date = materialReceipt.importDate;
-                    break;
-                  case ExportAlgorithmEnum.FEFO:
-                    date = materialReceipt.expireDate;
-                    break;
-                  default:
-                    throw new Error('Invalid export algorithm');
-                }
-                return {
-                  id: materialReceipt.id,
-                  remainQuantityByPack: materialReceipt.remainQuantityByPack,
-                  uomPerPack: materialPackage.uomPerPack,
-                  date: date,
-                };
-              });
+            return (
+              materialPackage.materialReceipt
+                // .filter(
+                //   (materialReceipt) =>
+                //     materialReceipt.status ===
+                //       $Enums.MaterialReceiptStatus.AVAILABLE &&
+                //     materialReceipt.remainQuantityByPack > 0,
+                // )
+                .map((materialReceipt) => {
+                  let date = new Date();
+                  switch (exportAlgorithmEnum) {
+                    case ExportAlgorithmEnum.FIFO:
+                      date = materialReceipt.importDate;
+                      break;
+                    case ExportAlgorithmEnum.LIFO:
+                      date = materialReceipt.importDate;
+                      break;
+                    case ExportAlgorithmEnum.FEFO:
+                      date = materialReceipt.expireDate;
+                      break;
+                    default:
+                      throw new Error('Invalid export algorithm');
+                  }
+                  return {
+                    id: materialReceipt.id,
+                    remainQuantityByPack: materialReceipt.remainQuantityByPack,
+                    uomPerPack: materialPackage.uomPerPack,
+                    date: date,
+                  };
+                })
+            );
           },
         ),
       }));
