@@ -86,6 +86,20 @@ export class PrismaService
             changes,
             importRequest: updatedRecord.id,
           });
+        } else if (params.model === 'MaterialExportRequest') {
+          const changes = {};
+          for (const key of Object.keys(updatedRecord)) {
+            if (updatedRecord[key] !== existingRecord[key]) {
+              changes[key] = {
+                before: existingRecord[key],
+                after: updatedRecord[key],
+              };
+            }
+          }
+          this.eventEmitter.emit('notification.materialExportRequest.updated', {
+            changes,
+            materialExportRequest: updatedRecord.id,
+          });
         }
 
         return result;
@@ -111,15 +125,10 @@ export class PrismaService
         }
         if (params.model === 'Task') {
           const createdEntity = result as Task;
-          this.eventEmitter.emit(
-            'notification.task.created',
-            createdEntity,
-          );
+          this.eventEmitter.emit('notification.task.created', createdEntity);
         }
         return result;
       }
-
-
 
       // Create Many
       if (

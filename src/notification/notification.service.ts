@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { Prisma } from '@prisma/client';
+import { NotificationType, Prisma } from '@prisma/client';
 import {
   DefaultArgs,
   PayloadToResult,
@@ -34,26 +34,28 @@ export class NotificationService {
       RenameAndNestPayloadKeys<Prisma.$TaskPayload<DefaultArgs>>
     >,
   ) {
-    let message;
-    let path;
-    let taskType;
+    Logger.log('notification.task.created', task);
+    let message: string;
+    let path: string;
+    let taskType: NotificationType;
     if (task.importRequestId) {
       message = `New Task ${task.code} has been created for Import Request ${task.importRequest.code}`;
       path = `/import-request/${task.importRequestId}`;
-      taskType = 'IMPORT';
-    }
-    if (task.inspectionRequestId) {
+      taskType = 'IMPORT_REQUEST';
+    } else if (task.inspectionRequestId) {
       message = `New Task ${task.code} has been created for Inspection Request ${task.inspectionRequest.code}`;
       path = `/inspection-request/${task.inspectionRequestId}`;
-      taskType = 'INSPECTION';
-    }
-    if (task.inventoryReportPlanId) {
+      taskType = 'INSPECTION_REQUEST';
+    } else if (task.inventoryReportPlanId) {
       message = `New Task ${task.code} has been created for Inventory Report Plan ${task.inventoryReportPlan.code}`;
-      path = `/inventory-report-plan/${task.inventoryReportPlanId}`;
-    }
-    if (task.materialExportReceiptId) {
+      path = `/stocktaking/plan/${task.inventoryReportPlanId}`;
+      taskType = 'INVENTORY_REPORT';
+    } else if (task.materialExportReceiptId) {
       message = `New Task ${task.code} has been created for Material Export Receipt ${task.materialExportReceipt.code}`;
-      path = `/material-export-receipt/${task.materialExportReceiptId}`;
+      path = `/export-receipt/${task.materialExportReceiptId}`;
+      taskType = 'MATERIAL_EXPORT_RECEIPT';
+    } else {
+      //todo
     }
     const result = await this.prismaService.notification.create({
       data: {
