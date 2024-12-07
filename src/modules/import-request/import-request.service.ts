@@ -659,7 +659,6 @@ export class ImportRequestService {
       expectedFinishedAt: importRequest.importExpectedFinishedAt,
     };
     const task = await this.taskService.create(createTaskDto);
-    Logger.log('IMPORT REQUEST Task created', task);
     return task;
   }
 
@@ -742,7 +741,6 @@ export class ImportRequestService {
           ...findOptions.where,
           warehouseStaffId: authenUser.warehouseStaffId,
         };
-        console.log(findOptions);
         return this.search(findOptions);
       case RoleCode.PURCHASING_STAFF:
         findOptions.where = {
@@ -842,7 +840,6 @@ export class ImportRequestService {
           ProductionBatchStatus.IMPORTING,
           prismaInstance,
         );
-        console.log(result);
         const discussion = await this.discussionService.create(
           {
             importRequestId: result.id,

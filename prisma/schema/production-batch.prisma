@@ -6,7 +6,7 @@ model ProductionBatch {
   description                    String?                          @map("description") @db.VarChar
   quantityToProduce              Float?                           @default(0) @map("quantity_to_produce")
   cancelledAt                    DateTime?                        @map("cancelled_at") @db.Timestamptz(6)
-  cancelledBy                    String?                          @unique @map("cancelled_by") @db.Uuid
+  cancelledBy                    String?                          @map("cancelled_by") @db.Uuid
   cancelledReason                String?                          @map("cancelled_reason") @db.VarChar
   status                         ProductionBatchStatus            @default(PENDING) @map("status")
   startDate                      DateTime?                        @map("start_date") @db.Time(6)
@@ -22,6 +22,7 @@ model ProductionBatch {
   importRequest                  ImportRequest[]
   productionBatchMaterialVariant ProductionBatchMaterialVariant[]
 
+  @@unique([id, cancelledBy])
   @@map("production_batch")
 }
 

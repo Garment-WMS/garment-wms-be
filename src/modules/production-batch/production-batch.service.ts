@@ -17,14 +17,14 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
 import { getPageMeta } from 'src/common/utils/utils';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ExcelService } from '../excel/excel.service';
 import { CreateImportRequestDetailDto } from '../import-request/dto/import-request-detail/create-import-request-detail.dto';
 import { ProductPlanDetailService } from '../product-plan-detail/product-plan-detail.service';
 import { ProductionBatchMaterialVariantService } from '../production-batch-material-variant/production-batch-material-variant.service';
+import { CancelProductBatchDto } from './dto/cancel-product-batch.dto';
 import { CreateProductionBatchDto } from './dto/create-production-batch.dto';
 import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
-import { CancelProductBatchDto } from './dto/cancel-product-batch.dto';
-import { AuthenUser } from '../auth/dto/authen-user.dto';
 
 type ProductionBatchWithInclude = Prisma.ProductionBatchGetPayload<{
   include: typeof productionBatchInclude;
@@ -68,6 +68,7 @@ export class ProductionBatchService {
       throw new BadRequestException('Production Batch is not pending');
     }
 
+    console.log('user', user.productionDepartmentId);
     const result = await this.prismaService.productionBatch.update({
       where: { id: id },
       data: {

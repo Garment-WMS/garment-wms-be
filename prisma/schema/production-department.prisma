@@ -8,7 +8,7 @@ model ProductionDepartment {
   materialExportRequest MaterialExportRequest[]
   importRequest         ImportRequest[]
   inspectionRequest     InspectionRequest[]
-  ProductionBatch       ProductionBatch?
+  ProductionBatch       ProductionBatch[]
 
   @@map("production_department")
 }
