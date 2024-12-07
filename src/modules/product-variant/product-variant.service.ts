@@ -216,7 +216,7 @@ export class ProductVariantService {
       HttpStatus.OK,
       {
         data: result.history,
-        pageMeta: getPageMeta(total, page, limit),
+        pageMeta: getPageMeta(result.history.length, page, limit),
       },
       'Product history found',
     );

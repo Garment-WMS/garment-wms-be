@@ -118,8 +118,8 @@ export class MaterialVariantService {
             (materialExportReceiptDetail) => {
               result.history.push({
                 materialExportReceiptDetailId: materialExportReceiptDetail.id,
-                materialExportReceiptId: materialExportReceiptDetail
-                  .materialExportReceiptId,
+                materialExportReceiptId:
+                  materialExportReceiptDetail.materialExportReceiptId,
                 quantityByPack: -materialExportReceiptDetail.quantityByPack,
                 code: materialExportReceiptDetail?.materialExportReceipt.code,
                 type: 'EXPORT_RECEIPT',
@@ -131,7 +131,8 @@ export class MaterialVariantService {
           materialReceipt?.receiptAdjustment?.forEach((receiptAdjustment) => {
             result.history.push({
               receiptAdjustmentId: receiptAdjustment.id,
-              inventoryReportId: receiptAdjustment?.inventoryReportDetail.inventoryReportId,
+              inventoryReportId:
+                receiptAdjustment?.inventoryReportDetail.inventoryReportId,
               quantityByPack:
                 receiptAdjustment.beforeAdjustQuantity -
                 receiptAdjustment.afterAdjustQuantity,
@@ -154,7 +155,7 @@ export class MaterialVariantService {
       HttpStatus.OK,
       {
         data: result.history,
-        pageMeta: getPageMeta(total, offset, limit),
+        pageMeta: getPageMeta(result.history.length, offset, limit),
       },
       'Material History found',
     );
