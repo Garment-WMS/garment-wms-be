@@ -54,7 +54,13 @@ export class MaterialVariantService {
     },
     materialPackage: {
       include: {
-        materialReceipt: true,
+        materialReceipt: {
+          include: {
+            materialExportReceiptDetail: true,
+            receiptAdjustment: true,
+            importReceipt: true,            
+          },
+        },
         inventoryStock: true, // Make sure to include inventoryStock
       },
     },

@@ -7,7 +7,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ImportRequest, Prisma, PrismaClient } from '@prisma/client';
+import { ImportRequest, Prisma, PrismaClient, Task } from '@prisma/client';
 
 @Injectable()
 export class PrismaService
@@ -83,6 +83,81 @@ export class PrismaService
     this.$use(this.findNotDeletedMiddleware);
     this.$use(this.generateCodeMiddleware);
 
+    this.$use(async (params, next) => {
+      if (
+        (params.action === 'update' || params.action === 'updateMany') &&
+        this.modelsNeedNotification.includes(params.model)
+      ) {
+        // Fetch the existing record before the update
+        const existingRecord = await this[params.model].findUnique({
+          where: params.args.where,
+        });
+
+        // Proceed with the update
+        const result = await next(params);
+        const updatedRecord = result as ImportRequest;
+        // Compare old and new values
+        if (params.model === 'ImportRequest') {
+          const changes = {};
+          for (const key of Object.keys(updatedRecord)) {
+            if (updatedRecord[key] !== existingRecord[key]) {
+              changes[key] = {
+                before: existingRecord[key],
+                after: updatedRecord[key],
+              };
+            }
+          }
+          this.eventEmitter.emit('notification.importRequest.updated', {
+            changes,
+            importRequest: updatedRecord.id,
+          });
+        }
+
+        return result;
+      }
+
+      return next(params);
+    });
+
+    this.$use(async (params, next) => {
+      if (
+        params.action === 'create' &&
+        this.modelsNeedNotification.includes(params.model)
+      ) {
+        // Execute the Prisma query and get the result
+        const result = await next(params);
+
+        if (params.model === 'ImportRequest') {
+          const createdEntity = result as ImportRequest;
+          this.eventEmitter.emit(
+            'notification.importRequest.created',
+            createdEntity,
+          );
+        }
+        return result;
+      }
+
+      // Create Many
+      if (
+        params.action === 'createMany' &&
+        this.modelsNeedNotification.includes(params.model)
+      ) {
+        // Execute the Prisma query and get the result
+        const result = await next(params);
+
+        if (params.model === 'Task') {
+          const createdEntity = result as Task[];
+          
+          this.eventEmitter.emit(
+            'notification.task.many.created',
+            createdEntity,
+          );
+        }
+        return result;
+      }
+
+      return next(params);
+    });
     // this.$on('error', ({ message }) => {
     //   this.logger.error(message);
     // });
@@ -217,61 +292,6 @@ export class PrismaService
       .join(delimiter);
   }
 
-  // generateCodeMiddleware: Prisma.Middleware = async (params, next) => {
-  //   const delimiter: string = '-';
-  //   if (
-  //     (params.action === 'create' ||
-  //       params.action === 'createMany' ||
-  //       params.action === 'createManyAndReturn') &&
-  //     this.modelsWithCode.includes(params.model)
-  //   ) {
-  //     const modelName = params.model;
-  //     const prefix = this.getPrefix(modelName, delimiter);
-
-  //     // Find the maximum existing code number
-  //     console.log('modelName', modelName);
-  //     const lastRecord = await this[modelName].findFirst({
-  //       // where: {
-  //       //   code: {
-  //       //     not: null,
-  //       //   },
-  //       // },
-  //       orderBy: { code: 'desc' },
-  //       select: { code: true },
-  //     });
-  //     console.log('lastRecord', lastRecord);
-
-  //     let lastNumber = 0;
-  //     if (lastRecord && lastRecord.code) {
-  //       const match = lastRecord.code.match(/\d+$/);
-  //       if (match) {
-  //         lastNumber = parseInt(match[0], 10);
-  //       }
-  //     }
-
-  //     if (params.action === 'create') {
-  //       if (params.args.data && params.args.data.code === undefined) {
-  //         const nextNumber = (lastNumber + 1).toString().padStart(6, '0');
-  //         params.args.data.code = `${prefix}${delimiter}${nextNumber}`;
-  //       }
-  //     } else if (
-  //       params.action === 'createMany' ||
-  //       params.action === 'createManyAndReturn'
-  //     ) {
-  //       if (params.args.data && Array.isArray(params.args.data)) {
-  //         params.args.data.forEach((item, index) => {
-  //           if (item.code === undefined) {
-  //             const nextNumber = (lastNumber + index + 1)
-  //               .toString()
-  //               .padStart(6, '0');
-  //             item.code = `${prefix}${delimiter}${nextNumber}`;
-  //           }
-  //         });
-  //       }
-  //     }
-  //   }
-  //   return next(params);
-  // };
   generateCodeMiddleware: Prisma.Middleware = async (params, next) => {
     const delimiter: string = '-';
     if (
@@ -317,26 +337,7 @@ export class PrismaService
         }
       }
     }
-
-    // Execute the operation
-    const result = await next(params);
-
-    // Perform "after" logic here
-    if (
-      params.action === 'create' &&
-      this.modelsNeedNotification.includes(params.model)
-    ) {
-      if (params.model === 'ImportRequest') {
-        const createdEntity = result as ImportRequest;
-        this.eventEmitter.emit(
-          'notification.importRequest.created',
-          createdEntity,
-        );
-      }
-      // Perform additional operations like logging, sending notifications, etc.
-    }
-
-    return result;
+    return next(params);
   };
 
   async onModuleDestroy() {

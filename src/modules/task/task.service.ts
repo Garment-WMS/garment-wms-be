@@ -26,10 +26,11 @@ export class TaskService {
 
     const task = await this.prismaService.task.create({
       data: taskCreateInput,
+      include: taskInclude,
     });
 
     // this.mockExpectFinishAt(task);
-    await this.createMockTodos(task);
+    // await this.createMockTodos(task);
     return task;
   }
 
@@ -47,9 +48,10 @@ export class TaskService {
     );
     const task = await this.prismaService.task.createManyAndReturn({
       data: taskCreateInput,
+      include: taskInclude,
     });
 
-    await this.createMockTodos(...task);
+    // await this.createMockTodos(...task);
     return task;
   }
 

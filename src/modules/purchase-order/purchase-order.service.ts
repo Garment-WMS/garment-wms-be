@@ -307,7 +307,6 @@ export class PurchaseOrderService {
         where: filterOption?.where ? filterOption.where : undefined,
       }),
     ]);
-
     for (const purchaseOrder of result) {
       const [
         totalImportQuantity,
