@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Prisma } from '@prisma/client';
 import {
@@ -25,6 +25,47 @@ export class NotificationService {
     importRequestId: string,
   ) {
     console.log('importRequest', importRequest);
+  }
+
+  @OnEvent('notification.task.created')
+  async handleNotificationTaskCreateEvent(
+    task: PayloadToResult<
+      Prisma.$TaskPayload<DefaultArgs>,
+      RenameAndNestPayloadKeys<Prisma.$TaskPayload<DefaultArgs>>
+    >,
+  ) {
+    Logger.log('notification.task.created', task);
+    let message;
+    let path;
+    let taskType;
+    if (task.importRequestId) {
+      message = `New Task ${task.code} has been created for Import Request ${task.importRequest.code}`;
+      path = `/import-request/${task.importRequestId}`;
+      taskType = 'IMPORT';
+    }
+    if (task.inspectionRequestId) {
+      message = `New Task ${task.code} has been created for Inspection Request ${task.inspectionRequest.code}`;
+      path = `/inspection-request/${task.inspectionRequestId}`;
+      taskType = 'INSPECTION';
+    }
+    if (task.inventoryReportPlanId) {
+      message = `New Task ${task.code} has been created for Inventory Report Plan ${task.inventoryReportPlan.code}`;
+      path = `/inventory-report-plan/${task.inventoryReportPlanId}`;
+    }
+    if (task.materialExportReceiptId) {
+      message = `New Task ${task.code} has been created for Material Export Receipt ${task.materialExportReceipt.code}`;
+      path = `/material-export-receipt/${task.materialExportReceiptId}`;
+    }
+    const result = await this.prismaService.notification.create({
+      data: {
+        title: `New Task ${task.code}`,
+        message: `${message}`,
+        path: `${path}`,
+        accountId: `${task.inspectionDepartmentId ? task.inspectionDepartment.accountId : task.warehouseStaff.accountId}`,
+      },
+    });
+    // const result = await Promise.all(createNotificationPromises);
+    this.notificationGateway.create(result);
   }
 
   @OnEvent('notification.task.many.created')

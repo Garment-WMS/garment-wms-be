@@ -556,6 +556,10 @@ export const taskInclude: Prisma.TaskInclude = {
   inventoryReport: {
     include: inventoryReportPlan,
   },
+  importRequest: {
+    include: importRequestInclude,
+  },
+
   // todo: true,
 };
 

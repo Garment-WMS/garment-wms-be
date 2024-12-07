@@ -134,8 +134,17 @@ export class PrismaService
             createdEntity,
           );
         }
+        if (params.model === 'Task') {
+          const createdEntity = result as Task;
+          this.eventEmitter.emit(
+            'notification.task.created',
+            createdEntity,
+          );
+        }
         return result;
       }
+
+
 
       // Create Many
       if (
@@ -147,7 +156,6 @@ export class PrismaService
 
         if (params.model === 'Task') {
           const createdEntity = result as Task[];
-          
           this.eventEmitter.emit(
             'notification.task.many.created',
             createdEntity,
