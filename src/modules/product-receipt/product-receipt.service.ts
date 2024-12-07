@@ -149,7 +149,8 @@ export class ProductReceiptService {
           code: undefined,
         };
         productReceipts.push(defectProductReceipt);
-      } else {
+      }
+      if (inspectionReportDetailItem.approvedQuantityByPack > 0) {
         const productReceipt: Prisma.ProductReceiptCreateManyInput = {
           importReceiptId: importReceiptId,
           productSizeId: inspectionReportDetailItem.productSizeId,
