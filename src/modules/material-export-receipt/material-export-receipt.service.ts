@@ -105,6 +105,8 @@ export class MaterialExportReceiptService {
           note: createMaterialExportReceiptDto.note,
           warehouseStaffId: createMaterialExportReceiptDto.warehouseStaffId,
           status: $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT,
+          expectedStartedAt: createMaterialExportReceiptDto.expectedStartedAt,
+          expectedFinishedAt: createMaterialExportReceiptDto.expectedFinishedAt,
           materialExportReceiptDetail: {
             createMany: {
               data: createMaterialExportReceiptDto.materialExportReceiptDetail.map(
@@ -544,6 +546,7 @@ export class MaterialExportReceiptService {
                 warehouseStaffExportDto.materialExportRequestId,
             },
             data: {
+              startedAt: new Date(),
               status: $Enums.MaterialExportRequestStatus.EXPORTING,
             },
             include: materialExportReceiptInclude,
@@ -582,6 +585,7 @@ export class MaterialExportReceiptService {
                 warehouseStaffExportDto.materialExportRequestId,
             },
             data: {
+              finishedAt: new Date(),
               status: $Enums.ExportReceiptStatus.EXPORTED,
             },
             include: materialExportReceiptInclude,
