@@ -1,5 +1,5 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   ExportReceiptStatus,
   MaterialReceiptStatus,
@@ -21,8 +21,121 @@ import { CreateMaterialDto } from './dto/create-material.dto';
 import { MaterialStock } from './dto/stock-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 
+type History = {
+  materialReceiptId?: string;
+  materialExportReceiptDetailId?: string;
+  receiptAdjustmentId?: string;
+  quantityByPack: number;
+  type: string;
+  code: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export interface MaterialVariant
+  extends Prisma.MaterialVariantGetPayload<{
+    include: {
+      materialAttribute: true;
+      material: {
+        include: {
+          materialUom: true;
+        };
+      };
+      materialPackage: {
+        include: {
+          materialReceipt: {
+            include: {
+              materialExportReceiptDetail: {
+                include: {
+                  materialExportReceipt: true;
+                };
+              };
+              receiptAdjustment: {
+                include: {
+                  inventoryReportDetail: {
+                    include: {
+                      inventoryReport: true;
+                    };
+                  };
+                };
+              };
+              importReceipt: true;
+            };
+          };
+          inventoryStock: true;
+        };
+      };
+    };
+  }> {
+  history?: History[];
+}
+
 @Injectable()
 export class MaterialVariantService {
+  async findHistoryByIdWithResponse(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Id is invalid');
+    }
+    const result = (await this.prismaService.materialVariant.findFirst({
+      where: { id },
+      include: this.materialHistoryInclude,
+    })) as MaterialVariant;
+    if (!result) {
+      return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
+    }
+    result.history = [];
+
+    result.materialPackage.forEach((materialPackage) => {
+      materialPackage?.materialReceipt?.forEach((materialReceipt) => {
+        if (materialReceipt.status == MaterialReceiptStatus.AVAILABLE) {
+          result.history.push({
+            materialReceiptId: materialReceipt.id,
+            quantityByPack: materialReceipt.quantityByPack,
+            code: materialReceipt.code,
+            type: 'IMPORT_RECEIPT',
+            createdAt: materialReceipt.createdAt,
+            updatedAt: materialReceipt.updatedAt,
+          });
+          materialReceipt?.materialExportReceiptDetail?.forEach(
+            (materialExportReceiptDetail) => {
+              console.log(materialExportReceiptDetail);
+              console.log(materialExportReceiptDetail.materialExportReceipt);
+              result.history.push({
+                materialExportReceiptDetailId: materialExportReceiptDetail.id,
+                quantityByPack: -materialExportReceiptDetail.quantityByPack,
+                code: materialExportReceiptDetail?.materialExportReceipt.code,
+                type: 'EXPORT_RECEIPT',
+                createdAt: materialExportReceiptDetail.createdAt,
+                updatedAt: materialExportReceiptDetail.updatedAt,
+              });
+            },
+          );
+          materialReceipt?.receiptAdjustment?.forEach((receiptAdjustment) => {
+            result.history.push({
+              receiptAdjustmentId: receiptAdjustment.id,
+              quantityByPack:
+                receiptAdjustment.beforeAdjustQuantity -
+                receiptAdjustment.afterAdjustQuantity,
+              code: receiptAdjustment?.inventoryReportDetail?.inventoryReport
+                .code,
+              type: 'RECEIPT_ADJUSTMENT',
+              createdAt: receiptAdjustment.createdAt,
+              updatedAt: receiptAdjustment.updatedAt,
+            });
+          });
+        }
+      });
+    });
+
+    result?.history?.sort((a, b) => {
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    });
+    return apiSuccess(
+      HttpStatus.OK,
+      result.history,
+      'Material variant history',
+    );
+  }
   constructor(
     private readonly prismaService: PrismaService,
     private readonly imageService: ImageService,
@@ -58,10 +171,43 @@ export class MaterialVariantService {
           include: {
             materialExportReceiptDetail: true,
             receiptAdjustment: true,
-            importReceipt: true,            
+            importReceipt: true,
           },
         },
         inventoryStock: true, // Make sure to include inventoryStock
+      },
+    },
+  };
+
+  materialHistoryInclude = {
+    materialAttribute: true,
+    material: {
+      include: {
+        materialUom: true,
+      },
+    },
+    materialPackage: {
+      include: {
+        materialReceipt: {
+          include: {
+            materialExportReceiptDetail: {
+              include: {
+                materialExportReceipt: true,
+              },
+            },
+            receiptAdjustment: {
+              include: {
+                inventoryReportDetail: {
+                  include: {
+                    inventoryReport: true,
+                  },
+                },
+              },
+            },
+            importReceipt: true,
+          },
+        },
+        inventoryStock: true,
       },
     },
   };
@@ -804,7 +950,7 @@ export class MaterialVariantService {
   }
 
   async findByIdWithResponse(id: string) {
-    const result = await this.findById(id);
+    const result = (await this.findById(id)) as MaterialVariant;
     if (result) {
       return apiSuccess(HttpStatus.OK, result, 'Material found');
     }

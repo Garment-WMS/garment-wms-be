@@ -34,7 +34,6 @@ export class NotificationService {
       RenameAndNestPayloadKeys<Prisma.$TaskPayload<DefaultArgs>>
     >,
   ) {
-    Logger.log('notification.task.created', task);
     let message;
     let path;
     let taskType;
@@ -65,6 +64,7 @@ export class NotificationService {
       },
     });
     // const result = await Promise.all(createNotificationPromises);
+    Logger.log('notification.task.created', result);
     this.notificationGateway.create(result);
   }
 
