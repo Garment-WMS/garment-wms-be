@@ -77,6 +77,7 @@ export interface MaterialVariant
 export class MaterialVariantService {
   async findHistoryByIdWithResponse(
     id: string,
+    sortBy: string,
     findOptions: GeneratedFindOptions<Prisma.MaterialVariantScalarWhereWithAggregatesInput>,
   ) {
     if (!isUUID(id)) {
@@ -148,6 +149,9 @@ export class MaterialVariantService {
     let length = result.history.length;
     result.history = result?.history
       ?.sort((a, b) => {
+        if (sortBy === 'desc') {
+          return b.createdAt.getTime() - a.createdAt.getTime();
+        }
         return a.createdAt.getTime() - b.createdAt.getTime();
       })
       .slice(offset, offset + limit);

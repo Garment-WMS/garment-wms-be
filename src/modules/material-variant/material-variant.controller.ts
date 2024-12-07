@@ -120,6 +120,7 @@ export class MaterialVariantController {
 
   @Get(':id/history')
   getMaterialHistoryById(
+    @Query('sortBy') sortBy: string,
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.MaterialVariantScalarWhereInput>(
         ['material.name', 'material.code', 'material.materialUom.name'],
@@ -137,7 +138,7 @@ export class MaterialVariantController {
     filterOptions: FilterDto<Prisma.MaterialVariantScalarWhereInput>,
     @Param('id', new CustomUUIDPipe()) id: string,
   ) {
-    return this.materialVariantService.findHistoryByIdWithResponse(id,filterOptions.findOptions);
+    return this.materialVariantService.findHistoryByIdWithResponse(id,sortBy,filterOptions.findOptions);
   }
 
   @Get(':id/receiptV1')

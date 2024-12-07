@@ -89,6 +89,7 @@ export class ProductVariantController {
   @Get(':id/history')
   getHistory(
     @Param('id', CustomUUIDPipe) id: string,
+    @Query('sortBy') sortBy: string,
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.ProductVariantScalarWhereInput>(
         ['product.name'],
@@ -97,7 +98,12 @@ export class ProductVariantController {
     )
     filterOptions: FilterDto<Prisma.ProductVariantScalarWhereInput>,
   ) {
-    return this.productVariantService.findHistoryByIdWithResponse(id, filterOptions.findOptions);
+    console.log(sortBy);
+    return this.productVariantService.findHistoryByIdWithResponse(
+      id,
+      sortBy,
+      filterOptions.findOptions,
+    );
   }
 
   @Post(':id/image')

@@ -133,6 +133,7 @@ export class ProductVariantService {
 
   async findHistoryByIdWithResponse(
     id: string,
+    sortBy: string,
     filterOption?: GeneratedFindOptions<Prisma.ProductVariantWhereInput>,
   ) {
     if (!isUUID(id)) {
@@ -202,10 +203,12 @@ export class ProductVariantService {
     let length = result.history.length;
     result.history = result?.history
       ?.sort((a, b) => {
+        if (sortBy === 'desc') {
+          return b.createdAt.getTime() - a.createdAt.getTime();
+        }
         return a.createdAt.getTime() - b.createdAt.getTime();
       })
       .slice(offset, offset + limit);
-
 
     return apiSuccess(
       HttpStatus.OK,
