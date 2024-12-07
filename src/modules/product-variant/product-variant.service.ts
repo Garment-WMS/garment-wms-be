@@ -478,7 +478,7 @@ export class ProductVariantService {
       };
       result = await this.update(id, updateProductDto);
     }
-    return result;
+    return imageUrl;
   }
 
   async create(createProductDto: CreateProductDto, file?: Express.Multer.File) {
@@ -508,7 +508,7 @@ export class ProductVariantService {
     if (file) {
       const imageUrl = await this.addImageWithoutResponse(file, result.id);
       if (imageUrl) {
-        result.image = imageUrl.image;
+        result.image = imageUrl;
       }
     }
 

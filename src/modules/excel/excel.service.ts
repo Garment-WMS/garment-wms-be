@@ -2119,8 +2119,9 @@ export class ExcelService {
       const row = worksheet.getRow(i);
       const itemCell = {
         productCodeCell: row.getCell(1),
-        quantityToProduceCell: row.getCell(2),
-        note: row.getCell(3),
+        productNameCell: row.getCell(2),
+        quantityToProduceCell: row.getCell(3),
+        note: row.getCell(4),
       };
 
       if (
