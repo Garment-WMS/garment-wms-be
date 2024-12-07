@@ -89,8 +89,6 @@ export class MaterialVariantService {
       this.prismaService.materialVariant.findFirst({
         where: { id },
         include: this.materialHistoryInclude,
-        skip: offset,
-        take: limit,
       }),
       this.prismaService.materialVariant.count({
         where: { id },
@@ -147,15 +145,18 @@ export class MaterialVariantService {
       });
     });
 
-    result?.history?.sort((a, b) => {
-      return a.createdAt.getTime() - b.createdAt.getTime();
-    });
+    let length = result.history.length;
+    result.history = result?.history
+      ?.sort((a, b) => {
+        return a.createdAt.getTime() - b.createdAt.getTime();
+      })
+      .slice(offset, offset + limit);
 
     return apiSuccess(
       HttpStatus.OK,
       {
         data: result.history,
-        pageMeta: getPageMeta(result.history.length, offset, limit),
+        pageMeta: getPageMeta(length, offset, limit),
       },
       'Material History found',
     );

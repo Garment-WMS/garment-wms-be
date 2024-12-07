@@ -138,27 +138,23 @@ export class ProductVariantService {
     if (!isUUID(id)) {
       throw new BadRequestException('Invalid id');
     }
-    const page = filterOption?.skip || Constant.DEFAULT_OFFSET;
+    const offset = filterOption?.skip || Constant.DEFAULT_OFFSET;
     const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
-    const [result, total] = (await this.prismaService.$transaction([
-      this.prismaService.productVariant.findFirst({
-        where: {
-          id: id,
-        },
-        skip: page,
-        take: limit,
-        include: {
-          productSize: {
-            include: {
-              productReceipt: {
-                include: {
-                  importReceipt: true,
-                  receiptAdjustment: {
-                    include: {
-                      inventoryReportDetail: {
-                        include: {
-                          inventoryReport: true,
-                        },
+    const result = (await this.prismaService.productVariant.findFirst({
+      where: {
+        id: id,
+      },
+      include: {
+        productSize: {
+          include: {
+            productReceipt: {
+              include: {
+                importReceipt: true,
+                receiptAdjustment: {
+                  include: {
+                    inventoryReportDetail: {
+                      include: {
+                        inventoryReport: true,
                       },
                     },
                   },
@@ -167,13 +163,8 @@ export class ProductVariantService {
             },
           },
         },
-      }),
-      this.prismaService.productVariant.count({
-        where: {
-          id: id,
-        },
-      }),
-    ])) as [ProductVariantIncludeQuery, number];
+      },
+    })) as ProductVariantIncludeQuery;
 
     result.history = [];
 
@@ -208,15 +199,19 @@ export class ProductVariantService {
       });
     });
 
-    result?.history?.sort((a, b) => {
-      return a.createdAt.getTime() - b.createdAt.getTime();
-    });
+    let length = result.history.length;
+    result.history = result?.history
+      ?.sort((a, b) => {
+        return a.createdAt.getTime() - b.createdAt.getTime();
+      })
+      .slice(offset, offset + limit);
+
 
     return apiSuccess(
       HttpStatus.OK,
       {
         data: result.history,
-        pageMeta: getPageMeta(result.history.length, page, limit),
+        pageMeta: getPageMeta(length, offset, limit),
       },
       'Product history found',
     );
