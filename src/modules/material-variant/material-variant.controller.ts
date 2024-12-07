@@ -21,9 +21,9 @@ import { HttpCacheInterceptor } from 'src/common/interceptor/cache.interceptor';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
 import { BodyInterceptor } from 'src/common/pipe/parse-form-data-json-pipe.pipe';
 import { ChartDto } from './dto/chart.dto';
+import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { MaterialVariantService } from './material-variant.service';
-import { CreateMaterialDto } from './dto/create-material.dto';
 
 @Controller('material-variant')
 @UseInterceptors(HttpCacheInterceptor)
@@ -68,7 +68,7 @@ export class MaterialVariantController {
     @Body('createMaterialDto')
     createMaterialDto: CreateMaterialDto,
   ) {
-    return this.materialVariantService.create(createMaterialDto,file);
+    return this.materialVariantService.create(createMaterialDto, file);
   }
 
   @Post('chart')
@@ -119,8 +119,25 @@ export class MaterialVariantController {
   }
 
   @Get(':id/history')
-  getMaterialHistoryById(@Param('id', new CustomUUIDPipe()) id: string) {
-    return this.materialVariantService.findHistoryByIdWithResponse(id);
+  getMaterialHistoryById(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialVariantScalarWhereInput>(
+        ['material.name', 'material.code', 'material.materialUom.name'],
+        [
+          { createdAt: 'desc' },
+          { id: 'asc' },
+          { name: 'asc' },
+          { materialId: 'asc' },
+          { code: 'asc' },
+          { reorderLevel: 'asc' },
+          { updatedAt: 'asc' },
+        ],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.MaterialVariantScalarWhereInput>,
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.materialVariantService.findHistoryByIdWithResponse(id,filterOptions.findOptions);
   }
 
   @Get(':id/receiptV1')

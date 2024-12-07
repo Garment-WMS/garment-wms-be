@@ -1,5 +1,5 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, ProductReceiptStatus } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
@@ -15,6 +15,65 @@ import { ChartDto } from './dto/chart-dto.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductStock } from './dto/product-stock.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+
+type History = {
+  productReceiptId?: string;
+  receiptAdjustmentId?: string;
+  importReceiptId?: string;
+  inventoryReportId?: string;
+  quantityByPack: number;
+  type: string;
+  code: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+const includeHistory: Prisma.ProductVariantInclude = {
+  productSize: {
+    include: {
+      productReceipt: {
+        include: {
+          receiptAdjustment: {
+            include: {
+              inventoryReportDetail: {
+                include: {
+                  inventoryReport: true,
+                },
+              },
+            },
+          },
+          importReceipt: true,
+        },
+      },
+    },
+  },
+};
+
+interface ProductVariantIncludeQuery
+  extends Prisma.ProductVariantGetPayload<{
+    include: {
+      productSize: {
+        include: {
+          productReceipt: {
+            include: {
+              receiptAdjustment: {
+                include: {
+                  inventoryReportDetail: {
+                    include: {
+                      inventoryReport: true;
+                    };
+                  };
+                };
+              };
+              importReceipt: true;
+            };
+          };
+        };
+      };
+    };
+  }> {
+  history?: History[];
+}
 
 @Injectable()
 export class ProductVariantService {
@@ -71,6 +130,97 @@ export class ProductVariantService {
       },
     },
   };
+
+  async findHistoryByIdWithResponse(
+    id: string,
+    filterOption?: GeneratedFindOptions<Prisma.ProductVariantWhereInput>,
+  ) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid id');
+    }
+    const page = filterOption?.skip || Constant.DEFAULT_OFFSET;
+    const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
+    const [result, total] = (await this.prismaService.$transaction([
+      this.prismaService.productVariant.findFirst({
+        where: {
+          id: id,
+        },
+        skip: page,
+        take: limit,
+        include: {
+          productSize: {
+            include: {
+              productReceipt: {
+                include: {
+                  importReceipt: true,
+                  receiptAdjustment: {
+                    include: {
+                      inventoryReportDetail: {
+                        include: {
+                          inventoryReport: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prismaService.productVariant.count({
+        where: {
+          id: id,
+        },
+      }),
+    ])) as [ProductVariantIncludeQuery, number];
+
+    result.history = [];
+
+    result.productSize.forEach((productSize) => {
+      productSize?.productReceipt?.forEach((productReceipt) => {
+        if (productReceipt.status === ProductReceiptStatus.AVAILABLE) {
+          result.history.push({
+            productReceiptId: productReceipt.id,
+            importReceiptId: productReceipt.importReceipt?.id,
+            quantityByPack: productReceipt.quantityByUom,
+            code: productReceipt.importReceipt?.code,
+            type: 'IMPORT_RECEIPT',
+            createdAt: productReceipt.createdAt,
+            updatedAt: productReceipt.updatedAt,
+          });
+        }
+        productReceipt?.receiptAdjustment.forEach((receiptAdjustment) => {
+          result.history.push({
+            receiptAdjustmentId: receiptAdjustment.id,
+            inventoryReportId:
+              receiptAdjustment?.inventoryReportDetail.inventoryReportId,
+            quantityByPack:
+              receiptAdjustment.beforeAdjustQuantity -
+              receiptAdjustment.afterAdjustQuantity,
+            code: receiptAdjustment?.inventoryReportDetail?.inventoryReport
+              .code,
+            type: 'RECEIPT_ADJUSTMENT',
+            createdAt: receiptAdjustment.createdAt,
+            updatedAt: receiptAdjustment.updatedAt,
+          });
+        });
+      });
+    });
+
+    result?.history?.sort((a, b) => {
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    });
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: result.history,
+        pageMeta: getPageMeta(total, page, limit),
+      },
+      'Product history found',
+    );
+  }
 
   async getChart(chartDto: ChartDto) {
     const productVariantIds = chartDto.productVariantId || [];
