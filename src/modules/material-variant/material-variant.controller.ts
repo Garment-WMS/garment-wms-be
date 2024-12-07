@@ -118,6 +118,11 @@ export class MaterialVariantController {
     return this.materialVariantService.findByIdWithResponse(id);
   }
 
+  @Get(':id/history')
+  getMaterialHistoryById(@Param('id', new CustomUUIDPipe()) id: string) {
+    return this.materialVariantService.findHistoryByIdWithResponse(id);
+  }
+
   @Get(':id/receiptV1')
   getMaterialReceiptById(@Param('id', new CustomUUIDPipe()) id: string) {
     return this.materialVariantService.findMaterialReceiptByIdWithResponse(id);
