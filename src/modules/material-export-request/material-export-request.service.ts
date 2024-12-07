@@ -521,6 +521,17 @@ export class MaterialExportRequestService {
           include: materialExportRequestInclude,
         });
 
+        const productionBatch = await this.prismaService.productionBatch.update(
+          {
+            where: {
+              id: result.productionBatchId,
+            },
+            data: {
+              status: $Enums.ProductionBatchStatus.MANUFACTURING,
+            },
+          },
+        );
+
         const chat: CreateChatDto = {
           discussionId: result.discussion.id,
           message: Constant.EXPORT_REQUEST_EXPORTED_PRODUCTION_APPROVED,
