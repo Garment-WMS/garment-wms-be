@@ -16,7 +16,7 @@ export class PrismaService
 {
   private readonly logger = new Logger(PrismaService.name);
 
-  constructor(private readonly eventEmitter: EventEmitter2) {
+  constructor(private readonly eventEmitter?: EventEmitter2) {
     super({
       log: [
         {

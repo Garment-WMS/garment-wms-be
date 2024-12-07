@@ -86,6 +86,26 @@ export class ProductVariantController {
     return this.productVariantService.findByIdWithResponse(id);
   }
 
+  @Get(':id/history')
+  getHistory(
+    @Param('id', CustomUUIDPipe) id: string,
+    @Query('sortBy') sortBy: string,
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ProductVariantScalarWhereInput>(
+        ['product.name'],
+        [],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.ProductVariantScalarWhereInput>,
+  ) {
+    console.log(sortBy);
+    return this.productVariantService.findHistoryByIdWithResponse(
+      id,
+      sortBy,
+      filterOptions.findOptions,
+    );
+  }
+
   @Post(':id/image')
   @UseInterceptors(FileInterceptor('file'))
   uploadAvatar(

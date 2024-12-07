@@ -25,6 +25,9 @@ type History = {
   materialReceiptId?: string;
   materialExportReceiptDetailId?: string;
   receiptAdjustmentId?: string;
+  importReceiptId?: string;
+  materialExportReceiptId?: string;
+  inventoryReportId?: string;
   quantityByPack: number;
   type: string;
   code: string;
@@ -72,14 +75,27 @@ export interface MaterialVariant
 
 @Injectable()
 export class MaterialVariantService {
-  async findHistoryByIdWithResponse(id: string) {
+  async findHistoryByIdWithResponse(
+    id: string,
+    sortBy: string,
+    findOptions: GeneratedFindOptions<Prisma.MaterialVariantScalarWhereWithAggregatesInput>,
+  ) {
     if (!isUUID(id)) {
       throw new BadRequestException('Id is invalid');
     }
-    const result = (await this.prismaService.materialVariant.findFirst({
-      where: { id },
-      include: this.materialHistoryInclude,
-    })) as MaterialVariant;
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+
+    const [result, total] = (await this.prismaService.$transaction([
+      this.prismaService.materialVariant.findFirst({
+        where: { id },
+        include: this.materialHistoryInclude,
+      }),
+      this.prismaService.materialVariant.count({
+        where: { id },
+      }),
+    ])) as [MaterialVariant, number];
+
     if (!result) {
       return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
     }
@@ -90,18 +106,19 @@ export class MaterialVariantService {
         if (materialReceipt.status == MaterialReceiptStatus.AVAILABLE) {
           result.history.push({
             materialReceiptId: materialReceipt.id,
+            importReceiptId: materialReceipt.importReceiptId,
             quantityByPack: materialReceipt.quantityByPack,
-            code: materialReceipt.code,
+            code: materialReceipt.importReceipt.code,
             type: 'IMPORT_RECEIPT',
             createdAt: materialReceipt.createdAt,
             updatedAt: materialReceipt.updatedAt,
           });
           materialReceipt?.materialExportReceiptDetail?.forEach(
             (materialExportReceiptDetail) => {
-              console.log(materialExportReceiptDetail);
-              console.log(materialExportReceiptDetail.materialExportReceipt);
               result.history.push({
                 materialExportReceiptDetailId: materialExportReceiptDetail.id,
+                materialExportReceiptId:
+                  materialExportReceiptDetail.materialExportReceiptId,
                 quantityByPack: -materialExportReceiptDetail.quantityByPack,
                 code: materialExportReceiptDetail?.materialExportReceipt.code,
                 type: 'EXPORT_RECEIPT',
@@ -113,6 +130,8 @@ export class MaterialVariantService {
           materialReceipt?.receiptAdjustment?.forEach((receiptAdjustment) => {
             result.history.push({
               receiptAdjustmentId: receiptAdjustment.id,
+              inventoryReportId:
+                receiptAdjustment?.inventoryReportDetail.inventoryReportId,
               quantityByPack:
                 receiptAdjustment.beforeAdjustQuantity -
                 receiptAdjustment.afterAdjustQuantity,
@@ -127,13 +146,23 @@ export class MaterialVariantService {
       });
     });
 
-    result?.history?.sort((a, b) => {
-      return a.createdAt.getTime() - b.createdAt.getTime();
-    });
+    let length = result.history.length;
+    result.history = result?.history
+      ?.sort((a, b) => {
+        if (sortBy === 'desc') {
+          return b.createdAt.getTime() - a.createdAt.getTime();
+        }
+        return a.createdAt.getTime() - b.createdAt.getTime();
+      })
+      .slice(offset, offset + limit);
+
     return apiSuccess(
       HttpStatus.OK,
-      result.history,
-      'Material variant history',
+      {
+        data: result.history,
+        pageMeta: getPageMeta(length, offset, limit),
+      },
+      'Material History found',
     );
   }
   constructor(
