@@ -15,6 +15,7 @@ import {
 import {
   discussionInclude,
   materialExportRequestInclude,
+  materialPackageInclude,
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -263,6 +264,18 @@ export class MaterialExportRequestService {
           ...materialExportRequestInclude,
           materialExportReceipt: {
             include: {
+              materialExportReceiptDetail: {
+                include: {
+                  materialReceipt: {
+                    include: {
+                      materialPackage: {
+                        include: materialPackageInclude,
+                      },
+                    },
+                  },
+                },
+              },
+
               task: {
                 include: {
                   warehouseStaff: {
