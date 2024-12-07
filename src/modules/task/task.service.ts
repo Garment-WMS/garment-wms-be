@@ -33,7 +33,6 @@ export class TaskService {
     // await this.createMockTodos(task);
     return task;
   }
-
   async createMany(
     createTaskDto: CreateTaskDto[],
     prismaInstance: PrismaService = this.prismaService,
@@ -248,15 +247,11 @@ export class TaskService {
 
     return await prismaService.task.updateMany({
       where: {
-        AND: [
-          taskWhereInput,
-          { status: $Enums.TaskStatus.OPEN }
-        ],
+        AND: [taskWhereInput, { status: $Enums.TaskStatus.OPEN }],
       },
       data: { status: $Enums.TaskStatus.IN_PROGRESS, startedAt: new Date() },
     });
   }
-
 
   async updateTaskStatusToDone(taskWhereInput: Prisma.TaskWhereInput) {
     const taskToUpdate = await this.prismaService.task.findFirst({
