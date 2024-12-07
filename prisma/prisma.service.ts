@@ -37,6 +37,7 @@ export class PrismaService
         },
       ],
     });
+    this.$extends;
   }
 
   async onModuleInit() {
@@ -51,33 +52,7 @@ export class PrismaService
       );
     }
     const eventEmitter = this.eventEmitter;
-    this.$extends({
-      query: {
-        importRequest: {
-          async create({ args, model, operation, query }) {
-            console.log('importRequest.create', args);
-            const result = await query(args);
-            if (result.status === 'ARRIVED') {
-              eventEmitter.emit('notification.importRequest.created', result);
-              Logger.debug('Emit notification.importRequest.created event');
-            }
-            return result;
-          },
-          async update({ args, model, operation, query }) {
-            switch (args.data.status) {
-              case 'APPROVED':
-                //send notification
-                break;
-              case 'REJECTED':
-                //send notification
-                break;
-            }
-
-            return query(args);
-          },
-        },
-      },
-    });
+    Logger.debug(`Event emitted: ${JSON.stringify(eventEmitter)}`);
 
     this.$use(this.softDeleteMiddleware);
     this.$use(this.findNotDeletedMiddleware);
@@ -95,6 +70,35 @@ export class PrismaService
     // this.$on('query', ({ query, params }) => {
     //   this.logger.log(`${query}; ${params}`);
     // });
+
+    this.$extends({
+      query: {
+        importRequest: {
+          async create({ args, model, operation, query }) {
+            console.log('importRequest.create', args);
+            const result = await query(args);
+            if (result.status === 'ARRIVED') {
+              eventEmitter.emit('notification.importRequest.created', {
+                importRequestId: result.id,
+                importRequestCode: result.code,
+              });
+              Logger.debug('Emit notification.importRequest.created event');
+            }
+            return result;
+          },
+          async update({ args, model, operation, query }) {
+            switch (args.data.status) {
+              case 'APPROVED':
+                break;
+              case 'REJECTED':
+                break;
+            }
+
+            return query(args);
+          },
+        },
+      },
+    });
   }
 
   private notSoftDeletedTables: string[] = ['Role', 'RefreshToken'];

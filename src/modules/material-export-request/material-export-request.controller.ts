@@ -25,6 +25,7 @@ import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-req
 import { ProductionStaffDepartmentProcessDto } from './dto/production-department-approve.dto';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
 import { MaterialExportRequestService } from './material-export-request.service';
+import { IsMaterialExportRequestExistPipe } from './validator/is-material-export-request-exist.pipe';
 
 @ApiTags('material-export-request')
 @Controller('material-export-request')
@@ -46,7 +47,7 @@ export class MaterialExportRequestController {
       HttpStatus.CREATED,
       await this.materialExportRequestService.create(
         createMaterialExportRequestDto,
-        productionDepartment
+        productionDepartment,
       ),
       'Material export request created successfully',
     );
@@ -142,14 +143,15 @@ export class MaterialExportRequestController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.WAREHOUSE_MANAGER)
   async managerApprove(
-    @Param('id') id: string,
+    @Param('id', IsMaterialExportRequestExistPipe)
+    materialExportRequestId: string,
     @Body() dto: ManagerApproveExportRequestDto,
     @GetUser() warehouseManager: AuthenUser,
   ) {
     return apiSuccess(
       HttpStatus.OK,
       await this.materialExportRequestService.managerApprove(
-        id,
+        materialExportRequestId,
         dto,
         warehouseManager,
       ),

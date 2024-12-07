@@ -12,7 +12,10 @@ import {
   Prisma,
   RoleCode,
 } from '@prisma/client';
-import { materialExportRequestInclude } from 'prisma/prisma-include';
+import {
+  discussionInclude,
+  materialExportRequestInclude,
+} from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
@@ -329,77 +332,74 @@ export class MaterialExportRequestService {
   }
 
   async managerApprove(
-    id: string,
+    materialExportRequestId: string,
     dto: ManagerApproveExportRequestDto,
     warehouseManager: AuthenUser,
   ) {
     const allowApproveStatus: $Enums.MaterialExportRequestStatus[] = [
       $Enums.MaterialExportRequestStatus.PENDING,
     ];
-    const materialExportRequest = await this.findUnique(id);
+    const materialExportRequest = await this.findUnique(
+      materialExportRequestId,
+    );
     if (!allowApproveStatus.includes(materialExportRequest.status)) {
       throw new BadRequestException(
         `Cannot approve material export request with status ${materialExportRequest.status}`,
       );
     }
     dto.warehouseManagerId = warehouseManager.warehouseManagerId;
-    dto.materialExportReceipt.materialExportRequestId = id;
+    dto.materialExportReceipt.materialExportRequestId = materialExportRequestId;
     dto.materialExportReceipt.warehouseStaffId = dto.warehouseStaffId;
     dto.materialExportReceipt.type =
       $Enums.MaterialExportReceiptType.PRODUCTION;
     switch (dto.action) {
       case ManagerAction.APPROVED:
-        const [materialExportRequest] = await this.prismaService.$transaction([
-          this.prismaService.materialExportRequest.update({
-            where: {
-              id: id,
-            },
-            data: {
-              warehouseManagerId: dto.warehouseManagerId,
-              status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
-              managerNote: dto.managerNote,
-              warehouseStaffId: dto.warehouseStaffId,
-              updatedAt: new Date(),
-            },
-            include: materialExportRequestInclude,
-          }),
-          // this.prismaService.materialExportReceipt.create({
-          //   data: {
-          //     note: dto.materialExportReceipt.note,
-          //     type: dto.materialExportReceipt.type,
-          //     materialExportRequestId: id,
-          //     warehouseStaffId: dto.warehouseStaffId,
-          //     expectedStartedAt: dto.exportExpectedStartedAt,
-          //     expectedFinishedAt: dto.exportExpectedFinishedAt,
-          //     materialExportReceiptDetail: {
-          //       createMany: {
-          //         data: dto.materialExportReceipt.materialExportReceiptDetail.map(
-          //           (detail) => ({
-          //             materialReceiptId: detail.materialReceiptId,
-          //             quantityByPack: detail.quantityByPack,
-          //           }),
-          //         ),
-          //       },
-          //     },
-          //   },
-          // }),
-        ]);
-        const { materialExportReceipt, inventoryStock, materialReceipt } =
-          await this.materialExportReceiptService.create({
-            note: dto.materialExportReceipt.note,
-            type: dto.materialExportReceipt.type,
-            materialExportRequestId: id,
-            warehouseStaffId: dto.warehouseStaffId,
-            expectedStartedAt: dto.exportExpectedStartedAt,
-            expectedFinishedAt: dto.exportExpectedFinishedAt,
-            materialExportReceiptDetail:
-              dto.materialExportReceipt.materialExportReceiptDetail.map(
-                (detail) => ({
-                  materialReceiptId: detail.materialReceiptId,
-                  quantityByPack: detail.quantityByPack,
-                }),
-              ),
-          });
+        const {
+          materialExportRequest,
+          materialExportReceipt,
+          inventoryStock,
+          materialReceipt,
+        } = await this.prismaService.$transaction(
+          async (prismaInstance: PrismaService) => {
+            const { materialExportReceipt, inventoryStock, materialReceipt } =
+              await this.materialExportReceiptService.create({
+                note: dto.materialExportReceipt.note,
+                type: dto.materialExportReceipt.type,
+                materialExportRequestId: materialExportRequestId,
+                warehouseStaffId: dto.warehouseStaffId,
+                expectedStartedAt: dto.exportExpectedStartedAt,
+                expectedFinishedAt: dto.exportExpectedFinishedAt,
+                materialExportReceiptDetail:
+                  dto.materialExportReceipt.materialExportReceiptDetail.map(
+                    (detail) => ({
+                      materialReceiptId: detail.materialReceiptId,
+                      quantityByPack: detail.quantityByPack,
+                    }),
+                  ),
+              });
+            const materialExportRequest =
+              await prismaInstance.materialExportRequest.update({
+                where: {
+                  id: materialExportRequestId,
+                },
+                data: {
+                  warehouseManagerId: dto.warehouseManagerId,
+                  status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
+                  managerNote: dto.managerNote,
+                  warehouseStaffId: dto.warehouseStaffId,
+                  updatedAt: new Date(),
+                },
+                include: materialExportRequestInclude,
+              });
+
+            return {
+              materialExportRequest,
+              materialExportReceipt,
+              inventoryStock,
+              materialReceipt,
+            };
+          },
+        );
         try {
           const task = await this.taskService.create({
             materialExportReceiptId: materialExportReceipt.id,
@@ -409,18 +409,24 @@ export class MaterialExportRequestService {
             expectedFinishedAt: materialExportReceipt.expectedFinishedAt,
             warehouseStaffId: dto.warehouseStaffId,
           });
-          await this.discussionService.updateExportReceipt(
-            materialExportReceipt.id,
-            materialExportReceipt.materialExportRequestId,
-          );
-          const chat: CreateChatDto = {
-            discussionId: materialExportRequest.discussion.id,
-            message: Constant.PENDING_TO_APPROVE,
-          };
-          await this.chatService.createWithoutResponse(chat, warehouseManager);
         } catch (error) {
-          Logger.error('Cannot create task', error);
+          Logger.error('Cannot create task', error, error.stack);
         }
+
+        const discussion = await this.discussionService.updateExportReceipt(
+          materialExportReceipt.id,
+          materialExportReceipt.materialExportRequestId,
+        );
+
+        const createChatDto: CreateChatDto = {
+          discussionId: discussion.id,
+          message: Constant.PENDING_TO_APPROVE,
+        };
+        await this.chatService.createWithoutResponse(
+          createChatDto,
+          warehouseManager,
+        );
+
         return {
           materialExportRequest,
           materialExportReceipt,
@@ -431,7 +437,7 @@ export class MaterialExportRequestService {
         const rejectedMaterialExportRequest =
           await this.prismaService.materialExportRequest.update({
             where: {
-              id: id,
+              id: materialExportRequestId,
             },
             data: {
               warehouseManagerId: dto.warehouseManagerId,
@@ -440,7 +446,11 @@ export class MaterialExportRequestService {
               rejectAt: new Date(),
               updatedAt: new Date(),
             },
-            include: materialExportRequestInclude,
+            include: {
+              discussion: {
+                include: discussionInclude,
+              },
+            },
           });
         const chat: CreateChatDto = {
           discussionId: materialExportRequest.discussion.id,

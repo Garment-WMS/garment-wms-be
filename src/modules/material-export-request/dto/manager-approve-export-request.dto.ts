@@ -41,6 +41,7 @@ export class ManagerApproveExportRequestDto {
   @ApiProperty({ required: false })
   @Type(() => CreateMaterialExportReceiptDto)
   @ValidateNested({ each: true })
+  @IsNotEmpty()
   materialExportReceipt: CreateMaterialExportReceiptDto;
 
   @ApiProperty({ required: false })

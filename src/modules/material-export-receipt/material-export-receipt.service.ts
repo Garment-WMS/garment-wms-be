@@ -91,9 +91,16 @@ export class MaterialExportReceiptService {
   // }
 
   async create(createMaterialExportReceiptDto: CreateMaterialExportReceiptDto) {
+    Logger.debug(
+      'createMaterialExportReceiptDto',
+      createMaterialExportReceiptDto,
+    );
+
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const input: Prisma.MaterialExportReceiptUncheckedCreateInput = {
+          materialExportRequestId:
+            createMaterialExportReceiptDto.materialExportRequestId,
           type: createMaterialExportReceiptDto.type,
           note: createMaterialExportReceiptDto.note,
           warehouseStaffId: createMaterialExportReceiptDto.warehouseStaffId,
@@ -167,6 +174,7 @@ export class MaterialExportReceiptService {
         };
       },
     );
+    Logger.debug('result', result);
 
     return result;
   }
