@@ -133,8 +133,8 @@ export class MaterialVariantService {
               inventoryReportId:
                 receiptAdjustment?.inventoryReportDetail.inventoryReportId,
               quantityByPack:
-                receiptAdjustment.beforeAdjustQuantity -
-                receiptAdjustment.afterAdjustQuantity,
+                receiptAdjustment.afterAdjustQuantity -
+                receiptAdjustment.beforeAdjustQuantity,
               code: receiptAdjustment?.inventoryReportDetail?.inventoryReport
                 .code,
               type: 'RECEIPT_ADJUSTMENT',

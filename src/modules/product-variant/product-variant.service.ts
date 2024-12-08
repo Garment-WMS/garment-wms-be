@@ -22,6 +22,7 @@ type History = {
   importReceiptId?: string;
   inventoryReportId?: string;
   quantityByPack: number;
+  isDefect: Boolean;
   type: string;
   code: string;
   createdAt: Date;
@@ -58,6 +59,7 @@ interface ProductVariantIncludeQuery
             include: {
               receiptAdjustment: {
                 include: {
+                  productReceipt: true;
                   inventoryReportDetail: {
                     include: {
                       inventoryReport: true;
@@ -153,6 +155,7 @@ export class ProductVariantService {
                 importReceipt: true,
                 receiptAdjustment: {
                   include: {
+                    productReceipt: true,
                     inventoryReportDetail: {
                       include: {
                         inventoryReport: true,
@@ -177,6 +180,7 @@ export class ProductVariantService {
             importReceiptId: productReceipt.importReceipt?.id,
             quantityByPack: productReceipt.quantityByUom,
             code: productReceipt.importReceipt?.code,
+            isDefect: productReceipt.isDefect,
             type: 'IMPORT_RECEIPT',
             createdAt: productReceipt.createdAt,
             updatedAt: productReceipt.updatedAt,
@@ -188,11 +192,12 @@ export class ProductVariantService {
             inventoryReportId:
               receiptAdjustment?.inventoryReportDetail.inventoryReportId,
             quantityByPack:
-              receiptAdjustment.beforeAdjustQuantity -
-              receiptAdjustment.afterAdjustQuantity,
+              receiptAdjustment.afterAdjustQuantity -
+              receiptAdjustment.beforeAdjustQuantity,
             code: receiptAdjustment?.inventoryReportDetail?.inventoryReport
               .code,
             type: 'RECEIPT_ADJUSTMENT',
+            isDefect: receiptAdjustment.productReceipt.isDefect,
             createdAt: receiptAdjustment.createdAt,
             updatedAt: receiptAdjustment.updatedAt,
           });
@@ -705,6 +710,7 @@ export class ProductVariantService {
       result.numberOfProductSize = 0;
       result.onHand = 0;
     }
+
     return result;
   }
 
