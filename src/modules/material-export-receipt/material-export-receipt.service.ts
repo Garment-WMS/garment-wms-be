@@ -158,6 +158,21 @@ export class MaterialExportReceiptService {
           ),
         ]);
 
+        //update status to USED if remainQuantityByPack = 0
+        await Promise.all(
+          materialReceipt.map((receipt) =>
+            prismaInstance.materialReceipt.update({
+              where: {
+                id: receipt.id,
+                remainQuantityByPack: 0,
+              },
+              data: {
+                status: $Enums.MaterialReceiptStatus.USED,
+              },
+            }),
+          ),
+        );
+
         const inventoryStock = await Promise.all(
           materialExportReceipt.materialExportReceiptDetail.map((detail) =>
             this.inventoryStockService.updateMaterialStock(
