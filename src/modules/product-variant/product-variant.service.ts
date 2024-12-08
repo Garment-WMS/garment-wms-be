@@ -646,6 +646,8 @@ export class ProductVariantService {
     ]);
 
     data.forEach((product: ProductStock) => {
+      product.onHandDisqualified = 0;
+      product.onHandQualified = 0;
       product.numberOfProductSize = product.productSize.length;
       product.productSize.forEach((productSize) => {
         productSize.productReceipt.forEach((productReceipt) => {
@@ -710,12 +712,16 @@ export class ProductVariantService {
     });
 
     if (result.productSize) {
+      result.onHandQualified = 0;
+      result.onHandDisqualified = 0;
       result.productSize.forEach((productSize) => {
         productSize.productReceipt.forEach((productReceipt) => {
           if (
             productReceipt.status === ProductReceiptStatus.AVAILABLE &&
             productReceipt.isDefect === false
           ) {
+            console.log(productReceipt.remainQuantityByUom);
+
             result.onHandQualified += productReceipt.remainQuantityByUom;
           }
           if (
