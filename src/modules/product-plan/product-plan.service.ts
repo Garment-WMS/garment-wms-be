@@ -113,6 +113,31 @@ export class ProductPlanService {
     },
   };
 
+  async findAllMinimize(
+    findOptions: GeneratedFindOptions<Prisma.ProductionPlanWhereInput>,
+  ) {
+    const [result, total] = await this.prismaService.$transaction([
+      this.prismaService.productionPlan.findMany({
+        skip: findOptions.skip,
+        take: findOptions.take,
+        orderBy: findOptions.orderBy,
+        where: findOptions.where,
+      }) as any,
+      this.prismaService.productionPlan.count({
+        where: findOptions.where,
+      }),
+    ]);
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: result,
+        pageMeta: getPageMeta(total, findOptions.skip, findOptions.take),
+      },
+      'List of Production plan',
+    );
+  }
+
   async findChart(id: string) {
     const productPlan = await this.prismaService.productionPlan.findFirst({
       where: { id },
