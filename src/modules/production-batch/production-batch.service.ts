@@ -5,7 +5,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, ProductionBatch, ProductionBatchStatus } from '@prisma/client';
+import {
+  Prisma,
+  ProductionBatch,
+  ProductionBatchStatus,
+  ProductVariant,
+} from '@prisma/client';
 import { isUUID } from 'class-validator';
 import {
   importRequestInclude,
@@ -22,6 +27,7 @@ import { ExcelService } from '../excel/excel.service';
 import { CreateImportRequestDetailDto } from '../import-request/dto/import-request-detail/create-import-request-detail.dto';
 import { ProductPlanDetailService } from '../product-plan-detail/product-plan-detail.service';
 import { ProductionBatchMaterialVariantService } from '../production-batch-material-variant/production-batch-material-variant.service';
+import { ChartDto } from '../purchase-order/dto/chart.dto';
 import { CancelProductBatchDto } from './dto/cancel-product-batch.dto';
 import { CreateProductionBatchDto } from './dto/create-production-batch.dto';
 import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
@@ -33,8 +39,153 @@ type ImportRequestWithInclude = Prisma.ImportRequestGetPayload<{
   include: typeof importRequestInclude;
 }>;
 
+export type totalProductSizeProduced = {
+  productVariant: ProductVariant;
+  producedQuantity: number;
+  defectQuantity: number;
+};
+
 @Injectable()
 export class ProductionBatchService {
+  async findChart(chartDto: ChartDto) {
+
+
+
+    const { year } = chartDto;
+    const monthlyData = [];
+    let qualityRate = 0;
+    let totalDefectProduct = 0;
+    let totalProducedProduct = 0;
+    let totalProductVariantProduced: totalProductSizeProduced[] = [];
+    for (let month = 0; month < 12; month++) {
+      let numberOfProducedProduct = 0;
+      let numberOfDefectProduct = 0;
+      const from = new Date(year, month, 1);
+      const to = new Date(year, month + 1, 0, 23, 59, 59, 999);
+      const productionBatch = await this.prismaService.productionBatch.findMany(
+        {
+          where: {
+            AND: {
+              productionPlanDetail: {
+                productionPlanId: chartDto.productPlanId
+                  ? chartDto.productPlanId
+                  : null,
+              },
+              createdAt: {
+                gte: from,
+                lte: to,
+              },
+              status: {
+                in: [ProductionBatchStatus.FINISHED],
+              },
+            },
+          },
+          include: {
+            importRequest: {
+              include: {
+                inspectionRequest: {
+                  include: {
+                    inspectionReport: {
+                      include: {
+                        importReceipt: {
+                          include: {
+                            productReceipt: {
+                              include: {
+                                productSize: {
+                                  include: {
+                                    productVariant: true,
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      );
+      productionBatch.forEach((batch) => {
+        batch.importRequest.forEach((request) => {
+          request.inspectionRequest.forEach((inspectionRequest) => {
+            if (inspectionRequest.inspectionReport) {
+              if (
+                inspectionRequest.inspectionReport?.importReceipt &&
+                inspectionRequest.inspectionReport.importReceipt.status ===
+                  'IMPORTED'
+              ) {
+                inspectionRequest.inspectionReport.importReceipt.productReceipt.forEach(
+                  (productReceipt) => {
+                    totalProductVariantProduced.push({
+                      productVariant: productReceipt.productSize.productVariant,
+                      producedQuantity: productReceipt.quantityByUom,
+                      defectQuantity: productReceipt.isDefect
+                        ? productReceipt.quantityByUom
+                        : 0,
+                    });
+                    if (productReceipt.isDefect) {
+                      numberOfDefectProduct += productReceipt.quantityByUom;
+                      totalDefectProduct += productReceipt.quantityByUom;
+                    } else {
+                      totalProducedProduct += productReceipt.quantityByUom;
+                      numberOfProducedProduct += productReceipt.quantityByUom;
+                    }
+                  },
+                );
+              }
+            }
+          });
+        });
+      });
+
+      monthlyData.push({
+        month: month + 1,
+        data: {
+          numberOfProducedProduct,
+          numberOfBatch: productionBatch.length,
+        },
+      });
+    }
+    let totalProductSizeProducedArray = totalProductVariantProduced.reduce(
+      (acc, productVariantProduced) => {
+        const productVariantId = productVariantProduced.productVariant.id;
+        if (!acc[productVariantId]) {
+          acc[productVariantId] = {
+            productVariant: productVariantProduced.productVariant,
+            producedQuantity: 0,
+            defectQuantity: 0,
+          };
+        }
+        acc[productVariantId].producedQuantity +=
+          productVariantProduced.producedQuantity;
+        acc[productVariantId].defectQuantity +=
+          productVariantProduced.defectQuantity;
+        return acc;
+      },
+      {},
+    );
+    totalProductSizeProducedArray = Object.values(
+      totalProductSizeProducedArray,
+    );
+
+    qualityRate =
+      totalProducedProduct / (totalProducedProduct + totalDefectProduct);
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        monthlyData,
+        qualityRate,
+        totalDefectProduct,
+        totalProducedProduct,
+        totalProductVariantProduced: totalProductSizeProducedArray,
+      },
+      'Chart data fetched successfully',
+    );
+  }
   constructor(
     readonly prismaService: PrismaService,
     private readonly excelService: ExcelService,
@@ -196,8 +347,6 @@ export class ProductionBatchService {
         'Exceed quantity to produce in plan detail, you can not create this production batch',
       );
     }
-    console.log(createProductionBatchInput[0]);
-
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const productionBatchInput: Prisma.ProductionBatchCreateInput = {

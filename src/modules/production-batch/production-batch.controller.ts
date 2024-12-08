@@ -24,6 +24,7 @@ import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { RolesGuard } from 'src/common/guard/roles.guard';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
+import { ChartDto } from '../purchase-order/dto/chart.dto';
 import { CancelProductBatchDto } from './dto/cancel-product-batch.dto';
 import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
 import { ProductionBatchService } from './production-batch.service';
@@ -47,6 +48,12 @@ export class ProductionBatchController {
       );
     return fileResult;
   }
+
+  @Get('chart')
+  findChart(@Body() chartDto: ChartDto) {
+    return this.productionBatchService.findChart(chartDto);
+  }
+
   @Get()
   async search(
     @Query(
