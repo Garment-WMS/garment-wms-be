@@ -1009,6 +1009,7 @@ export class MaterialVariantService {
     }
 
     if (result.materialPackage) {
+      result.onHandUom = 0;
       result.materialPackage.forEach((materialPackage) => {
         if (materialPackage?.inventoryStock?.quantityByPack) {
           result.onHandUom +=
