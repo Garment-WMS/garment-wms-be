@@ -647,6 +647,22 @@ export class ProductVariantService {
 
     data.forEach((product: ProductStock) => {
       product.numberOfProductSize = product.productSize.length;
+      product.productSize.forEach((productSize) => {
+        productSize.productReceipt.forEach((productReceipt) => {
+          if (
+            productReceipt.status === ProductReceiptStatus.AVAILABLE &&
+            productReceipt.isDefect === false
+          ) {
+            product.onHandQualified += productReceipt.remainQuantityByUom;
+          }
+          if (
+            productReceipt.status === ProductReceiptStatus.AVAILABLE &&
+            productReceipt.isDefect === true
+          ) {
+            product.onHandDisqualified += productReceipt.remainQuantityByUom;
+          }
+        });
+      });
       product.onHand = product?.productSize?.reduce(
         (totalAcc, productSizeEl) => {
           let variantTotal = 0;
@@ -694,6 +710,22 @@ export class ProductVariantService {
     });
 
     if (result.productSize) {
+      result.productSize.forEach((productSize) => {
+        productSize.productReceipt.forEach((productReceipt) => {
+          if (
+            productReceipt.status === ProductReceiptStatus.AVAILABLE &&
+            productReceipt.isDefect === false
+          ) {
+            result.onHandQualified += productReceipt.remainQuantityByUom;
+          }
+          if (
+            productReceipt.status === ProductReceiptStatus.AVAILABLE &&
+            productReceipt.isDefect === true
+          ) {
+            result.onHandDisqualified += productReceipt.remainQuantityByUom;
+          }
+        });
+      });
       result.numberOfProductSize = result.productSize
         ? result.productSize.length
         : 0;

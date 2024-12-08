@@ -1009,6 +1009,14 @@ export class MaterialVariantService {
     }
 
     if (result.materialPackage) {
+      result.materialPackage.forEach((materialPackage) => {
+        if (materialPackage?.inventoryStock?.quantityByPack) {
+          result.onHandUom +=
+            materialPackage.inventoryStock.quantityByPack *
+            materialPackage.uomPerPack;
+        } else {
+        }
+      });
       result.numberOfMaterialPackage = result.materialPackage.length
         ? result.materialPackage.length
         : 0;

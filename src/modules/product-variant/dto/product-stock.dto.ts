@@ -16,6 +16,8 @@ export type ProductStock = Prisma.ProductVariantGetPayload<{
       };
     };
   }> & {
+    onHandDisqualified?:number;
+    onHandQualified?:number;
     onHand?: number; // Custom field
     numberOfProductSize?: number; // Custom field
   };
