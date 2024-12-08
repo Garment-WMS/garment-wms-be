@@ -750,29 +750,43 @@ export class MaterialVariantService {
         where: findOptions?.where,
       }),
     ]);
-    let onHandUom = 0;
+    let onHand = 0;
     data.forEach((material: MaterialStock) => {
+      material.onHand = onHand;
+      material.onHandUom = 0;
       material.materialPackage.forEach((materialPackage) => {
-        if (materialPackage?.inventoryStock?.quantityByPack) {
-          onHandUom +=
-            materialPackage.inventoryStock.quantityByPack *
-            materialPackage.uomPerPack;
+        let materialPackageOnHand = 0;
+        if (materialPackage?.materialReceipt) {
+          materialPackage.materialReceipt.forEach((materialReceipt) => {
+            if (materialReceipt.status == MaterialReceiptStatus.AVAILABLE) {
+              materialPackageOnHand += materialReceipt.remainQuantityByPack;
+              onHand += materialReceipt.remainQuantityByPack;
+              material.onHandUom +=
+                materialReceipt.remainQuantityByPack *
+                materialPackage.uomPerPack;
+            }
+          });
+          if (materialPackage.inventoryStock) {
+            materialPackage.inventoryStock.quantityByPack =
+              materialPackageOnHand;
+          }
         } else {
         }
       });
-      material.onHandUom = onHandUom;
+
       material.numberOfMaterialPackage = material.materialPackage.length;
-      material.onHand = material?.materialPackage?.reduce(
-        (totalAcc, materialVariantEl) => {
-          let variantTotal = 0;
-          //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
-          if (materialVariantEl.inventoryStock) {
-            variantTotal = materialVariantEl.inventoryStock.quantityByPack;
-          }
-          return totalAcc + variantTotal;
-        },
-        0,
-      );
+      material.onHand = onHand;
+      // material.onHand = material?.materialPackage?.reduce(
+      //   (totalAcc, materialVariantEl) => {
+      //     let variantTotal = 0;
+      //     //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+      //     if (materialVariantEl.inventoryStock) {
+      //       variantTotal = materialVariantEl.inventoryStock.quantityByPack;
+      //     }
+      //     return totalAcc + variantTotal;
+      //   },
+      //   0,
+      // );
     });
 
     const dataResponse: DataResponse = {
@@ -1007,31 +1021,44 @@ export class MaterialVariantService {
     if (!result) {
       return null;
     }
-
+    let onHand = 0;
     if (result.materialPackage) {
       result.onHandUom = 0;
       result.materialPackage.forEach((materialPackage) => {
-        if (materialPackage?.inventoryStock?.quantityByPack) {
-          result.onHandUom +=
-            materialPackage.inventoryStock.quantityByPack *
-            materialPackage.uomPerPack;
+        let materialPackageOnHand = 0;
+        if (materialPackage?.materialReceipt) {
+          materialPackage.materialReceipt.forEach((materialReceipt) => {
+            if (materialReceipt.status == MaterialReceiptStatus.AVAILABLE) {
+              materialPackageOnHand += materialReceipt.remainQuantityByPack;
+              onHand += materialReceipt.remainQuantityByPack;
+              result.onHandUom +=
+                materialReceipt.remainQuantityByPack *
+                materialPackage.uomPerPack;
+            }
+          });
+          if (materialPackage.inventoryStock) {
+            materialPackage.inventoryStock.quantityByPack =
+              materialPackageOnHand;
+          }
         } else {
         }
       });
       result.numberOfMaterialPackage = result.materialPackage.length
         ? result.materialPackage.length
         : 0;
-      result.onHand = result?.materialPackage?.reduce(
-        (totalAcc, materialVariantEl) => {
-          let variantTotal = 0;
-          //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
-          if (materialVariantEl.inventoryStock) {
-            variantTotal = materialVariantEl.inventoryStock.quantityByPack;
-          }
-          return totalAcc + variantTotal;
-        },
-        0,
-      );
+      result.onHand = onHand;
+
+      // result.onHand = result?.materialPackage?.reduce(
+      //   (totalAcc, materialVariantEl) => {
+      //     let variantTotal = 0;
+      //     //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+      //     if (materialVariantEl.inventoryStock) {
+      //       variantTotal = materialVariantEl.inventoryStock.quantityByPack;
+      //     }
+      //     return totalAcc + variantTotal;
+      //   },
+      //   0,
+      // );
     } else {
       result.numberOfMaterialPackage = 0;
       result.onHand = 0;
