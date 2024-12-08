@@ -436,6 +436,9 @@ export class ProductPlanService {
         purchaseOrder.totalInProgressPoDelivery = totalInProgressPoDelivery;
         purchaseOrder.totalCancelledPoDelivery = totalCancelledPoDelivery;
         purchaseOrder.totalPendingPoDelivery = totalPendingPoDelivery;
+        purchaseOrder.poMaterialSummary = getPoDeliveryStatistic(
+          purchaseOrder.poDelivery,
+        );
       });
       // this.findChartWithProductPlan(productionPlan);
     });
@@ -597,6 +600,9 @@ function getProductPlanStatistics(productPlan: any) {
     purchaseOrder.totalInProgressPoDelivery = totalInProgressPoDelivery;
     purchaseOrder.totalCancelledPoDelivery = totalCancelledPoDelivery;
     purchaseOrder.totalPendingPoDelivery = totalPendingPoDelivery;
+    purchaseOrder.poMaterialSummary = getPoDeliveryStatistic(
+      purchaseOrder.poDelivery,
+    );
   });
 
   productPlan.productionPlanDetail.forEach((detail) => {
@@ -702,6 +708,55 @@ function getProductPlanStatistics(productPlan: any) {
   productPlan.totalInProgressPurchaseOrder = totalInProgressPurchaseOrder;
   productPlan.totalFinishedPurchaseOrder = totalFinishedPurchaseOrder;
   productPlan.totalCancelledPurchaseOrder = totalCancelledPurchaseOrder;
-
+  productPlan.materialVariantSummary = getMaterialVariantSummary(
+    productPlan.purchaseOrder,
+  );
   return productPlan;
+}
+export function getPoDeliveryStatistic(poDelivery) {
+  if (!poDelivery) {
+    return poDelivery;
+  }
+  const materialSummary = poDelivery.reduce((summary, delivery) => {
+    delivery.poDeliveryDetail?.forEach((detail) => {
+      const materialId = detail.materialPackageId;
+      if (summary[materialId]) {
+        summary[materialId].quantityByPack += detail.quantityByPack;
+        summary[materialId].actualImportQuantity += detail.actualImportQuantity;
+      } else {
+        summary[materialId] = {
+          ...detail.materialPackage,
+          quantityByPack: detail.quantityByPack,
+          actualImportQuantity: detail.actualImportQuantity,
+        };
+      }
+    });
+    return summary;
+  }, {});
+
+  return Object.values(materialSummary);
+}
+
+export function getMaterialVariantSummary(purchaseOrder) {
+  if (!purchaseOrder) {
+    return purchaseOrder;
+  }
+  const materialSummary = purchaseOrder.reduce((summary, delivery) => {
+    delivery.poMaterialSummary?.forEach((detail) => {
+      const materialId = detail.materialVariantId;
+      if (summary[materialId]) {
+        summary[materialId].quantityByPack += detail.quantityByPack;
+        summary[materialId].actualImportQuantity += detail.actualImportQuantity;
+      } else {
+        summary[materialId] = {
+          ...detail.materialVariant,
+          quantityByPack: detail.quantityByPack,
+          actualImportQuantity: detail.actualImportQuantity,
+        };
+      }
+    });
+    return summary;
+  }, {});
+
+  return Object.values(materialSummary);
 }
