@@ -63,46 +63,55 @@ export class PrismaService
         (params.action === 'update' || params.action === 'updateMany') &&
         this.modelsNeedNotification.includes(params.model)
       ) {
+        console.log('Update', params.args.where);
         // Fetch the existing record before the update
-        const existingRecord = await this[params.model].findUnique({
-          where: params.args.where,
-        });
+        try {
+          const existingRecord = await this[params.model].findUnique({
+            where: params.args.where,
+          });
 
-        // Proceed with the update
-        const result = await next(params);
-        const updatedRecord = result as ImportRequest;
-        // Compare old and new values
-        if (params.model === 'ImportRequest') {
-          const changes = {};
-          for (const key of Object.keys(updatedRecord)) {
-            if (updatedRecord[key] !== existingRecord[key]) {
-              changes[key] = {
-                before: existingRecord[key],
-                after: updatedRecord[key],
-              };
+          // Proceed with the update
+          const result = await next(params);
+          const updatedRecord = result as ImportRequest;
+          // Compare old and new values
+          if (params.model === 'ImportRequest') {
+            const changes = {};
+            for (const key of Object.keys(updatedRecord)) {
+              if (updatedRecord[key] !== existingRecord[key]) {
+                changes[key] = {
+                  before: existingRecord[key],
+                  after: updatedRecord[key],
+                };
+              }
             }
-          }
-          this.eventEmitter.emit('notification.importRequest.updated', {
-            changes,
-            importRequest: updatedRecord.id,
-          });
-        } else if (params.model === 'MaterialExportRequest') {
-          const changes = {};
-          for (const key of Object.keys(updatedRecord)) {
-            if (updatedRecord[key] !== existingRecord[key]) {
-              changes[key] = {
-                before: existingRecord[key],
-                after: updatedRecord[key],
-              };
+            this.eventEmitter.emit('notification.importRequest.updated', {
+              changes,
+              importRequest: updatedRecord.id,
+            });
+          } else if (params.model === 'MaterialExportRequest') {
+            const changes = {};
+            for (const key of Object.keys(updatedRecord)) {
+              if (updatedRecord[key] !== existingRecord[key]) {
+                changes[key] = {
+                  before: existingRecord[key],
+                  after: updatedRecord[key],
+                };
+              }
             }
+            this.eventEmitter.emit(
+              'notification.materialExportRequest.updated',
+              {
+                changes,
+                materialExportRequest: updatedRecord.id,
+              },
+            );
           }
-          this.eventEmitter.emit('notification.materialExportRequest.updated', {
-            changes,
-            materialExportRequest: updatedRecord.id,
-          });
+
+          return result;
+        } catch (e) {
+          console.error(e);
+          return next(params);
         }
-
-        return result;
       }
 
       return next(params);

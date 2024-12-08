@@ -8,6 +8,7 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ExcelService } from '../excel/excel.service';
+import { ChartDto } from '../material-variant/dto/chart.dto';
 import { PoDeliveryDto } from '../po-delivery/dto/po-delivery.dto';
 import {
   extractNumberFromCode,
@@ -22,6 +23,136 @@ import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 
 @Injectable()
 export class PurchaseOrderService {
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly excelService: ExcelService,
+    private readonly poDeliveryService: PoDeliveryService,
+    private readonly productionPlanservice: ProductPlanService,
+  ) {}
+
+  queryInclude: Prisma.PurchaseOrderInclude = {
+    supplier: true,
+    poDelivery: {
+      include: {
+        poDeliveryDetail: {
+          include: {
+            materialPackage: {
+              include: {
+                materialVariant: {
+                  include: {
+                    material: {
+                      include: {
+                        materialUom: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+
+  async getPurchaseOrderChart(chartDto: ChartDto) {
+    const { year } = chartDto;
+    const monthlyData = [];
+    for (let month = 0; month < 12; month++) {
+      const from = new Date(year, month, 1);
+      const to = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+      const purchaseOrder = await this.prismaService.purchaseOrder.findMany({
+        where: {
+          AND: {
+            createdAt: {
+              gte: from,
+              lte: to,
+            },
+            status: {
+              in: [PurchaseOrderStatus.FINISHED],
+            },
+          },
+        },
+        include: {
+          poDelivery: {
+            include: {
+              poDeliveryDetail: true,
+            },
+          },
+        },
+      });
+      let poValue = 0;
+      let numberOfMaterialUnits = 0;
+      purchaseOrder.forEach((po) => {
+        poValue += po.subTotalAmount;
+        po.poDelivery.forEach((pd) => {
+          pd.poDeliveryDetail.forEach((pdd) => {
+            numberOfMaterialUnits += pdd.quantityByPack;
+          });
+        });
+      });
+
+      //TODO: Need to check if this is correct after doing materialExportReceipt
+      // const exportMaterialReceipt =
+      //   await this.prismaService.materialExportReceiptDetail.findMany({
+      //     where: {
+      //       AND: {
+      //         ...additionExportReceiptQuery,
+      //         createdAt: {
+      //           gte: from,
+      //           lte: to,
+      //         },
+      //       },
+      //       materialExportReceipt: {
+      //         status: ExportReceiptStatus.EXPORTED,
+      //       },
+      //     },
+      //     include: {
+      //       materialReceipt: {
+      //         include: {
+      //           materialPackage: {
+      //             include: materialPackageInclude,
+      //           },
+      //         },
+      //       },
+      //     },
+      //   });
+
+      // const totalQuantities = this.calculateTotalQuantities(
+      //   importMaterialReceipt,
+      //   exportMaterialReceipt,
+      // );
+      monthlyData.push({
+        month: month + 1,
+        data: {
+          numberOfImportedMaterialUnits: numberOfMaterialUnits,
+          numberOfPo: purchaseOrder.length,
+          poValue,
+        },
+      });
+    }
+
+    return apiSuccess(HttpStatus.OK, monthlyData, 'Purchase Order chart data');
+  }
+
+  async getPurchaseOrderStatisticsHistory(from: any, to: any) {
+    const fromDate = from ? new Date(from) : undefined;
+    const toDate = to ? new Date(to) : undefined;
+
+    const allPurchaseOrder = await this.prismaService.purchaseOrder.findMany({
+      where: {
+        createdAt: {
+          gte: fromDate,
+          lte: toDate,
+        },
+      },
+    });
+    let total = allPurchaseOrder.reduce(
+      (total, order) => total + order.subTotalAmount,
+      0,
+    );
+  }
   async updateAllPurchaseOrderCodes(): Promise<ApiResponse> {
     try {
       const purchaseOrders = await this.prismaService.purchaseOrder.findMany({
@@ -62,38 +193,6 @@ export class PurchaseOrderService {
     const paddedNumber = number.toString().padStart(6, '0');
     return `${prefix}-${paddedNumber}`;
   }
-  constructor(
-    private readonly prismaService: PrismaService,
-    private readonly excelService: ExcelService,
-    private readonly poDeliveryService: PoDeliveryService,
-    private readonly productionPlanservice: ProductPlanService,
-  ) {}
-
-  queryInclude: Prisma.PurchaseOrderInclude = {
-    supplier: true,
-    poDelivery: {
-      include: {
-        poDeliveryDetail: {
-          include: {
-            materialPackage: {
-              include: {
-                materialVariant: {
-                  include: {
-                    material: {
-                      include: {
-                        materialUom: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  };
-
   async getAllPurchaseOrders() {
     const result = (await this.prismaService.purchaseOrder.findMany({
       include: {
