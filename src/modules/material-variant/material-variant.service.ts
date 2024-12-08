@@ -750,8 +750,17 @@ export class MaterialVariantService {
         where: findOptions?.where,
       }),
     ]);
-
+    let onHandUom = 0;
     data.forEach((material: MaterialStock) => {
+      material.materialPackage.forEach((materialPackage) => {
+        if (materialPackage?.inventoryStock?.quantityByPack) {
+          onHandUom +=
+            materialPackage.inventoryStock.quantityByPack *
+            materialPackage.uomPerPack;
+        } else {
+        }
+      });
+      material.onHandUom = onHandUom;
       material.numberOfMaterialPackage = material.materialPackage.length;
       material.onHand = material?.materialPackage?.reduce(
         (totalAcc, materialVariantEl) => {

@@ -15,6 +15,7 @@ export type MaterialStock = Prisma.MaterialVariantGetPayload<{
     };
   };
 }> & {
+  onHandUom?: number;
   onHand?: number; // Adding custom field
   numberOfMaterialPackage?: number; // Adding custom field
 };
