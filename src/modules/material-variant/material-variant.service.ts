@@ -756,7 +756,7 @@ export class MaterialVariantService {
       material.onHandUom = 0;
       material.materialPackage.forEach((materialPackage) => {
         let materialPackageOnHand = 0;
-        if (materialPackage?.materialReceipt) {
+        if (materialPackage.materialReceipt.length > 0) {
           materialPackage.materialReceipt.forEach((materialReceipt) => {
             if (materialReceipt.status == MaterialReceiptStatus.AVAILABLE) {
               materialPackageOnHand += materialReceipt.remainQuantityByPack;
@@ -771,6 +771,7 @@ export class MaterialVariantService {
               materialPackageOnHand;
           }
         } else {
+          onHand = 0;
         }
       });
 
