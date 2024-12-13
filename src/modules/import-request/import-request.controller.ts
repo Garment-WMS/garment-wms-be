@@ -26,6 +26,7 @@ import { CreateProductImportRequestDto } from './dto/import-request/create-produ
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
 import { ProductionDepartmentCreateReturnImportRequestDto } from './dto/import-request/production-department-create-return-import-request.dto';
 import { PurchasingStaffProcessDto } from './dto/import-request/purchasing-staff-process.dto';
+import { ReassignImportRequestDto } from './dto/import-request/reassign-import-request.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 import { ImportRequestService } from './import-request.service';
 import { IsImportRequestExistPipe } from './pipe/is-import-request-exist.pipe';
@@ -249,6 +250,17 @@ export class ImportRequestController {
       HttpStatus.OK,
       await this.importRequestService.getByImportReceiptId(importReceiptId),
       'Get import request by import receipt successfully',
+    );
+  }
+
+  @Post('/reassign')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER)
+  async reassign(@Body() reassignImportRequestDto: ReassignImportRequestDto) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.importRequestService.reassign(reassignImportRequestDto),
+      'Import request reassigned successfully',
     );
   }
 }

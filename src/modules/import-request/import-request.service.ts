@@ -4,7 +4,6 @@ import {
   ForbiddenException,
   HttpStatus,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -849,6 +848,10 @@ export class ImportRequestService {
         result.discussion = discussion;
         return result;
       },
+      {
+        maxWait: 5000,
+        timeout: 10000,
+      },
     );
 
     if (result) {
@@ -882,12 +885,50 @@ export class ImportRequestService {
   }
 
   async reassign(reassignImportRequestDto: ReassignImportRequestDto) {
+    const importRequestCheck =
+      await this.prismaService.importRequest.findUnique({
+        where: { id: reassignImportRequestDto.importRequestId },
+        select: { status: true },
+      });
+    if (!importRequestCheck) {
+      throw new NotFoundException('Import Request not found');
+    }
+    const allowReassignStatus: ImportRequestStatus[] = [
+      'APPROVED',
+      'INSPECTING',
+      'INSPECTED',
+      'AWAIT_TO_IMPORT',
+    ];
+    if (!allowReassignStatus.includes(importRequestCheck.status)) {
+      throw new BadRequestException(
+        `Import Request status must be ${allowReassignStatus.join(', ')} but current status is ${importRequestCheck.status}`,
+      );
+    }
     const importRequest = await this.prismaService.importRequest.update({
       where: { id: reassignImportRequestDto.importRequestId },
       data: {
         warehouseStaffId: reassignImportRequestDto.warehouseStaffId,
       },
     });
+    const importReceipt = await this.prismaService.importReceipt.findFirst({
+      where: {
+        inspectionReport: {
+          inspectionRequest: {
+            importRequestId: importRequest.id,
+          },
+        },
+      },
+    });
+
+    if (importReceipt) {
+      await this.prismaService.importReceipt.update({
+        where: { id: importReceipt.id },
+        data: {
+          warehouseStaffId: reassignImportRequestDto.warehouseStaffId,
+        },
+      });
+    }
+
     //reassign task
     const task = await this.taskService.reassignImportRequestTask(
       importRequest.id,
