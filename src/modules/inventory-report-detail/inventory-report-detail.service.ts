@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ReceiptAdjustmentStatus } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
@@ -98,22 +98,16 @@ export class InventoryReportDetailService {
         warehouseManagerId: warehouseManagerId,
         materialReceiptId: inventoryReportDetail.materialReceiptId,
         productReceiptId: inventoryReportDetail.productReceiptId,
+        status: ReceiptAdjustmentStatus.ADJUSTED,
         inventoryReportDetailId: result.id,
         beforeAdjustQuantity: inventoryReportDetail.expectedQuantity,
         afterAdjustQuantity: result.managerQuantityConfirm,
         reason: inventoryRecordDetail.note,
       };
-      console.log(createReceiptAdjustmentDto);
 
+      //TODO: Can implement background job here
       await this.receiptAdjustmentService.create(createReceiptAdjustmentDto);
-
-      // BUG: Not work
-      // await this.receiptAdjustQueue.add(
-      //   'create-receipt-adjustment',
-      //   createReceiptAdjustmentDto,
-      // );
     }
-
     return result;
   }
 
@@ -306,6 +300,7 @@ export class InventoryReportDetailService {
           managerQuantityConfirm: null,
         },
       });
+    console.log(isAllInventoryReportDetailRecorded);
     if (isAllInventoryReportDetailRecorded.length > 0) {
       return false;
     }

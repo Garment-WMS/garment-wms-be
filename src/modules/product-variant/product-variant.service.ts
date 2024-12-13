@@ -1,5 +1,5 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, ProductReceiptStatus } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
@@ -8,16 +8,81 @@ import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { ProductAttributeService } from 'src/product-attribute/product-attribute.service';
 import { ImageService } from '../image/image.service';
+import { ProductSizeService } from '../product-size/product-size.service';
 import { ChartDto } from './dto/chart-dto.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductStock } from './dto/product-stock.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
+type History = {
+  productReceiptId?: string;
+  receiptAdjustmentId?: string;
+  importReceiptId?: string;
+  inventoryReportId?: string;
+  quantityByPack: number;
+  isDefect: Boolean;
+  type: string;
+  code: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+const includeHistory: Prisma.ProductVariantInclude = {
+  productSize: {
+    include: {
+      productReceipt: {
+        include: {
+          receiptAdjustment: {
+            include: {
+              inventoryReportDetail: {
+                include: {
+                  inventoryReport: true,
+                },
+              },
+            },
+          },
+          importReceipt: true,
+        },
+      },
+    },
+  },
+};
+
+interface ProductVariantIncludeQuery
+  extends Prisma.ProductVariantGetPayload<{
+    include: {
+      productSize: {
+        include: {
+          productReceipt: {
+            include: {
+              receiptAdjustment: {
+                include: {
+                  productReceipt: true;
+                  inventoryReportDetail: {
+                    include: {
+                      inventoryReport: true;
+                    };
+                  };
+                };
+              };
+              importReceipt: true;
+            };
+          };
+        };
+      };
+    };
+  }> {
+  history?: History[];
+}
+
 @Injectable()
 export class ProductVariantService {
   constructor(
     private prismaService: PrismaService,
+    private readonly productSizeService: ProductSizeService,
+    private readonly productAttributeService: ProductAttributeService,
     private readonly imageService: ImageService,
   ) {}
 
@@ -67,6 +132,98 @@ export class ProductVariantService {
       },
     },
   };
+
+  async findHistoryByIdWithResponse(
+    id: string,
+    sortBy: string,
+    filterOption?: GeneratedFindOptions<Prisma.ProductVariantWhereInput>,
+  ) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid id');
+    }
+    const offset = filterOption?.skip || Constant.DEFAULT_OFFSET;
+    const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
+    const result = (await this.prismaService.productVariant.findFirst({
+      where: {
+        id: id,
+      },
+      include: {
+        productSize: {
+          include: {
+            productReceipt: {
+              include: {
+                importReceipt: true,
+                receiptAdjustment: {
+                  include: {
+                    productReceipt: true,
+                    inventoryReportDetail: {
+                      include: {
+                        inventoryReport: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    })) as ProductVariantIncludeQuery;
+
+    result.history = [];
+
+    result.productSize.forEach((productSize) => {
+      productSize?.productReceipt?.forEach((productReceipt) => {
+        if (productReceipt.status === ProductReceiptStatus.AVAILABLE) {
+          result.history.push({
+            productReceiptId: productReceipt.id,
+            importReceiptId: productReceipt.importReceipt?.id,
+            quantityByPack: productReceipt.quantityByUom,
+            code: productReceipt.importReceipt?.code,
+            isDefect: productReceipt.isDefect,
+            type: 'IMPORT_RECEIPT',
+            createdAt: productReceipt.createdAt,
+            updatedAt: productReceipt.updatedAt,
+          });
+        }
+        productReceipt?.receiptAdjustment.forEach((receiptAdjustment) => {
+          result.history.push({
+            receiptAdjustmentId: receiptAdjustment.id,
+            inventoryReportId:
+              receiptAdjustment?.inventoryReportDetail.inventoryReportId,
+            quantityByPack:
+              receiptAdjustment.afterAdjustQuantity -
+              receiptAdjustment.beforeAdjustQuantity,
+            code: receiptAdjustment?.inventoryReportDetail?.inventoryReport
+              .code,
+            type: 'RECEIPT_ADJUSTMENT',
+            isDefect: receiptAdjustment.productReceipt.isDefect,
+            createdAt: receiptAdjustment.createdAt,
+            updatedAt: receiptAdjustment.updatedAt,
+          });
+        });
+      });
+    });
+
+    let length = result.history.length;
+    result.history = result?.history
+      ?.sort((a, b) => {
+        if (sortBy === 'desc') {
+          return b.createdAt.getTime() - a.createdAt.getTime();
+        }
+        return a.createdAt.getTime() - b.createdAt.getTime();
+      })
+      .slice(offset, offset + limit);
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: result.history,
+        pageMeta: getPageMeta(length, offset, limit),
+      },
+      'Product history found',
+    );
+  }
 
   async getChart(chartDto: ChartDto) {
     const productVariantIds = chartDto.productVariantId || [];
@@ -313,10 +470,53 @@ export class ProductVariantService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Image not uploaded');
   }
 
-  async create(createProductDto: CreateProductDto) {
+  async addImageWithoutResponse(file: Express.Multer.File, id: string) {
+    const imageUrl = await this.imageService.addImageToFirebase(
+      file,
+      id,
+      PathConstants.PRODUCT_PATH,
+    );
+    let result;
+    if (imageUrl) {
+      const updateProductDto: UpdateProductDto = {
+        image: imageUrl,
+      };
+      result = await this.update(id, updateProductDto);
+    }
+    return imageUrl;
+  }
+
+  async create(createProductDto: CreateProductDto, file?: Express.Multer.File) {
+    const { productAttributes, productSizes, code, ...rest } = createProductDto;
+
     const result = await this.prismaService.productVariant.create({
-      data: createProductDto,
+      data: rest,
+      include: this.includeQuery,
     });
+
+    if (createProductDto.productAttributes) {
+      const productAttribute = await this.productAttributeService.createMany(
+        createProductDto.productAttributes,
+        result.id,
+      );
+      result.productAttribute = productAttribute;
+    }
+
+    if (createProductDto.productSizes) {
+      const productSize = await this.productSizeService.createMany(
+        createProductDto.productSizes,
+        result,
+      );
+      result.productSize = productSize;
+    }
+
+    if (file) {
+      const imageUrl = await this.addImageWithoutResponse(file, result.id);
+      if (imageUrl) {
+        result.image = imageUrl;
+      }
+    }
+
     if (result) {
       return apiSuccess(
         HttpStatus.CREATED,
@@ -446,7 +646,25 @@ export class ProductVariantService {
     ]);
 
     data.forEach((product: ProductStock) => {
+      product.onHandDisqualified = 0;
+      product.onHandQualified = 0;
       product.numberOfProductSize = product.productSize.length;
+      product.productSize.forEach((productSize) => {
+        productSize.productReceipt.forEach((productReceipt) => {
+          if (
+            productReceipt.status === ProductReceiptStatus.AVAILABLE &&
+            productReceipt.isDefect === false
+          ) {
+            product.onHandQualified += productReceipt.remainQuantityByUom;
+          }
+          if (
+            productReceipt.status === ProductReceiptStatus.AVAILABLE &&
+            productReceipt.isDefect === true
+          ) {
+            product.onHandDisqualified += productReceipt.remainQuantityByUom;
+          }
+        });
+      });
       product.onHand = product?.productSize?.reduce(
         (totalAcc, productSizeEl) => {
           let variantTotal = 0;
@@ -494,6 +712,26 @@ export class ProductVariantService {
     });
 
     if (result.productSize) {
+      result.onHandQualified = 0;
+      result.onHandDisqualified = 0;
+      result.productSize.forEach((productSize) => {
+        productSize.productReceipt.forEach((productReceipt) => {
+          if (
+            productReceipt.status === ProductReceiptStatus.AVAILABLE &&
+            productReceipt.isDefect === false
+          ) {
+            console.log(productReceipt.remainQuantityByUom);
+
+            result.onHandQualified += productReceipt.remainQuantityByUom;
+          }
+          if (
+            productReceipt.status === ProductReceiptStatus.AVAILABLE &&
+            productReceipt.isDefect === true
+          ) {
+            result.onHandDisqualified += productReceipt.remainQuantityByUom;
+          }
+        });
+      });
       result.numberOfProductSize = result.productSize
         ? result.productSize.length
         : 0;
@@ -510,6 +748,7 @@ export class ProductVariantService {
       result.numberOfProductSize = 0;
       result.onHand = 0;
     }
+
     return result;
   }
 

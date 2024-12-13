@@ -27,6 +27,8 @@ export class ExportAlgorithmService {
           materialVariantId: needMaterialVariants.materialVariantId,
           targetQuantityUom: needMaterialVariants.targetQuantityUom,
           missingQuantityUom: needMaterialVariants.targetQuantityUom,
+          exceedQuantityUom: 0,
+          exceedPercentage: 0,
           needMaterialReceipts: [],
           isFullFilled: false,
         });
@@ -47,7 +49,12 @@ export class ExportAlgorithmService {
 
       let remainingTargetQuantityUom: number =
         needMaterialVariants.targetQuantityUom;
-      const needMaterialReceipts = [];
+      const needMaterialReceipts: {
+        id: string;
+        quantityByPack: number;
+        uomPerPack: number;
+        date: Date;
+      }[] = [];
 
       for (const item of sortedItems) {
         if (remainingTargetQuantityUom <= 0) {
@@ -70,11 +77,24 @@ export class ExportAlgorithmService {
         needMaterialReceipts.push(needMaterialReceipt);
         remainingTargetQuantityUom -= quantityUomToUse;
       }
+
+      let exceedQuantityUom: number = needMaterialVariants.targetQuantityUom;
+      for (const needMaterialReceipt of needMaterialReceipts) {
+        exceedQuantityUom -=
+          needMaterialReceipt.quantityByPack * needMaterialReceipt.uomPerPack;
+      }
+      exceedQuantityUom = Math.abs(exceedQuantityUom);
+      const exceedPercentage =
+        (exceedQuantityUom / needMaterialVariants.targetQuantityUom) * 100;
+
       result.push({
         materialVariantId: needMaterialVariants.materialVariantId,
         targetQuantityUom: needMaterialVariants.targetQuantityUom,
-        missingQuantityUom: remainingTargetQuantityUom,
+        missingQuantityUom:
+          remainingTargetQuantityUom < 0 ? 0 : remainingTargetQuantityUom,
         needMaterialReceipts: needMaterialReceipts,
+        exceedQuantityUom: exceedQuantityUom,
+        exceedPercentage: exceedPercentage,
         isFullFilled: remainingTargetQuantityUom <= 0,
       });
       // this.logger.debug({

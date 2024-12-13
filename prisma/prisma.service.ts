@@ -6,7 +6,16 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import {
+  ImportRequest,
+  InventoryReportPlan,
+  InventoryStock,
+  MaterialExportRequest,
+  Prisma,
+  PrismaClient,
+  Task,
+} from '@prisma/client';
 
 @Injectable()
 export class PrismaService
@@ -15,7 +24,7 @@ export class PrismaService
 {
   private readonly logger = new Logger(PrismaService.name);
 
-  constructor() {
+  constructor(private readonly eventEmitter?: EventEmitter2) {
     super({
       log: [
         {
@@ -36,6 +45,7 @@ export class PrismaService
         },
       ],
     });
+    this.$extends;
   }
 
   async onModuleInit() {
@@ -49,11 +59,156 @@ export class PrismaService
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+    const eventEmitter = this.eventEmitter;
+    Logger.debug(`Event emitted: ${JSON.stringify(eventEmitter)}`);
 
     this.$use(this.softDeleteMiddleware);
     this.$use(this.findNotDeletedMiddleware);
     this.$use(this.generateCodeMiddleware);
 
+    this.$use(async (params, next) => {
+      if (
+        (params.action === 'update' || params.action === 'updateMany') &&
+        this.modelsNeedNotification.includes(params.model)
+      ) {
+        console.log('Update', params.args.where);
+        // Fetch the existing record before the update
+        try {
+          const existingRecord = await this[params.model].findUnique({
+            where: params.args.where,
+          });
+
+          // Proceed with the update
+          const result = await next(params);
+          // Compare old and new values
+          if (params.model === 'ImportRequest') {
+            const changes = {};
+            const updatedRecord = result as ImportRequest;
+
+            for (const key of Object.keys(updatedRecord)) {
+              if (updatedRecord[key] !== existingRecord[key]) {
+                changes[key] = {
+                  before: existingRecord[key],
+                  after: updatedRecord[key],
+                };
+              }
+            }
+            this.eventEmitter.emit('notification.importRequest.updated', {
+              changes,
+              importRequestId: updatedRecord.id,
+            });
+          } else if (params.model === 'MaterialExportRequest') {
+            const updatedRecord = result as MaterialExportRequest;
+            const changes = {};
+            for (const key of Object.keys(updatedRecord)) {
+              if (updatedRecord[key] !== existingRecord[key]) {
+                changes[key] = {
+                  before: existingRecord[key],
+                  after: updatedRecord[key],
+                };
+              }
+            }
+            this.eventEmitter.emit(
+              'notification.materialExportRequest.updated',
+              {
+                changes,
+                materialExportRequest: updatedRecord,
+              },
+            );
+          } else if (params.model === 'InventoryStock') {
+            const changes = {};
+            const updatedRecord = result as InventoryStock;
+            for (const key of Object.keys(updatedRecord)) {
+              if (updatedRecord[key] !== existingRecord[key]) {
+                changes[key] = {
+                  before: existingRecord[key],
+                  after: updatedRecord[key],
+                };
+              }
+            }
+            this.eventEmitter.emit('notification.inventoryStock.updated', {
+              changes,
+              inventoryStockId: updatedRecord.id,
+            });
+          }else if (params.model === 'InventoryReportPlan') {
+            const changes = {};
+            const updatedRecord = result as InventoryReportPlan;
+            for (const key of Object.keys(updatedRecord)) {
+              if (updatedRecord[key] !== existingRecord[key]) {
+                changes[key] = {
+                  before: existingRecord[key],
+                  after: updatedRecord[key],
+                };
+              }
+            }
+            this.eventEmitter.emit('notification.inventoryReportPlan.updated', {
+              changes,
+              inventoryReportPlanId: updatedRecord.id,
+            });
+          }
+
+          return result;
+        } catch (e) {
+          console.error(e);
+          return next(params);
+        }
+      }
+
+      return next(params);
+    });
+
+    this.$use(async (params, next) => {
+      if (
+        params.action === 'create' &&
+        this.modelsNeedNotification.includes(params.model)
+      ) {
+        // Execute the Prisma query and get the result
+        const result = await next(params);
+
+        switch (params.model) {
+          case 'ImportRequest':
+            const createdEntity = result as ImportRequest;
+            this.eventEmitter.emit(
+              'notification.importRequest.created',
+              createdEntity,
+            );
+            break;
+          case 'MaterialExportRequest':
+            const createdMaterialExportRequest =
+              result as MaterialExportRequest;
+            this.eventEmitter.emit(
+              'notification.materialExportRequest.created',
+              createdMaterialExportRequest,
+            );
+            break;
+        }
+        if (params.model === 'Task') {
+          const createdEntity = result as Task;
+          this.eventEmitter.emit('notification.task.created', createdEntity);
+        }
+        return result;
+      }
+
+      // Create Many
+      if (
+        params.action === 'createMany' &&
+        this.modelsNeedNotification.includes(params.model)
+      ) {
+        // Execute the Prisma query and get the result
+        const result = await next(params);
+
+        if (params.model === 'Task') {
+          const createdEntity = result as Task[];
+          this.eventEmitter.emit(
+            'notification.task.many.created',
+            createdEntity,
+          );
+        }
+        return result;
+      }
+
+      return next(params);
+    });
     // this.$on('error', ({ message }) => {
     //   this.logger.error(message);
     // });
@@ -150,6 +305,28 @@ export class PrismaService
     'MaterialExportReceipt',
   ];
 
+  modelsNeedNotification: Prisma.ModelName[] = [
+    'ImportRequest',
+    'ImportReceipt',
+    'InspectionRequest',
+    'InspectionReport',
+    'InventoryReport',
+    'InventoryReportPlan',
+    'InventoryReportPlanDetail',
+    'ProductionBatch',
+    'ProductionPlan',
+    'ProductReceipt',
+    'MaterialReceipt',
+    'PoDelivery',
+    'PurchaseOrder',
+    'ProductionPlanDetail',
+    'Task',
+    'Todo',
+    'InventoryStock',
+    'MaterialExportRequest',
+    'MaterialExportReceipt',
+  ];
+
   getPrefix(modelName: string, delimiter: string): string {
     return modelName
       .match(/[A-Z][a-z]*|[A-Z]+(?![a-z])/g)
@@ -160,13 +337,14 @@ export class PrismaService
   generateCodeMiddleware: Prisma.Middleware = async (params, next) => {
     const delimiter: string = '-';
     if (
-      (params.action === 'create' || params.action === 'createMany') &&
+      (params.action === 'create' ||
+        params.action === 'createMany' ||
+        params.action === 'createManyAndReturn') &&
       this.modelsWithCode.includes(params.model)
     ) {
       const modelName = params.model;
       const prefix = this.getPrefix(modelName, delimiter);
 
-      // Find the maximum existing code number
       const lastRecord = await this[modelName].findFirst({
         orderBy: { code: 'desc' },
         select: { code: true },
@@ -185,7 +363,10 @@ export class PrismaService
           const nextNumber = (lastNumber + 1).toString().padStart(6, '0');
           params.args.data.code = `${prefix}${delimiter}${nextNumber}`;
         }
-      } else if (params.action === 'createMany') {
+      } else if (
+        params.action === 'createMany' ||
+        params.action === 'createManyAndReturn'
+      ) {
         if (params.args.data && Array.isArray(params.args.data)) {
           params.args.data.forEach((item, index) => {
             if (item.code === undefined) {

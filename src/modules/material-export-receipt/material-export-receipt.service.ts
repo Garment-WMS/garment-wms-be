@@ -9,15 +9,21 @@ import {
 import { $Enums, Prisma, RoleCode } from '@prisma/client';
 import {
   materialExportReceiptInclude,
-  materialExportRequestInclude,
   materialInclude,
+  materialPackageInclude,
+  materialVariantInclude,
+  warehouseStaffInclude,
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
+import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { ChatService } from '../chat/chat.service';
+import { CreateChatDto } from '../chat/dto/create-chat.dto';
+import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { TaskService } from '../task/task.service';
 import { CreateMaterialExportReceiptDto } from './dto/create-material-export-receipt.dto';
 import { ExportAlgorithmParam } from './dto/export-algorithm-param.type';
@@ -36,6 +42,8 @@ export class MaterialExportReceiptService {
     private readonly prismaService: PrismaService,
     private readonly exportAlgorithmService: ExportAlgorithmService,
     private readonly taskService: TaskService,
+    private readonly chatService: ChatService,
+    private readonly inventoryStockService: InventoryStockService,
   ) {}
 
   async getByUserToken(
@@ -84,27 +92,110 @@ export class MaterialExportReceiptService {
   // }
 
   async create(createMaterialExportReceiptDto: CreateMaterialExportReceiptDto) {
-    const input: Prisma.MaterialExportReceiptUncheckedCreateInput = {
-      type: createMaterialExportReceiptDto.type,
-      note: createMaterialExportReceiptDto.note,
-      warehouseStaffId: createMaterialExportReceiptDto.warehouseStaffId,
-      materialExportReceiptDetail: {
-        createMany: {
-          data: createMaterialExportReceiptDto.materialExportReceiptDetail.map(
-            (detail) => ({
-              materialReceiptId: detail.materialReceiptId,
-              quantityByPack: detail.quantityByPack,
-            }),
-          ),
-          skipDuplicates: true,
-        },
-      },
-    };
+    Logger.debug(
+      'createMaterialExportReceiptDto',
+      createMaterialExportReceiptDto,
+    );
 
-    return this.prismaService.materialExportReceipt.create({
-      data: input,
-      include: materialExportReceiptInclude,
-    });
+    const result = await this.prismaService.$transaction(
+      async (prismaInstance: PrismaService) => {
+        const input: Prisma.MaterialExportReceiptUncheckedCreateInput = {
+          materialExportRequestId:
+            createMaterialExportReceiptDto.materialExportRequestId,
+          type: createMaterialExportReceiptDto.type,
+          note: createMaterialExportReceiptDto.note,
+          warehouseStaffId: createMaterialExportReceiptDto.warehouseStaffId,
+          status: $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT,
+          expectedStartedAt: createMaterialExportReceiptDto.expectedStartedAt,
+          expectedFinishedAt: createMaterialExportReceiptDto.expectedFinishedAt,
+          materialExportReceiptDetail: {
+            createMany: {
+              data: createMaterialExportReceiptDto.materialExportReceiptDetail.map(
+                (detail) => ({
+                  materialReceiptId: detail.materialReceiptId,
+                  quantityByPack: detail.quantityByPack,
+                }),
+              ),
+              skipDuplicates: true,
+            },
+          },
+        };
+
+        const [materialExportReceipt, materialReceipt] = await Promise.all([
+          prismaInstance.materialExportReceipt.create({
+            data: input,
+            include: {
+              materialExportReceiptDetail: {
+                include: {
+                  materialReceipt: {
+                    include: {
+                      materialPackage: {
+                        include: materialPackageInclude,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          }),
+          Promise.all(
+            createMaterialExportReceiptDto.materialExportReceiptDetail.map(
+              (detail) =>
+                prismaInstance.materialReceipt.update({
+                  where: {
+                    id: detail.materialReceiptId,
+                  },
+                  data: {
+                    remainQuantityByPack: {
+                      decrement: detail.quantityByPack,
+                    },
+                  },
+                  select: {
+                    id: true,
+                    remainQuantityByPack: true,
+                  },
+                }),
+            ),
+          ),
+        ]);
+
+        //update status to USED if remainQuantityByPack = 0
+        await Promise.all(
+          materialReceipt.map((receipt) => {
+            if (receipt.remainQuantityByPack === 0) {
+              return prismaInstance.materialReceipt.update({
+                where: {
+                  id: receipt.id,
+                },
+                data: {
+                  status: $Enums.MaterialReceiptStatus.USED,
+                },
+              });
+            }
+          }),
+        );
+
+        const inventoryStock = await Promise.all(
+          materialExportReceipt.materialExportReceiptDetail.map((detail) =>
+            this.inventoryStockService.updateMaterialStock(
+              detail.materialReceipt.materialPackageId,
+              //minus quantity by pack
+              -detail.quantityByPack,
+              prismaInstance,
+            ),
+          ),
+        );
+
+        return {
+          materialExportReceipt,
+          inventoryStock,
+          materialReceipt,
+        };
+      },
+    );
+    Logger.debug('result', result);
+
+    return result;
   }
 
   async getLatest(from: any, to: any) {
@@ -156,7 +247,17 @@ export class MaterialExportReceiptService {
     const materialExportReceipt =
       this.prismaService.materialExportReceipt.findUnique({
         where: { id },
-        include: materialExportReceiptInclude,
+        include: {
+          ...materialExportReceiptInclude,
+          task: {
+            include: {
+              warehouseStaff: {
+                include: warehouseStaffInclude,
+              },
+              todo: true,
+            },
+          },
+        },
       });
     if (!materialExportReceipt) {
       throw new Error('Material export receipt not found');
@@ -175,6 +276,22 @@ export class MaterialExportReceiptService {
         },
         include: {
           materialExportRequestDetail: {
+            // where: {
+            //   materialVariant: {
+            //     materialPackage: {
+            //       every: {
+            //         materialReceipt: {
+            //           every: {
+            //             status: 'AVAILABLE',
+            //             remainQuantityByPack: {
+            //               gt: 0,
+            //             },
+            //           },
+            //         },
+            //       },
+            //     },
+            //   },
+            // },
             include: {
               materialVariant: {
                 include: {
@@ -233,28 +350,35 @@ export class MaterialExportReceiptService {
         targetQuantityUom: detail.quantityByUom,
         allMaterialReceipts: detail.materialVariant.materialPackage?.flatMap(
           (materialPackage) => {
-            return materialPackage.materialReceipt.map((materialReceipt) => {
-              let date = new Date();
-              switch (exportAlgorithmEnum) {
-                case ExportAlgorithmEnum.FIFO:
-                  date = materialReceipt.importDate;
-                  break;
-                case ExportAlgorithmEnum.LIFO:
-                  date = materialReceipt.importDate;
-                  break;
-                case ExportAlgorithmEnum.FEFO:
-                  date = materialReceipt.expireDate;
-                  break;
-                default:
-                  throw new Error('Invalid export algorithm');
-              }
-              return {
-                id: materialReceipt.id,
-                remainQuantityByPack: materialReceipt.remainQuantityByPack,
-                uomPerPack: materialPackage.uomPerPack,
-                date: date,
-              };
-            });
+            return materialPackage.materialReceipt
+              .filter(
+                (materialReceipt) =>
+                  materialReceipt.status ===
+                    $Enums.MaterialReceiptStatus.AVAILABLE &&
+                  materialReceipt.remainQuantityByPack > 0,
+              )
+              .map((materialReceipt) => {
+                let date = new Date();
+                switch (exportAlgorithmEnum) {
+                  case ExportAlgorithmEnum.FIFO:
+                    date = materialReceipt.importDate;
+                    break;
+                  case ExportAlgorithmEnum.LIFO:
+                    date = materialReceipt.importDate;
+                    break;
+                  case ExportAlgorithmEnum.FEFO:
+                    date = materialReceipt.expireDate;
+                    break;
+                  default:
+                    throw new Error('Invalid export algorithm');
+                }
+                return {
+                  id: materialReceipt.id,
+                  remainQuantityByPack: materialReceipt.remainQuantityByPack,
+                  uomPerPack: materialPackage.uomPerPack,
+                  date: date,
+                };
+              });
           },
         ),
       }));
@@ -357,6 +481,10 @@ export class MaterialExportReceiptService {
             },
           }),
           quantityByPack: needMaterialReceipt.quantityByPack,
+          targetQuantityUom: detail.targetQuantityUom,
+          missingQuantityUom: detail.missingQuantityUom,
+          exceedQuantityUom: detail.exceedQuantityUom,
+          exceedPercentage: detail.exceedPercentage,
         }));
       }),
     );
@@ -397,9 +525,9 @@ export class MaterialExportReceiptService {
     return `This action removes a #${id} materialExportReceipt`;
   }
 
-  async warehouseStaffExport(
+  async warehouseStaffExporting(
     warehouseStaffExportDto: WarehouseStaffExportDto,
-    // warehouseStaff: AuthenUser,
+    warehouseStaff: AuthenUser,
   ) {
     switch (warehouseStaffExportDto.action) {
       case WarehouseStaffExportAction.EXPORTING:
@@ -415,13 +543,27 @@ export class MaterialExportReceiptService {
         //   materialExportReceiptStatus =
         //     $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT;
         // }
-        const currentInventoryReportPlan =
-          await this.getInventoryReportPlanNow();
-        if (currentInventoryReportPlan.length > 0) {
-          return apiFailed(
+        const materialExportReceipt =
+          await this.prismaService.materialExportReceipt.findUnique({
+            where: {
+              materialExportRequestId:
+                warehouseStaffExportDto.materialExportRequestId,
+            },
+            include: materialExportReceiptInclude,
+          });
+
+        const { inventoryReportPlan, collisionMaterialVariant } =
+          await this.getInventoryReportPlanCollisionWithExportReceipt(
+            materialExportReceipt.id,
+          );
+        if (inventoryReportPlan.length > 0) {
+          throw new CustomHttpException(
             409,
-            'There are inventory report plan is in progress please wait for it to finish',
-            currentInventoryReportPlan,
+            apiFailed(
+              409,
+              'There are inventory report plan is in progress please wait for it to finish',
+              { inventoryReportPlan, collisionMaterialVariant },
+            ),
           );
         }
         const materialExportReceipt1 =
@@ -431,6 +573,7 @@ export class MaterialExportReceiptService {
                 warehouseStaffExportDto.materialExportRequestId,
             },
             data: {
+              startedAt: new Date(),
               status: $Enums.MaterialExportRequestStatus.EXPORTING,
             },
             include: materialExportReceiptInclude,
@@ -441,10 +584,24 @@ export class MaterialExportReceiptService {
             data: {
               status: $Enums.MaterialExportRequestStatus.EXPORTING,
             },
+            include: {
+              discussion: true,
+            },
           });
+        const task1 = await this.taskService.updateTaskStatusToInProgress({
+          materialExportReceiptId: materialExportReceipt1.id,
+        });
+
+        const chat: CreateChatDto = {
+          discussionId: materialExportRequest1.discussion.id,
+          message: Constant.EXPORT_RECEIPT_AWAIT_TO_EXPORT_TO_EXPORTING,
+        };
+        await this.chatService.createWithoutResponse(chat, warehouseStaff);
+
         return {
           materialExportReceipt: materialExportReceipt1,
           materialExportRequest: materialExportRequest1,
+          task: task1,
         };
 
       case WarehouseStaffExportAction.EXPORTED:
@@ -455,6 +612,7 @@ export class MaterialExportReceiptService {
                 warehouseStaffExportDto.materialExportRequestId,
             },
             data: {
+              finishedAt: new Date(),
               status: $Enums.ExportReceiptStatus.EXPORTED,
             },
             include: materialExportReceiptInclude,
@@ -465,65 +623,137 @@ export class MaterialExportReceiptService {
             data: {
               status: WarehouseStaffExportAction.EXPORTED,
             },
+            include: {
+              discussion: true,
+            },
           });
+        const task2 = await this.taskService.updateTaskStatusToDone({
+          materialExportReceiptId: materialExportReceipt2.id,
+        });
+
+        const chat2: CreateChatDto = {
+          discussionId: materialExportRequest2.discussion.id,
+          message: Constant.EXPORT_RECEIPT_AWAIT_TO_EXPORT_TO_EXPORTED,
+        };
+        await this.chatService.createWithoutResponse(chat2, warehouseStaff);
+
         return {
           materialExportReceipt: materialExportReceipt2,
           materialExportRequest: materialExportRequest2,
-        };
-
-      case WarehouseStaffExportAction.DELIVERING:
-        const materialExportReceipt3 =
-          await this.prismaService.materialExportReceipt.update({
-            where: { id: warehouseStaffExportDto.materialExportRequestId },
-            data: {
-              status: $Enums.ExportReceiptStatus.DELIVERING,
-            },
-          });
-        const materialExportRequest3 =
-          await this.prismaService.materialExportRequest.update({
-            where: { id: warehouseStaffExportDto.materialExportRequestId },
-            data: {
-              status: $Enums.MaterialExportRequestStatus.DELIVERING,
-            },
-            include: materialExportRequestInclude,
-          });
-        return {
-          materialExportReceipt: materialExportReceipt3,
-          materialExportRequest: materialExportRequest3,
-        };
-
-      case WarehouseStaffExportAction.DELIVERED:
-        const materialExportReceipt4 =
-          await this.prismaService.materialExportReceipt.update({
-            where: { id: warehouseStaffExportDto.materialExportRequestId },
-            data: {
-              status: $Enums.ExportReceiptStatus.DELIVERED,
-            },
-            include: materialExportReceiptInclude,
-          });
-        const materialExportRequest4 =
-          await this.prismaService.materialExportRequest.update({
-            where: { id: warehouseStaffExportDto.materialExportRequestId },
-            data: {
-              status: $Enums.MaterialExportRequestStatus.DELIVERED,
-            },
-            include: materialExportRequestInclude,
-          });
-        const task = await this.taskService.updateTaskStatusToDone({
-          materialExportReceiptId:
-            warehouseStaffExportDto.materialExportRequestId,
-        });
-        Logger.log('updateTaskStatusToDone', task);
-        return {
-          materialExportReceipt: materialExportReceipt4,
-          materialExportRequest: materialExportRequest4,
+          task: task2,
         };
       default:
         throw new Error('Invalid action');
     }
   }
 
-  // async isAnyWaitOrInProgressReportPlan() {
+  //todo: fix this
+  async getInventoryReportPlanCollisionWithExportReceipt(
+    materialExportReceiptId: string,
+  ) {
+    const materialExportReceipt =
+      await this.prismaService.materialExportReceipt.findUnique({
+        where: { id: materialExportReceiptId },
+        include: {
+          materialExportReceiptDetail: {
+            include: {
+              materialReceipt: {
+                include: {
+                  materialPackage: {
+                    include: {
+                      materialVariant: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    const inventoryReportPlanInProgress =
+      await this.prismaService.inventoryReportPlan.findMany({
+        where: {
+          status: {
+            in: [
+              $Enums.InventoryReportPlanStatus.AWAIT,
+              $Enums.InventoryReportPlanStatus.IN_PROGRESS,
+            ],
+          },
+        },
+        include: {
+          inventoryReportPlanDetail: {
+            include: {
+              materialVariant: {
+                include: materialVariantInclude,
+              },
+            },
+          },
+        },
+      });
+    const materialVariantIdsInPlan = new Set<string>();
+    inventoryReportPlanInProgress.forEach((plan) => {
+      plan.inventoryReportPlanDetail.forEach((detail) => {
+        materialVariantIdsInPlan.add(detail.materialVariantId);
+      });
+    });
+    const collisionMaterialVariant =
+      materialExportReceipt.materialExportReceiptDetail
+        .map((detail) => {
+          return detail.materialReceipt.materialPackage.materialVariant;
+        })
+        .filter((variant) => materialVariantIdsInPlan.has(variant.id));
+
+    // const inventoryReportPlan =
+    //   await this.prismaService.inventoryReportPlan.findMany({
+    //     where: {
+    //       status: {
+    //         in: [
+    //           $Enums.InventoryReportPlanStatus.AWAIT,
+    //           $Enums.InventoryReportPlanStatus.IN_PROGRESS,
+    //         ],
+    //       },
+    //       inventoryReportPlanDetail: {
+    //         some: {
+    //           materialVariant: {
+    //             id: {
+    //               in: materialExportReceipt.materialExportReceiptDetail.map(
+    //                 (detail) =>
+    //                   detail.materialReceipt.materialPackage.materialVariant.id,
+    //               ),
+    //             },
+    //           },
+    //         },
+    //       },
+    //     },
+    //     include: {
+    //       inventoryReportPlanDetail: {
+    //         include: {
+    //           materialVariant: {
+    //             include: materialVariantInclude,
+    //           },
+    //         },
+    //       },
+    //     },
+    //   });
+
+    // const collisionMaterialVariant = inventoryReportPlan.map(
+    //   (inventoryReportPlan) => {
+    //     return inventoryReportPlan.inventoryReportPlanDetail.map((detail) => {
+    //       return detail.materialVariant;
+    //     });
+    //   },
+    // );
+    Logger.debug(collisionMaterialVariant);
+    Logger.debug(JSON.stringify(collisionMaterialVariant));
+    Logger.debug(JSON.stringify(inventoryReportPlanInProgress));
+    return {
+      inventoryReportPlan: inventoryReportPlanInProgress,
+      collisionMaterialVariant,
+    };
+  }
+
+  // //NOT DRY
+  // async getInventoryReportPlanNow(materialVariants: MaterialVariant[]) {
   //   const result = await this.prismaService.inventoryReportPlan.findMany({
   //     where: {
   //       status: {
@@ -534,21 +764,6 @@ export class MaterialExportReceiptService {
   //       },
   //     },
   //   });
-  //   return result.length > 0;
+  //   return result;
   // }
-
-  //NOT DRY
-  async getInventoryReportPlanNow() {
-    const result = await this.prismaService.inventoryReportPlan.findMany({
-      where: {
-        status: {
-          in: [
-            $Enums.InventoryReportPlanStatus.AWAIT,
-            $Enums.InventoryReportPlanStatus.IN_PROGRESS,
-          ],
-        },
-      },
-    });
-    return result;
-  }
 }

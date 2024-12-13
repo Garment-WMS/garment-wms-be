@@ -9,6 +9,8 @@ export type ExportAlgorithmResults = {
   materialVariantId: string;
   targetQuantityUom: number;
   missingQuantityUom: number;
+  exceedQuantityUom: number;
+  exceedPercentage: number;
   needMaterialReceipts: {
     id: string;
     quantityByPack: number;

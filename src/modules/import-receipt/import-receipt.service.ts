@@ -25,12 +25,14 @@ import {
   importReceiptInclude,
   inspectionReportDetailDefectIncludeWithoutInspectionReportDetail,
   materialPackageInclude,
+  materialVariantInclude,
   productSizeInclude,
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
+import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ChatService } from '../chat/chat.service';
@@ -194,19 +196,6 @@ export class ImportReceiptService {
       finishedAt: createImportReceiptDto.finishAt,
     };
 
-    // this.validateMaterialReceipt(
-    //   inspectionReport.inspectionReportDetail,
-    //   createImportReceiptDto.materialReceipts,
-    // );
-
-    // const isAnyAwaitOrInProgressReportPlan =
-    //   await this.isAnyWaitOrInProgressReportPlan();
-
-    // if (isAnyAwaitOrInProgressReportPlan) {
-    //   importRequestStatus = ImportRequestStatus.AWAIT_TO_IMPORT;
-    //   importReceiptInput.status = ImportReceiptStatus.AWAIT_TO_IMPORT;
-    // }
-
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const importReceipt = await prismaInstance.importReceipt.create({
@@ -239,6 +228,11 @@ export class ImportReceiptService {
     );
     if (result) {
       try {
+        const chat: CreateChatDto = {
+          discussionId: importRequest?.discussion.id,
+          message: Constant.IMPORT_RECEIPT_INSPECTED_TO_AWAIT_TO_IMPORT,
+        };
+        await this.chatService.createBySystemWithoutResponse(chat);
         await this.updateTaskByImportReceipt(result);
         await this.discussionService.updateImportReceiptDiscussion(
           result.id,
@@ -304,24 +298,12 @@ export class ImportReceiptService {
       finishedAt: createImportReceiptDto.finishAt,
     };
 
-    // this.validateMaterialReceipt(
-    //   inspectionReport.inspectionReportDetail,
-    //   createImportReceiptDto.materialReceipts,
-    // );
-
-    const isAnyAwaitOrInProgressReportPlan =
-      await this.isAnyWaitOrInProgressReportPlan();
-
-    // let importRequestStatus: ImportRequestStatus =
-    //   ImportRequestStatus.IMPORTING;
-    // if (isAnyAwaitOrInProgressReportPlan) {
-    //   importRequestStatus = ImportRequestStatus.AWAIT_TO_IMPORT;
-    //   importReceiptInput.status = ImportReceiptStatus.AWAIT_TO_IMPORT;
-    // }
-
+    console.log('importReceiptInput', importReceiptInput);
+    let poDeliveryExtra;
+    const poDeliveryExtraEl = [];
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
-        const importReceipt = await prismaInstance.importReceipt.create({
+        let importReceipt = await prismaInstance.importReceipt.create({
           data: importReceiptInput,
         });
         if (importReceipt) {
@@ -333,10 +315,33 @@ export class ImportReceiptService {
               prismaInstance,
               // createImportReceiptDto.materialReceipts,
             );
+          //TODO: Validate this method when no there is no approved material
+          if (result.length === 0) {
+            await prismaInstance.importReceipt.delete({
+              where: {
+                id: importReceipt.id,
+              },
+            });
+            importReceipt = null;
+            await this.importRequestService.updateImportRequestStatus(
+              inspectionReport.inspectionRequest.importRequestId,
+              $Enums.ImportRequestStatus.REJECTED,
+              prismaInstance,
+            );
+          } else {
+            await this.importRequestService.updateImportRequestStatus(
+              inspectionReport.inspectionRequest.importRequestId,
+              importReceipt.status,
+              prismaInstance,
+            );
+          }
 
-          let poDeliveryExtra;
-          //Compare number of imported materials with number of approved material
-          for (let i = 0; i < result.length; i++) {
+          // Compare number of imported materials with number of approved material
+          for (
+            let i = 0;
+            i < inspectionReport.inspectionReportDetail.length;
+            i++
+          ) {
             await this.prismaService.poDeliveryDetail.updateMany({
               where: {
                 AND: [
@@ -344,12 +349,16 @@ export class ImportReceiptService {
                     poDeliveryId: importRequest.poDeliveryId,
                   },
                   {
-                    materialPackageId: result[i].materialPackageId,
+                    materialPackageId:
+                      inspectionReport.inspectionReportDetail[i]
+                        .materialPackageId,
                   },
                 ],
               },
               data: {
-                actualImportQuantity: result[i].quantityByPack,
+                actualImportQuantity:
+                  inspectionReport.inspectionReportDetail[i]
+                    .approvedQuantityByPack,
               },
             });
 
@@ -360,9 +369,13 @@ export class ImportReceiptService {
             let poDeliveryDetail = poDelivery.poDeliveryDetail as any;
             let expectedImportQuantity = poDeliveryDetail.find(
               (detail) =>
-                detail.materialPackageId === result[i].materialPackageId,
+                detail.materialPackageId ===
+                inspectionReport.inspectionReportDetail[i].materialPackageId,
             ).quantityByPack;
-            if (result[i].quantityByPack !== expectedImportQuantity) {
+            if (
+              inspectionReport.inspectionReportDetail[i]
+                .approvedQuantityByPack !== expectedImportQuantity
+            ) {
               poDeliveryExtra =
                 await this.poDeliveryService.findExtraPoDelivery(
                   importRequest.poDelivery.purchaseOrderId,
@@ -383,25 +396,88 @@ export class ImportReceiptService {
                     connect: { id: poDeliveryExtra.id },
                   },
                   materialPackage: {
-                    connect: { id: result[i].materialPackageId },
+                    connect: {
+                      id: inspectionReport.inspectionReportDetail[i]
+                        .materialPackageId,
+                    },
                   },
                   quantityByPack:
-                    expectedImportQuantity - result[i].quantityByPack,
+                    expectedImportQuantity -
+                    inspectionReport.inspectionReportDetail[i]
+                      .approvedQuantityByPack,
                   totalAmount: 0,
                 },
                 poDeliveryExtra.id,
-                result[i].materialPackageId,
+                inspectionReport.inspectionReportDetail[i].materialPackageId,
                 prismaInstance,
               );
             }
           }
 
+          // const updatePromises = inspectionReport.inspectionReportDetail.map(
+          //   async (detail) => {
+          //     // Perform the updateMany operation
+          //     await this.prismaService.poDeliveryDetail.updateMany({
+          //       where: {
+          //         AND: [
+          //           { poDeliveryId: importRequest.poDeliveryId },
+          //           { materialPackageId: detail.materialPackageId },
+          //         ],
+          //       },
+          //       data: {
+          //         actualImportQuantity: detail.approvedQuantityByPack,
+          //       },
+          //     });
+
+          //     // Create the extra PO delivery for rejected material if necessary
+          //     let poDelivery: any = importRequest.poDelivery;
+          //     let poDeliveryDetail = poDelivery.poDeliveryDetail as any;
+          //     let expectedImportQuantity = poDeliveryDetail.find(
+          //       (d) => d.materialPackageId === detail.materialPackageId,
+          //     ).quantityByPack;
+
+          //     if (detail.approvedQuantityByPack !== expectedImportQuantity) {
+          //       poDeliveryExtraEl.push(
+          //         {
+          //           poDelivery: {
+          //             connect: { id: poDeliveryExtra.id },
+          //           },
+          //           materialPackage: {
+          //             connect: {
+          //               id: detail.materialPackageId,
+          //             },
+          //           },
+          //           quantityByPack:
+          //             expectedImportQuantity - detail.approvedQuantityByPack,
+          //           totalAmount: 0,
+          //         },
+          //         // detail.materialPackageId,
+          //       );
+          //       // Create PoDeliveryMaterial
+          //       // await this.poDeliveryDetailsService.createPoDeliveryMaterial(
+          //       //   {
+          //       //     poDelivery: {
+          //       //       connect: { id: poDeliveryExtra.id },
+          //       //     },
+          //       //     materialPackage: {
+          //       //       connect: {
+          //       //         id: detail.materialPackageId,
+          //       //       },
+          //       //     },
+          //       //     quantityByPack:
+          //       //       expectedImportQuantity - detail.approvedQuantityByPack,
+          //       //     totalAmount: 0,
+          //       //   },
+          //       //   poDeliveryExtra.id,
+          //       //   detail.materialPackageId,
+          //       //   prismaInstance,
+          //       // );
+          //     }
+          //   },
+          // );
+          // // Wait for all the operations to complete concurrently
+          // await Promise.all(updatePromises);
           //Update import request status to Approved
-          await this.importRequestService.updateImportRequestStatus(
-            inspectionReport.inspectionRequest.importRequestId,
-            importReceipt.status,
-            prismaInstance,
-          );
         }
         return importReceipt;
       },
@@ -409,27 +485,50 @@ export class ImportReceiptService {
         timeout: 100000,
       },
     );
-    if (result) {
-      try {
-        await this.updateTaskByImportReceipt(result);
-        await this.discussionService.updateImportReceiptDiscussion(
-          result.id,
-          createImportReceiptDto.importRequestId,
-        );
-      } catch (e) {
-        Logger.error(e);
-        throw new ConflictException('Can not create Task automatically');
-      }
 
-      return apiSuccess(
-        HttpStatus.CREATED,
-        result,
-        'Create import receipt successfully',
+    console.log('result', result);
+    if (!result) {
+      const chat: CreateChatDto = {
+        discussionId: importRequest?.discussion.id,
+        message: Constant.IMPORT_REQUEST_INSPECTED_TO_CANCELLED,
+      };
+      await this.chatService.createBySystemWithoutResponse(chat);
+    }
+
+    // if(poDeliveryExtraEl.length > 0) {
+    //   poDeliveryExtra = await this.poDeliveryService.findExtraPoDelivery(
+    //     importRequest.poDelivery.purchaseOrderId,
+    //   );
+    //   if (!poDeliveryExtra) {
+    //     poDeliveryExtra = await this.poDeliveryService.createPoDelivery({
+    //       purchaseOrderId: importRequest.poDelivery.purchaseOrderId,
+    //       isExtra: true,
+    //       status: PoDeliveryStatus.PENDING,
+    //     });
+    //   }
+    //   await this.poDeliveryDetailsService.createPoDeliveryMaterial(poDeliveryExtraEl, poDeliveryExtra.id);
+    // }
+    const chat: CreateChatDto = {
+      discussionId: importRequest?.discussion.id,
+      message: Constant.IMPORT_RECEIPT_INSPECTED_TO_AWAIT_TO_IMPORT,
+    };
+    await this.chatService.createBySystemWithoutResponse(chat);
+
+    if (result) {
+      await this.updateTaskByImportReceipt(result);
+      await this.discussionService.updateImportReceiptDiscussion(
+        result.id,
+        createImportReceiptDto.importRequestId,
       );
     }
-    return apiFailed(
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      'Create import receipt failed',
+    // } catch (e) {
+    //   Logger.error(e);
+    //   throw new ConflictException('Can not create Task automatically');
+    // }
+    return apiSuccess(
+      HttpStatus.CREATED,
+      result,
+      'Create import receipt successfully',
     );
   }
   async isAnyWaitOrInProgressReportPlan() {
@@ -446,6 +545,23 @@ export class ImportReceiptService {
     return result.length > 0;
   }
 
+  async getImportRequestByImportReceiptId(importReceiptId: string) {
+    const importRequest = await this.prismaService.importRequest.findFirst({
+      where: {
+        inspectionRequest: {
+          some: {
+            inspectionReport: {
+              importReceipt: {
+                id: importReceiptId,
+              },
+            },
+          },
+        },
+      },
+    });
+    return importRequest;
+  }
+
   async updateTaskByImportReceipt(importReceipt: ImportReceipt) {
     // const createTaskDto: CreateTaskDto = {
     //   taskType: 'IMPORT',
@@ -455,22 +571,13 @@ export class ImportReceiptService {
     //   expectedStartedAt: importReceipt.expectedStartedAt,
     //   expectedFinishedAt: importReceipt.expectFinishedAt,
     // };
+    const importRequest = await this.getImportRequestByImportReceiptId(
+      importReceipt.id,
+    );
 
     const task = await this.prismaService.task.findFirst({
       where: {
-        importRequest: {
-          // status: 'INSPECTED',
-          inspectionRequest: {
-            some: {
-              // status: 'INSPECTED',
-              inspectionReport: {
-                importReceipt: {
-                  id: importReceipt.id,
-                },
-              },
-            },
-          },
-        },
+        importRequestId: importRequest.id,
       },
       select: { id: true },
     });
@@ -484,7 +591,7 @@ export class ImportReceiptService {
     const result = await this.prismaService.task.update({
       where: { id: task.id },
       data: {
-        exportReceiptId: importReceipt.id,
+        importReceiptId: importReceipt.id,
       },
     });
 
@@ -510,7 +617,7 @@ export class ImportReceiptService {
       );
     }
 
-    if (importRequest.status === $Enums.ImportRequestStatus.CANCELED) {
+    if (importRequest.status === $Enums.ImportRequestStatus.CANCELLED) {
       throw new BadRequestException(
         'Import receipt cannot be created. The import request has been canceled.',
       );
@@ -652,6 +759,7 @@ export class ImportReceiptService {
         } else {
           throw new Error('Receipt not found');
         }
+
         const result = await this.updateImportReceiptStatusToImportedOrRejected(
           importReceiptId,
           $Enums.ImportReceiptStatus.IMPORTED,
@@ -662,13 +770,12 @@ export class ImportReceiptService {
         return result;
       },
     );
-
     const chat: CreateChatDto = {
       discussionId: importReceipt.discussion.id,
-      message: Constant.INSPECTED_TO_IMPORTING,
+      message: Constant.IMPORTING_TO_IMPORTED,
     };
     await this.chatService.create(chat, user);
-    console.log('Created chat');
+
     await this.importReceiptQueue.add('check-last-importing-receipt', {});
 
     if (result) {
@@ -684,13 +791,22 @@ export class ImportReceiptService {
     );
   }
 
-  async updateImportReceiptStatusToImporting(importReceiptId: string) {
-    const currentInventoryReportPlan = await this.getInventoryReportPlanNow();
-    if (currentInventoryReportPlan.length > 0) {
-      return apiFailed(
+  async updateImportReceiptStatusToImporting(
+    importReceiptId: string,
+    user: AuthenUser,
+  ) {
+    const { inventoryReportPlan, collisionMaterialVariant } =
+      await this.getInventoryReportPlanCollisionWithImportReceipt(
+        importReceiptId,
+      );
+    if (inventoryReportPlan.length > 0) {
+      throw new CustomHttpException(
         409,
-        'There are inventory report plan is in progress please wait for it to finish',
-        currentInventoryReportPlan,
+        apiFailed(
+          409,
+          'There are inventory report plan is in progress please wait for it to finish',
+          { inventoryReportPlan, collisionMaterialVariant },
+        ),
       );
     }
     const importRequest = await this.prismaService.importReceipt.update({
@@ -701,10 +817,19 @@ export class ImportReceiptService {
         status: ImportReceiptStatus.IMPORTING,
         startedAt: new Date(),
       },
+      include: {
+        discussion: true,
+      },
     });
     const task = await this.taskService.updateTaskStatusToInProgress({
       importReceiptId: importReceiptId,
     });
+
+    const chat: CreateChatDto = {
+      discussionId: importRequest?.discussion.id,
+      message: Constant.AWAIT_TO_IMPORT_TO_IMPORTING,
+    };
+    await this.chatService.createWithoutResponse(chat, user);
 
     return { importRequest, task };
   }
@@ -939,17 +1064,65 @@ export class ImportReceiptService {
   }
 
   //NOT DRY
-  async getInventoryReportPlanNow() {
-    const result = await this.prismaService.inventoryReportPlan.findMany({
-      where: {
-        status: {
-          in: [
-            $Enums.InventoryReportPlanStatus.AWAIT,
-            $Enums.InventoryReportPlanStatus.IN_PROGRESS,
-          ],
+  // async getInventoryReportPlanNow() {
+  //   const result = await this.prismaService.inventoryReportPlan.findMany({
+  //     where: {
+  //       status: {
+  //         in: [
+  //           $Enums.InventoryReportPlanStatus.AWAIT,
+  //           $Enums.InventoryReportPlanStatus.IN_PROGRESS,
+  //         ],
+  //       },
+  //     },
+  //   });
+  //   return result;
+  // }
+  async getInventoryReportPlanCollisionWithImportReceipt(
+    importReceiptId: string,
+  ) {
+    const inventoryReportPlan =
+      await this.prismaService.inventoryReportPlan.findMany({
+        where: {
+          status: {
+            in: [
+              $Enums.InventoryReportPlanStatus.AWAIT,
+              $Enums.InventoryReportPlanStatus.IN_PROGRESS,
+            ],
+          },
+          inventoryReportPlanDetail: {
+            some: {
+              materialVariant: {
+                materialPackage: {
+                  some: {
+                    materialReceipt: {
+                      some: {
+                        importReceiptId: importReceiptId,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
+        include: {
+          inventoryReportPlanDetail: {
+            include: {
+              materialVariant: {
+                include: materialVariantInclude,
+              },
+            },
+          },
+        },
+      });
+
+    const collisionMaterialVariant = inventoryReportPlan.map(
+      (inventoryReportPlan) => {
+        return inventoryReportPlan.inventoryReportPlanDetail.map((detail) => {
+          return detail.materialVariant;
+        });
       },
-    });
-    return result;
+    );
+    return { inventoryReportPlan, collisionMaterialVariant };
   }
 }

@@ -34,6 +34,12 @@ export class CreateImportRequestDto {
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsUUID()
   @IsOptional()
+  @IsUserRoleExist(RoleCode.PRODUCTION_DEPARTMENT)
+  productionDepartmentId?: string;
+
+  @ApiProperty({ required: false, type: 'string', format: 'uuid' })
+  @IsUUID()
+  @IsOptional()
   @IsUserRoleExist(RoleCode.WAREHOUSE_STAFF)
   warehouseStaffId?: string;
 

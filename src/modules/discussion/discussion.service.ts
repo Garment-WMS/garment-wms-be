@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
+import { NotificationService } from 'src/notification/notification.service';
 import { CreateDiscussionDto } from './dto/create-discussion.dto';
 import { UpdateDiscussionDto } from './dto/update-discussion.dto';
 
 @Injectable()
 export class DiscussionService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly notificationService: NotificationService,
+  ) {}
   async updateExportReceipt(id: string, materialExportRequestId: string) {
     return await this.prismaService.discussion.update({
       where: {
@@ -93,10 +97,13 @@ export class DiscussionService {
 
   async create(
     createDiscussionDto: CreateDiscussionDto,
-    prismaInstance: PrismaService,
+    prismaInstance: PrismaService = this.prismaService,
   ) {
     return await prismaInstance.discussion.create({
       data: { ...createDiscussionDto },
+      include: {
+        chat: true,
+      },
     });
   }
 

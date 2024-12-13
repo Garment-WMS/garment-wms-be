@@ -8,6 +8,7 @@ import { ExcelController } from './excel.controller';
 import { ExcelService } from './excel.service';
 import { ProductPlanDetailModule } from '../product-plan-detail/product-plan-detail.module';
 import { ProductPlanModule } from '../product-plan/product-plan.module';
+import { ProductVariantModule } from '../product-variant/product-variant.module';
 
 @Module({
   controllers: [ExcelController],
@@ -17,6 +18,7 @@ import { ProductPlanModule } from '../product-plan/product-plan.module';
     ProductPlanDetailModule,
     MaterialVariantModule,
     MaterialPackageModule,
+    ProductVariantModule,
     ProductSizeModule,
   ],
   providers: [ExcelService],

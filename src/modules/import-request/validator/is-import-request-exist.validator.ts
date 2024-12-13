@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   registerDecorator,
   ValidationArguments,
@@ -21,6 +21,8 @@ export class IsImportRequestExistValidator
       where: { id: value },
       select: { id: true },
     });
+    Logger.debug(await this.prismaService.importRequest.findFirst());
+    Logger.debug(isExist);
     return !!isExist;
   }
   defaultMessage?(validationArguments?: ValidationArguments): string {

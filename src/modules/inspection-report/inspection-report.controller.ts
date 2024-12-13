@@ -103,10 +103,12 @@ export class InspectionReportController {
     );
   }
 
-  @Post('/skip-by-inspection-request-id/:inspection-request-id')
+  @Post('/skip-by-inspection-request-id/:inspectionRequestId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.INSPECTION_DEPARTMENT)
   async skipByInspectionRequestId(
     @GetUser() user: AuthenUser,
-    @Param('inspection-request-id') inspectionRequestId: string,
+    @Param('inspectionRequestId') inspectionRequestId: string,
   ) {
     return apiSuccess(
       HttpStatus.OK,

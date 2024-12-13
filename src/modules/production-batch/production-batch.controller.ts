@@ -6,6 +6,7 @@ import {
   Get,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -23,6 +24,8 @@ import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { RolesGuard } from 'src/common/guard/roles.guard';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
+import { ChartDto } from '../purchase-order/dto/chart.dto';
+import { CancelProductBatchDto } from './dto/cancel-product-batch.dto';
 import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
 import { ProductionBatchService } from './production-batch.service';
 
@@ -45,6 +48,12 @@ export class ProductionBatchController {
       );
     return fileResult;
   }
+
+  @Get('chart')
+  findChart(@Body() chartDto: ChartDto) {
+    return this.productionBatchService.findChart(chartDto);
+  }
+
   @Get()
   async search(
     @Query(
@@ -63,7 +72,7 @@ export class ProductionBatchController {
   }
 
   @Get(':id')
-  async findUnique(@Param('id') id: string) {
+  async findUnique(@Param('id', ParseUUIDPipe) id: string) {
     return apiSuccess(
       HttpStatus.OK,
       await this.productionBatchService.findUnique(id),
@@ -79,6 +88,25 @@ export class ProductionBatchController {
     return apiSuccess(
       HttpStatus.OK,
       await this.productionBatchService.update(id, updateProductionBatchDto),
+      'Production batch updated successfully',
+    );
+  }
+
+  @Patch(':id/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.PRODUCTION_DEPARTMENT)
+  async cancelProductionBatch(
+    @Param('id') id: string,
+    @Body() cancelProductBatchDto: CancelProductBatchDto,
+    @GetUser() user: AuthenUser,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.productionBatchService.cancelProductionBatch(
+        id,
+        user,
+        cancelProductBatchDto,
+      ),
       'Production batch updated successfully',
     );
   }

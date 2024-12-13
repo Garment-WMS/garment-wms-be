@@ -1,9 +1,10 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   ExportReceiptStatus,
   MaterialReceiptStatus,
   Prisma,
+  ReOrderAlertStatus,
 } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { materialPackageInclude } from 'prisma/prisma-include';
@@ -12,18 +13,281 @@ import { Constant, months } from 'src/common/constant/constant';
 import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
-import { getPageMeta } from 'src/common/utils/utils';
+import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
 import { ImageService } from '../image/image.service';
+import { MaterialAttributeService } from '../material-attribute/material-attribute.service';
+import { MaterialPackageService } from '../material-package/material-package.service';
 import { ChartDto } from './dto/chart.dto';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { MaterialStock } from './dto/stock-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 
+type History = {
+  materialReceiptId?: string;
+  materialExportReceiptDetailId?: string;
+  receiptAdjustmentId?: string;
+  importReceiptId?: string;
+  materialExportReceiptId?: string;
+  inventoryReportId?: string;
+  quantityByPack: number;
+  type: string;
+  code: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export interface MaterialVariant
+  extends Prisma.MaterialVariantGetPayload<{
+    include: {
+      materialAttribute: true;
+      material: {
+        include: {
+          materialUom: true;
+        };
+      };
+      materialPackage: {
+        include: {
+          materialReceipt: {
+            include: {
+              materialExportReceiptDetail: {
+                include: {
+                  materialExportReceipt: true;
+                };
+              };
+              receiptAdjustment: {
+                include: {
+                  inventoryReportDetail: {
+                    include: {
+                      inventoryReport: true;
+                    };
+                  };
+                };
+              };
+              importReceipt: true;
+            };
+          };
+          inventoryStock: true;
+        };
+      };
+    };
+  }> {
+  history?: History[];
+}
+
 @Injectable()
 export class MaterialVariantService {
+  async updateReorderAlert(
+    id: string,
+    currentQuantityByUom: number,
+    reorderLevel: number,
+  ) {
+    const el = await this.prismaService.reorderAlert.findFirst({
+      where: { materialVariantId: id, status: ReOrderAlertStatus.OPEN },
+    });
+    if (!el) {
+      return { result: null, operation: 'NO_OPERATION' };
+    }
+    const result = await this.prismaService.reorderAlert.update({
+      where: { id: el.id },
+      data: {
+        currentQuantityByUom: currentQuantityByUom,
+        status: ReOrderAlertStatus.CLOSED,
+        closedAt: new Date(),
+      },
+    });
+    return { result, operation: 'updated' };
+  }
+  async createReOrderAlert(
+    materialVariantId: string,
+    currentQuantity: number,
+    reorderLevel: number,
+  ) {
+    const el = await this.prismaService.reorderAlert.findFirst({
+      where: { materialVariantId, status: ReOrderAlertStatus.OPEN },
+    });
+    const result = await this.prismaService.reorderAlert.upsert({
+      where: { id: el?.id || nonExistUUID },
+      create: {
+        materialVariantId,
+        currentQuantityByUom: currentQuantity,
+        reorderQuantityByUom: reorderLevel,
+        status: ReOrderAlertStatus.OPEN,
+        openedAt: new Date(),
+      },
+      update: {
+        currentQuantityByUom: currentQuantity,
+        status: ReOrderAlertStatus.OPEN,
+      },
+    });
+    const operation = el ? 'updated' : 'created';
+
+    return { result, operation };
+  }
+
+  async findReOrderAlertByMaterialVariantId(materialVariantId: string) {
+    const result = await this.prismaService.reorderAlert.findMany({
+      where: {
+        materialVariantId,
+      },
+    });
+    return result;
+  }
+
+  async findAllOpenReOrderAlert() {
+    const result = await this.prismaService.reorderAlert.findMany({
+      where: {
+        status: 'OPEN',
+      },
+      include: {
+        materialVariant: true,
+      },
+    });
+    return apiSuccess(HttpStatus.OK, result, 'List of ReOrder Alert');
+  }
+
+  async closeReOrderAlert(id: string) {
+    const result = await this.prismaService.reorderAlert.update({
+      where: { id },
+      data: {
+        status: ReOrderAlertStatus.CLOSED,
+        closedAt: new Date(),
+      },
+    });
+    return apiSuccess(HttpStatus.OK, result, 'ReOrder Alert closed');
+  }
+
+  async isMaterialVariantAtReOrderLevel(materialVariantId: string) {
+    const materialVariant = await this.prismaService.materialVariant.findFirst({
+      where: { id: materialVariantId },
+      include: {
+        materialPackage: {
+          include: {
+            inventoryStock: true,
+            materialReceipt: {
+              where: {
+                status: MaterialReceiptStatus.AVAILABLE,
+              },
+            },
+          },
+        },
+      },
+    });
+    const totalQuantity = materialVariant.materialPackage.reduce(
+      (totalAcc, materialPackageEl) => {
+        let variantTotal = 0;
+        variantTotal =
+          materialPackageEl.inventoryStock?.quantityByPack *
+            materialPackageEl.uomPerPack || 0;
+        // materialPackageEl.materialReceipt.forEach((materialReceipt) => {
+        //   variantTotal +=
+        //     materialReceipt.quantityByPack * materialPackageEl.uomPerPack;
+        // });
+        return totalAcc + variantTotal;
+      },
+      0,
+    );
+    const isAtReorderAlert = totalQuantity <= materialVariant.reorderLevel;
+    return {
+      isAtReorderAlert,
+      currentQuantityByUom: totalQuantity,
+    };
+  }
+
+  async findHistoryByIdWithResponse(
+    id: string,
+    sortBy: string,
+    findOptions: GeneratedFindOptions<Prisma.MaterialVariantScalarWhereWithAggregatesInput>,
+  ) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Id is invalid');
+    }
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+
+    const [result, total] = (await this.prismaService.$transaction([
+      this.prismaService.materialVariant.findFirst({
+        where: { id },
+        include: this.materialHistoryInclude,
+      }),
+      this.prismaService.materialVariant.count({
+        where: { id },
+      }),
+    ])) as [MaterialVariant, number];
+
+    if (!result) {
+      return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
+    }
+    result.history = [];
+
+    result.materialPackage.forEach((materialPackage) => {
+      materialPackage?.materialReceipt?.forEach((materialReceipt) => {
+        if (materialReceipt.status == MaterialReceiptStatus.AVAILABLE) {
+          result.history.push({
+            materialReceiptId: materialReceipt.id,
+            importReceiptId: materialReceipt.importReceiptId,
+            quantityByPack: materialReceipt.quantityByPack,
+            code: materialReceipt.importReceipt.code,
+            type: 'IMPORT_RECEIPT',
+            createdAt: materialReceipt.createdAt,
+            updatedAt: materialReceipt.updatedAt,
+          });
+          materialReceipt?.materialExportReceiptDetail?.forEach(
+            (materialExportReceiptDetail) => {
+              result.history.push({
+                materialExportReceiptDetailId: materialExportReceiptDetail.id,
+                materialExportReceiptId:
+                  materialExportReceiptDetail.materialExportReceiptId,
+                quantityByPack: -materialExportReceiptDetail.quantityByPack,
+                code: materialExportReceiptDetail?.materialExportReceipt.code,
+                type: 'EXPORT_RECEIPT',
+                createdAt: materialExportReceiptDetail.createdAt,
+                updatedAt: materialExportReceiptDetail.updatedAt,
+              });
+            },
+          );
+          materialReceipt?.receiptAdjustment?.forEach((receiptAdjustment) => {
+            result.history.push({
+              receiptAdjustmentId: receiptAdjustment.id,
+              inventoryReportId:
+                receiptAdjustment?.inventoryReportDetail.inventoryReportId,
+              quantityByPack:
+                receiptAdjustment.afterAdjustQuantity -
+                receiptAdjustment.beforeAdjustQuantity,
+              code: receiptAdjustment?.inventoryReportDetail?.inventoryReport
+                .code,
+              type: 'RECEIPT_ADJUSTMENT',
+              createdAt: receiptAdjustment.createdAt,
+              updatedAt: receiptAdjustment.updatedAt,
+            });
+          });
+        }
+      });
+    });
+
+    let length = result.history.length;
+    result.history = result?.history
+      ?.sort((a, b) => {
+        if (sortBy === 'desc') {
+          return b.createdAt.getTime() - a.createdAt.getTime();
+        }
+        return a.createdAt.getTime() - b.createdAt.getTime();
+      })
+      .slice(offset, offset + limit);
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: result.history,
+        pageMeta: getPageMeta(length, offset, limit),
+      },
+      'Material History found',
+    );
+  }
   constructor(
     private readonly prismaService: PrismaService,
     private readonly imageService: ImageService,
+    private readonly materialPackageService: MaterialPackageService,
+    private readonly materialAttributeService: MaterialAttributeService,
   ) {}
 
   materialInclude: Prisma.MaterialVariantInclude = {
@@ -50,8 +314,47 @@ export class MaterialVariantService {
     },
     materialPackage: {
       include: {
-        materialReceipt: true,
+        materialReceipt: {
+          include: {
+            materialExportReceiptDetail: true,
+            receiptAdjustment: true,
+            importReceipt: true,
+          },
+        },
         inventoryStock: true, // Make sure to include inventoryStock
+      },
+    },
+  };
+
+  materialHistoryInclude = {
+    materialAttribute: true,
+    material: {
+      include: {
+        materialUom: true,
+      },
+    },
+    materialPackage: {
+      include: {
+        materialReceipt: {
+          include: {
+            materialExportReceiptDetail: {
+              include: {
+                materialExportReceipt: true,
+              },
+            },
+            receiptAdjustment: {
+              include: {
+                inventoryReportDetail: {
+                  include: {
+                    inventoryReport: true,
+                  },
+                },
+              },
+            },
+            importReceipt: true,
+          },
+        },
+        inventoryStock: true,
       },
     },
   };
@@ -565,20 +868,44 @@ export class MaterialVariantService {
         where: findOptions?.where,
       }),
     ]);
-
+    let onHand = 0;
     data.forEach((material: MaterialStock) => {
-      material.numberOfMaterialPackage = material.materialPackage.length;
-      material.onHand = material?.materialPackage?.reduce(
-        (totalAcc, materialVariantEl) => {
-          let variantTotal = 0;
-          //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
-          if (materialVariantEl.inventoryStock) {
-            variantTotal = materialVariantEl.inventoryStock.quantityByPack;
+      material.onHand = onHand;
+      material.onHandUom = 0;
+      material.materialPackage.forEach((materialPackage) => {
+        let materialPackageOnHand = 0;
+        if (materialPackage.materialReceipt.length > 0) {
+          materialPackage.materialReceipt.forEach((materialReceipt) => {
+            if (materialReceipt.status == MaterialReceiptStatus.AVAILABLE) {
+              materialPackageOnHand += materialReceipt.remainQuantityByPack;
+              onHand += materialReceipt.remainQuantityByPack;
+              material.onHandUom +=
+                materialReceipt.remainQuantityByPack *
+                materialPackage.uomPerPack;
+            }
+          });
+          if (materialPackage.inventoryStock) {
+            materialPackage.inventoryStock.quantityByPack =
+              materialPackageOnHand;
           }
-          return totalAcc + variantTotal;
-        },
-        0,
-      );
+        } else {
+          onHand = 0;
+        }
+      });
+
+      material.numberOfMaterialPackage = material.materialPackage.length;
+      material.onHand = onHand;
+      // material.onHand = material?.materialPackage?.reduce(
+      //   (totalAcc, materialVariantEl) => {
+      //     let variantTotal = 0;
+      //     //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+      //     if (materialVariantEl.inventoryStock) {
+      //       variantTotal = materialVariantEl.inventoryStock.quantityByPack;
+      //     }
+      //     return totalAcc + variantTotal;
+      //   },
+      //   0,
+      // );
     });
 
     const dataResponse: DataResponse = {
@@ -625,6 +952,22 @@ export class MaterialVariantService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Image not uploaded');
   }
 
+  async addImageWithoutResponse(file: Express.Multer.File, id: string) {
+    const imageUrl = await this.imageService.addImageToFirebase(
+      file,
+      id,
+      PathConstants.MATERIAL_PATH,
+    );
+    let result;
+    if (imageUrl) {
+      const updateMaterialDto: UpdateMaterialDto = {
+        image: imageUrl,
+      };
+      result = await this.update(id, updateMaterialDto);
+    }
+    return result;
+  }
+
   async update(id: string, updateMaterialDto: UpdateMaterialDto) {
     const materialVariant = await this.findById(id);
     if (!materialVariant) {
@@ -656,8 +999,12 @@ export class MaterialVariantService {
     return apiFailed(HttpStatus.BAD_REQUEST, 'Material not updated');
   }
 
-  async create(createMaterialDto: CreateMaterialDto) {
-    const { materialId, code, ...rest } = createMaterialDto;
+  async create(
+    createMaterialDto: CreateMaterialDto,
+    file?: Express.Multer.File,
+  ) {
+    const { materialId, code, materialPackages, materialAttributes, ...rest } =
+      createMaterialDto;
 
     const materialInput: Prisma.MaterialVariantCreateInput = {
       ...rest,
@@ -671,7 +1018,57 @@ export class MaterialVariantService {
 
     const result = await this.prismaService.materialVariant.create({
       data: materialInput,
+      include: this.materialInclude,
     });
+    let errorResponse = [];
+
+    try {
+      if (createMaterialDto.materialAttributes) {
+        const resultAttribute =
+          await this.materialAttributeService.createManyWithMaterialVariantId(
+            createMaterialDto.materialAttributes,
+            result.id,
+          );
+        result.materialAttribute = resultAttribute;
+      }
+    } catch (e) {
+      errorResponse.push(e);
+    }
+
+    try {
+      if (createMaterialDto.materialPackages) {
+        const resultPackage =
+          await this.materialPackageService.createManyWithMaterialVariantId(
+            createMaterialDto.materialPackages,
+            result.id,
+          );
+        result.materialPackage = resultPackage;
+      }
+    } catch (e) {
+      errorResponse.push(e);
+    }
+
+    try {
+      if (file) {
+        const imageUrl = await this.addImageWithoutResponse(file, result.id);
+        if (imageUrl) {
+          result.image = imageUrl.image;
+        }
+      }
+    } catch (e) {
+      errorResponse.push(e);
+    }
+
+    if (errorResponse.length > 0) {
+      if (result) {
+        return apiFailed(
+          HttpStatus.BAD_REQUEST,
+          'Material created successfully but some error occured',
+          errorResponse,
+        );
+      }
+    }
+
     if (result) {
       return apiSuccess(
         HttpStatus.CREATED,
@@ -679,7 +1076,6 @@ export class MaterialVariantService {
         'Material created successfully',
       );
     }
-
     return apiFailed(HttpStatus.BAD_REQUEST, 'Material not created');
   }
 
@@ -725,7 +1121,7 @@ export class MaterialVariantService {
   }
 
   async findByIdWithResponse(id: string) {
-    const result = await this.findById(id);
+    const result = (await this.findById(id)) as MaterialVariant;
     if (result) {
       return apiSuccess(HttpStatus.OK, result, 'Material found');
     }
@@ -744,23 +1140,44 @@ export class MaterialVariantService {
     if (!result) {
       return null;
     }
-
+    let onHand = 0;
     if (result.materialPackage) {
+      result.onHandUom = 0;
+      result.materialPackage.forEach((materialPackage) => {
+        let materialPackageOnHand = 0;
+        if (materialPackage?.materialReceipt) {
+          materialPackage.materialReceipt.forEach((materialReceipt) => {
+            if (materialReceipt.status == MaterialReceiptStatus.AVAILABLE) {
+              materialPackageOnHand += materialReceipt.remainQuantityByPack;
+              onHand += materialReceipt.remainQuantityByPack;
+              result.onHandUom +=
+                materialReceipt.remainQuantityByPack *
+                materialPackage.uomPerPack;
+            }
+          });
+          if (materialPackage.inventoryStock) {
+            materialPackage.inventoryStock.quantityByPack =
+              materialPackageOnHand;
+          }
+        } else {
+        }
+      });
       result.numberOfMaterialPackage = result.materialPackage.length
         ? result.materialPackage.length
         : 0;
+      result.onHand = onHand;
 
-      result.onHand = result?.materialPackage?.reduce(
-        (totalAcc, materialVariantEl) => {
-          let variantTotal = 0;
-          //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
-          if (materialVariantEl.inventoryStock) {
-            variantTotal = materialVariantEl.inventoryStock.quantityByPack;
-          }
-          return totalAcc + variantTotal;
-        },
-        0,
-      );
+      // result.onHand = result?.materialPackage?.reduce(
+      //   (totalAcc, materialVariantEl) => {
+      //     let variantTotal = 0;
+      //     //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+      //     if (materialVariantEl.inventoryStock) {
+      //       variantTotal = materialVariantEl.inventoryStock.quantityByPack;
+      //     }
+      //     return totalAcc + variantTotal;
+      //   },
+      //   0,
+      // );
     } else {
       result.numberOfMaterialPackage = 0;
       result.onHand = 0;

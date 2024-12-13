@@ -1,0 +1,20 @@
+model ReorderAlert {
+    id                   String             @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+    materialVariantId    String             @map("material_variant_id") @db.Uuid
+    currentQuantityByUom Float              @default(0) @map("current_quantity_by_uom")
+    reorderQuantityByUom Float              @default(0) @map("reorder_quantity_by_uom")
+    status               ReOrderAlertStatus @default(OPEN)
+    openedAt             DateTime           @default(now()) @map("opened_at")
+    closedAt             DateTime?          @map("closed_at")
+    createdAt            DateTime           @default(now())
+    updatedAt            DateTime           @updatedAt
+    deletedAt            DateTime?          @map("deleted_at")
+    materialVariant      MaterialVariant    @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    @@map("reorder_alert")
+}
+
+enum ReOrderAlertStatus {
+    OPEN
+    CLOSED
+}

@@ -2,8 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { $Enums, RoleCode } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
   ArrayUnique,
   IsArray,
+  IsDateString,
   IsEnum,
   IsOptional,
   IsString,
@@ -37,6 +39,16 @@ export class CreateMaterialExportReceiptDto {
   type: $Enums.MaterialExportReceiptType;
 
   @ApiProperty()
+  @IsDateString()
+  @IsOptional()
+  expectedStartedAt: Date;
+
+  @ApiProperty()
+  @IsDateString()
+  @IsOptional()
+  expectedFinishedAt: Date;
+
+  @ApiProperty()
   @ValidateNested({
     each: true,
   })
@@ -44,6 +56,7 @@ export class CreateMaterialExportReceiptDto {
     message: 'Material receipt id must be unique in array',
   })
   @Type(() => NestCreateMaterialExportReceipt)
+  @ArrayNotEmpty()
   @IsArray()
   materialExportReceiptDetail: NestCreateMaterialExportReceipt[];
 }

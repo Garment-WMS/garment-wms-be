@@ -214,7 +214,7 @@ export class ExcelService {
       );
       return apiFailed(
         HttpStatus.BAD_REQUEST,
-        'There is error in the file',
+        'There is error Purchase Order sheet. Please fix before upload again !!!',
         downloadUrl,
       );
     }
@@ -909,7 +909,7 @@ export class ExcelService {
               );
               errorSet = true;
             }
-            purchaseOrderObject.productionPlanId = productPlan.id as string;
+            purchaseOrderObject.productionPlanId = productPlan?.id as string;
           }
           break;
         }
@@ -1867,7 +1867,7 @@ export class ExcelService {
       );
       return apiFailed(
         HttpStatus.BAD_REQUEST,
-        'There is error in the file',
+        'Invalid file format, worksheet not found',
         downloadUrl,
       );
     }
@@ -2124,8 +2124,9 @@ export class ExcelService {
       const row = worksheet.getRow(i);
       const itemCell = {
         productCodeCell: row.getCell(1),
-        quantityToProduceCell: row.getCell(2),
-        note: row.getCell(3),
+        productNameCell: row.getCell(2),
+        quantityToProduceCell: row.getCell(3),
+        note: row.getCell(4),
       };
 
       if (

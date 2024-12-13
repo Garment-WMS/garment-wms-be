@@ -1,12 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsMaterialExportRequestExist } from '../validator/is-material-export-request-exist.validator';
 
 export enum ProductionDepartmentApproveAction {
-  PRODUCTION_APPROVE,
-  PRODUCTION_REJECT,
+  PRODUCTION_APPROVED = 'PRODUCTION_APPROVED',
+  PRODUCTION_REJECTED = 'PRODUCTION_REJECTED',
 }
 
-export class ProductionStaffDepartmentDto {
+export class ProductionStaffDepartmentProcessDto {
+  @ApiProperty()
+  @IsUUID()
+  @IsMaterialExportRequestExist()
+  materialExportRequestId: string;
+
   @ApiProperty()
   @IsEnum(ProductionDepartmentApproveAction)
   action: ProductionDepartmentApproveAction;

@@ -18,8 +18,11 @@ export class PoDeliveryService {
     private readonly poDeliveryMaterialService: PoDeliveryMaterialService,
   ) {}
 
-  findExtraPoDelivery(purchaseOrderId: string) {
-    return this.pirsmaService.poDelivery.findFirst({
+  findExtraPoDelivery(
+    purchaseOrderId: string,
+    prismaInstance: PrismaService = this.pirsmaService,
+  ) {
+    return prismaInstance.poDelivery.findFirst({
       where: {
         purchaseOrderId,
         isExtra: true,
@@ -103,14 +106,15 @@ export class PoDeliveryService {
   }
 
   async IsImportingOrFinishedPoDeliveryExist(PoId: string) {
-    return !!(await this.pirsmaService.poDelivery.findMany({
+    const poDeliveries = await this.pirsmaService.poDelivery.findMany({
       where: {
         purchaseOrderId: PoId,
         status: {
-          in: [PoDeliveryStatus.PENDING, PoDeliveryStatus.FINISHED],
+          in: [PoDeliveryStatus.IMPORTING, PoDeliveryStatus.FINISHED],
         },
       },
-    }));
+    });
+    return poDeliveries.length > 0;
   }
 
   async checkIsPoDeliveryStatus(poDeliveryId: string) {
@@ -241,8 +245,8 @@ export class PoDeliveryService {
 
   async getOnePoDelivery(id: string) {
     const result = await this.findPoDeliveryId(id);
-
     if (result) {
+      getPoDeliveryStatistic(result);
       return apiSuccess(HttpStatus.OK, result, 'Get po delivery successfully');
     }
     return apiSuccess(HttpStatus.NOT_FOUND, null, 'Po delivery not found');
@@ -256,7 +260,59 @@ export class PoDeliveryService {
       where: {
         id: id,
       },
-      include: this.includeQuery,
+      include: {
+        poDeliveryDetail: {
+          include: {
+            materialPackage: {
+              include: {
+                materialVariant: {
+                  include: {
+                    material: {
+                      include: {
+                        materialUom: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        importRequest: {
+          include: {
+            inspectionRequest: {
+              include: {
+                inspectionReport: {
+                  include: {
+                    importReceipt: {
+                      include: {
+                        materialReceipt: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            importRequestDetail: {
+              include: {
+                materialPackage: {
+                  include: {
+                    materialVariant: {
+                      include: {
+                        material: {
+                          include: {
+                            materialUom: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
   }
 
@@ -326,6 +382,7 @@ export class PoDeliveryService {
             // status: $Enums.PurchaseOrderStatus.IN_PROGRESS,
           },
           data: {
+            finishDate: new Date(),
             status: $Enums.PurchaseOrderStatus.FINISHED,
           },
         });
@@ -480,3 +537,30 @@ export const extractNumberFromCode = (code: string): number => {
   }
   throw new Error('Invalid code format');
 };
+
+export function getPoDeliveryStatistic(poDelivery) {
+  if (!poDelivery) {
+    return poDelivery;
+  }
+  const materialSummary = poDelivery.poDeliveryDetail?.reduce(
+    (summary, detail) => {
+      const materialId = detail.materialPackageId;
+      if (summary[materialId]) {
+        summary[materialId].quantityByPack += detail.quantityByPack;
+        summary[materialId].actualImportQuantity += detail.actualImportQuantity;
+      } else {
+        summary[materialId] = {
+          ...detail,
+        };
+      }
+      return summary;
+    },
+    {},
+  );
+
+  const poDeliveryWithMaterialSummary = {
+    ...poDelivery,
+    materialSummary: Object.values(materialSummary),
+  };
+  return poDeliveryWithMaterialSummary;
+}

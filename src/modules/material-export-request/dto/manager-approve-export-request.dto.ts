@@ -29,12 +29,7 @@ export class ManagerApproveExportRequestDto {
 
   @ApiProperty({ required: false })
   @IsString()
-  @IsNotEmpty()
-  @ValidateIf((o) => o.action === ManagerAction.REJECTED)
-  rejectionReason: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
+  @IsOptional()
   managerNote: string;
 
   @ApiProperty({ required: false })
@@ -46,15 +41,18 @@ export class ManagerApproveExportRequestDto {
   @ApiProperty({ required: false })
   @Type(() => CreateMaterialExportReceiptDto)
   @ValidateNested({ each: true })
+  @IsNotEmpty()
   materialExportReceipt: CreateMaterialExportReceiptDto;
 
   @ApiProperty({ required: false })
   @IsDateString()
   @IsNotEmpty()
+  @ValidateIf((o) => o.action === ManagerAction.APPROVED)
   exportExpectedStartedAt: Date;
 
   @ApiProperty({ required: false })
   @IsDateString()
   @IsNotEmpty()
+  @ValidateIf((o) => o.action === ManagerAction.APPROVED)
   exportExpectedFinishedAt: Date;
 }

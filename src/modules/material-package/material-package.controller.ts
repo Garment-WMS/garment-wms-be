@@ -14,7 +14,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
-import { CreateMaterialVariantDto } from './dto/create-material-variant.dto';
+import { CreateMaterialPackageDto } from './dto/create-material-variant.dto';
 import { UpdateMaterialVariantDto } from './dto/update-material-variant.dto';
 import { MaterialPackageService } from './material-package.service';
 
@@ -27,7 +27,7 @@ export class MaterialPackageController {
 
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  create(@Body() createMaterialVariantDto: CreateMaterialVariantDto) {
+  create(@Body() createMaterialVariantDto: CreateMaterialPackageDto) {
     return this.materialPackageService.create(createMaterialVariantDto);
   }
 

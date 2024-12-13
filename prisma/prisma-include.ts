@@ -299,7 +299,11 @@ export const inspectionRequestInclude: Prisma.InspectionRequestInclude = {
     include: warehouseManagerInclude,
   },
   inspectionReport: {
-    include: inspectionReportInclude,
+    include: {
+      inspectionReportDetail: {
+        include: inspectionReportDetailWithoutInspectionReportInclude,
+      },
+    },
   },
 };
 
@@ -453,9 +457,6 @@ export const materialExportRequestInclude: Prisma.MaterialExportRequestInclude =
     materialExportRequestDetail: {
       include: materialExportRequestDetailInclude,
     },
-    productFormula: {
-      include: productFormulaInclude,
-    },
     productionBatch: {
       include: productionBatchInclude,
     },
@@ -555,7 +556,11 @@ export const taskInclude: Prisma.TaskInclude = {
   inventoryReport: {
     include: inventoryReportPlan,
   },
-  todo: true,
+  importRequest: {
+    include: importRequestInclude,
+  },
+
+  // todo: true,
 };
 
 export const productReceiptIncludeQuery: Prisma.ProductReceiptInclude = {

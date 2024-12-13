@@ -12,6 +12,7 @@ import { ImportRequestModule } from '../import-request/import-request.module';
 import { InventoryReportPlanModule } from '../inventory-report-plan/inventory-report-plan.module';
 import { MaterialExportReceiptModule } from '../material-export-receipt/material-export-receipt.module';
 import { MaterialExportRequestModule } from '../material-export-request/material-export-request.module';
+import { TaskModule } from '../task/task.module';
 
 @Module({
   controllers: [InventoryReportController],
@@ -27,6 +28,7 @@ import { MaterialExportRequestModule } from '../material-export-request/material
     InventoryReportDetailModule,
     // InventoryReportPlanModule,
     PrismaModule,
+    TaskModule,
   ],
   exports: [InventoryReportService],
   providers: [InventoryReportService],

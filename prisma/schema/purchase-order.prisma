@@ -1,6 +1,6 @@
 model PurchaseOrder {
   id                 String              @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  poNumber           String              @unique @map("PO_number") @db.VarChar
+  poNumber           String?             @map("PO_number") @db.VarChar
   code               String?             @map("code") @db.VarChar
   productionPlanId   String?             @map("production_plan_id") @db.Uuid
   purchasingStaffId  String?             @map("purchasing_staff_id") @db.Uuid
@@ -14,7 +14,7 @@ model PurchaseOrder {
   orderDate          DateTime            @map("order_date") @db.Date
   note               String?             @map("note") @db.VarChar
   expectedFinishDate DateTime            @map("expected_finish_date") @db.Date
-  finishDate         DateTime?           @map("finish_date") @db.Date
+  finishDate         DateTime?           @map("finish_date") @db.Timestamptz(6)
   cancelledAt        DateTime?           @map("cancelled_at") @db.Timestamptz(6)
   cancelledReason    String?             @map("cancelled_reason") @db.VarChar
   cancelledBy        String?             @map("cancelled_by") @db.Uuid

@@ -24,7 +24,9 @@ import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { CreateProductImportRequestDto } from './dto/import-request/create-product-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
+import { ProductionDepartmentCreateReturnImportRequestDto } from './dto/import-request/production-department-create-return-import-request.dto';
 import { PurchasingStaffProcessDto } from './dto/import-request/purchasing-staff-process.dto';
+import { ReassignImportRequestDto } from './dto/import-request/reassign-import-request.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
 import { ImportRequestService } from './import-request.service';
 import { IsImportRequestExistPipe } from './pipe/is-import-request-exist.pipe';
@@ -37,13 +39,13 @@ export class ImportRequestController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.PURCHASING_STAFF)
-  async create(
+  async createMaterialImportRequest(
     @GetUser() purchasingStaff: AuthenUser,
     @Body() createImportRequestDto: CreateImportRequestDto,
   ) {
     return apiSuccess(
       HttpStatus.CREATED,
-      await this.importRequestService.create(
+      await this.importRequestService.createMaterialImportRequest(
         purchasingStaff,
         createImportRequestDto,
       ),
@@ -68,6 +70,23 @@ export class ImportRequestController {
     );
   }
 
+  @Post('/material-return')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.PRODUCTION_DEPARTMENT)
+  async createReturnImportRequest(
+    @GetUser() productionDepartment: AuthenUser,
+    @Body() dto: ProductionDepartmentCreateReturnImportRequestDto,
+  ) {
+    return apiSuccess(
+      HttpStatus.CREATED,
+      await this.importRequestService.productionDepartmentCreateReturnImportRequest(
+        dto,
+        productionDepartment.productionDepartmentId,
+      ),
+      'Import request created successfully',
+    );
+  }
+
   @Get()
   async search(
     @Query(
@@ -78,6 +97,9 @@ export class ImportRequestController {
           'inspectionRequest.inspectionReport.id',
           'inspectionRequest.inspectionReport.code',
           'inspectionRequest.inspectionReport.importReceipt.id',
+          'poDelivery.code',
+          'poDelivery.purchaseOrder.code',
+          'productionBatch.code',
         ],
         [{ createdAt: 'desc' }],
       ),
@@ -188,12 +210,12 @@ export class ImportRequestController {
     @Param('id', IsImportRequestExistPipe)
     id: string,
     @Body() managerProcessDto: ManagerProcessDto,
-    @GetUser() warehouseManager: AuthenUser,
+    @GetUser() account: AuthenUser,
   ) {
     return apiSuccess(
       HttpStatus.OK,
       await this.importRequestService.managerProcess(
-        warehouseManager.warehouseManagerId,
+        account,
         id,
         managerProcessDto,
       ),
@@ -228,6 +250,17 @@ export class ImportRequestController {
       HttpStatus.OK,
       await this.importRequestService.getByImportReceiptId(importReceiptId),
       'Get import request by import receipt successfully',
+    );
+  }
+
+  @Post('/reassign')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER)
+  async reassign(@Body() reassignImportRequestDto: ReassignImportRequestDto) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.importRequestService.reassign(reassignImportRequestDto),
+      'Import request reassigned successfully',
     );
   }
 }

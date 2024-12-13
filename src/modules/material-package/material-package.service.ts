@@ -1,12 +1,13 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { BadGatewayException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { extractPageAndPageSize, getPageMeta } from 'src/common/utils/utils';
-import { CreateMaterialVariantDto } from './dto/create-material-variant.dto';
+import { NestedMaterialPackageDto } from '../material-variant/dto/nested-material-package.dto';
+import { CreateMaterialPackageDto } from './dto/create-material-variant.dto';
 import { UpdateMaterialVariantDto } from './dto/update-material-variant.dto';
 
 @Injectable()
@@ -27,7 +28,29 @@ export class MaterialPackageService {
     },
   };
 
-  async create(createMaterialVariantDto: CreateMaterialVariantDto) {
+  async createManyWithMaterialVariantId(
+    materialPackages: NestedMaterialPackageDto[],
+    id: string,
+  ) {
+    const materialPackageInput: Prisma.MaterialPackageCreateManyInput[] =
+      materialPackages.map((materialPackage) => {
+        return {
+          name: materialPackage.name,
+          code: undefined,
+          packedHeight: materialPackage.packedHeight,
+          packedLength: materialPackage.packedLength,
+          packedWeight: materialPackage.packedWeight,
+          packedWidth: materialPackage.packedWidth,
+          packUnit: materialPackage.packUnit,
+          uomPerPack: materialPackage.uomPerPack,
+          materialVariantId: id,
+        };
+      });
+    return this.prismaService.materialPackage.createManyAndReturn({
+      data: materialPackageInput,
+    });
+  }
+  async create(createMaterialVariantDto: CreateMaterialPackageDto) {
     const result = await this.prismaService.materialPackage.create({
       data: createMaterialVariantDto,
     });
@@ -85,7 +108,7 @@ export class MaterialPackageService {
 
   async findById(id: string) {
     if (!isUUID(id)) {
-      throw new BadGatewayException('Invalid id');
+      throw new BadRequestException('Invalid uuid format');
     }
     const result = await this.prismaService.materialPackage.findUnique({
       where: { id },

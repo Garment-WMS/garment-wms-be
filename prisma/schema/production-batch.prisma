@@ -5,32 +5,36 @@ model ProductionBatch {
   name                           String                           @map("name") @db.VarChar
   description                    String?                          @map("description") @db.VarChar
   quantityToProduce              Float?                           @default(0) @map("quantity_to_produce")
-  canceledAt                     DateTime?                        @map("canceled_at") @db.Timestamptz(6)
-  canceledBy                     String?                          @map("canceled_by") @db.Uuid
-  canceledReason                 String?                          @map("canceled_reason") @db.VarChar
-  status                         ProductionBatchStatus            @default(EXECUTING) @map("status")
+  cancelledAt                    DateTime?                        @map("cancelled_at") @db.Timestamptz(6)
+  cancelledBy                    String?                          @map("cancelled_by") @db.Uuid
+  cancelledReason                String?                          @map("cancelled_reason") @db.VarChar
+  status                         ProductionBatchStatus            @default(PENDING) @map("status")
   startDate                      DateTime?                        @map("start_date") @db.Time(6)
   finishedDate                   DateTime?                        @map("finished_date") @db.Time(6)
   expectedFinishDate             DateTime?                        @map("expected_finish_date") @db.Time(6)
+  expectedStartDate              DateTime?                        @map("expected_start_date") @db.Time(6)
   createdAt                      DateTime?                        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                      DateTime?                        @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                      DateTime?                        @map("deleted_at") @db.Timestamptz(6)
   materialExportRequest          MaterialExportRequest[]
   productionPlanDetail           ProductionPlanDetail?            @relation(fields: [productionPlanDetailId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  cancelledProductDepartment     ProductionDepartment?            @relation(fields: [cancelledBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   importRequest                  ImportRequest[]
   productionBatchMaterialVariant ProductionBatchMaterialVariant[]
 
+  @@unique([id, cancelledBy])
   @@map("production_batch")
 }
 
 enum ProductionBatchStatus {
+  PENDING
   EXECUTING
-  WAITING_FOR_EXPORTING_MATERIAL
+  // WAITING_FOR_EXPORTING_MATERIAL
   MANUFACTURING
   IMPORTING
   // IMPORTED
   FINISHED
-  CANCELED
+  CANCELLED
 
   @@map("production_batch_status")
 }

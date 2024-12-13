@@ -27,6 +27,7 @@ import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CancelledPurchaseOrderDto } from './dto/cancelled-purchase-order.dto';
 import { UpdatePurchaseOrderStatusDto } from './dto/update-purchase-order-status.dto';
 import { PurchaseOrderService } from './purchase-order.service';
+import { ChartDto } from './dto/chart.dto';
 
 @Controller('purchase-order')
 export class PurchaseOrderController {
@@ -50,6 +51,11 @@ export class PurchaseOrderController {
     return this.purchaseOrderService.getPurchaseOrders(filterDto.findOptions);
   }
 
+  @Get('chart')
+  getPurchaseOrderChart(@Body() chartDto: ChartDto) {
+    return this.purchaseOrderService.getPurchaseOrderChart(chartDto);
+  }
+
   @Get('all')
   getAllPurchaseOrders() {
     return this.purchaseOrderService.getAllPurchaseOrders();
@@ -61,6 +67,10 @@ export class PurchaseOrderController {
   @Get('statistic')
   getPurchaseOrderStatistics() {
     return this.purchaseOrderService.getPurchaseOrderStatistics();
+  }
+  @Get('statistic/history')
+  getPurchaseOrderStatisticsHistory(@Query('from') from, @Query('to') to) {
+    return this.purchaseOrderService.getPurchaseOrderStatisticsHistory(from,to);
   }
 
   @Post()
@@ -78,6 +88,11 @@ export class PurchaseOrderController {
         user.purchasingStaffId,
       );
     return fileResult;
+  }
+
+  @Patch('generate_code')
+  async generatePurchaseOrderCode() {
+    return this.purchaseOrderService.updateAllPurchaseOrderCodes();
   }
 
   @Delete(':id')

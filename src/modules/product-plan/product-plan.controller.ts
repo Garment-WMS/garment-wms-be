@@ -53,9 +53,27 @@ export class ProductPlanController {
     return this.productPlanService.findAll(filterDto.findOptions);
   }
 
+
+  @Get('/minimize')
+  findAllMinimize(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ProductionPlanWhereInput>(
+        [],
+        [{ createdAt: 'desc' }],
+      ),
+    )
+    filterDto: FilterDto<Prisma.ProductionPlanWhereInput>,
+  ) {
+    return this.productPlanService.findAllMinimize(filterDto.findOptions);
+  }
+
   @Get(':id')
   findOne(@Param('id', CustomUUIDPipe) id: string) {
     return this.productPlanService.findOne(id);
+  }
+  @Get(':id/chart')
+  findChart(@Param('id', CustomUUIDPipe) id: string) {
+    return this.productPlanService.findChart(id);
   }
 
   @Patch(':id')

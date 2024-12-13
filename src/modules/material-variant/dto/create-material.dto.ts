@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
 import {
+  IsArray,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -8,8 +10,12 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { UniqueInArray } from 'src/common/decorator/validator/unique-property.decorator';
 import { IsMaterialTypeExist } from 'src/modules/material/validator/is-material-type-exist.validator';
+import { NestedMaterialAttributeDto } from './nested-material-attribute.dto';
+import { NestedMaterialPackageDto } from './nested-material-package.dto';
 
 export class CreateMaterialDto {
   @ApiProperty({})
@@ -36,5 +42,22 @@ export class CreateMaterialDto {
   @IsNotEmpty()
   @IsInt()
   @Min(0)
+  @Transform(({ value }) => (value === undefined || value === null ? 0 : value))
   reorderLevel: number;
+
+  @ApiProperty({})
+  @IsOptional()
+  @IsArray()
+  @Type(() => NestedMaterialPackageDto)
+  @ValidateNested({ each: true })
+  @UniqueInArray(['name'])
+  materialPackages?: NestedMaterialPackageDto[];
+
+  @ApiProperty()
+  @IsOptional()
+  @IsArray()
+  @Type(() => NestedMaterialAttributeDto)
+  @ValidateNested({ each: true })
+  @UniqueInArray(['name'])
+  materialAttributes?: NestedMaterialAttributeDto[];
 }

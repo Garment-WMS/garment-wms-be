@@ -10,11 +10,13 @@ export type MaterialStock = Prisma.MaterialVariantGetPayload<{
     };
     materialPackage: {
       include: {
+        materialReceipt: true;
         inventoryStock: true;
       };
     };
   };
 }> & {
+  onHandUom?: number;
   onHand?: number; // Adding custom field
   numberOfMaterialPackage?: number; // Adding custom field
 };

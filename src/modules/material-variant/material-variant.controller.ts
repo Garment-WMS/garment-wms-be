@@ -19,6 +19,7 @@ import { Prisma } from '@prisma/client';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { HttpCacheInterceptor } from 'src/common/interceptor/cache.interceptor';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
+import { BodyInterceptor } from 'src/common/pipe/parse-form-data-json-pipe.pipe';
 import { ChartDto } from './dto/chart.dto';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
@@ -54,9 +55,20 @@ export class MaterialVariantController {
   }
 
   @Post()
-  @UsePipes(new ValidationPipe({ whitelist: true }))
-  create(@Body() createMaterialDto: CreateMaterialDto) {
+  @UsePipes(new ValidationPipe({}))
+  create(@Body('createMaterialDto') createMaterialDto: any) {
     return this.materialVariantService.create(createMaterialDto);
+  }
+
+  @Post('/form-data')
+  @UseInterceptors(FileInterceptor('file'), BodyInterceptor)
+  @UsePipes(new ValidationPipe({}))
+  createFormData(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('createMaterialDto')
+    createMaterialDto: CreateMaterialDto,
+  ) {
+    return this.materialVariantService.create(createMaterialDto, file);
   }
 
   @Post('chart')
@@ -64,6 +76,10 @@ export class MaterialVariantController {
     return this.materialVariantService.getChart(chartDto);
   }
 
+  @Get('/all-reorder-level')
+  getAllReorderLevel() {
+    return this.materialVariantService.findAllOpenReOrderAlert();
+  }
   @Get('all')
   getAllMaterial() {
     return this.materialVariantService.findAll();
@@ -104,6 +120,33 @@ export class MaterialVariantController {
   @Get(':id')
   getMaterialById(@Param('id', new CustomUUIDPipe()) id: string) {
     return this.materialVariantService.findByIdWithResponse(id);
+  }
+
+  @Get(':id/history')
+  getMaterialHistoryById(
+    @Query('sortBy') sortBy: string,
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialVariantScalarWhereInput>(
+        ['material.name', 'material.code', 'material.materialUom.name'],
+        [
+          { createdAt: 'desc' },
+          { id: 'asc' },
+          { name: 'asc' },
+          { materialId: 'asc' },
+          { code: 'asc' },
+          { reorderLevel: 'asc' },
+          { updatedAt: 'asc' },
+        ],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.MaterialVariantScalarWhereInput>,
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.materialVariantService.findHistoryByIdWithResponse(
+      id,
+      sortBy,
+      filterOptions.findOptions,
+    );
   }
 
   @Get(':id/receiptV1')

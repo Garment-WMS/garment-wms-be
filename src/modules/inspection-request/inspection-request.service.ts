@@ -159,13 +159,17 @@ export class InspectionRequestService {
           data: {
             status: $Enums.ImportRequestStatus.INSPECTING,
           },
+          include: {
+            discussion: true,
+          },
         }),
       ]);
 
     const chat: CreateChatDto = {
-      discussionId: '',
-      message: '',
+      discussionId: importRequest.discussion.id,
+      message: Constant.APPROVED_TO_INSPECTING,
     };
+    await this.chatService.createBySystemWithoutResponse(chat);
 
     return inspectionRequest;
   }
@@ -207,7 +211,8 @@ export class InspectionRequestService {
       taskType: 'INSPECTION',
       inspectionDepartmentId: inspectionDepartmentId,
       inspectionRequestId: inspectionRequestId,
-      status: 'OPEN',
+      status: 'IN_PROGRESS',
+      startedAt: new Date(),
       expectedStartedAt: expectedStartedAt,
       expectedFinishedAt: expectedFinishedAt,
     };

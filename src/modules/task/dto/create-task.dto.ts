@@ -8,10 +8,10 @@ export class CreateTaskDto {
   @IsUUID()
   id?: string;
 
-  @ApiProperty()
-  @IsOptional()
-  @IsString()
-  code?: string;
+  // @ApiProperty()
+  // @IsOptional()
+  // @IsString()
+  // code?: string;
 
   @ApiProperty()
   @IsOptional()

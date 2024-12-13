@@ -10,9 +10,15 @@ import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ImageService } from '../image/image.service';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class UserService {
+  constructor(
+    private prisma: PrismaService,
+    private readonly imageService: ImageService,
+    @InjectQueue('receipt-adjustment') private readonly testQueue: Queue,
+  ) {}
   async getAccountById(id: string) {
     const result = await this.prisma.account.findFirst({
       where: {
@@ -104,12 +110,6 @@ export class UserService {
     }
     return apiSuccess(200, result, 'Get all user by role successfully');
   }
-  constructor(
-    private prisma: PrismaService,
-    private readonly imageService: ImageService,
-    @InjectQueue('receipt-adjustment') private readonly testQueue: Queue,
-  ) {}
-
   async search(findOptions: GeneratedFindOptions<Prisma.AccountWhereInput>) {
     const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;

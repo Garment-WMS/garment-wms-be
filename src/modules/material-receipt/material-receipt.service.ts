@@ -137,66 +137,58 @@ export class MaterialReceiptService {
     let createdMaterialReceipts = [];
     let materialReceipts: Prisma.MaterialReceiptCreateManyInput[] = [];
     for (let i = 0; i < inspectionReportDetail.length; i++) {
-      const result = await this.poDeliveryService.getExpiredDate(
-        poDeliveryId,
-        inspectionReportDetail[0].materialPackageId,
-        prismaInstance,
-      );
-      materialReceipts.push({
-        importReceiptId: id,
-        materialPackageId: inspectionReportDetail[i].materialPackageId,
-        remainQuantityByPack: inspectionReportDetail[i].approvedQuantityByPack,
-        quantityByPack: inspectionReportDetail[i].approvedQuantityByPack,
-        expireDate: result.expiredDate,
-      });
+      if (inspectionReportDetail[i].approvedQuantityByPack !== 0) {
+        const result = await this.poDeliveryService.getExpiredDate(
+          poDeliveryId,
+          inspectionReportDetail[0].materialPackageId,
+          prismaInstance,
+        );
+        materialReceipts.push({
+          importReceiptId: id,
+          materialPackageId: inspectionReportDetail[i].materialPackageId,
+          remainQuantityByPack:
+            inspectionReportDetail[i].approvedQuantityByPack,
+          quantityByPack: inspectionReportDetail[i].approvedQuantityByPack,
+          expireDate: result.expiredDate,
+        });
+      }
     }
 
-    await prismaInstance.materialReceipt.createMany({
-      data: materialReceipts,
-    });
-
-    createdMaterialReceipts = await prismaInstance.materialReceipt.findMany({
-      where: {
-        importReceiptId: id,
-      },
-      include: materialReceiptIncludeWithoutImportReceipt,
-    });
-
+    createdMaterialReceipts =
+      await prismaInstance.materialReceipt.createManyAndReturn({
+        data: materialReceipts,
+      });
     return createdMaterialReceipts;
   }
 
   async updateMaterialReceiptQuantity(
     id: string,
     quantityByPack: number,
-    prismaInstance: PrismaClient = this.prismaService,
+    prismaInstance: PrismaService = this.prismaService,
   ) {
     const materialReceipt = await this.findById(id);
     if (!materialReceipt) {
       throw new Error('Material Receipt not found');
     }
-    return prismaInstance.$transaction(
-      async (prismaInstance: PrismaService) => {
-        await prismaInstance.materialReceipt.update({
-          where: {
-            id,
-          },
-          data: {
-            remainQuantityByPack: quantityByPack,
-          },
-        });
-
-        const remainQuantityByPack = await this.getRemainQuantityByPack(
-          materialReceipt.materialPackageId,
-          prismaInstance,
-        );
-
-        await this.inventoryStockService.updateMaterialStockQuantity(
-          materialReceipt.materialPackageId,
-          remainQuantityByPack,
-          prismaInstance,
-        );
-        return null;
+    await prismaInstance.materialReceipt.update({
+      where: {
+        id,
       },
+      data: {
+        remainQuantityByPack: quantityByPack,
+        ...(quantityByPack === 0 && { status: MaterialReceiptStatus.USED }),
+      },
+    });
+
+    const remainQuantityByPack = await this.getRemainQuantityByPack(
+      materialReceipt.materialPackageId,
+      prismaInstance,
+    );
+
+    await this.inventoryStockService.updateMaterialStockQuantity(
+      materialReceipt.materialPackageId,
+      remainQuantityByPack,
+      prismaInstance,
     );
   }
 

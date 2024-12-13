@@ -48,7 +48,7 @@ export class ManagerProcessDto {
   @IsUserRoleExist(RoleCode.INSPECTION_DEPARTMENT)
   @IsNotEmpty()
   @IsUUID()
-  inspectionDepartmentId: string;
+  inspectionDepartmentId?: string;
 
   @ApiProperty()
   @IsOptional()
@@ -59,20 +59,24 @@ export class ManagerProcessDto {
   @ApiProperty({ required: true, type: 'date' })
   @IsDateString()
   @IsNotEmpty()
+  @ValidateIf((o) => o.action === ManagerAction.APPROVED)
   inspectExpectedStartedAt: Date;
 
   @ApiProperty({ required: true, type: 'date' })
   @IsDateString()
   @IsNotEmpty()
+  @ValidateIf((o) => o.action === ManagerAction.APPROVED)
   inspectExpectedFinishedAt: Date;
 
   @ApiProperty({ required: true, type: 'date' })
   @IsDateString()
   @IsNotEmpty()
+  @ValidateIf((o) => o.action === ManagerAction.APPROVED)
   importExpectedStartedAt: Date;
 
   @ApiProperty({ required: true, type: 'date' })
   @IsDateString()
   @IsNotEmpty()
+  @ValidateIf((o) => o.action === ManagerAction.APPROVED)
   importExpectedFinishedAt: Date;
 }

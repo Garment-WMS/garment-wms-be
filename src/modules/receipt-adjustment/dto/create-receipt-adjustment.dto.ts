@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ReceiptAdjustmentStatus } from '@prisma/client';
 import {
+  IsArray,
+  isArray,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -45,4 +49,9 @@ export class CreateReceiptAdjustmentDto {
   @IsUUID()
   @IsOptional()
   productReceiptId: string;
+
+  @ApiProperty()
+  @IsEnum(ReceiptAdjustmentStatus)
+  @IsOptional()
+  status: ReceiptAdjustmentStatus;
 }

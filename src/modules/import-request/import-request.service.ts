@@ -20,6 +20,7 @@ import { isNotEmpty } from 'class-validator';
 import {
   importRequestInclude,
   importRequestIncludeUnique,
+  materialPackageInclude,
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -29,15 +30,19 @@ import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { ChatService } from '../chat/chat.service';
+import { CreateChatDto } from '../chat/dto/create-chat.dto';
 import { DiscussionService } from '../discussion/discussion.service';
 import { InspectionRequestService } from '../inspection-request/inspection-request.service';
 import { PoDeliveryService } from '../po-delivery/po-delivery.service';
 import { ProductionBatchService } from '../production-batch/production-batch.service';
 import { CreateTaskDto } from '../task/dto/create-task.dto';
 import { TaskService } from '../task/task.service';
+import { UserService } from '../user/user.service';
 import { CreateImportRequestDto } from './dto/import-request/create-import-request.dto';
 import { CreateProductImportRequestDto } from './dto/import-request/create-product-import-request.dto';
 import { ManagerProcessDto } from './dto/import-request/manager-process.dto';
+import { ProductionDepartmentCreateReturnImportRequestDto } from './dto/import-request/production-department-create-return-import-request.dto';
 import { PurchasingStaffProcessDto } from './dto/import-request/purchasing-staff-process.dto';
 import { ReassignImportRequestDto } from './dto/import-request/reassign-import-request.dto';
 import { UpdateImportRequestDto } from './dto/import-request/update-import-request.dto';
@@ -51,6 +56,8 @@ export class ImportRequestService {
     private readonly productionBatchService: ProductionBatchService,
     private readonly discussionService: DiscussionService,
     private readonly taskService: TaskService,
+    private readonly chatService: ChatService,
+    private readonly userService: UserService,
   ) {}
   // async updateAwaitStatusToImportingStatus() {
   //   await this.prismaService.importRequest.updateMany({
@@ -143,7 +150,7 @@ export class ImportRequestService {
         where: { status: $Enums.ImportRequestStatus.ARRIVED },
       }),
       this.prismaService.importRequest.count({
-        where: { status: $Enums.ImportRequestStatus.CANCELED },
+        where: { status: $Enums.ImportRequestStatus.CANCELLED },
       }),
       this.prismaService.importRequest.count({
         where: { status: $Enums.ImportRequestStatus.INSPECTING },
@@ -215,6 +222,30 @@ export class ImportRequestService {
     return importRequest;
   }
 
+  async findUniqueForNotification(id: string) {
+    const importRequest = await this.prismaService.importRequest.findUnique({
+      where: { id },
+      include: {
+        warehouseStaff: {
+          include: {
+            account: true,
+          },
+        },
+        purchasingStaff: {
+          include: {
+            account: true,
+          },
+        },
+        warehouseManager: {
+          include: {
+            account: true,
+          },
+        },
+      },
+    });
+    return importRequest;
+  }
+
   async findFirst(id: string) {
     const importRequest = await this.prismaService.importRequest.findFirst({
       where: { id },
@@ -229,7 +260,7 @@ export class ImportRequestService {
         poDeliveryId,
         status: {
           notIn: [
-            $Enums.ImportRequestStatus.CANCELED,
+            $Enums.ImportRequestStatus.CANCELLED,
             $Enums.ImportRequestStatus.REJECTED,
           ],
         },
@@ -243,7 +274,7 @@ export class ImportRequestService {
         productionBatchId,
         status: {
           notIn: [
-            $Enums.ImportRequestStatus.CANCELED,
+            $Enums.ImportRequestStatus.CANCELLED,
             $Enums.ImportRequestStatus.REJECTED,
           ],
         },
@@ -251,7 +282,10 @@ export class ImportRequestService {
     });
   }
 
-  async create(purchasingStaff: AuthenUser, dto: CreateImportRequestDto) {
+  async createMaterialImportRequest(
+    purchasingStaff: AuthenUser,
+    dto: CreateImportRequestDto,
+  ) {
     const activeImportReq = await this.getActiveImportReqOfPoDelivery(
       dto.poDeliveryId,
     );
@@ -307,18 +341,6 @@ export class ImportRequestService {
         errorResponse,
       );
     }
-
-    // const [result, updatePoDelivery] = await this.prismaService.$transaction([
-    //   this.prismaService.importRequest.create({
-    //     data: createImportRequestInput,
-    //     include: importRequestInclude,
-    //   }),
-    //   this.poDeliveryService.updateStatus(
-    //     dto.poDeliveryId,
-    //     $Enums.PoDeliveryStatus.IMPORTING,
-    //   ),
-    // ]);
-
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const resultOut = await prismaInstance.importRequest.create({
@@ -330,16 +352,132 @@ export class ImportRequestService {
           $Enums.PoDeliveryStatus.IMPORTING,
         );
 
-        const discussion = await this.discussionService.create(
-          {
-            importRequestId: resultOut.id,
-          },
-          prismaInstance,
-        );
-        resultOut.discussion = discussion;
         return resultOut;
       },
     );
+    // const discussion = await this.discussionService.create({
+    //   importRequestId: result.id,
+    // });
+    // if (discussion) {
+    //   const account = await this.userService.findOne({
+    //     id: purchasingStaff.userId,
+    //   });
+    //   const chat: CreateChatDto = {
+    //     discussionId: discussion.id,
+    //     message: `Import request created by ${account.firstName} ${account.lastName}`,
+    //   };
+    //   const chatResult =
+    //     await this.chatService.createBySystemWithoutResponse(chat);
+    //   discussion.chat.push(chatResult);
+    // }
+    // result.discussion = discussion;
+    result.discussion =
+      await this.autoCreateDiscussionAfterImportRequestCreated(
+        result,
+        purchasingStaff.userId,
+      );
+    return result;
+  }
+
+  async autoCreateDiscussionAfterImportRequestCreated(
+    importRequest: ImportRequest,
+    userId: string,
+  ) {
+    const discussion = await this.discussionService.create({
+      importRequestId: importRequest.id,
+    });
+    if (discussion) {
+      const account = await this.userService.findOne({
+        id: userId,
+      });
+      const chat: CreateChatDto = {
+        discussionId: discussion.id,
+        message: `Import material request created by ${account.firstName} ${account.lastName}`,
+      };
+      const chatResult =
+        await this.chatService.createBySystemWithoutResponse(chat);
+      discussion.chat.push(chatResult);
+    }
+    return discussion;
+  }
+
+  async productionDepartmentCreateReturnImportRequest(
+    dto: ProductionDepartmentCreateReturnImportRequestDto,
+    productionDepartmentId: string,
+  ) {
+    const materialExportRequest =
+      await this.prismaService.materialExportRequest.findUnique({
+        where: {
+          id: dto.materialExportRequestId,
+        },
+        include: {
+          materialExportReceipt: {
+            include: {
+              materialExportReceiptDetail: {
+                include: {
+                  materialReceipt: {
+                    include: {
+                      materialPackage: { include: materialPackageInclude },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    if (!materialExportRequest) {
+      throw new NotFoundException("Material export request doesn't exist");
+    }
+    if (
+      materialExportRequest.status !==
+      $Enums.MaterialExportRequestStatus.PRODUCTION_REJECTED
+    ) {
+      throw new BadRequestException(
+        'Material export request must be production rejected',
+      );
+    }
+
+    const importRequestDetails = new Map<string, number>();
+
+    materialExportRequest.materialExportReceipt.materialExportReceiptDetail.forEach(
+      (detail) => {
+        if (
+          importRequestDetails.get(detail.materialReceipt.materialPackageId)
+        ) {
+          importRequestDetails.set(
+            detail.materialReceipt.materialPackageId,
+            importRequestDetails.get(detail.materialReceipt.materialPackageId) +
+              detail.quantityByPack,
+          );
+        } else {
+          importRequestDetails.set(
+            detail.materialReceipt.materialPackageId,
+            detail.quantityByPack,
+          );
+        }
+      },
+    );
+    const createImportRequestInput: Prisma.ImportRequestCreateInput = {
+      productionDepartment: {
+        connect: { id: productionDepartmentId },
+      },
+      status: $Enums.ImportRequestStatus.ARRIVED,
+      description: 'Import request for return material',
+      type: $Enums.ImportRequestType.MATERIAL_RETURN,
+      importRequestDetail: {
+        createMany: {
+          data: Array.from(importRequestDetails).map(([key, value]) => ({
+            materialPackageId: key,
+            quantityByPack: value,
+          })),
+        },
+      },
+    };
+    const result = await this.prismaService.importRequest.create({
+      data: createImportRequestInput,
+      include: importRequestInclude,
+    });
     return result;
   }
 
@@ -415,7 +553,7 @@ export class ImportRequestService {
       select: { status: true },
     });
     if (
-      purchasingStaffProcessDto.action == $Enums.ImportRequestStatus.CANCELED
+      purchasingStaffProcessDto.action == $Enums.ImportRequestStatus.CANCELLED
     ) {
       const allowCancel: $Enums.ImportRequestStatus[] = [
         $Enums.ImportRequestStatus.ARRIVED,
@@ -430,13 +568,14 @@ export class ImportRequestService {
       return await this.prismaService.importRequest.update({
         where: { id: id },
         data: {
-          status: $Enums.ImportRequestStatus.CANCELED,
+          status: $Enums.ImportRequestStatus.CANCELLED,
           cancelReason: purchasingStaffProcessDto.cancelReason,
+          cancelledAt: new Date(),
         },
       });
     } else {
       throw new BadRequestException(
-        `Allowed action is ${$Enums.ImportRequestStatus.CANCELED}`,
+        `Allowed action is ${$Enums.ImportRequestStatus.CANCELLED}`,
       );
     }
   }
@@ -444,7 +583,7 @@ export class ImportRequestService {
   // REJECTED
   // APPROVED
   async managerProcess(
-    warehouseManagerId: string,
+    account: AuthenUser,
     id: string,
     managerProcess: ManagerProcessDto,
   ) {
@@ -454,6 +593,7 @@ export class ImportRequestService {
         id: true,
         status: true,
         warehouseManagerId: true,
+        discussion: true,
       },
     });
 
@@ -473,20 +613,28 @@ export class ImportRequestService {
         const importRequest = await this.prismaService.importRequest.update({
           where: { id: id },
           data: {
-            status: $Enums.ImportRequestStatus.APPROVED,
+            status: $Enums.ImportRequestStatus.INSPECTING,
             managerNote: managerProcess.managerNote,
             warehouseStaffId: managerProcess.warehouseStaffId,
-            warehouseManagerId: warehouseManagerId,
+            warehouseManagerId: account.warehouseManagerId,
             inspectExpectedStartedAt: managerProcess.inspectExpectedStartedAt,
             inspectExpectedFinishedAt: managerProcess.inspectExpectedFinishedAt,
             importExpectedStartedAt: managerProcess.importExpectedStartedAt,
             importExpectedFinishedAt: managerProcess.importExpectedFinishedAt,
           },
+          include: {
+            discussion: true,
+          },
         });
+        const chat: CreateChatDto = {
+          discussionId: importRequest.discussion.id,
+          message: Constant.ARRIVED_TO_APPROVED,
+        };
+        await this.chatService.createWithoutResponse(chat, account);
 
         const inspectionRequest =
           await this.inspectionRequestService.createInspectionRequestByImportRequest(
-            warehouseManagerId,
+            account.warehouseManagerId,
             managerProcess,
             importRequest,
           );
@@ -495,18 +643,25 @@ export class ImportRequestService {
           importRequest,
           managerProcess.warehouseStaffId,
         );
+
         return { importRequest, inspectionRequest, task };
 
       case $Enums.ImportRequestStatus.REJECTED:
-        return await this.prismaService.importRequest.update({
+        const result = await this.prismaService.importRequest.update({
           where: { id },
           data: {
             status: $Enums.ImportRequestStatus.REJECTED,
             rejectAt: new Date(),
-            warehouseManagerId: warehouseManagerId,
+            warehouseManagerId: account.warehouseManagerId,
             managerNote: managerProcess.managerNote,
           },
         });
+        const chat2: CreateChatDto = {
+          discussionId: importRequest.discussion.id,
+          message: Constant.ARRIVED_TO_CANCELED,
+        };
+        await this.chatService.createWithoutResponse(chat2, account);
+        return result;
       default:
         throw new BadRequestException(
           `Allowed action is ${$Enums.ImportRequestStatus.APPROVED} or ${$Enums.ImportRequestStatus.REJECTED}`,
@@ -609,7 +764,6 @@ export class ImportRequestService {
           ...findOptions.where,
           warehouseStaffId: authenUser.warehouseStaffId,
         };
-        console.log(findOptions);
         return this.search(findOptions);
       case RoleCode.PURCHASING_STAFF:
         findOptions.where = {
@@ -709,7 +863,6 @@ export class ImportRequestService {
           ProductionBatchStatus.IMPORTING,
           prismaInstance,
         );
-        console.log(result);
         const discussion = await this.discussionService.create(
           {
             importRequestId: result.id,
@@ -718,6 +871,10 @@ export class ImportRequestService {
         );
         result.discussion = discussion;
         return result;
+      },
+      {
+        maxWait: 5000,
+        timeout: 10000,
       },
     );
 
@@ -751,13 +908,93 @@ export class ImportRequestService {
     });
   }
 
-  async reassign(reassignImportRequestDto: ReassignImportRequestDto) {
+  async reassign(dto: ReassignImportRequestDto) {
+    if (!dto.inspectionDepartmentId && !dto.warehouseStaffId) {
+      throw new BadRequestException(
+        'Warehouse staff or inspection department must be provided',
+      );
+    }
+
+    const importRequestCheck =
+      await this.prismaService.importRequest.findUnique({
+        where: { id: dto.importRequestId },
+        select: { status: true },
+      });
+    if (!importRequestCheck) {
+      throw new NotFoundException('Import Request not found');
+    }
+    const allowReassignImportStatus: ImportRequestStatus[] = [
+      'APPROVED',
+      'INSPECTING',
+      'INSPECTED',
+      'AWAIT_TO_IMPORT',
+    ];
+
+    //reassign warehouse staff
+    if (!allowReassignImportStatus.includes(importRequestCheck.status)) {
+      throw new BadRequestException(
+        `Import Request status must be ${allowReassignImportStatus.join(', ')} but current status is ${importRequestCheck.status}`,
+      );
+    }
     const importRequest = await this.prismaService.importRequest.update({
-      where: { id: reassignImportRequestDto.importRequestId },
+      where: { id: dto.importRequestId },
       data: {
-        warehouseStaffId: reassignImportRequestDto.warehouseStaffId,
+        warehouseStaffId: dto.warehouseStaffId,
       },
     });
+    const importReceipt = await this.prismaService.importReceipt.findFirst({
+      where: {
+        inspectionReport: {
+          inspectionRequest: {
+            importRequestId: importRequest.id,
+          },
+        },
+      },
+    });
+
+    if (importReceipt) {
+      await this.prismaService.importReceipt.update({
+        where: { id: importReceipt.id },
+        data: {
+          warehouseStaffId: dto.warehouseStaffId,
+          expectedStartedAt: dto.importExpectedStartedAt,
+          expectFinishedAt: dto.importExpectedFinishedAt,
+        },
+      });
+    }
+
+    //reassign inspection staff
+    const allowReassignInspectionStatus: ImportRequestStatus[] = [
+      'APPROVED',
+      'INSPECTING',
+    ];
+    if (!allowReassignInspectionStatus.includes(importRequestCheck.status)) {
+      // throw new BadRequestException(
+      //   `Import Request status must be ${allowReassignInspectionStatus.join(', ')} but current status is ${importRequestCheck.status}`,
+      // );
+      return apiSuccess(
+        400,
+        importRequest,
+        `Warehouse staff reassign successfully but inspection staff reassign failed(allow status ${allowReassignInspectionStatus.join(', ')})`,
+      );
+    }
+    const inspectionRequest =
+      await this.prismaService.inspectionRequest.findFirst({
+        where: {
+          importRequestId: importRequest.id,
+        },
+      });
+    if (inspectionRequest) {
+      await this.prismaService.inspectionRequest.update({
+        where: { id: inspectionRequest.id },
+        data: {
+          inspectionDepartmentId: dto.inspectionDepartmentId,
+          expectedStartedAt: dto.inspectExpectedStartedAt,
+          expectedFinishedAt: dto.inspectExpectedFinishedAt,
+        },
+      });
+    }
+
     //reassign task
     const task = await this.taskService.reassignImportRequestTask(
       importRequest.id,

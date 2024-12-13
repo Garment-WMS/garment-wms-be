@@ -73,6 +73,7 @@ export const PRODUCTION_MATERIAL_VARIANT_DETAIL_TABLE = 'materialRequirement';
 
 export const PRODUCTION_PLAN_DETAIL_HEADER = [
   'Product Code',
+  'Product Name',
   'Quantity To Produce',
   'Note',
 ];

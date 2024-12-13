@@ -13,23 +13,27 @@ import {
   RoleCode,
 } from '@prisma/client';
 import {
+  discussionInclude,
   materialExportRequestInclude,
-  productFormulaInclude,
+  materialPackageInclude,
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { ChatService } from '../chat/chat.service';
+import { CreateChatDto } from '../chat/dto/create-chat.dto';
 import { DiscussionService } from '../discussion/discussion.service';
 import { ManagerAction } from '../import-request/dto/import-request/manager-process.dto';
-import { CreateNestedMaterialExportRequestDetailDto } from '../material-export-request-detail/dto/create-nested-material-export-request-detail.dto';
+import { MaterialExportReceiptService } from '../material-export-receipt/material-export-receipt.service';
+import { ProductionBatchService } from '../production-batch/production-batch.service';
 import { TaskService } from '../task/task.service';
 import { CreateMaterialExportRequestDto } from './dto/create-material-export-request.dto';
 import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-request.dto';
 import {
   ProductionDepartmentApproveAction,
-  ProductionStaffDepartmentDto,
+  ProductionStaffDepartmentProcessDto,
 } from './dto/production-department-approve.dto';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
 
@@ -39,6 +43,9 @@ export class MaterialExportRequestService {
     private readonly prismaService: PrismaService,
     private readonly taskService: TaskService,
     private readonly discussionService: DiscussionService,
+    private readonly chatService: ChatService,
+    private readonly materialExportReceiptService: MaterialExportReceiptService,
+    private readonly productionBatchService: ProductionBatchService,
   ) {}
 
   async getByUserToken(
@@ -80,38 +87,71 @@ export class MaterialExportRequestService {
   async isAnyExportingExportRequest() {
     const result = await this.prismaService.materialExportRequest.findMany({
       where: {
-        status: MaterialExportRequestStatus.DELIVERING,
+        status: MaterialExportRequestStatus.EXPORTING,
       },
     });
     return result;
   }
-  async create(dto: CreateMaterialExportRequestDto) {
+  async create(dto: CreateMaterialExportRequestDto, user: AuthenUser) {
+    // if (!dto.materialExportRequestDetail) {
     const productionBatch =
       await this.prismaService.productionBatch.findUniqueOrThrow({
         where: {
           id: dto.productionBatchId,
         },
         select: {
-          quantityToProduce: true,
+          productionBatchMaterialVariant: true,
+          materialExportRequest: {
+            where: {
+              status: {
+                notIn: [
+                  MaterialExportRequestStatus.REJECTED,
+                  MaterialExportRequestStatus.PRODUCTION_REJECTED,
+                  MaterialExportRequestStatus.RETURNED,
+                  MaterialExportRequestStatus.CANCELLED,
+                ],
+              },
+            },
+          },
         },
       });
 
-    const quantityToProduce = productionBatch.quantityToProduce;
-
-    if (!dto.materialExportRequestDetail) {
-      dto.materialExportRequestDetail =
-        await this.mapMaterialExportRequestDetailByFormula(
-          dto.productFormulaId,
-          quantityToProduce,
-        );
+    if (!productionBatch) {
+      throw new NotFoundException('Production batch not found');
     }
+    if (
+      productionBatch.materialExportRequest &&
+      productionBatch.materialExportRequest.length > 0
+    ) {
+      throw new BadRequestException(
+        'Production batch already has active export request',
+      );
+    }
+
+    if (
+      !productionBatch.productionBatchMaterialVariant ||
+      productionBatch.productionBatchMaterialVariant.length === 0
+    ) {
+      throw new BadRequestException('Production batch material is empty');
+    }
+
+    //todo check production batch status and production batch export request is PRODUCTION_REJECTED
+
+    const materialExportRequestDetail =
+      productionBatch.productionBatchMaterialVariant.map(
+        (productionBatchMaterial) => ({
+          materialVariantId: productionBatchMaterial.materialVariantId,
+          quantityByUom: productionBatchMaterial.quantityByUom,
+        }),
+      );
+    dto.materialExportRequestDetail = materialExportRequestDetail;
+    // }
     const materialExportRequestInput: Prisma.MaterialExportRequestUncheckedCreateInput =
       {
         productionBatchId: dto.productionBatchId,
         productionDepartmentId: dto.productionDepartmentId,
         description: dto.description,
         status: dto.status,
-        productFormulaId: dto.productFormulaId,
         materialExportRequestDetail: {
           createMany: {
             data: dto.materialExportRequestDetail.map((detail) => ({
@@ -129,47 +169,61 @@ export class MaterialExportRequestService {
           include: materialExportRequestInclude,
         });
 
-        const discussion = await this.discussionService.create(
-          {
-            exportRequestId: result.id,
-          },
+        const result2 = await this.productionBatchService.updateStatus(
+          result.productionBatchId,
+          $Enums.ProductionBatchStatus.EXECUTING,
           prismaInstance,
         );
-        result.discussion = discussion;
+        console.log(result2);
         return result;
       },
     );
+    const discussion = await this.discussionService.create({
+      exportRequestId: result.id,
+    });
+    const account = await this.prismaService.account.findUnique({
+      where: {
+        id: user.userId,
+      },
+    });
+    const chat: CreateChatDto = {
+      discussionId: discussion.id,
+      message: `Export material request created by ${account.firstName} ${account.lastName}`,
+    };
+    await this.chatService.createBySystemWithoutResponse(chat);
+    result.discussion = discussion;
+
     return result;
   }
 
-  async mapMaterialExportRequestDetailByFormula(
-    productFormulaId: string,
-    productQuantity: number,
-  ) {
-    const productFormula = await this.prismaService.productFormula.findUnique({
-      where: {
-        id: productFormulaId,
-      },
-      include: productFormulaInclude,
-    });
-    if (!productFormula) {
-      throw new NotFoundException('Product formula not found');
-    }
-    if (!productFormula.productFormulaMaterial) {
-      throw new BadRequestException('Product formula material not found');
-    }
-    const materialExportRequestDetail =
-      productFormula.productFormulaMaterial.map((productFormulaMaterial) => {
-        const materialExportRequestDetail: CreateNestedMaterialExportRequestDetailDto =
-          {
-            materialVariantId: productFormulaMaterial.materialVariantId,
-            quantityByUom:
-              productFormulaMaterial.quantityByUom * productQuantity,
-          };
-        return materialExportRequestDetail;
-      });
-    return materialExportRequestDetail;
-  }
+  // async mapMaterialExportRequestDetailByFormula(
+  //   productFormulaId: string,
+  //   productQuantity: number,
+  // ) {
+  //   const productFormula = await this.prismaService.productFormula.findUnique({
+  //     where: {
+  //       id: productFormulaId,
+  //     },
+  //     include: productFormulaInclude,
+  //   });
+  //   if (!productFormula) {
+  //     throw new NotFoundException('Product formula not found');
+  //   }
+  //   if (!productFormula.productFormulaMaterial) {
+  //     throw new BadRequestException('Product formula material not found');
+  //   }
+  //   const materialExportRequestDetail =
+  //     productFormula.productFormulaMaterial.map((productFormulaMaterial) => {
+  //       const materialExportRequestDetail: CreateNestedMaterialExportRequestDetailDto =
+  //         {
+  //           materialVariantId: productFormulaMaterial.materialVariantId,
+  //           quantityByUom:
+  //             productFormulaMaterial.quantityByUom * productQuantity,
+  //         };
+  //       return materialExportRequestDetail;
+  //     });
+  //   return materialExportRequestDetail;
+  // }
 
   async search(
     findOptions: GeneratedFindOptions<Prisma.MaterialExportRequestWhereInput>,
@@ -206,7 +260,35 @@ export class MaterialExportRequestService {
         where: {
           id: id,
         },
-        include: materialExportRequestInclude,
+        include: {
+          ...materialExportRequestInclude,
+          materialExportReceipt: {
+            include: {
+              materialExportReceiptDetail: {
+                include: {
+                  materialReceipt: {
+                    include: {
+                      materialPackage: {
+                        include: materialPackageInclude,
+                      },
+                    },
+                  },
+                },
+              },
+
+              task: {
+                include: {
+                  warehouseStaff: {
+                    include: {
+                      account: true,
+                    },
+                  },
+                  todo: true,
+                },
+              },
+            },
+          },
+        },
       });
     if (!materialExportRequest) {
       throw new NotFoundException('Material Export Request not found');
@@ -229,7 +311,6 @@ export class MaterialExportRequestService {
       productionDepartmentId: dto.productionDepartmentId,
       description: dto.description,
       status: dto.status,
-      productFormulaId: dto.productFormulaId,
       materialExportRequestDetail: {
         upsert: dto.materialExportRequestDetail.map((detail) => ({
           where: {
@@ -264,62 +345,74 @@ export class MaterialExportRequestService {
   }
 
   async managerApprove(
-    id: string,
+    materialExportRequestId: string,
     dto: ManagerApproveExportRequestDto,
-    warehouseManagerId: string,
+    warehouseManager: AuthenUser,
   ) {
     const allowApproveStatus: $Enums.MaterialExportRequestStatus[] = [
       $Enums.MaterialExportRequestStatus.PENDING,
     ];
-    const materialExportRequest = await this.findUnique(id);
+    const materialExportRequest = await this.findUnique(
+      materialExportRequestId,
+    );
     if (!allowApproveStatus.includes(materialExportRequest.status)) {
       throw new BadRequestException(
         `Cannot approve material export request with status ${materialExportRequest.status}`,
       );
     }
-    dto.warehouseManagerId = warehouseManagerId;
-    dto.materialExportReceipt.materialExportRequestId = id;
+    dto.warehouseManagerId = warehouseManager.warehouseManagerId;
+    dto.materialExportReceipt.materialExportRequestId = materialExportRequestId;
     dto.materialExportReceipt.warehouseStaffId = dto.warehouseStaffId;
     dto.materialExportReceipt.type =
       $Enums.MaterialExportReceiptType.PRODUCTION;
     switch (dto.action) {
       case ManagerAction.APPROVED:
-        const [materialExportRequest, materialExportReceipt] =
-          await this.prismaService.$transaction([
-            this.prismaService.materialExportRequest.update({
-              where: {
-                id: id,
-              },
-              data: {
-                warehouseManagerId: dto.warehouseManagerId,
-                status: $Enums.MaterialExportRequestStatus.APPROVED,
-                managerNote: dto.managerNote,
-                warehouseStaffId: dto.warehouseStaffId,
-                updatedAt: new Date(),
-              },
-              include: materialExportRequestInclude,
-            }),
-            this.prismaService.materialExportReceipt.create({
-              data: {
+        const {
+          materialExportRequest,
+          materialExportReceipt,
+          inventoryStock,
+          materialReceipt,
+        } = await this.prismaService.$transaction(
+          async (prismaInstance: PrismaService) => {
+            const { materialExportReceipt, inventoryStock, materialReceipt } =
+              await this.materialExportReceiptService.create({
                 note: dto.materialExportReceipt.note,
                 type: dto.materialExportReceipt.type,
-                materialExportRequestId: id,
+                materialExportRequestId: materialExportRequestId,
                 warehouseStaffId: dto.warehouseStaffId,
                 expectedStartedAt: dto.exportExpectedStartedAt,
                 expectedFinishedAt: dto.exportExpectedFinishedAt,
-                materialExportReceiptDetail: {
-                  createMany: {
-                    data: dto.materialExportReceipt.materialExportReceiptDetail.map(
-                      (detail) => ({
-                        materialReceiptId: detail.materialReceiptId,
-                        quantityByPack: detail.quantityByPack,
-                      }),
-                    ),
-                  },
+                materialExportReceiptDetail:
+                  dto.materialExportReceipt.materialExportReceiptDetail.map(
+                    (detail) => ({
+                      materialReceiptId: detail.materialReceiptId,
+                      quantityByPack: detail.quantityByPack,
+                    }),
+                  ),
+              });
+            const materialExportRequest =
+              await prismaInstance.materialExportRequest.update({
+                where: {
+                  id: materialExportRequestId,
                 },
-              },
-            }),
-          ]);
+                data: {
+                  warehouseManagerId: dto.warehouseManagerId,
+                  status: $Enums.MaterialExportRequestStatus.AWAIT_TO_EXPORT,
+                  managerNote: dto.managerNote,
+                  warehouseStaffId: dto.warehouseStaffId,
+                  updatedAt: new Date(),
+                },
+                include: materialExportRequestInclude,
+              });
+
+            return {
+              materialExportRequest,
+              materialExportReceipt,
+              inventoryStock,
+              materialReceipt,
+            };
+          },
+        );
         try {
           const task = await this.taskService.create({
             materialExportReceiptId: materialExportReceipt.id,
@@ -329,19 +422,35 @@ export class MaterialExportRequestService {
             expectedFinishedAt: materialExportReceipt.expectedFinishedAt,
             warehouseStaffId: dto.warehouseStaffId,
           });
-          await this.discussionService.updateExportReceipt(
-            materialExportReceipt.id,
-            materialExportReceipt.materialExportRequestId,
-          );
         } catch (error) {
-          Logger.error('Cannot create task', error);
+          Logger.error('Cannot create task', error, error.stack);
         }
-        return materialExportRequest;
+
+        const discussion = await this.discussionService.updateExportReceipt(
+          materialExportReceipt.id,
+          materialExportReceipt.materialExportRequestId,
+        );
+
+        const createChatDto: CreateChatDto = {
+          discussionId: discussion.id,
+          message: Constant.PENDING_TO_APPROVE,
+        };
+        await this.chatService.createWithoutResponse(
+          createChatDto,
+          warehouseManager,
+        );
+
+        return {
+          materialExportRequest,
+          materialExportReceipt,
+          inventoryStock,
+          materialReceipt,
+        };
       case ManagerAction.REJECTED:
         const rejectedMaterialExportRequest =
           await this.prismaService.materialExportRequest.update({
             where: {
-              id: id,
+              id: materialExportRequestId,
             },
             data: {
               warehouseManagerId: dto.warehouseManagerId,
@@ -350,8 +459,17 @@ export class MaterialExportRequestService {
               rejectAt: new Date(),
               updatedAt: new Date(),
             },
-            include: materialExportRequestInclude,
+            include: {
+              discussion: {
+                include: discussionInclude,
+              },
+            },
           });
+        const chat: CreateChatDto = {
+          discussionId: materialExportRequest.discussion.id,
+          message: Constant.PENDING_TO_REJECT,
+        };
+        await this.chatService.createWithoutResponse(chat, warehouseManager);
         return rejectedMaterialExportRequest;
       default:
         throw new BadRequestException('Invalid manager action');
@@ -365,16 +483,15 @@ export class MaterialExportRequestService {
   }
 
   async productionDepartmentApprove(
-    materialExportRequestId: string,
-    productionStaffApproveDto: ProductionStaffDepartmentDto,
-    productionDepartmentId: string,
+    productionStaffApproveDto: ProductionStaffDepartmentProcessDto,
+    productionDepartment: AuthenUser,
   ) {
     const allowMaterialExportRequest =
       await this.prismaService.materialExportRequest.findUnique({
         where: {
-          id: materialExportRequestId,
+          id: productionStaffApproveDto.materialExportRequestId,
           status: {
-            in: [MaterialExportRequestStatus.DELIVERED],
+            in: [MaterialExportRequestStatus.EXPORTED],
           },
         },
       });
@@ -382,7 +499,7 @@ export class MaterialExportRequestService {
     if (!allowMaterialExportRequest) {
       throw new BadRequestException(
         'Material Export Request status must be ' +
-          MaterialExportRequestStatus.DELIVERED,
+          MaterialExportRequestStatus.EXPORTED,
       );
     }
     // if (
@@ -393,28 +510,59 @@ export class MaterialExportRequestService {
     // }
 
     switch (productionStaffApproveDto.action) {
-      case ProductionDepartmentApproveAction.PRODUCTION_APPROVE:
-        return await this.prismaService.materialExportRequest.update({
+      case ProductionDepartmentApproveAction.PRODUCTION_APPROVED:
+        const result = await this.prismaService.materialExportRequest.update({
           where: {
-            id: materialExportRequestId,
+            id: productionStaffApproveDto.materialExportRequestId,
           },
           data: {
             status: MaterialExportRequestStatus.PRODUCTION_APPROVED,
           },
           include: materialExportRequestInclude,
         });
-      case ProductionDepartmentApproveAction.PRODUCTION_REJECT:
-        return await this.prismaService.materialExportRequest.update({
+
+        const productionBatch = await this.prismaService.productionBatch.update(
+          {
+            where: {
+              id: result.productionBatchId,
+            },
+            data: {
+              status: $Enums.ProductionBatchStatus.MANUFACTURING,
+            },
+          },
+        );
+
+        const chat: CreateChatDto = {
+          discussionId: result.discussion.id,
+          message: Constant.EXPORT_REQUEST_EXPORTED_PRODUCTION_APPROVED,
+        };
+        await this.chatService.createWithoutResponse(
+          chat,
+          productionDepartment,
+        );
+        return result;
+      case ProductionDepartmentApproveAction.PRODUCTION_REJECTED:
+        const result2 = await this.prismaService.materialExportRequest.update({
           where: {
-            id: materialExportRequestId,
+            id: productionStaffApproveDto.materialExportRequestId,
           },
           data: {
-            status: MaterialExportRequestStatus.REJECTED,
+            status: MaterialExportRequestStatus.PRODUCTION_REJECTED,
             productionRejectReason:
               productionStaffApproveDto.productionRejectReason,
           },
           include: materialExportRequestInclude,
         });
+        //create import request MATERIAL_RETURN
+        const chat2: CreateChatDto = {
+          discussionId: result2.discussion.id,
+          message: Constant.EXPORT_REQUEST_EXPORTED_PRODUCTION_REJECTED,
+        };
+        await this.chatService.createWithoutResponse(
+          chat2,
+          productionDepartment,
+        );
+        return result2;
       default:
         throw new BadRequestException('Invalid action');
     }

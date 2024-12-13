@@ -196,13 +196,13 @@ export class InspectionReportService {
 
     importRequestDetailItemIdSet.forEach((id) => {
       if (!inspectionReportDetailItemSet.has(id)) {
-        redundantIds.push(id);
+        missingIds.push(id);
       }
     });
 
     inspectionReportDetailItemSet.forEach((id) => {
       if (!importRequestDetailItemIdSet.has(id)) {
-        missingIds.push(id);
+        redundantIds.push(id);
       }
     });
 
@@ -331,6 +331,7 @@ export class InspectionReportService {
     }
     const dto: CreateInspectionReportDto = {
       inspectionRequestId: inspectionRequestId,
+      type: importRequest.type.startsWith('MATERIAL') ? 'MATERIAL' : 'PRODUCT',
       inspectionReportDetail: importRequest.importRequestDetail.map(
         (detail) => ({
           materialPackageId: detail.materialPackageId,
@@ -342,6 +343,7 @@ export class InspectionReportService {
       ),
     };
     const inspectionReport = await this.create(dto, user);
+    return inspectionReport;
   }
 
   async create(dto: CreateInspectionReportDto, user: AuthenUser) {
@@ -371,28 +373,21 @@ export class InspectionReportService {
         `Inspection report detail: ${JSON.stringify(inspectionReportDetail)}`,
       );
     });
+    console.log('dto input', dto);
     const inspectionReportCreateInput: Prisma.InspectionReportUncheckedCreateInput =
       {
         code: dto.code,
         inspectionRequestId: dto.inspectionRequestId,
         type: dto.type,
-        // inspectionReportDetail: {
-        //   createMany: {
-        //     data: dto.inspectionReportDetail.map((detail) => ({
-        //       materialPackageId: detail.materialPackageId,
-        //       productSizeId: detail.productSizeId,
-        //       quantityByPack: detail.quantityByPack,
-        //       approvedQuantityByPack: detail.approvedQuantityByPack,
-        //       defectQuantityByPack: detail.defectQuantityByPack,
-        //     })),
-        //   },
-        // },
+        finishedAt: new Date(),
       };
+
     let result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const inspectionReport = await prismaInstance.inspectionReport.create({
           data: inspectionReportCreateInput,
         });
+
         const inspectionReportDetails =
           await this.createInspectionReportDetails(
             dto.inspectionReportDetail,
@@ -409,6 +404,9 @@ export class InspectionReportService {
             importRequest.id,
             prismaInstance,
           );
+        console.log('inspectionReport', inspectionReport);
+        console.log('inspectionReportDetails', inspectionReportDetails);
+        // throw new BadRequestException('Test');
 
         return {
           inspectionReport,
@@ -418,15 +416,17 @@ export class InspectionReportService {
       },
     );
     result.inspectionReport = await this.findUnique(result.inspectionReport.id);
+
+    const chat: CreateChatDto = {
+      discussionId: importRequest?.discussion.id,
+      message: Constant.IMPORT_REQUEST_INSPECTING_TO_INSPECTED,
+    };
+    await this.chatService.create(chat, user);
+
     //auto create import receipt
     const importReceipt =
       await this.createImportReceiptAfterInspected(importRequest);
 
-    const chat: CreateChatDto = {
-      discussionId: importRequest?.discussion.id,
-      message: Constant.APPROVED_TO_INSPECTING,
-    };
-    await this.chatService.create(chat, user);
     return {
       ...result,
       importReceipt,
@@ -441,11 +441,13 @@ export class InspectionReportService {
       '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
     >,
   ) {
+    // Create related inspection report detail defects
     const input: Prisma.InspectionReportDetailUncheckedCreateInput[] = dto.map(
       (detail) => ({
         approvedQuantityByPack: detail.approvedQuantityByPack,
         defectQuantityByPack: detail.defectQuantityByPack,
-        quantityByPack: detail.quantityByPack,
+        quantityByPack:
+          detail.approvedQuantityByPack + detail.defectQuantityByPack,
         materialPackageId: detail.materialPackageId,
         productSizeId: detail.productSizeId,
         inspectionReportId: inspectionReportId,
@@ -457,30 +459,47 @@ export class InspectionReportService {
     // Create inspection report details
     const createdDetails =
       await prisma.inspectionReportDetail.createManyAndReturn({
-        data: input,
+        data: dto.map((detail) => ({
+          approvedQuantityByPack: detail.approvedQuantityByPack,
+          defectQuantityByPack: detail.defectQuantityByPack,
+          quantityByPack:
+            detail.approvedQuantityByPack + detail.defectQuantityByPack,
+          materialPackageId: detail.materialPackageId,
+          productSizeId: detail.productSizeId,
+          inspectionReportId: inspectionReportId,
+        })),
+
         skipDuplicates: true,
       });
 
-    // Create related inspection report detail defects
+    //Create related inspection report detail defects
+    const inspectionReportDetailDefectCreatePromises: Prisma.PrismaPromise<Prisma.BatchPayload>[] =
+      [];
     for (const detail of dto) {
       if (detail.inspectionReportDetailDefect) {
         const createdDetail = createdDetails.find(
           (d) =>
-            d.materialPackageId === detail.materialPackageId &&
+            (d.materialPackageId === detail.materialPackageId ||
+              d.productSizeId === detail.productSizeId) &&
             d.inspectionReportId === inspectionReportId,
         );
 
         if (createdDetail) {
-          await prisma.inspectionReportDetailDefect.createMany({
-            data: detail.inspectionReportDetailDefect.map((defect) => ({
-              defectId: defect.defectId,
-              quantityByPack: defect.quantityByPack,
-              inspectionReportDetailId: createdDetail.id,
-            })),
-          });
+          inspectionReportDetailDefectCreatePromises.push(
+            prisma.inspectionReportDetailDefect.createMany({
+              data: detail.inspectionReportDetailDefect.map((defect) => ({
+                defectId: defect.defectId,
+                quantityByPack: defect.quantityByPack,
+                inspectionReportDetailId: createdDetail.id,
+              })),
+            }),
+          );
         }
       }
     }
+    const inspectionReportDetailDefects = await Promise.all(
+      inspectionReportDetailDefectCreatePromises,
+    );
 
     return createdDetails;
   }
@@ -502,6 +521,7 @@ export class InspectionReportService {
       },
       data: {
         status: $Enums.InspectionRequestStatus.INSPECTED,
+        finishedAt: new Date(),
       },
     });
   }
@@ -617,6 +637,7 @@ export class InspectionReportService {
           createImportReceiptDto,
           importRequest.warehouseManagerId,
         );
+
       case $Enums.ReceiptType.PRODUCT:
         return this.importReceiptService.createProductReceipt(
           createImportReceiptDto,

@@ -5,6 +5,7 @@ import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
+import { ApiResponse } from 'src/common/dto/response.dto';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ImportReceiptService } from '../import-receipt/import-receipt.service';
 import { ImportRequestService } from '../import-request/import-request.service';
@@ -18,6 +19,7 @@ import { MaterialExportRequestService } from '../material-export-request/materia
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { MaterialVariantService } from '../material-variant/material-variant.service';
 import { ProductReceiptService } from '../product-receipt/product-receipt.service';
+import { TaskService } from '../task/task.service';
 import { CreateInventoryReportDto } from './dto/create-inventory-report.dto';
 import { UpdateInventoryReportDto } from './dto/update-inventory-report.dto';
 
@@ -25,14 +27,10 @@ import { UpdateInventoryReportDto } from './dto/update-inventory-report.dto';
 export class InventoryReportService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly materialVariantService: MaterialVariantService,
-    private readonly importReceiptService: ImportReceiptService,
     private readonly inventoryReportDetailService: InventoryReportDetailService,
     private readonly materialReceiptService: MaterialReceiptService,
     private readonly productReceiptService: ProductReceiptService,
-    private readonly importRequestService: ImportRequestService,
-    private readonly materialExportReceiptService: MaterialExportReceiptService,
-    private readonly materialExportRequestService: MaterialExportRequestService,
+    private readonly taskService: TaskService,
   ) {}
 
   includeQuery: Prisma.InventoryReportInclude = {
@@ -108,17 +106,15 @@ export class InventoryReportService {
       );
     }
 
-    let result = [];
-    for (const inventoryRecordDetail of updateInventoryReportDetailDto.details) {
-      const updateResult =
-        await this.inventoryReportDetailService.handleApprovalInventoryReportDetail(
+    const result = await Promise.all(
+      updateInventoryReportDetailDto.details.map((inventoryRecordDetail) =>
+        this.inventoryReportDetailService.handleApprovalInventoryReportDetail(
           inventoryRecordDetail.inventoryReportDetailId,
           inventoryRecordDetail,
           warehouseManagerId,
-        );
-      result.push(updateResult);
-    }
-
+        ),
+      ),
+    );
     const isInventoryReportDetailDone =
       await this.inventoryReportDetailService.checkLastApprovalInventoryReport(
         id,
@@ -130,11 +126,9 @@ export class InventoryReportService {
         InventoryReportStatus.FINISHED,
       );
     }
-
+    //TODO: Fix Bug Check Last Inventory report detail
     const isInventoryPlanDone =
-      await this.inventoryReportDetailService.checkLastInventoryReport(
-        inventoryReport.inventoryReportPlanDetail[0].inventoryReportPlanId,
-      );
+      await this.checkLastApprovalInventoryReport(inventoryReport);
 
     if (isInventoryPlanDone) {
       await this.prismaService.inventoryReportPlan.update({
@@ -144,22 +138,41 @@ export class InventoryReportService {
         },
         data: {
           status: InventoryReportStatus.FINISHED,
-          to: new Date(),
+          finishedAt: new Date(),
         },
       });
-      // await this.importRequestService.updateAwaitStatusToImportingStatus();
-      // await this.importReceiptService.updateAwaitStatusToImportingStatus();
-      // await this.materialExportReceiptService.updateAwaitStatusToExportingStatus();
-      // await this.materialExportRequestService.updateAwaitStatusToExportingStatus();
     }
-
     // const
-
     return apiSuccess(
       HttpStatus.OK,
       result,
       'Update inventory report detail successfully',
     );
+  }
+  async checkLastApprovalInventoryReport(inventoryReport: any) {
+    const isLastInventoryReport =
+      await this.prismaService.inventoryReport.findMany({
+        where: {
+          AND: [
+            {
+              inventoryReportPlanDetail: {
+                some: {
+                  inventoryReportPlanId:
+                    inventoryReport?.inventoryReportPlanDetail[0]
+                      .inventoryReportPlanId,
+                },
+              },
+              status: {
+                notIn: [InventoryReportStatus.FINISHED],
+              },
+            },
+          ],
+        },
+      });
+    if (isLastInventoryReport.length === 0) {
+      return true;
+    }
+    return false;
   }
 
   async test(inventoryReportPlanId: string) {
@@ -186,22 +199,21 @@ export class InventoryReportService {
     id: string,
     updateInventoryReportDetailDto: WarehouseStaffQuantityReportDetails,
     warehouseStaffId: string,
-  ) {
+  ): Promise<ApiResponse> {
     const inventoryReport = await this.findById(id);
     if (!inventoryReport) {
       throw new BadRequestException('Inventory report not found');
     }
 
-    let result = [];
-    for (const inventoryRecordDetail of updateInventoryReportDetailDto.details) {
-      const updateResult =
-        await this.inventoryReportDetailService.handleRecordInventoryReportDetail(
+    const result = await Promise.all(
+      updateInventoryReportDetailDto.details.map((inventoryRecordDetail) =>
+        this.inventoryReportDetailService.handleRecordInventoryReportDetail(
           inventoryRecordDetail.inventoryReportDetailId,
           inventoryRecordDetail,
           warehouseStaffId,
-        );
-      result.push(updateResult);
-    }
+        ),
+      ),
+    );
 
     const isInventoryReportDetailDone =
       await this.inventoryReportDetailService.checkLastInventoryReport(id);
@@ -211,29 +223,18 @@ export class InventoryReportService {
         id,
         InventoryReportStatus.REPORTED,
       );
+
+      await this.taskService.updateTaskStatusToDone({
+        warehouseStaffId: warehouseStaffId,
+        inventoryReportPlanId:
+          inventoryReport?.inventoryReportPlanDetail[0].inventoryReportPlanId,
+      });
     }
-
-    // const isInventoryPlanDone =
-    //   await this.inventoryReportDetailService.checkLastInventoryReport(
-    //     inventoryReport.inventoryReportPlanDetail[0].inventoryReportPlanId,
-    //   );
-
-    // if (isInventoryPlanDone) {
-    //   await this.prismaService.inventoryReportPlan.update({
-    //     where: {
-    //       id: inventoryReport.inventoryReportPlanDetail[0]
-    //         .inventoryReportPlanId,
-    //     },
-    //     data: {
-    //       status: InventoryReportStatus.FINISHED,
-    //     },
-    //   });
-    // }
 
     return apiSuccess(
       HttpStatus.OK,
       result,
-      'Update inventory report detail successfully',
+      'Record inventory report successfully',
     );
   }
   updateInventoryReportStatus(id: string, status: InventoryReportStatus) {
@@ -241,6 +242,7 @@ export class InventoryReportService {
       where: { id },
       data: {
         status: status,
+        ...(status === InventoryReportStatus.FINISHED && { to: new Date() }),
       },
     });
   }
