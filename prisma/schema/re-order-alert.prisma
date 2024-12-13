@@ -1,5 +1,5 @@
 model ReOrderAlert {
-    id                   Int                @id @default(autoincrement())
+    id                   String             @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
     materialVariantId    String             @map("material_variant_id") @db.Uuid
     currentQuantityByUom Float              @default(0) @map("current_quantity_by_uom")
     reorderQuantityByUom Float              @default(0) @map("reorder_quantity_by_uom")
