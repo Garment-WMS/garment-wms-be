@@ -18,4 +18,5 @@ model MaterialVariant {
   productionBatchMaterialVariant ProductionBatchMaterialVariant[]
 
   @@map("material_variant")
+  ReOrderAlert ReOrderAlert[]
 }
