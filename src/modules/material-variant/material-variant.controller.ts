@@ -76,6 +76,10 @@ export class MaterialVariantController {
     return this.materialVariantService.getChart(chartDto);
   }
 
+  @Get('/all-reorder-level')
+  getAllReorderLevel() {
+    return this.materialVariantService.findAllOpenReOrderAlert();
+  }
   @Get('all')
   getAllMaterial() {
     return this.materialVariantService.findAll();
@@ -138,7 +142,11 @@ export class MaterialVariantController {
     filterOptions: FilterDto<Prisma.MaterialVariantScalarWhereInput>,
     @Param('id', new CustomUUIDPipe()) id: string,
   ) {
-    return this.materialVariantService.findHistoryByIdWithResponse(id,sortBy,filterOptions.findOptions);
+    return this.materialVariantService.findHistoryByIdWithResponse(
+      id,
+      sortBy,
+      filterOptions.findOptions,
+    );
   }
 
   @Get(':id/receiptV1')

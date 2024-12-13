@@ -222,6 +222,30 @@ export class ImportRequestService {
     return importRequest;
   }
 
+  async findUniqueForNotification(id: string) {
+    const importRequest = await this.prismaService.importRequest.findUnique({
+      where: { id },
+      include: {
+        warehouseStaff: {
+          include: {
+            account: true,
+          },
+        },
+        purchasingStaff: {
+          include: {
+            account: true,
+          },
+        },
+        warehouseManager: {
+          include: {
+            account: true,
+          },
+        },
+      },
+    });
+    return importRequest;
+  }
+
   async findFirst(id: string) {
     const importRequest = await this.prismaService.importRequest.findFirst({
       where: { id },

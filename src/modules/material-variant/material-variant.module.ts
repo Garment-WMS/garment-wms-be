@@ -6,6 +6,7 @@ import { MaterialPackageModule } from '../material-package/material-package.modu
 import { MaterialVariantController } from './material-variant.controller';
 import { MaterialVariantService } from './material-variant.service';
 import { IsMaterialVariantExistValidator } from './validation/is-material-exist.validation';
+import { MaterialReceiptModule } from '../material-receipt/material-receipt.module';
 
 @Module({
   controllers: [MaterialVariantController],
@@ -13,7 +14,7 @@ import { IsMaterialVariantExistValidator } from './validation/is-material-exist.
     PrismaModule,
     ImageModule,
     MaterialPackageModule,
-    MaterialAttributeModule,
+    MaterialAttributeModule,    
   ],
   providers: [MaterialVariantService, IsMaterialVariantExistValidator],
   exports: [MaterialVariantService],

@@ -4,6 +4,7 @@ import {
   ExportReceiptStatus,
   MaterialReceiptStatus,
   Prisma,
+  ReOrderAlertStatus,
 } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { materialPackageInclude } from 'prisma/prisma-include';
@@ -12,7 +13,7 @@ import { Constant, months } from 'src/common/constant/constant';
 import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
-import { getPageMeta } from 'src/common/utils/utils';
+import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
 import { ImageService } from '../image/image.service';
 import { MaterialAttributeService } from '../material-attribute/material-attribute.service';
 import { MaterialPackageService } from '../material-package/material-package.service';
@@ -75,6 +76,123 @@ export interface MaterialVariant
 
 @Injectable()
 export class MaterialVariantService {
+  async updateReorderAlert(
+    id: string,
+    currentQuantityByUom: number,
+    reorderLevel: number,
+  ) {
+    const el = await this.prismaService.reorderAlert.findFirst({
+      where: { materialVariantId: id, status: ReOrderAlertStatus.OPEN },
+    });
+    if (!el) {
+      return { result: null, operation: 'NO_OPERATION' };
+    }
+    const result = await this.prismaService.reorderAlert.update({
+      where: { id: el.id },
+      data: {
+        currentQuantityByUom: currentQuantityByUom,
+        status: ReOrderAlertStatus.CLOSED,
+        closedAt: new Date(),
+      },
+    });
+    return { result, operation: 'updated' };
+  }
+  async createReOrderAlert(
+    materialVariantId: string,
+    currentQuantity: number,
+    reorderLevel: number,
+  ) {
+    const el = await this.prismaService.reorderAlert.findFirst({
+      where: { materialVariantId, status: ReOrderAlertStatus.OPEN },
+    });
+    const result = await this.prismaService.reorderAlert.upsert({
+      where: { id: el?.id || nonExistUUID },
+      create: {
+        materialVariantId,
+        currentQuantityByUom: currentQuantity,
+        reorderQuantityByUom: reorderLevel,
+        status: ReOrderAlertStatus.OPEN,
+        openedAt: new Date(),
+      },
+      update: {
+        currentQuantityByUom: currentQuantity,
+        status: ReOrderAlertStatus.OPEN,
+      },
+    });
+    const operation = el ? 'updated' : 'created';
+
+    return { result, operation };
+  }
+
+  async findReOrderAlertByMaterialVariantId(materialVariantId: string) {
+    const result = await this.prismaService.reorderAlert.findMany({
+      where: {
+        materialVariantId,
+      },
+    });
+    return result;
+  }
+
+  async findAllOpenReOrderAlert() {
+    const result = await this.prismaService.reorderAlert.findMany({
+      where: {
+        status: 'OPEN',
+      },
+      include: {
+        materialVariant: true,
+      },
+    });
+    return apiSuccess(HttpStatus.OK, result, 'List of ReOrder Alert');
+  }
+
+  async closeReOrderAlert(id: string) {
+    const result = await this.prismaService.reorderAlert.update({
+      where: { id },
+      data: {
+        status: ReOrderAlertStatus.CLOSED,
+        closedAt: new Date(),
+      },
+    });
+    return apiSuccess(HttpStatus.OK, result, 'ReOrder Alert closed');
+  }
+
+  async isMaterialVariantAtReOrderLevel(materialVariantId: string) {
+    const materialVariant = await this.prismaService.materialVariant.findFirst({
+      where: { id: materialVariantId },
+      include: {
+        materialPackage: {
+          include: {
+            inventoryStock: true,
+            materialReceipt: {
+              where: {
+                status: MaterialReceiptStatus.AVAILABLE,
+              },
+            },
+          },
+        },
+      },
+    });
+    const totalQuantity = materialVariant.materialPackage.reduce(
+      (totalAcc, materialPackageEl) => {
+        let variantTotal = 0;
+        variantTotal =
+          materialPackageEl.inventoryStock?.quantityByPack *
+            materialPackageEl.uomPerPack || 0;
+        // materialPackageEl.materialReceipt.forEach((materialReceipt) => {
+        //   variantTotal +=
+        //     materialReceipt.quantityByPack * materialPackageEl.uomPerPack;
+        // });
+        return totalAcc + variantTotal;
+      },
+      0,
+    );
+    const isAtReorderAlert = totalQuantity <= materialVariant.reorderLevel;
+    return {
+      isAtReorderAlert,
+      currentQuantityByUom: totalQuantity,
+    };
+  }
+
   async findHistoryByIdWithResponse(
     id: string,
     sortBy: string,

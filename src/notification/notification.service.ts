@@ -1,7 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
-  MaterialExportRequest,
+  ImportRequestStatus,
+  InventoryReportPlanStatus,
   NotificationType,
   Prisma,
   RoleCode,
@@ -28,57 +29,276 @@ export class NotificationService {
     private readonly materialVariantService: MaterialVariantService,
   ) {}
 
+  @OnEvent('notification.inventoryReportPlan.updated')
+  async inventoryReportPlanStatusUpdatedEvent({
+    changeField,
+    inventoryReportPlanId,
+  }: {
+    changeField: ChangeFieldDto;
+    inventoryReportPlanId: string;
+  }) {
+    const inventoryReportPlan =
+      await this.prismaService.inventoryReportPlan.findUnique({
+        where: {
+          id: inventoryReportPlanId,
+        },
+        include: {
+          inventoryReportPlanDetail: {
+            include: {
+              warehouseStaff: {
+                include: {
+                  account: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    const warehouseStaffSet = new Set(
+      inventoryReportPlan.inventoryReportPlanDetail.map(
+        (detail) => detail.warehouseStaff,
+      ),
+    );
+    if (changeField.status.before === InventoryReportPlanStatus.IN_PROGRESS) {
+      const createNotificationPromises = Array.from(warehouseStaffSet).map(
+        async (warehouseStaff) => {
+          return this.prismaService.notification.create({
+            data: {
+              title: `Inventory Report Plan ${inventoryReportPlan.code} has been started`,
+              message: `Inventory Report Plan ${inventoryReportPlan.code} has been started`,
+              path: `/stocktaking/plan/${inventoryReportPlan.id}`,
+              accountId: warehouseStaff.accountId,
+              type: 'INVENTORY_REPORT',
+            },
+          });
+        },
+      );
+      const result = await Promise.all(createNotificationPromises);
+      result.map((createNotificationPromises) => {
+        this.notificationGateway.create(createNotificationPromises);
+      });
+    }
+  }
+
   @OnEvent('notification.inventoryStock.updated')
   async updateInventoryStockNotificationEvent({ changes, inventoryStockId }) {
     const inventoryStock =
       await this.inventoryStockService.findOne(inventoryStockId);
     if (inventoryStock.materialPackageId !== null) {
       const materialVariant = inventoryStock.materialPackage.materialVariant;
-      const allInventoryStockOfMaterialVariant =
-        await this.inventoryStockService.findAllByMaterialVariantId(
+      const { isAtReorderAlert: isAtReorderLevelAlert, currentQuantityByUom } =
+        await this.materialVariantService.isMaterialVariantAtReOrderLevel(
           materialVariant.id,
         );
-      const totalRemainQuantity = allInventoryStockOfMaterialVariant.reduce(
-        (acc, item) =>
-          acc + item.quantityByPack * item.materialPackage.uomPerPack,
-        0,
-      );
-      Logger.log('totalRemainQuantity', totalRemainQuantity);
-      Logger.log('materialVariant.reorderLevel', materialVariant.reorderLevel);
-      if (totalRemainQuantity <= materialVariant.reorderLevel) {
-        const purchasingStaffs = (
-          await this.userService.getAllUserByRole(RoleCode.PURCHASING_STAFF)
-        ).data;
-        const createNotificationPromises = purchasingStaffs.map(
-          async (purchasingStaff) => {
-            return this.prismaService.notification.create({
-              data: {
-                title: `Reorder Level of Material Variant ${materialVariant.code}`,
-                message: `Material Variant ${materialVariant.code} has reached the reorder level`,
-                path: `/material-variant/${materialVariant.id}`,
-                accountId: purchasingStaff.accountId,
-                type: 'REORDER_LEVEL',
-              },
-            });
-          },
-        );
-        const result = await Promise.all(createNotificationPromises);
-        console.log('result', result);
-        result.map((createNotificationPromises) => {
-          this.notificationGateway.create(createNotificationPromises);
-        });
+      if (isAtReorderLevelAlert) {
+        const { result: reorderAlert, operation } =
+          await this.materialVariantService.createReOrderAlert(
+            materialVariant.id,
+            currentQuantityByUom,
+            materialVariant.reorderLevel,
+          );
+        //Mean new reorder alert is created
+        if (operation.toLocaleUpperCase() === 'CREATED') {
+          const purchasingStaffs = (
+            await this.userService.getAllUserByRole(RoleCode.PURCHASING_STAFF)
+          ).data;
+          const createNotificationPromises = purchasingStaffs.map(
+            async (purchasingStaff) => {
+              return this.prismaService.notification.create({
+                data: {
+                  title: `Reorder Level of Material Variant ${materialVariant.code}`,
+                  message: `Material Variant ${materialVariant.code} has reached the reorder level`,
+                  path: `/material-variant/${materialVariant.id}`,
+                  accountId: purchasingStaff.accountId,
+                  type: 'REORDER_LEVEL',
+                },
+              });
+            },
+          );
+          const result = await Promise.all(createNotificationPromises);
+          result.map((createNotificationPromises) => {
+            this.notificationGateway.create(createNotificationPromises);
+          });
+        }
+      } else {
+        const { result: reorderAlert, operation } =
+          await this.materialVariantService.updateReorderAlert(
+            materialVariant.id,
+            currentQuantityByUom,
+            materialVariant.reorderLevel,
+          );
+        if (reorderAlert || operation.toUpperCase() === 'UPDATED') {
+          const purchasingStaffs = (
+            await this.userService.getAllUserByRole(RoleCode.PURCHASING_STAFF)
+          ).data;
+          const createNotificationPromises = purchasingStaffs.map(
+            async (purchasingStaff) => {
+              return this.prismaService.notification.create({
+                data: {
+                  title: `Reorder Level of Material Variant ${materialVariant.code}`,
+                  message: `Material Variant ${materialVariant.code} has been filled up and no longer at reorder level`,
+                  path: `/material-variant/${materialVariant.id}`,
+                  accountId: purchasingStaff.accountId,
+                  type: 'REORDER_LEVEL',
+                },
+              });
+            },
+          );
+          const result = await Promise.all(createNotificationPromises);
+          result.map((createNotificationPromises) => {
+            this.notificationGateway.create(createNotificationPromises);
+          });
+        }
       }
     }
   }
 
   @OnEvent('notification.importRequest.updated')
-  async handleNotificationImportRequestUpdatedEvent(
-    importRequest: ChangeFieldDto,
-    importRequestId: string,
-  ) {
-    console.log('importRequest', importRequest);
+  async handleNotificationImportRequestUpdatedEvent({
+    changeField,
+    importRequestId,
+  }: {
+    changeField: ChangeFieldDto;
+    importRequestId: string;
+  }) {
+    const importRequest = await this.findUniqueForNotification(importRequestId);
+
+    if (changeField.status.after === ImportRequestStatus.INSPECTED) {
+      const notification =
+        await this.prismaService.notification.createManyAndReturn({
+          data: [
+            {
+              title: `Import Request ${importRequest.code} has been inspected`,
+              message: `Import Request ${importRequest.code} has been inspected and waiting for importing`,
+              path: `/import-request/${importRequest.id}`,
+              type: 'IMPORT_REQUEST',
+              accountId: importRequest.warehouseManager.accountId,
+            },
+            {
+              title: `Import Request ${importRequest.code} has been inspected`,
+              message: `Import Request ${importRequest.code} has been inspected and waiting for importing`,
+              path: `/import-request/${importRequest.id}`,
+              type: 'IMPORT_REQUEST',
+
+              accountId: importRequest.warehouseStaff.accountId,
+            },
+            {
+              title: `Import Request ${importRequest.code} has been inspected`,
+              message: `Import Request ${importRequest.code} has been inspected and waiting for importing`,
+              path: `/import-request/${importRequest.id}`,
+              type: 'IMPORT_REQUEST',
+
+              accountId: importRequest.purchasingStaff.accountId,
+            },
+          ],
+        });
+      notification.map((notification) => {
+        this.notificationGateway.create(notification);
+      });
+    } else if (changeField.status.after === ImportRequestStatus.IMPORTING) {
+      const notification =
+        await this.prismaService.notification.createManyAndReturn({
+          data: [
+            {
+              title: `Import Request ${importRequest.code} is importing`,
+              message: `Import Request ${importRequest.code} is importing`,
+              path: `/import-request/${importRequest.id}`,
+              type: 'IMPORT_REQUEST',
+
+              accountId: importRequest.warehouseManager.accountId,
+            },
+            {
+              title: `Import Request ${importRequest.code} is importing`,
+              message: `Import Request ${importRequest.code} is importing`,
+              path: `/import-request/${importRequest.id}`,
+              type: 'IMPORT_REQUEST',
+
+              accountId: importRequest.purchasingStaff.accountId,
+            },
+          ],
+        });
+      notification.map((notification) => {
+        this.notificationGateway.create(notification);
+      });
+    } else if (changeField.status.after === ImportRequestStatus.IMPORTED) {
+      const notification =
+        await this.prismaService.notification.createManyAndReturn({
+          data: [
+            {
+              title: `Import Request ${importRequest.code} has been imported`,
+              message: `Import Request ${importRequest.code} has been imported`,
+              path: `/import-request/${importRequest.id}`,
+              type: 'IMPORT_REQUEST',
+
+              accountId: importRequest.warehouseManager.accountId,
+            },
+            {
+              title: `Import Request ${importRequest.code} has been imported`,
+              message: `Import Request ${importRequest.code} has been imported`,
+              path: `/import-request/${importRequest.id}`,
+              type: 'IMPORT_REQUEST',
+
+              accountId: importRequest.purchasingStaff.accountId,
+            },
+          ],
+        });
+      notification.map((notification) => {
+        this.notificationGateway.create(notification);
+      });
+    } else if (changeField.status.after === ImportRequestStatus.CANCELLED) {
+      let message = `Import Request ${importRequest.code} has been cancelled`;
+      let title = importRequest?.inspectionRequest
+        ? `Import Request ${importRequest.code} has been cancelled because there is no approved materials`
+        : `Import Request ${importRequest.code} has been cancelled`;
+      const notification =
+        await this.prismaService.notification.createManyAndReturn({
+          data: [
+            {
+              title: title,
+              message: message,
+              path: `/import-request/${importRequest.id}`,
+              type: 'IMPORT_REQUEST',
+              accountId: importRequest.warehouseManager.accountId,
+            },
+            {
+              title: title,
+              message: message,
+              path: `/import-request/${importRequest.id}`,
+              type: 'IMPORT_REQUEST',
+              accountId: importRequest.purchasingStaff.accountId,
+            },
+          ],
+        });
+      notification.map((notification) => {
+        this.notificationGateway.create(notification);
+      });
+    }
   }
 
+  async findUniqueForNotification(id: string) {
+    const importRequest = await this.prismaService.importRequest.findUnique({
+      where: { id },
+      include: {
+        inspectionRequest: true,
+        warehouseStaff: {
+          include: {
+            account: true,
+          },
+        },
+        purchasingStaff: {
+          include: {
+            account: true,
+          },
+        },
+        warehouseManager: {
+          include: {
+            account: true,
+          },
+        },
+      },
+    });
+    return importRequest;
+  }
   @OnEvent('notification.task.created')
   async handleNotificationTaskCreateEvent(
     task: PayloadToResult<
@@ -86,7 +306,6 @@ export class NotificationService {
       RenameAndNestPayloadKeys<Prisma.$TaskPayload<DefaultArgs>>
     >,
   ) {
-    Logger.log('notification.task.created', task);
     let message: string;
     let path: string;
     let taskType: NotificationType;

@@ -9,6 +9,7 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   ImportRequest,
+  InventoryReportPlan,
   InventoryStock,
   MaterialExportRequest,
   Prisma,
@@ -79,7 +80,6 @@ export class PrismaService
 
           // Proceed with the update
           const result = await next(params);
-          console.log(params.model, result);
           // Compare old and new values
           if (params.model === 'ImportRequest') {
             const changes = {};
@@ -95,7 +95,7 @@ export class PrismaService
             }
             this.eventEmitter.emit('notification.importRequest.updated', {
               changes,
-              importRequest: updatedRecord.id,
+              importRequestId: updatedRecord.id,
             });
           } else if (params.model === 'MaterialExportRequest') {
             const updatedRecord = result as MaterialExportRequest;
@@ -129,6 +129,21 @@ export class PrismaService
             this.eventEmitter.emit('notification.inventoryStock.updated', {
               changes,
               inventoryStockId: updatedRecord.id,
+            });
+          }else if (params.model === 'InventoryReportPlan') {
+            const changes = {};
+            const updatedRecord = result as InventoryReportPlan;
+            for (const key of Object.keys(updatedRecord)) {
+              if (updatedRecord[key] !== existingRecord[key]) {
+                changes[key] = {
+                  before: existingRecord[key],
+                  after: updatedRecord[key],
+                };
+              }
+            }
+            this.eventEmitter.emit('notification.inventoryReportPlan.updated', {
+              changes,
+              inventoryReportPlanId: updatedRecord.id,
             });
           }
 
