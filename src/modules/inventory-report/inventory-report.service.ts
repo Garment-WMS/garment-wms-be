@@ -5,6 +5,7 @@ import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
+import { ApiResponse } from 'src/common/dto/response.dto';
 import { getPageMeta } from 'src/common/utils/utils';
 import { ImportReceiptService } from '../import-receipt/import-receipt.service';
 import { ImportRequestService } from '../import-request/import-request.service';
@@ -26,14 +27,9 @@ import { UpdateInventoryReportDto } from './dto/update-inventory-report.dto';
 export class InventoryReportService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly materialVariantService: MaterialVariantService,
-    private readonly importReceiptService: ImportReceiptService,
     private readonly inventoryReportDetailService: InventoryReportDetailService,
     private readonly materialReceiptService: MaterialReceiptService,
     private readonly productReceiptService: ProductReceiptService,
-    private readonly importRequestService: ImportRequestService,
-    private readonly materialExportReceiptService: MaterialExportReceiptService,
-    private readonly materialExportRequestService: MaterialExportRequestService,
     private readonly taskService: TaskService,
   ) {}
 
@@ -203,7 +199,7 @@ export class InventoryReportService {
     id: string,
     updateInventoryReportDetailDto: WarehouseStaffQuantityReportDetails,
     warehouseStaffId: string,
-  ) {
+  ): Promise<ApiResponse> {
     const inventoryReport = await this.findById(id);
     if (!inventoryReport) {
       throw new BadRequestException('Inventory report not found');
@@ -238,7 +234,7 @@ export class InventoryReportService {
     return apiSuccess(
       HttpStatus.OK,
       result,
-      'Update inventory report detail successfully',
+      'Record inventory report successfully',
     );
   }
   updateInventoryReportStatus(id: string, status: InventoryReportStatus) {

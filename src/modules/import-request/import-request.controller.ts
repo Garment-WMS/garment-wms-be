@@ -38,7 +38,7 @@ export class ImportRequestController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.PURCHASING_STAFF)
-  async create(
+  async createMaterialImportRequest(
     @GetUser() purchasingStaff: AuthenUser,
     @Body() createImportRequestDto: CreateImportRequestDto,
   ) {

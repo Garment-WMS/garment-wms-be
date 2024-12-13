@@ -15,6 +15,18 @@ export class InventoryStockService {
     private readonly materialVariantService: MaterialVariantService,
     private readonly productVariantService: ProductVariantService,
   ) {}
+  findAllByMaterialVariantId(id: string) {
+    return this.prismaService.inventoryStock.findMany({
+      where: {
+        materialPackage: {
+          materialVariantId: id,
+        },
+      },
+      include: {
+        materialPackage: true,
+      },
+    });
+  }
 
   async getInvetoryStockDashboard() {
     const materialInventoryStock =
@@ -295,12 +307,29 @@ export class InventoryStockService {
     throw new Error('Method not implemented.');
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} inventoryStock`;
+  findOne(id: string) {
+    return this.prismaService.inventoryStock.findFirst({
+      where: {
+        id: id,
+      },
+      include: {
+        materialPackage: {
+          include: {
+            materialVariant: true,
+          },
+        },
+        productSize: true,
+      },
+    });
   }
 
-  update(id: number, updateInventoryStockDto: UpdateInventoryStockDto) {
-    return `This action updates a #${id} inventoryStock`;
+  async update(id: string, updateInventoryStockDto: UpdateInventoryStockDto) {
+    return await this.prismaService.inventoryStock.update({
+      where: {
+        id: id,
+      },
+      data: updateInventoryStockDto,
+    });
   }
 
   remove(id: number) {
