@@ -211,7 +211,8 @@ export class InspectionRequestService {
       taskType: 'INSPECTION',
       inspectionDepartmentId: inspectionDepartmentId,
       inspectionRequestId: inspectionRequestId,
-      status: 'OPEN',
+      status: 'IN_PROGRESS',
+      startedAt: new Date(),
       expectedStartedAt: expectedStartedAt,
       expectedFinishedAt: expectedFinishedAt,
     };
