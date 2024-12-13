@@ -945,8 +945,13 @@ export class ImportRequestService {
       'INSPECTING',
     ];
     if (!allowReassignInspectionStatus.includes(importRequestCheck.status)) {
-      throw new BadRequestException(
-        `Import Request status must be ${allowReassignInspectionStatus.join(', ')} but current status is ${importRequestCheck.status}`,
+      // throw new BadRequestException(
+      //   `Import Request status must be ${allowReassignInspectionStatus.join(', ')} but current status is ${importRequestCheck.status}`,
+      // );
+      return apiSuccess(
+        400,
+        importRequest,
+        `Warehouse staff reassign successfully but inspection staff reassign failed(allow status ${allowReassignInspectionStatus.join(', ')})`,
       );
     }
     const inspectionRequest =
