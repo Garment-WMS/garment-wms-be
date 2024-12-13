@@ -16,7 +16,7 @@ model MaterialVariant {
   materialExportRequestDetail    MaterialExportRequestDetail[]
   InventoryReportPlanDetail      InventoryReportPlanDetail[]
   productionBatchMaterialVariant ProductionBatchMaterialVariant[]
+  ReorderAlert                   ReorderAlert[]
 
   @@map("material_variant")
-  ReOrderAlert ReOrderAlert[]
 }

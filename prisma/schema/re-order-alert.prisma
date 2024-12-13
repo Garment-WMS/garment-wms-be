@@ -1,4 +1,4 @@
-model ReOrderAlert {
+model ReorderAlert {
     id                   String             @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
     materialVariantId    String             @map("material_variant_id") @db.Uuid
     currentQuantityByUom Float              @default(0) @map("current_quantity_by_uom")
@@ -11,7 +11,7 @@ model ReOrderAlert {
     deletedAt            DateTime?          @map("deleted_at")
     materialVariant      MaterialVariant    @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-    @@map("re_order_alert")
+    @@map("reorder_alert")
 }
 
 enum ReOrderAlertStatus {
