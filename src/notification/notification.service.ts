@@ -1,6 +1,11 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { NotificationType, Prisma, RoleCode } from '@prisma/client';
+import {
+  MaterialExportRequest,
+  NotificationType,
+  Prisma,
+  RoleCode,
+} from '@prisma/client';
 import {
   DefaultArgs,
   PayloadToResult,
@@ -24,10 +29,7 @@ export class NotificationService {
   ) {}
 
   @OnEvent('notification.inventoryStock.updated')
-  async updateInventoryStockNotificationEvent({
-    changes,
-    inventoryStockId,
-  }) {
+  async updateInventoryStockNotificationEvent({ changes, inventoryStockId }) {
     const inventoryStock =
       await this.inventoryStockService.findOne(inventoryStockId);
     if (inventoryStock.materialPackageId !== null) {
@@ -187,6 +189,46 @@ export class NotificationService {
     result.map((createNotificationPromises) => {
       this.notificationGateway.create(createNotificationPromises);
     });
+  }
+
+  @OnEvent('notification.materialExportRequest.created')
+  async handleNotificationMaterialExportRequestCreatedEvent(
+    materialExportRequest: PayloadToResult<
+      Prisma.$MaterialExportRequestPayload<DefaultArgs>,
+      RenameAndNestPayloadKeys<
+        Prisma.$MaterialExportRequestPayload<DefaultArgs>
+      >
+    >,
+  ) {
+    const warehouseManagers =
+      await this.prismaService.warehouseManager.findMany();
+    const createNotificationPromises = warehouseManagers.map(
+      async (warehouseManager) => {
+        return this.prismaService.notification.create({
+          data: {
+            title: `New Material Export Request ${materialExportRequest.code}`,
+            message: `New Material Export Request ${materialExportRequest.code} has been created by Production department and waiting for approval`,
+            path: `/material-export-request/${materialExportRequest.id}`,
+            accountId: warehouseManager.accountId,
+          },
+        });
+      },
+    );
+    const result = await Promise.all(createNotificationPromises);
+    result.map((createNotificationPromises) => {
+      this.notificationGateway.create(createNotificationPromises);
+    });
+  }
+
+  @OnEvent('notification.materialExportRequest.updated')
+  async handleNotificationMaterialExportRequestUpdatedEvent(
+    materialExportRequestChanges: ChangeFieldDto,
+    materialExportRequest: MaterialExportRequest,
+  ) {
+    Logger.log(
+      'notification.materialExportRequest.updated',
+      materialExportRequestChanges,
+    );
   }
 
   // async create(

@@ -112,7 +112,7 @@ export class PrismaService
               'notification.materialExportRequest.updated',
               {
                 changes,
-                materialExportRequest: updatedRecord.id,
+                materialExportRequest: updatedRecord,
               },
             );
           } else if (params.model === 'InventoryStock') {
@@ -150,12 +150,22 @@ export class PrismaService
         // Execute the Prisma query and get the result
         const result = await next(params);
 
-        if (params.model === 'ImportRequest') {
-          const createdEntity = result as ImportRequest;
-          this.eventEmitter.emit(
-            'notification.importRequest.created',
-            createdEntity,
-          );
+        switch (params.model) {
+          case 'ImportRequest':
+            const createdEntity = result as ImportRequest;
+            this.eventEmitter.emit(
+              'notification.importRequest.created',
+              createdEntity,
+            );
+            break;
+          case 'MaterialExportRequest':
+            const createdMaterialExportRequest =
+              result as MaterialExportRequest;
+            this.eventEmitter.emit(
+              'notification.materialExportRequest.created',
+              createdMaterialExportRequest,
+            );
+            break;
         }
         if (params.model === 'Task') {
           const createdEntity = result as Task;
@@ -196,35 +206,6 @@ export class PrismaService
     // this.$on('query', ({ query, params }) => {
     //   this.logger.log(`${query}; ${params}`);
     // });
-
-    this.$extends({
-      query: {
-        importRequest: {
-          async create({ args, model, operation, query }) {
-            console.log('importRequest.create', args);
-            const result = await query(args);
-            if (result.status === 'ARRIVED') {
-              eventEmitter.emit('notification.importRequest.created', {
-                importRequestId: result.id,
-                importRequestCode: result.code,
-              });
-              Logger.debug('Emit notification.importRequest.created event');
-            }
-            return result;
-          },
-          async update({ args, model, operation, query }) {
-            switch (args.data.status) {
-              case 'APPROVED':
-                break;
-              case 'REJECTED':
-                break;
-            }
-
-            return query(args);
-          },
-        },
-      },
-    });
   }
 
   private notSoftDeletedTables: string[] = ['Role', 'RefreshToken'];
