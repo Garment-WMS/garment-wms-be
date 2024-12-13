@@ -12,6 +12,7 @@ import {
   materialInclude,
   materialPackageInclude,
   materialVariantInclude,
+  warehouseStaffInclude,
 } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -246,7 +247,17 @@ export class MaterialExportReceiptService {
     const materialExportReceipt =
       this.prismaService.materialExportReceipt.findUnique({
         where: { id },
-        include: materialExportReceiptInclude,
+        include: {
+          ...materialExportReceiptInclude,
+          task: {
+            include: {
+              warehouseStaff: {
+                include: warehouseStaffInclude,
+              },
+              todo: true,
+            },
+          },
+        },
       });
     if (!materialExportReceipt) {
       throw new Error('Material export receipt not found');
