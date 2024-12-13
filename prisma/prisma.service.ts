@@ -7,7 +7,14 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ImportRequest, Prisma, PrismaClient, Task } from '@prisma/client';
+import {
+  ImportRequest,
+  InventoryStock,
+  MaterialExportRequest,
+  Prisma,
+  PrismaClient,
+  Task,
+} from '@prisma/client';
 
 @Injectable()
 export class PrismaService
@@ -72,10 +79,12 @@ export class PrismaService
 
           // Proceed with the update
           const result = await next(params);
-          const updatedRecord = result as ImportRequest;
+          console.log(params.model, result);
           // Compare old and new values
           if (params.model === 'ImportRequest') {
             const changes = {};
+            const updatedRecord = result as ImportRequest;
+
             for (const key of Object.keys(updatedRecord)) {
               if (updatedRecord[key] !== existingRecord[key]) {
                 changes[key] = {
@@ -89,6 +98,7 @@ export class PrismaService
               importRequest: updatedRecord.id,
             });
           } else if (params.model === 'MaterialExportRequest') {
+            const updatedRecord = result as MaterialExportRequest;
             const changes = {};
             for (const key of Object.keys(updatedRecord)) {
               if (updatedRecord[key] !== existingRecord[key]) {
@@ -105,6 +115,21 @@ export class PrismaService
                 materialExportRequest: updatedRecord.id,
               },
             );
+          } else if (params.model === 'InventoryStock') {
+            const changes = {};
+            const updatedRecord = result as InventoryStock;
+            for (const key of Object.keys(updatedRecord)) {
+              if (updatedRecord[key] !== existingRecord[key]) {
+                changes[key] = {
+                  before: existingRecord[key],
+                  after: updatedRecord[key],
+                };
+              }
+            }
+            this.eventEmitter.emit('notification.inventoryStock.updated', {
+              changes,
+              inventoryStockId: updatedRecord.id,
+            });
           }
 
           return result;
@@ -292,25 +317,16 @@ export class PrismaService
     'InventoryReport',
     'InventoryReportPlan',
     'InventoryReportPlanDetail',
-    'MaterialInspectionCriteria',
-    'MaterialVariant',
-    'Material',
-    'MaterialPackage',
-    'ProductInspectionCriteria',
-    'ProductSize',
-    'ProductVariant',
-    'Product',
     'ProductionBatch',
     'ProductionPlan',
     'ProductReceipt',
     'MaterialReceipt',
     'PoDelivery',
-    'Supplier',
     'PurchaseOrder',
     'ProductionPlanDetail',
     'Task',
     'Todo',
-    'ProductFormula',
+    'InventoryStock',
     'MaterialExportRequest',
     'MaterialExportReceipt',
   ];

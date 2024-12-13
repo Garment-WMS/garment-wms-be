@@ -64,7 +64,7 @@ export class ProductReceiptService {
       this.prismaService,
     );
 
-    await this.inventoryStockService.updateProductStockQuantity(
+    await this.inventoryStockService.updateProductStockQuantity(        
       productReceipt.productSizeId,
       remainQuantityByUom,
       this.prismaService,

@@ -89,18 +89,17 @@ export class InventoryReportController {
   @Patch(':id/record')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleCode.WAREHOUSE_STAFF)
-  processInventoryDetail(
+  async handleRecordInventoryReport(
     @Param('id', CustomUUIDPipe) id: string,
     @Body() updateInventoryReportDetailDto: WarehouseStaffQuantityReportDetails,
     @GetUser() user: AuthenUser,
   ) {
-    return this.inventoryReportService.handleRecordInventoryReport(
+    return await this.inventoryReportService.handleRecordInventoryReport(
       id,
       updateInventoryReportDetailDto,
       user.warehouseStaffId,
     );
   }
-
 
   @Patch(':id/approve')
   @UseGuards(JwtAuthGuard, RolesGuard)

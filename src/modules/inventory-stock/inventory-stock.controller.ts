@@ -24,7 +24,6 @@ export class InventoryStockController {
   @Get('/dashboard')
   getInvetoryStockDashboard() {
     return this.inventoryStockService.getInvetoryStockDashboard();
-
   }
 
   @Get('/material')
@@ -34,7 +33,7 @@ export class InventoryStockController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.inventoryStockService.findOne(+id);
+    return this.inventoryStockService.findOne(id);
   }
 
   @Patch(':id')
@@ -42,7 +41,7 @@ export class InventoryStockController {
     @Param('id') id: string,
     @Body() updateInventoryStockDto: UpdateInventoryStockDto,
   ) {
-    return this.inventoryStockService.update(+id, updateInventoryStockDto);
+    return this.inventoryStockService.update(id, updateInventoryStockDto);
   }
 
   @Delete(':id')

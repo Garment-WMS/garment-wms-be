@@ -1,12 +1,14 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { NotificationType, Prisma } from '@prisma/client';
+import { NotificationType, Prisma, RoleCode } from '@prisma/client';
 import {
   DefaultArgs,
   PayloadToResult,
   RenameAndNestPayloadKeys,
 } from '@prisma/client/runtime/library';
 import { PrismaService } from 'prisma/prisma.service';
+import { InventoryStockService } from 'src/modules/inventory-stock/inventory-stock.service';
+import { MaterialVariantService } from 'src/modules/material-variant/material-variant.service';
 import { UserService } from 'src/modules/user/user.service';
 import { ChangeFieldDto } from './dto/change-field.dto';
 import { NotificationGateway } from './notification.gateway';
@@ -17,7 +19,55 @@ export class NotificationService {
     private readonly prismaService: PrismaService,
     private readonly notificationGateway: NotificationGateway,
     private readonly userService: UserService,
+    private readonly inventoryStockService: InventoryStockService,
+    private readonly materialVariantService: MaterialVariantService,
   ) {}
+
+  @OnEvent('notification.inventoryStock.updated')
+  async updateInventoryStockNotificationEvent({
+    changes,
+    inventoryStockId,
+  }) {
+    const inventoryStock =
+      await this.inventoryStockService.findOne(inventoryStockId);
+    if (inventoryStock.materialPackageId !== null) {
+      const materialVariant = inventoryStock.materialPackage.materialVariant;
+      const allInventoryStockOfMaterialVariant =
+        await this.inventoryStockService.findAllByMaterialVariantId(
+          materialVariant.id,
+        );
+      const totalRemainQuantity = allInventoryStockOfMaterialVariant.reduce(
+        (acc, item) =>
+          acc + item.quantityByPack * item.materialPackage.uomPerPack,
+        0,
+      );
+      Logger.log('totalRemainQuantity', totalRemainQuantity);
+      Logger.log('materialVariant.reorderLevel', materialVariant.reorderLevel);
+      if (totalRemainQuantity <= materialVariant.reorderLevel) {
+        const purchasingStaffs = (
+          await this.userService.getAllUserByRole(RoleCode.PURCHASING_STAFF)
+        ).data;
+        const createNotificationPromises = purchasingStaffs.map(
+          async (purchasingStaff) => {
+            return this.prismaService.notification.create({
+              data: {
+                title: `Reorder Level of Material Variant ${materialVariant.code}`,
+                message: `Material Variant ${materialVariant.code} has reached the reorder level`,
+                path: `/material-variant/${materialVariant.id}`,
+                accountId: purchasingStaff.accountId,
+                type: 'REORDER_LEVEL',
+              },
+            });
+          },
+        );
+        const result = await Promise.all(createNotificationPromises);
+        console.log('result', result);
+        result.map((createNotificationPromises) => {
+          this.notificationGateway.create(createNotificationPromises);
+        });
+      }
+    }
+  }
 
   @OnEvent('notification.importRequest.updated')
   async handleNotificationImportRequestUpdatedEvent(
