@@ -884,30 +884,38 @@ export class ImportRequestService {
     });
   }
 
-  async reassign(reassignImportRequestDto: ReassignImportRequestDto) {
+  async reassign(dto: ReassignImportRequestDto) {
+    if (!dto.inspectionDepartmentId && !dto.warehouseStaffId) {
+      throw new BadRequestException(
+        'Warehouse staff or inspection department must be provided',
+      );
+    }
+
     const importRequestCheck =
       await this.prismaService.importRequest.findUnique({
-        where: { id: reassignImportRequestDto.importRequestId },
+        where: { id: dto.importRequestId },
         select: { status: true },
       });
     if (!importRequestCheck) {
       throw new NotFoundException('Import Request not found');
     }
-    const allowReassignStatus: ImportRequestStatus[] = [
+    const allowReassignImportStatus: ImportRequestStatus[] = [
       'APPROVED',
       'INSPECTING',
       'INSPECTED',
       'AWAIT_TO_IMPORT',
     ];
-    if (!allowReassignStatus.includes(importRequestCheck.status)) {
+
+    //reassign warehouse staff
+    if (!allowReassignImportStatus.includes(importRequestCheck.status)) {
       throw new BadRequestException(
-        `Import Request status must be ${allowReassignStatus.join(', ')} but current status is ${importRequestCheck.status}`,
+        `Import Request status must be ${allowReassignImportStatus.join(', ')} but current status is ${importRequestCheck.status}`,
       );
     }
     const importRequest = await this.prismaService.importRequest.update({
-      where: { id: reassignImportRequestDto.importRequestId },
+      where: { id: dto.importRequestId },
       data: {
-        warehouseStaffId: reassignImportRequestDto.warehouseStaffId,
+        warehouseStaffId: dto.warehouseStaffId,
       },
     });
     const importReceipt = await this.prismaService.importReceipt.findFirst({
@@ -924,7 +932,36 @@ export class ImportRequestService {
       await this.prismaService.importReceipt.update({
         where: { id: importReceipt.id },
         data: {
-          warehouseStaffId: reassignImportRequestDto.warehouseStaffId,
+          warehouseStaffId: dto.warehouseStaffId,
+          expectedStartedAt: dto.importExpectedStartedAt,
+          expectFinishedAt: dto.importExpectedFinishedAt,
+        },
+      });
+    }
+
+    //reassign inspection staff
+    const allowReassignInspectionStatus: ImportRequestStatus[] = [
+      'APPROVED',
+      'INSPECTING',
+    ];
+    if (!allowReassignInspectionStatus.includes(importRequestCheck.status)) {
+      throw new BadRequestException(
+        `Import Request status must be ${allowReassignInspectionStatus.join(', ')} but current status is ${importRequestCheck.status}`,
+      );
+    }
+    const inspectionRequest =
+      await this.prismaService.inspectionRequest.findFirst({
+        where: {
+          importRequestId: importRequest.id,
+        },
+      });
+    if (inspectionRequest) {
+      await this.prismaService.inspectionRequest.update({
+        where: { id: inspectionRequest.id },
+        data: {
+          inspectionDepartmentId: dto.inspectionDepartmentId,
+          expectedStartedAt: dto.inspectExpectedStartedAt,
+          expectedFinishedAt: dto.inspectExpectedFinishedAt,
         },
       });
     }

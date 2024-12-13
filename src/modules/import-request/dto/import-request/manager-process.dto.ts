@@ -48,7 +48,7 @@ export class ManagerProcessDto {
   @IsUserRoleExist(RoleCode.INSPECTION_DEPARTMENT)
   @IsNotEmpty()
   @IsUUID()
-  inspectionDepartmentId: string;
+  inspectionDepartmentId?: string;
 
   @ApiProperty()
   @IsOptional()
