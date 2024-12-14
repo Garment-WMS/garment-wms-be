@@ -44,6 +44,11 @@ export class MaterialReceiptController {
     return this.materialReceiptService.findAll();
   }
 
+  @Get('/lite')
+  findAllMaterialVariantLite() {
+    return this.materialReceiptService.findAllLite();
+  }
+
   @Get('/by-material-variant')
   findByMaterialVariant(
     @Query('materialVariantId', ParseUUIDPipe) materialVariantId: string,
