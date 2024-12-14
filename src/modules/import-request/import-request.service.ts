@@ -26,6 +26,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
+import { ApiResponse } from 'src/common/dto/response.dto';
 import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { CustomValidationException } from 'src/common/filter/custom-validation.exception';
 import { getPageMeta, nonExistUUID } from 'src/common/utils/utils';
@@ -963,7 +964,16 @@ export class ImportRequestService {
       });
     }
 
+    //reassign import task
+    const importTask = await this.taskService.reassignImportRequestTask(
+      importRequest.id,
+      importRequest.warehouseStaffId,
+      dto.importExpectedStartedAt,
+      dto.importExpectedFinishedAt,
+    );
+
     //reassign inspection staff
+
     const allowReassignInspectionStatus: ImportRequestStatus[] = [
       'APPROVED',
       'INSPECTING',
@@ -972,9 +982,9 @@ export class ImportRequestService {
       // throw new BadRequestException(
       //   `Import Request status must be ${allowReassignInspectionStatus.join(', ')} but current status is ${importRequestCheck.status}`,
       // );
-      return apiSuccess(
+      return new ApiResponse(
         400,
-        importRequest,
+        { importRequest, importTask },
         `Warehouse staff reassign successfully but inspection staff reassign failed(allow status ${allowReassignInspectionStatus.join(', ')})`,
       );
     }
@@ -984,6 +994,7 @@ export class ImportRequestService {
           importRequestId: importRequest.id,
         },
       });
+    let inspectionTask: Prisma.BatchPayload;
     if (inspectionRequest) {
       await this.prismaService.inspectionRequest.update({
         where: { id: inspectionRequest.id },
@@ -993,13 +1004,14 @@ export class ImportRequestService {
           expectedFinishedAt: dto.inspectExpectedFinishedAt,
         },
       });
+      inspectionTask = await this.taskService.reassignInspectionRequestTask(
+        inspectionRequest.id,
+        inspectionRequest.inspectionDepartmentId,
+        dto.inspectExpectedStartedAt,
+        dto.inspectExpectedFinishedAt,
+      );
     }
 
-    //reassign task
-    const task = await this.taskService.reassignImportRequestTask(
-      importRequest.id,
-      importRequest.warehouseStaffId,
-    );
-    return { importRequest, task };
+    return { importRequest, importTask, inspectionTask };
   }
 }

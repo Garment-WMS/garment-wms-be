@@ -290,11 +290,31 @@ export class TaskService {
   async reassignImportRequestTask(
     importReceiptId: string,
     warehouseStaffId: string,
+    expectedStartedAt: Date,
+    expectedFinishedAt: Date,
   ) {
     return await this.prismaService.task.updateMany({
       where: { importReceiptId: importReceiptId },
       data: {
         warehouseStaffId: warehouseStaffId,
+        expectedStartedAt: expectedStartedAt,
+        expectedFinishedAt: expectedFinishedAt,
+      },
+    });
+  }
+
+  async reassignInspectionRequestTask(
+    inspectionRequestId: string,
+    inspectionDepartmentId: string,
+    expectedStartedAt: Date,
+    expectedFinishedAt: Date,
+  ) {
+    return await this.prismaService.task.updateMany({
+      where: { inspectionRequestId: inspectionRequestId },
+      data: {
+        inspectionDepartmentId: inspectionDepartmentId,
+        expectedStartedAt: expectedStartedAt,
+        expectedFinishedAt: expectedFinishedAt,
       },
     });
   }
