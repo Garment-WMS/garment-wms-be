@@ -48,6 +48,12 @@ export type totalProductSizeProduced = {
 
 @Injectable()
 export class ProductionBatchService {
+  constructor(
+    readonly prismaService: PrismaService,
+    private readonly excelService: ExcelService,
+    private readonly productPlanDetailService: ProductPlanDetailService,
+    private readonly productionBatchMaterialVariantService: ProductionBatchMaterialVariantService,
+  ) {}
   async findChart(chartDto: ChartDto) {
     // const { year } = chartDto;
     const monthlyData = [];
@@ -184,12 +190,7 @@ export class ProductionBatchService {
       'Chart data fetched successfully',
     );
   }
-  constructor(
-    readonly prismaService: PrismaService,
-    private readonly excelService: ExcelService,
-    private readonly productPlanDetailService: ProductPlanDetailService,
-    private readonly productionBatchMaterialVariantService: ProductionBatchMaterialVariantService,
-  ) {}
+
   async cancelProductionBatch(
     id: string,
     user: AuthenUser,
@@ -419,7 +420,7 @@ export class ProductionBatchService {
     if (!isUUID(id)) {
       throw new BadRequestException('Invalid UUID');
     }
-    const data = (await this.prismaService.productionBatch.findFirst({
+    const data: any = (await this.prismaService.productionBatch.findFirst({
       where: { id },
       include: productionBatchInclude,
     })) as ProductionBatchWithInclude;
@@ -472,10 +473,21 @@ export class ProductionBatchService {
       return Object.values(grouped);
     }
 
-    const groupedMaterials = groupByMaterialVariantId(
+    const groupedMaterials: any = groupByMaterialVariantId(
       actualExportMateiralQuantity,
     );
-    console.log(groupedMaterials);
+
+    data.productionBatchMaterialVariant.forEach((materialVariant) => {
+      const foundMaterial = groupedMaterials.find(
+        (groupedMaterial) =>
+          groupedMaterial.materialVariantId ===
+          materialVariant.materialVariantId,
+      );
+      if (foundMaterial) {
+        materialVariant.actualExportQuantity = foundMaterial.quantity;
+      }
+    });
+
     if (!data) {
       throw new NotFoundException('Production batch not found');
     }
