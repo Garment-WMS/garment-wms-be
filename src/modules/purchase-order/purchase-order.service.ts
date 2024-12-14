@@ -585,6 +585,11 @@ export class PurchaseOrderService {
         poDelivery: {
           include: {
             importRequest: {
+              where: {
+                status: {
+                  notIn: ['CANCELLED', 'REJECTED'],
+                },
+              },
               include: {
                 inspectionRequest: {
                   include: {
