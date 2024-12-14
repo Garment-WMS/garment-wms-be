@@ -477,7 +477,7 @@ export class NotificationService {
           data: {
             title: `New Material Export Request ${materialExportRequest.code}`,
             message: `New Material Export Request ${materialExportRequest.code} has been created by Production department and waiting for approval`,
-            path: `/material-export-request/${materialExportRequest.id}`,
+            path: `/export-request/${materialExportRequest.id}`,
             accountId: warehouseManager.accountId,
           },
         });
