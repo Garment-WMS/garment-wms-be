@@ -305,7 +305,7 @@ export class InventoryReportPlanService {
 
     if (isInventoryPlanValid.length > 0) {
       return apiFailed(
-        400,
+        409,
         'Inventory report plan in time range already exists',
         isInventoryPlanValid,
       );
@@ -710,7 +710,7 @@ export class InventoryReportPlanService {
 
     if (isInventoryPlanValid.length > 0) {
       return apiFailed(
-        400,
+        409,
         'Inventory report plan in time range already exists',
         isInventoryPlanValid,
       );
