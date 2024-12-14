@@ -1,4 +1,5 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { MaterialReceiptStatus, Prisma, PrismaClient } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import {
@@ -94,6 +95,97 @@ export class MaterialReceiptService {
     });
 
     return materialReceipts;
+  }
+
+  async getAllMaterialReceiptOfMaterialVariantSimplified(
+    materialVariantId: string,
+    prismaInstance: PrismaService = this.prismaService,
+  ) {
+    const materialVariant = await this.prismaService.materialVariant.count({
+      where: {
+        id: materialVariantId,
+      },
+    });
+    if (materialVariant === 0) {
+      throw new NotFoundException('Material Variant not found');
+    }
+    const materialReceipts = await prismaInstance.materialReceipt.findMany({
+      where: {
+        materialPackage: {
+          materialVariantId: materialVariantId,
+        },
+        status: {
+          in: [MaterialReceiptStatus.AVAILABLE],
+        },
+        remainQuantityByPack: {
+          gt: 0,
+        },
+      },
+      include: {
+        materialPackage: {
+          include: {
+            materialVariant: {
+              include: {
+                material: {
+                  include: {
+                    materialUom: true,
+                  },
+                },
+              },
+            },
+          },
+          // include: materialPackageInclude,
+        },
+      },
+    });
+
+    const simplifiedResult = materialReceipts.map((materialReceipt) => {
+      return {
+        id: materialReceipt.id,
+        code: materialReceipt.code,
+        expireDate: materialReceipt.expireDate,
+        importDate: materialReceipt.importDate,
+        remainQuantityByPack: materialReceipt.remainQuantityByPack,
+        remainQuantityByUom:
+          materialReceipt.remainQuantityByPack *
+          materialReceipt.materialPackage.uomPerPack,
+        materialPackage: {
+          id: materialReceipt.materialPackage.id,
+          // code: materialReceipt.materialPackage.code,
+          name: materialReceipt.materialPackage.name,
+          uomPerPack: materialReceipt.materialPackage.uomPerPack,
+          materialVariant: {
+            id: materialReceipt.materialPackage.materialVariant.id,
+            // code: materialReceipt.materialPackage.materialVariant.code,
+            name: materialReceipt.materialPackage.materialVariant.name,
+            image: materialReceipt.materialPackage.materialVariant.image,
+            material: {
+              id: materialReceipt.materialPackage.materialVariant.material.id,
+              // code: materialReceipt.materialPackage.materialVariant.material
+              //   .code,
+              name: materialReceipt.materialPackage.materialVariant.material
+                .name,
+              materialUom: {
+                name: materialReceipt.materialPackage.materialVariant.material
+                  .materialUom.name,
+                uomCharacter:
+                  materialReceipt.materialPackage.materialVariant.material
+                    .materialUom.uomCharacter,
+                uomDataType:
+                  materialReceipt.materialPackage.materialVariant.material
+                    .materialUom.uomDataType,
+              },
+            },
+          },
+        },
+      };
+    });
+
+    return apiSuccess(
+      HttpStatus.OK,
+      simplifiedResult,
+      'Get all material receipt of material variant successfully',
+    );
   }
 
   findAllMaterialVariant() {
@@ -205,6 +297,20 @@ export class MaterialReceiptService {
       HttpStatus.OK,
       materialReceipts,
       'Get all material receipt successfully',
+    );
+  }
+
+  async searchWithoutPage(
+    findOptions: GeneratedFindOptions<Prisma.MaterialReceiptWhereInput>,
+  ) {
+    const materialReceipts = await this.prismaService.materialReceipt.findMany({
+      ...findOptions,
+      include: materialReceiptIncludeWithoutImportReceipt,
+    });
+    return apiSuccess(
+      HttpStatus.OK,
+      materialReceipts,
+      'Search all material receipt successfully',
     );
   }
 

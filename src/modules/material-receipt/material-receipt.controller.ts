@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -12,7 +13,6 @@ import {
 import { Prisma } from '@prisma/client';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CreateMaterialReceiptDto } from './dto/create-material-receipt.dto';
-import { UpdateMaterialReceiptDto } from './dto/update-material-receipt.dto';
 import { MaterialReceiptService } from './material-receipt.service';
 
 @Controller('material-receipt')
@@ -33,10 +33,23 @@ export class MaterialReceiptController {
 
   @Get()
   findAllMaterialVariant(
-    @Query(new AllFilterPipeUnsafe<any, Prisma.MaterialWhereInput>([]))
-    filterDto: FilterDto<Prisma.MaterialWhereInput>,
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialReceiptWhereInput>([
+        'materialPackage.materialVariantId',
+      ]),
+    )
+    filterDto: FilterDto<Prisma.MaterialReceiptWhereInput>,
   ) {
     return this.materialReceiptService.findAll();
+  }
+
+  @Get('/by-material-variant')
+  findByMaterialVariant(
+    @Query('materialVariantId', ParseUUIDPipe) materialVariantId: string,
+  ) {
+    return this.materialReceiptService.getAllMaterialReceiptOfMaterialVariantSimplified(
+      materialVariantId,
+    );
   }
 
   @Get('/by-code')
