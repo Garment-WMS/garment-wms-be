@@ -605,7 +605,7 @@ export class MaterialExportRequestService {
             materialPackage: true,
           },
         });
-      const availableQuantity = materialReceipts.reduce(
+      const remainQuantityByPack = materialReceipts.reduce(
         (sum, receipt) => sum + receipt.remainQuantityByPack,
         0,
       );
@@ -613,17 +613,59 @@ export class MaterialExportRequestService {
         materialVariantId: exportRequestDetail.materialVariantId,
         // materialReceipts,
         requiredQuantity: exportRequestDetail.quantityByUom,
-        availableQuantity,
+        remainQuantityByPack: remainQuantityByPack,
         fullFilledPercentage:
-          (availableQuantity / exportRequestDetail.quantityByUom) * 100,
-        isFullFilled: availableQuantity >= exportRequestDetail.quantityByUom,
+          (remainQuantityByPack / exportRequestDetail.quantityByUom) * 100,
+        isFullFilled: remainQuantityByPack >= exportRequestDetail.quantityByUom,
       });
     }
 
     return {
-      result,
       isFullFilled: result.every((item) => item.isFullFilled),
       missingMaterials: result.filter((item) => !item.isFullFilled),
+    };
+  }
+
+  async checkQuantityEnoughForVariant(
+    materialVariantId: string,
+    quantityByUom: number,
+  ) {
+    const materialVariant = await this.prismaService.materialVariant.findUnique(
+      {
+        where: {
+          id: materialVariantId,
+        },
+      },
+    );
+    if (!materialVariant) {
+      throw new NotFoundException('Material variant not found');
+    }
+    const materialReceipts = await this.prismaService.materialReceipt.findMany({
+      where: {
+        materialPackage: {
+          materialVariantId: materialVariantId,
+        },
+        status: {
+          in: [$Enums.MaterialReceiptStatus.AVAILABLE],
+        },
+        remainQuantityByPack: {
+          gt: 0,
+        },
+      },
+      include: {
+        materialPackage: true,
+      },
+    });
+    const remainQuantityByPack = materialReceipts.reduce(
+      (sum, receipt) => sum + receipt.remainQuantityByPack,
+      0,
+    );
+    return {
+      materialVariantId: materialVariantId,
+      requiredQuantity: quantityByUom,
+      remainQuantityByPack: remainQuantityByPack,
+      fullFilledPercentage: (remainQuantityByPack / quantityByUom) * 100,
+      isFullFilled: remainQuantityByPack >= quantityByUom,
     };
   }
 }

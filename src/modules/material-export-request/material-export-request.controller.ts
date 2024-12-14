@@ -21,6 +21,7 @@ import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { RolesGuard } from 'src/common/guard/roles.guard';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
+import { CheckQuantityVariantDto } from './dto/check-quantity-variant.dto';
 import { CreateMaterialExportRequestDto } from './dto/create-material-export-request.dto';
 import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-request.dto';
 import { ProductionStaffDepartmentProcessDto } from './dto/production-department-approve.dto';
@@ -183,6 +184,20 @@ export class MaterialExportRequestController {
       HttpStatus.OK,
       await this.materialExportRequestService.checkQuantityEnoughForExportRequest(
         id,
+      ),
+      'Check quantity successfully',
+    );
+  }
+
+  @Post('check-quantity-variant')
+  async checkQuantityVariant(
+    @Body() checkQuantityVariantDto: CheckQuantityVariantDto,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportRequestService.checkQuantityEnoughForVariant(
+        checkQuantityVariantDto.materialVariantId,
+        checkQuantityVariantDto.quantityByUom,
       ),
       'Check quantity successfully',
     );
