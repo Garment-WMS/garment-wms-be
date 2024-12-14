@@ -49,6 +49,5 @@ export class CreateProductionBatchDto
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  productionBatchMaterials?: CreateProductionBatchMaterialVariantDto[]
-
+  productionBatchMaterials: CreateProductionBatchMaterialVariantDto[];
 }

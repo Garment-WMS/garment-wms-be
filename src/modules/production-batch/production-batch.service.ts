@@ -3,6 +3,7 @@ import {
   BadRequestException,
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -47,11 +48,14 @@ export type totalProductSizeProduced = {
 
 @Injectable()
 export class ProductionBatchService {
-  async findChart(chartDto: ChartDto) {
-
-
-
-    const { year } = chartDto;
+  constructor(
+    readonly prismaService: PrismaService,
+    private readonly excelService: ExcelService,
+    private readonly productPlanDetailService: ProductPlanDetailService,
+    private readonly productionBatchMaterialVariantService: ProductionBatchMaterialVariantService,
+  ) {}
+  async findChart(chartDto: string) {
+    // const { year } = chartDto;
     const monthlyData = [];
     let qualityRate = 0;
     let totalDefectProduct = 0;
@@ -60,21 +64,21 @@ export class ProductionBatchService {
     for (let month = 0; month < 12; month++) {
       let numberOfProducedProduct = 0;
       let numberOfDefectProduct = 0;
-      const from = new Date(year, month, 1);
-      const to = new Date(year, month + 1, 0, 23, 59, 59, 999);
+      // const from = new Date(year, month, 1);
+      // const to = new Date(year, month + 1, 0, 23, 59, 59, 999);
       const productionBatch = await this.prismaService.productionBatch.findMany(
         {
           where: {
             AND: {
               productionPlanDetail: {
-                productionPlanId: chartDto.productPlanId
-                  ? chartDto.productPlanId
+                productionPlanId: chartDto
+                  ? chartDto
                   : null,
               },
-              createdAt: {
-                gte: from,
-                lte: to,
-              },
+              // createdAt: {
+              //   gte: from,
+              //   lte: to,
+              // },
               status: {
                 in: [ProductionBatchStatus.FINISHED],
               },
@@ -186,12 +190,7 @@ export class ProductionBatchService {
       'Chart data fetched successfully',
     );
   }
-  constructor(
-    readonly prismaService: PrismaService,
-    private readonly excelService: ExcelService,
-    private readonly productPlanDetailService: ProductPlanDetailService,
-    private readonly productionBatchMaterialVariantService: ProductionBatchMaterialVariantService,
-  ) {}
+
   async cancelProductionBatch(
     id: string,
     user: AuthenUser,
@@ -328,18 +327,16 @@ export class ProductionBatchService {
     if (excelData instanceof ApiResponse) {
       return excelData;
     }
-    const createProductBatchData = excelData as CreateProductionBatchDto[];
-    const createProductionBatchInput: Prisma.ProductionBatchCreateManyInput[] =
-      createProductBatchData.map((item) => {
-        return {
-          ...item,
-        };
-      });
+    Logger.log(excelData);
+    console.log(excelData);
+    // throw new BadRequestException('Method not implemented.');
+    const createProductBatchData = excelData as CreateProductionBatchDto;
+    const createProductionBatchInput: any = createProductBatchData;
 
     const isExceedQuantityPlanDetail =
       await this.productPlanDetailService.IsExceedQuantityPlanDetail(
-        createProductionBatchInput[0].productionPlanDetailId,
-        createProductionBatchInput[0].quantityToProduce,
+        createProductionBatchInput.productionPlanDetailId,
+        createProductionBatchInput.quantityToProduce,
       );
     if (isExceedQuantityPlanDetail) {
       return apiFailed(
@@ -352,13 +349,13 @@ export class ProductionBatchService {
         const productionBatchInput: Prisma.ProductionBatchCreateInput = {
           productionPlanDetail: {
             connect: {
-              id: createProductionBatchInput[0].productionPlanDetailId,
+              id: createProductionBatchInput.productionPlanDetailId,
             },
           },
           code: undefined,
-          name: createProductionBatchInput[0].name,
-          description: createProductionBatchInput[0].description,
-          quantityToProduce: createProductionBatchInput[0].quantityToProduce,
+          name: createProductionBatchInput.name,
+          description: createProductionBatchInput.description,
+          quantityToProduce: createProductionBatchInput.quantityToProduce,
           status: ProductionBatchStatus.PENDING,
         };
         // throw new Error('Method not implemented.');
@@ -372,7 +369,7 @@ export class ProductionBatchService {
         if (productionBatchResult) {
           await this.productionBatchMaterialVariantService.createMany(
             productionBatchResult.id,
-            createProductBatchData[0].productionBatchMaterials,
+            createProductBatchData.productionBatchMaterials,
             prismaInstance,
           );
         }
@@ -423,7 +420,7 @@ export class ProductionBatchService {
     if (!isUUID(id)) {
       throw new BadRequestException('Invalid UUID');
     }
-    const data = (await this.prismaService.productionBatch.findFirst({
+    const data: any = (await this.prismaService.productionBatch.findFirst({
       where: { id },
       include: productionBatchInclude,
     })) as ProductionBatchWithInclude;
@@ -447,6 +444,50 @@ export class ProductionBatchService {
         });
       }
     });
+    let actualExportMateiralQuantity = [];
+    data?.materialExportRequest?.forEach((request: any) => {
+      if (request?.materialExportReceipt) {
+        request.materialExportReceipt.materialExportReceiptDetail.forEach(
+          (detail: any) => {
+            actualExportMateiralQuantity.push({
+              materialVariantId:
+                detail.materialReceipt.materialPackage.materialVariantId,
+              quantity:
+                detail.quantityByPack *
+                detail.materialReceipt.materialPackage.uomPerPack,
+            });
+          },
+        );
+      }
+    });
+    function groupByMaterialVariantId(materials) {
+      const grouped = materials.reduce((acc, material) => {
+        if (!acc[material.materialVariantId]) {
+          acc[material.materialVariantId] = { ...material };
+        } else {
+          acc[material.materialVariantId].quantity += material.quantity;
+        }
+        return acc;
+      }, {});
+
+      return Object.values(grouped);
+    }
+
+    const groupedMaterials: any = groupByMaterialVariantId(
+      actualExportMateiralQuantity,
+    );
+
+    data.productionBatchMaterialVariant.forEach((materialVariant) => {
+      const foundMaterial = groupedMaterials.find(
+        (groupedMaterial) =>
+          groupedMaterial.materialVariantId ===
+          materialVariant.materialVariantId,
+      );
+      if (foundMaterial) {
+        materialVariant.actualExportQuantity = foundMaterial.quantity;
+      }
+    });
+
     if (!data) {
       throw new NotFoundException('Production batch not found');
     }

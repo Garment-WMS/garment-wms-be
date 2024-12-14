@@ -328,6 +328,11 @@ export class ImportReceiptService {
               $Enums.ImportRequestStatus.REJECTED,
               prismaInstance,
             );
+            await this.poDeliveryService.updatePoDeliveryMaterialStatus(
+              importRequest.poDeliveryId,
+              PoDeliveryStatus.CANCELLED,
+              prismaInstance,
+            );
           } else {
             await this.importRequestService.updateImportRequestStatus(
               inspectionReport.inspectionRequest.importRequestId,
@@ -486,7 +491,6 @@ export class ImportReceiptService {
       },
     );
 
-    console.log('result', result);
     if (!result) {
       const chat: CreateChatDto = {
         discussionId: importRequest?.discussion.id,
@@ -495,19 +499,6 @@ export class ImportReceiptService {
       await this.chatService.createBySystemWithoutResponse(chat);
     }
 
-    // if(poDeliveryExtraEl.length > 0) {
-    //   poDeliveryExtra = await this.poDeliveryService.findExtraPoDelivery(
-    //     importRequest.poDelivery.purchaseOrderId,
-    //   );
-    //   if (!poDeliveryExtra) {
-    //     poDeliveryExtra = await this.poDeliveryService.createPoDelivery({
-    //       purchaseOrderId: importRequest.poDelivery.purchaseOrderId,
-    //       isExtra: true,
-    //       status: PoDeliveryStatus.PENDING,
-    //     });
-    //   }
-    //   await this.poDeliveryDetailsService.createPoDeliveryMaterial(poDeliveryExtraEl, poDeliveryExtra.id);
-    // }
     const chat: CreateChatDto = {
       discussionId: importRequest?.discussion.id,
       message: Constant.IMPORT_RECEIPT_INSPECTED_TO_AWAIT_TO_IMPORT,
@@ -521,10 +512,6 @@ export class ImportReceiptService {
         createImportReceiptDto.importRequestId,
       );
     }
-    // } catch (e) {
-    //   Logger.error(e);
-    //   throw new ConflictException('Can not create Task automatically');
-    // }
     return apiSuccess(
       HttpStatus.CREATED,
       result,

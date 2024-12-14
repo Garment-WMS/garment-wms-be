@@ -34,6 +34,43 @@ interface InventoryReportPlanPayload
 
 @Injectable()
 export class InventoryReportPlanService {
+  async cancelInventoryReportPlan(id: string, warehouseManagerId: string) {
+    const inventoryReportPlan = await this.findById(id);
+    if (!inventoryReportPlan) {
+      throw new BadRequestException('Inventory report plan not found');
+    }
+    if (inventoryReportPlan.warehouseManagerId !== warehouseManagerId) {
+      return apiFailed(
+        HttpStatus.FORBIDDEN,
+        'You are not allowed to cancel this inventory report plan',
+      );
+    }
+
+    if (inventoryReportPlan.status === InventoryReportPlanStatus.FINISHED) {
+      throw new BadRequestException(
+        'Inventory report plan is already finished',
+      );
+    }
+    if (inventoryReportPlan.status === InventoryReportPlanStatus.CANCELLED) {
+      throw new BadRequestException(
+        'Inventory report plan is already cancelled',
+      );
+    }
+    if (inventoryReportPlan.status === InventoryReportPlanStatus.IN_PROGRESS) {
+      throw new BadRequestException('Inventory report plan is in progress');
+    }
+    const result = this.updateStatus(id, InventoryReportPlanStatus.CANCELLED);
+    if (result) {
+      await this.taskService.updateTaskStatusToCancelled({
+        inventoryReportPlanId: id,
+      });
+    }
+    return apiSuccess(
+      HttpStatus.NO_CONTENT,
+      {},
+      'Inventory report plan cancelled successfully',
+    );
+  }
   constructor(
     private readonly prismaService: PrismaService,
     private readonly inventoryReportPlanDetailService: InventoryReportPlanDetailService,
@@ -49,7 +86,7 @@ export class InventoryReportPlanService {
 
   @OnEvent('start-await-inventory-report-plan')
   async handleStartAwaitInventoryReportPlan() {
-    console.log('Start await inventory report plan');
+    // console.log('Start await inventory report plan');
     await this.startAwaitInventoryReportPlan();
   }
 
@@ -158,6 +195,11 @@ export class InventoryReportPlanService {
         'Inventory report plan is already in progress',
       );
     }
+    if (inventoryReportPlan.status === InventoryReportPlanStatus.CANCELLED) {
+      throw new BadRequestException(
+        'Inventory report plan is already cancelled',
+      );
+    }
 
     const warehouseStaffs =
       await this.prismaService.inventoryReportPlan.findMany({
@@ -263,7 +305,7 @@ export class InventoryReportPlanService {
 
     if (isInventoryPlanValid.length > 0) {
       return apiFailed(
-        400,
+        409,
         'Inventory report plan in time range already exists',
         isInventoryPlanValid,
       );
@@ -668,7 +710,7 @@ export class InventoryReportPlanService {
 
     if (isInventoryPlanValid.length > 0) {
       return apiFailed(
-        400,
+        409,
         'Inventory report plan in time range already exists',
         isInventoryPlanValid,
       );
