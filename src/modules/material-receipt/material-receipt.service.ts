@@ -3,7 +3,6 @@ import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { MaterialReceiptStatus, Prisma, PrismaClient } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import {
-  materialPackageInclude,
   materialReceiptIncludeWithoutImportReceipt,
   materialReceiptIncludeWithoutImportReceipt2,
 } from 'prisma/prisma-include';
@@ -306,7 +305,17 @@ export class MaterialReceiptService {
     const materialReceipts = await this.prismaService.materialReceipt.findMany({
       include: {
         materialPackage: {
-          include: materialPackageInclude,
+          include: {
+            materialVariant: {
+              include: {
+                material: {
+                  include: {
+                    materialUom: true,
+                  },
+                },
+              },
+            },
+          },
         },
       },
     });
