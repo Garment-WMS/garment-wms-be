@@ -205,15 +205,16 @@ export class NotificationService {
   }
 
   @OnEvent('notification.importRequest.updated')
-  async handleNotificationImportRequestUpdatedEvent({
-    changeField,
-    importRequestId,
-  }: {
+  async handleNotificationImportRequestUpdatedEvent(payload: {
     changeField: ChangeFieldDto;
     importRequestId: string;
   }) {
+    const { changeField, importRequestId } = payload;
+    console.log('changeField', changeField);
+    console.log('importRequestId', importRequestId);
     const importRequest = await this.findUniqueForNotification(importRequestId);
-
+    console.log('importRequest', importRequest);
+    console.log('changeField', changeField);
     if (changeField?.status.after === ImportRequestStatus.INSPECTED) {
       const notification =
         await this.prismaService.notification.createManyAndReturn({
@@ -314,6 +315,22 @@ export class NotificationService {
             {
               title: title,
               message: message,
+              path: `/import-request/${importRequest.id}`,
+              type: 'IMPORT_REQUEST',
+              accountId: importRequest.purchasingStaff.accountId,
+            },
+          ],
+        });
+      notification.map((notification) => {
+        this.notificationGateway.create(notification);
+      });
+    } else if (changeField?.status.after === ImportRequestStatus.APPROVED) {
+      const notification =
+        await this.prismaService.notification.createManyAndReturn({
+          data: [
+            {
+              title: `Import Request ${importRequest.code} has been approved`,
+              message: `Import Request ${importRequest.code} has been approved`,
               path: `/import-request/${importRequest.id}`,
               type: 'IMPORT_REQUEST',
               accountId: importRequest.purchasingStaff.accountId,
