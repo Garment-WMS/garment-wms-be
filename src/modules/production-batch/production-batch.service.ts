@@ -54,7 +54,7 @@ export class ProductionBatchService {
     private readonly productPlanDetailService: ProductPlanDetailService,
     private readonly productionBatchMaterialVariantService: ProductionBatchMaterialVariantService,
   ) {}
-  async findChart(chartDto: ChartDto) {
+  async findChart(chartDto: string) {
     // const { year } = chartDto;
     const monthlyData = [];
     let qualityRate = 0;
@@ -71,8 +71,8 @@ export class ProductionBatchService {
           where: {
             AND: {
               productionPlanDetail: {
-                productionPlanId: chartDto.productPlanId
-                  ? chartDto.productPlanId
+                productionPlanId: chartDto
+                  ? chartDto
                   : null,
               },
               // createdAt: {
