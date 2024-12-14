@@ -1,4 +1,4 @@
-export const formatDate = (dateString: string | undefined) => {
+export const formatDate = (dateString: string | Date | undefined) => {
   if (!dateString) return '';
   const date = new Date(dateString);
   return new Intl.DateTimeFormat('en-US', {

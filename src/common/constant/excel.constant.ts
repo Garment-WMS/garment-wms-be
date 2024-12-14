@@ -78,7 +78,7 @@ export const PRODUCTION_PLAN_DETAIL_HEADER = [
   'Note',
 ];
 export const PRODUCTION_BATCH_DETAIL_HEADER = [
-  'Production Plan Detail Code',
+  'Product Size code',
   'Name',
   'Quantity To Produce',
   'Description',

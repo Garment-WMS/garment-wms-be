@@ -3,6 +3,7 @@ import {
   BadRequestException,
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -48,9 +49,6 @@ export type totalProductSizeProduced = {
 @Injectable()
 export class ProductionBatchService {
   async findChart(chartDto: ChartDto) {
-
-
-
     const { year } = chartDto;
     const monthlyData = [];
     let qualityRate = 0;
@@ -328,18 +326,16 @@ export class ProductionBatchService {
     if (excelData instanceof ApiResponse) {
       return excelData;
     }
-    const createProductBatchData = excelData as CreateProductionBatchDto[];
-    const createProductionBatchInput: Prisma.ProductionBatchCreateManyInput[] =
-      createProductBatchData.map((item) => {
-        return {
-          ...item,
-        };
-      });
+    Logger.log(excelData);
+    console.log(excelData);
+    // throw new BadRequestException('Method not implemented.');
+    const createProductBatchData = excelData as CreateProductionBatchDto;
+    const createProductionBatchInput: any = createProductBatchData;
 
     const isExceedQuantityPlanDetail =
       await this.productPlanDetailService.IsExceedQuantityPlanDetail(
-        createProductionBatchInput[0].productionPlanDetailId,
-        createProductionBatchInput[0].quantityToProduce,
+        createProductionBatchInput.productionPlanDetailId,
+        createProductionBatchInput.quantityToProduce,
       );
     if (isExceedQuantityPlanDetail) {
       return apiFailed(
@@ -352,13 +348,13 @@ export class ProductionBatchService {
         const productionBatchInput: Prisma.ProductionBatchCreateInput = {
           productionPlanDetail: {
             connect: {
-              id: createProductionBatchInput[0].productionPlanDetailId,
+              id: createProductionBatchInput.productionPlanDetailId,
             },
           },
           code: undefined,
-          name: createProductionBatchInput[0].name,
-          description: createProductionBatchInput[0].description,
-          quantityToProduce: createProductionBatchInput[0].quantityToProduce,
+          name: createProductionBatchInput.name,
+          description: createProductionBatchInput.description,
+          quantityToProduce: createProductionBatchInput.quantityToProduce,
           status: ProductionBatchStatus.PENDING,
         };
         // throw new Error('Method not implemented.');
@@ -372,7 +368,7 @@ export class ProductionBatchService {
         if (productionBatchResult) {
           await this.productionBatchMaterialVariantService.createMany(
             productionBatchResult.id,
-            createProductBatchData[0].productionBatchMaterials,
+            createProductBatchData.productionBatchMaterials,
             prismaInstance,
           );
         }

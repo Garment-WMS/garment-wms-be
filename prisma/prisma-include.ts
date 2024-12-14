@@ -311,7 +311,23 @@ export const productionBatchInclude: Prisma.ProductionBatchInclude = {
   importRequest: {
     include: importRequestInclude,
   },
-  materialExportRequest: true,
+  materialExportRequest: {
+    include: {
+      materialExportReceipt: {
+        include: {
+          materialExportReceiptDetail: {
+            include: {
+              materialReceipt: {
+                include: {
+                  materialPackage: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   productionBatchMaterialVariant: {
     include: {
       materialVariant: {

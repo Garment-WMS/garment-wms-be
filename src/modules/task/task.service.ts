@@ -270,6 +270,23 @@ export class TaskService {
     });
   }
 
+  async updateTaskStatusToCancelled(taskWhereInput: Prisma.TaskWhereInput) {
+    const taskToUpdate = await this.prismaService.task.findFirst({
+      where: taskWhereInput,
+      select: { id: true },
+    });
+    if (!taskToUpdate) {
+      Logger.error(
+        `Cannot auto finish Task with ${JSON.stringify(taskWhereInput)} because of not found`,
+      );
+      return null;
+    }
+    return await this.prismaService.task.update({
+      where: { id: taskToUpdate.id },
+      data: { status: $Enums.TaskStatus.CANCELLED, finishedAt: new Date() },
+    });
+  }
+
   //only task with status OPEN can be reassigned
   async validateTaskStatusCanReassign(taskWhereInput: Prisma.TaskWhereInput) {
     const tasks = await this.prismaService.task.findMany({
