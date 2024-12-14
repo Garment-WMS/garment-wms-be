@@ -50,7 +50,7 @@ export class ProductionBatchController {
   }
 
   @Get('chart')
-  findChart(@Body() chartDto: ChartDto) {
+  findChart(@Body() chartDto: any) {
     return this.productionBatchService.findChart(chartDto);
   }
 

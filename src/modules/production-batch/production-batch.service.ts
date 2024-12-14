@@ -49,7 +49,7 @@ export type totalProductSizeProduced = {
 @Injectable()
 export class ProductionBatchService {
   async findChart(chartDto: ChartDto) {
-    const { year } = chartDto;
+    // const { year } = chartDto;
     const monthlyData = [];
     let qualityRate = 0;
     let totalDefectProduct = 0;
@@ -58,8 +58,8 @@ export class ProductionBatchService {
     for (let month = 0; month < 12; month++) {
       let numberOfProducedProduct = 0;
       let numberOfDefectProduct = 0;
-      const from = new Date(year, month, 1);
-      const to = new Date(year, month + 1, 0, 23, 59, 59, 999);
+      // const from = new Date(year, month, 1);
+      // const to = new Date(year, month + 1, 0, 23, 59, 59, 999);
       const productionBatch = await this.prismaService.productionBatch.findMany(
         {
           where: {
@@ -69,10 +69,10 @@ export class ProductionBatchService {
                   ? chartDto.productPlanId
                   : null,
               },
-              createdAt: {
-                gte: from,
-                lte: to,
-              },
+              // createdAt: {
+              //   gte: from,
+              //   lte: to,
+              // },
               status: {
                 in: [ProductionBatchStatus.FINISHED],
               },
@@ -443,6 +443,39 @@ export class ProductionBatchService {
         });
       }
     });
+    let actualExportMateiralQuantity = [];
+    data?.materialExportRequest?.forEach((request: any) => {
+      if (request?.materialExportReceipt) {
+        request.materialExportReceipt.materialExportReceiptDetail.forEach(
+          (detail: any) => {
+            actualExportMateiralQuantity.push({
+              materialVariantId:
+                detail.materialReceipt.materialPackage.materialVariantId,
+              quantity:
+                detail.quantityByPack *
+                detail.materialReceipt.materialPackage.uomPerPack,
+            });
+          },
+        );
+      }
+    });
+    function groupByMaterialVariantId(materials) {
+      const grouped = materials.reduce((acc, material) => {
+        if (!acc[material.materialVariantId]) {
+          acc[material.materialVariantId] = { ...material };
+        } else {
+          acc[material.materialVariantId].quantity += material.quantity;
+        }
+        return acc;
+      }, {});
+
+      return Object.values(grouped);
+    }
+
+    const groupedMaterials = groupByMaterialVariantId(
+      actualExportMateiralQuantity,
+    );
+    console.log(groupedMaterials);
     if (!data) {
       throw new NotFoundException('Production batch not found');
     }
