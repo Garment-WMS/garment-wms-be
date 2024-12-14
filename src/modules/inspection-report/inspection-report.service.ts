@@ -373,7 +373,6 @@ export class InspectionReportService {
         `Inspection report detail: ${JSON.stringify(inspectionReportDetail)}`,
       );
     });
-    console.log('dto input', dto);
     const inspectionReportCreateInput: Prisma.InspectionReportUncheckedCreateInput =
       {
         code: dto.code,
@@ -404,10 +403,6 @@ export class InspectionReportService {
             importRequest.id,
             prismaInstance,
           );
-        console.log('inspectionReport', inspectionReport);
-        console.log('inspectionReportDetails', inspectionReportDetails);
-        // throw new BadRequestException('Test');
-
         return {
           inspectionReport,
           'inspectionRequest.status': inspectionRequestStatusUpdated.status,
