@@ -36,6 +36,7 @@ export class MaterialReceiptController {
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.MaterialReceiptWhereInput>([
         'materialPackage.materialVariantId',
+        'importReceipt.inspectionReport.inspectionRequest.importRequest.poDelivery.purchaseOrder.code',
       ]),
     )
     filterDto: FilterDto<Prisma.MaterialReceiptWhereInput>,

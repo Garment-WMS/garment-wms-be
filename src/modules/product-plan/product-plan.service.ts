@@ -327,7 +327,7 @@ export class ProductPlanService {
     }
     const result = await this.prismaService.productionPlan.update({
       where: { id },
-      data: { status },
+      data: { status, startDate: new Date() },
     });
 
     return apiSuccess(
