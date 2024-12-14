@@ -3,10 +3,13 @@ import {
   Controller,
   Delete,
   Get,
+  HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
 } from '@nestjs/common';
+import { apiSuccess } from 'src/common/dto/api-response';
 import { CreateMaterialExportRequestDetailDto } from './dto/create-material-export-request-detail.dto';
 import { UpdateMaterialExportRequestDetailDto } from './dto/update-material-export-request-detail.dto';
 import { MaterialExportRequestDetailService } from './material-export-request-detail.service';
@@ -16,6 +19,17 @@ export class MaterialExportRequestDetailController {
   constructor(
     private readonly materialExportRequestDetailService: MaterialExportRequestDetailService,
   ) {}
+
+  @Get('check-quantity/:id')
+  async checkQuantity(@Param('id', ParseUUIDPipe) id: string) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportRequestDetailService.checkQuantityEnoughForExportRequestDetail(
+        id,
+      ),
+      'Check quantity successfully',
+    );
+  }
 
   @Post()
   create(

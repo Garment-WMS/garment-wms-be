@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'prisma/prisma.service';
 import { CreateMaterialExportReceiptDetailDto } from './dto/create-material-export-receipt-detail.dto';
 import { UpdateMaterialExportReceiptDetailDto } from './dto/update-material-export-receipt-detail.dto';
 
 @Injectable()
 export class MaterialExportReceiptDetailService {
-  create(createMaterialExportReceiptDetailDto: CreateMaterialExportReceiptDetailDto) {
+  constructor(private readonly prismaService: PrismaService) {}
+
+  create(
+    createMaterialExportReceiptDetailDto: CreateMaterialExportReceiptDetailDto,
+  ) {
     return 'This action adds a new materialExportReceiptDetail';
   }
 
@@ -16,7 +21,10 @@ export class MaterialExportReceiptDetailService {
     return `This action returns a #${id} materialExportReceiptDetail`;
   }
 
-  update(id: number, updateMaterialExportReceiptDetailDto: UpdateMaterialExportReceiptDetailDto) {
+  update(
+    id: number,
+    updateMaterialExportReceiptDetailDto: UpdateMaterialExportReceiptDetailDto,
+  ) {
     return `This action updates a #${id} materialExportReceiptDetail`;
   }
 

@@ -1,15 +1,30 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { MaterialExportReceiptDetailService } from './material-export-receipt-detail.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { CreateMaterialExportReceiptDetailDto } from './dto/create-material-export-receipt-detail.dto';
 import { UpdateMaterialExportReceiptDetailDto } from './dto/update-material-export-receipt-detail.dto';
+import { MaterialExportReceiptDetailService } from './material-export-receipt-detail.service';
 
 @Controller('material-export-receipt-detail')
 export class MaterialExportReceiptDetailController {
-  constructor(private readonly materialExportReceiptDetailService: MaterialExportReceiptDetailService) {}
+  constructor(
+    private readonly materialExportReceiptDetailService: MaterialExportReceiptDetailService,
+  ) {}
 
   @Post()
-  create(@Body() createMaterialExportReceiptDetailDto: CreateMaterialExportReceiptDetailDto) {
-    return this.materialExportReceiptDetailService.create(createMaterialExportReceiptDetailDto);
+  create(
+    @Body()
+    createMaterialExportReceiptDetailDto: CreateMaterialExportReceiptDetailDto,
+  ) {
+    return this.materialExportReceiptDetailService.create(
+      createMaterialExportReceiptDetailDto,
+    );
   }
 
   @Get()
@@ -23,8 +38,15 @@ export class MaterialExportReceiptDetailController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMaterialExportReceiptDetailDto: UpdateMaterialExportReceiptDetailDto) {
-    return this.materialExportReceiptDetailService.update(+id, updateMaterialExportReceiptDetailDto);
+  update(
+    @Param('id') id: string,
+    @Body()
+    updateMaterialExportReceiptDetailDto: UpdateMaterialExportReceiptDetailDto,
+  ) {
+    return this.materialExportReceiptDetailService.update(
+      +id,
+      updateMaterialExportReceiptDetailDto,
+    );
   }
 
   @Delete(':id')
