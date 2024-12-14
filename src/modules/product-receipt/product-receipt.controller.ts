@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -12,12 +13,29 @@ import {
 import { Prisma } from '@prisma/client';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CreateProductReceiptDto } from './dto/create-product-receipt.dto';
+import { ProductReceiptDisposeArrayDto } from './dto/product-receipt-dispose.dto';
 import { UpdateProductReceiptDto } from './dto/update-product-receipt.dto';
 import { ProductReceiptService } from './product-receipt.service';
 
 @Controller('product-receipt')
 export class ProductReceiptController {
   constructor(private readonly productReceiptService: ProductReceiptService) {}
+
+  @Post('/dispose')
+  async dispose(
+    @Body() ProductReceiptDisposeArrayDto: ProductReceiptDisposeArrayDto,
+  ) {
+    ProductReceiptDisposeArrayDto.productReceipts.forEach(
+      (productReceiptDisposeDto) => {
+        Logger.debug(
+          `Dispose product receipt ${productReceiptDisposeDto.productReceiptId} with quantity ${productReceiptDisposeDto.quantityByUom}`,
+        );
+      },
+    );
+    return this.productReceiptService.dispose(
+      ProductReceiptDisposeArrayDto.productReceipts,
+    );
+  }
 
   @Post()
   create(@Body() createProductReceiptDto: CreateProductReceiptDto) {

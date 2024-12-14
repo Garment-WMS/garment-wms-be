@@ -1,5 +1,10 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { Prisma, PrismaClient, ProductReceiptStatus } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isUUID } from 'class-validator';
@@ -14,6 +19,7 @@ import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { CreateProductReceiptDto } from './dto/create-product-receipt.dto';
+import { ProductReceiptDisposeDto } from './dto/product-receipt-dispose.dto';
 import { UpdateProductReceiptDto } from './dto/update-product-receipt.dto';
 
 @Injectable()
@@ -22,6 +28,97 @@ export class ProductReceiptService {
     private prismaService: PrismaService,
     private readonly inventoryStockService: InventoryStockService,
   ) {}
+
+  async dispose(productReceiptDisposeDtos: ProductReceiptDisposeDto[]) {
+    let result = [];
+    for (let productReceiptDisposeDto of productReceiptDisposeDtos) {
+      const prevProductReceipt =
+        await this.prismaService.productReceipt.findUnique({
+          where: {
+            id: productReceiptDisposeDto.productReceiptId,
+          },
+        });
+      if (!prevProductReceipt) {
+        throw new BadRequestException(
+          `Product Receipt id ${productReceiptDisposeDto.productReceiptId} not found`,
+        );
+      }
+      let disposedProductReceiptResult;
+
+      if (
+        productReceiptDisposeDto.quantityByUom >
+        prevProductReceipt.remainQuantityByUom
+      ) {
+        throw new BadRequestException(
+          `Quantity dispose not greater than remain quantity`,
+        );
+      } else if (
+        productReceiptDisposeDto.quantityByUom <
+        prevProductReceipt.remainQuantityByUom
+      ) {
+        Logger.debug(
+          'productReceiptDisposeDto.quantityByUom',
+          productReceiptDisposeDto.quantityByUom,
+        );
+        Logger.debug(
+          'prevProductReceipt.remainQuantityByUom',
+          prevProductReceipt.remainQuantityByUom,
+        );
+        const [disposedProductReceipt, productReceipt] =
+          await this.prismaService.$transaction([
+            this.prismaService.productReceipt.create({
+              data: {
+                expireDate: prevProductReceipt.expireDate,
+                importDate: prevProductReceipt.importDate,
+                importReceiptId: prevProductReceipt.importReceiptId,
+                productSizeId: prevProductReceipt.productSizeId,
+                quantityByUom: productReceiptDisposeDto.quantityByUom,
+                remainQuantityByUom: productReceiptDisposeDto.quantityByUom,
+                status: ProductReceiptStatus.DISPOSED,
+              },
+            }),
+            this.prismaService.productReceipt.update({
+              where: {
+                id: productReceiptDisposeDto.productReceiptId,
+              },
+              data: {
+                remainQuantityByUom:
+                  prevProductReceipt.remainQuantityByUom -
+                  productReceiptDisposeDto.quantityByUom,
+              },
+            }),
+          ]);
+        Logger.debug(disposedProductReceipt, productReceipt);
+        disposedProductReceiptResult = disposedProductReceipt;
+      } else {
+        const disposedProductReceipt =
+          await this.prismaService.productReceipt.update({
+            where: {
+              id: productReceiptDisposeDto.productReceiptId,
+              remainQuantityByUom:
+                prevProductReceipt.remainQuantityByUom -
+                productReceiptDisposeDto.quantityByUom,
+            },
+            data: {
+              status: ProductReceiptStatus.DISPOSED,
+            },
+          });
+        disposedProductReceiptResult = disposedProductReceipt;
+      }
+      result.push(disposedProductReceiptResult);
+      //update minus inventory stock
+      const inventoryStock =
+        await this.inventoryStockService.updateProductStock(
+          prevProductReceipt.productSizeId,
+          -productReceiptDisposeDto.quantityByUom,
+        );
+    }
+    return apiSuccess(
+      HttpStatus.OK,
+      result,
+      'Product Receipt disposed successfully',
+    );
+  }
 
   async findByCode(code: string) {
     const result = await this.prismaService.productReceipt.findFirst({
@@ -64,7 +161,7 @@ export class ProductReceiptService {
       this.prismaService,
     );
 
-    await this.inventoryStockService.updateProductStockQuantity(        
+    await this.inventoryStockService.updateProductStockQuantity(
       productReceipt.productSizeId,
       remainQuantityByUom,
       this.prismaService,
