@@ -75,7 +75,10 @@ export class ImportReceiptController {
   search(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.ImportReceiptWhereInput>(
-        ['inspectionReport.inspectionRequest.importRequestId'],
+        [
+          'inspectionReport.inspectionRequest.importRequestId',
+          'inspectionReport.inspectionRequest.importRequest.poDelivery.purchaseOrder.code',
+        ],
         [
           { createdAt: 'desc' },
           { id: 'asc' },
@@ -132,7 +135,10 @@ export class ImportReceiptController {
   ) {
     return apiSuccess(
       HttpStatus.OK,
-      await this.importReceiptService.updateImportReceiptStatusToImporting(id,user),
+      await this.importReceiptService.updateImportReceiptStatusToImporting(
+        id,
+        user,
+      ),
       'Start import receipt successfully',
     );
   }

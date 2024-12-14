@@ -28,7 +28,6 @@ import { ExcelService } from '../excel/excel.service';
 import { CreateImportRequestDetailDto } from '../import-request/dto/import-request-detail/create-import-request-detail.dto';
 import { ProductPlanDetailService } from '../product-plan-detail/product-plan-detail.service';
 import { ProductionBatchMaterialVariantService } from '../production-batch-material-variant/production-batch-material-variant.service';
-import { ChartDto } from '../purchase-order/dto/chart.dto';
 import { CancelProductBatchDto } from './dto/cancel-product-batch.dto';
 import { CreateProductionBatchDto } from './dto/create-production-batch.dto';
 import { UpdateProductionBatchDto } from './dto/update-production-batch.dto';
@@ -55,51 +54,54 @@ export class ProductionBatchService {
     private readonly productionBatchMaterialVariantService: ProductionBatchMaterialVariantService,
   ) {}
   async findChart(chartDto: string) {
+    const productionPlan = await this.prismaService.productionPlan.findFirst({
+      where: {
+        id: chartDto,
+      },
+    });
     // const { year } = chartDto;
     const monthlyData = [];
     let qualityRate = 0;
     let totalDefectProduct = 0;
     let totalProducedProduct = 0;
     let totalProductVariantProduced: totalProductSizeProduced[] = [];
-    for (let month = 0; month < 12; month++) {
-      let numberOfProducedProduct = 0;
-      let numberOfDefectProduct = 0;
-      // const from = new Date(year, month, 1);
-      // const to = new Date(year, month + 1, 0, 23, 59, 59, 999);
-      const productionBatch = await this.prismaService.productionBatch.findMany(
-        {
-          where: {
-            AND: {
-              productionPlanDetail: {
-                productionPlanId: chartDto
-                  ? chartDto
-                  : null,
-              },
-              // createdAt: {
-              //   gte: from,
-              //   lte: to,
-              // },
-              status: {
-                in: [ProductionBatchStatus.FINISHED],
-              },
-            },
+
+    // for (let month = 0; month < 12; month++) {
+    let numberOfProducedProduct = 0;
+    let numberOfDefectProduct = 0;
+    // const year = productionPlan.startDate.getFullYear();
+    // const endYear = productionPlan.expectedEndDate.getFullYear();
+    // const from = new Date(year, month, 1);
+    // const to = new Date(endYear, month + 1, 0, 23, 59, 59, 999);
+    const productionBatch = await this.prismaService.productionBatch.findMany({
+      where: {
+        AND: {
+          productionPlanDetail: {
+            productionPlanId: chartDto ? chartDto : null,
           },
+          // createdAt: {
+          //   gte: from,
+          //   lte: to,
+          // },
+          status: {
+            in: [ProductionBatchStatus.FINISHED],
+          },
+        },
+      },
+      include: {
+        importRequest: {
           include: {
-            importRequest: {
+            inspectionRequest: {
               include: {
-                inspectionRequest: {
+                inspectionReport: {
                   include: {
-                    inspectionReport: {
+                    importReceipt: {
                       include: {
-                        importReceipt: {
+                        productReceipt: {
                           include: {
-                            productReceipt: {
+                            productSize: {
                               include: {
-                                productSize: {
-                                  include: {
-                                    productVariant: true,
-                                  },
-                                },
+                                productVariant: true,
                               },
                             },
                           },
@@ -112,18 +114,30 @@ export class ProductionBatchService {
             },
           },
         },
-      );
-      productionBatch.forEach((batch) => {
-        batch.importRequest.forEach((request) => {
-          request.inspectionRequest.forEach((inspectionRequest) => {
-            if (inspectionRequest.inspectionReport) {
-              if (
-                inspectionRequest.inspectionReport?.importReceipt &&
-                inspectionRequest.inspectionReport.importReceipt.status ===
-                  'IMPORTED'
-              ) {
-                inspectionRequest.inspectionReport.importReceipt.productReceipt.forEach(
-                  (productReceipt) => {
+      },
+    });
+    productionBatch.forEach((batch) => {
+      batch.importRequest.forEach((request) => {
+        request.inspectionRequest.forEach((inspectionRequest) => {
+          if (inspectionRequest.inspectionReport) {
+            if (
+              inspectionRequest.inspectionReport?.importReceipt &&
+              inspectionRequest.inspectionReport.importReceipt.status ===
+                'IMPORTED'
+            ) {
+              inspectionRequest.inspectionReport.importReceipt.productReceipt.forEach(
+                (productReceipt) => {
+                  if (productReceipt.isDefect) {
+                    totalProductVariantProduced.push({
+                      productVariant: productReceipt.productSize.productVariant,
+                      producedQuantity: 0,
+                      defectQuantity: productReceipt.isDefect
+                        ? productReceipt.quantityByUom
+                        : 0,
+                    });
+                    numberOfDefectProduct += productReceipt.quantityByUom;
+                    totalDefectProduct += productReceipt.quantityByUom;
+                  } else {
                     totalProductVariantProduced.push({
                       productVariant: productReceipt.productSize.productVariant,
                       producedQuantity: productReceipt.quantityByUom,
@@ -131,29 +145,16 @@ export class ProductionBatchService {
                         ? productReceipt.quantityByUom
                         : 0,
                     });
-                    if (productReceipt.isDefect) {
-                      numberOfDefectProduct += productReceipt.quantityByUom;
-                      totalDefectProduct += productReceipt.quantityByUom;
-                    } else {
-                      totalProducedProduct += productReceipt.quantityByUom;
-                      numberOfProducedProduct += productReceipt.quantityByUom;
-                    }
-                  },
-                );
-              }
+                    totalProducedProduct += productReceipt.quantityByUom;
+                    numberOfProducedProduct += productReceipt.quantityByUom;
+                  }
+                },
+              );
             }
-          });
+          }
         });
       });
-
-      monthlyData.push({
-        month: month + 1,
-        data: {
-          numberOfProducedProduct,
-          numberOfBatch: productionBatch.length,
-        },
-      });
-    }
+    });
     let totalProductSizeProducedArray = totalProductVariantProduced.reduce(
       (acc, productVariantProduced) => {
         const productVariantId = productVariantProduced.productVariant.id;
@@ -181,7 +182,7 @@ export class ProductionBatchService {
     return apiSuccess(
       HttpStatus.OK,
       {
-        monthlyData,
+        // monthlyData,
         qualityRate,
         totalDefectProduct,
         totalProducedProduct,
