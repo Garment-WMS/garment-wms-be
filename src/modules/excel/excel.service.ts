@@ -2194,6 +2194,10 @@ export class ExcelService {
             listItemError,
           )
         ) {
+          console.log(
+            'itemCell.quantityToProduceCell.value',
+            itemCell.quantityToProduceCell.value,
+          );
           if (!isInt(itemCell.quantityToProduceCell.value) && !errorFlag) {
             const text = [
               { text: `${itemCell.quantityToProduceCell.value}` },
@@ -2308,6 +2312,8 @@ export class ExcelService {
       return errorResponse;
     }
 
+    console.log('Production Batch Error', productionBatchError);
+
     if (productionBatchError.size > 0) {
       productionBatchError.forEach((value, key) => {
         const cell = worksheet.getCell(key);
@@ -2348,9 +2354,11 @@ export class ExcelService {
       productionMaterialVaraintError,
       errorResponse,
     );
+    
+
     if (productionMaterialVaraintError.size > 0) {
       productionMaterialVaraintError.forEach((value, key) => {
-        const cell = worksheet.getCell(key);
+        const cell = materialRequirementSheet.getCell(key);
 
         // Set the cell value to the error message
         cell.value = { richText: [] };
@@ -2754,6 +2762,7 @@ export class ExcelService {
                 font: { color: { argb: 'FF0000' } },
               },
             ];
+
             this.addError(
               listItemError,
               itemCell.quantityToProduceCell.address,
@@ -2788,6 +2797,11 @@ export class ExcelService {
         }
 
         if (!isError) {
+          console.log(
+            'itemCell.quantityToProduceCell.value',
+            itemCell.quantityToProduceCell.value,
+          );
+
           itemListResult.code = productionPlanDetailCode;
           itemListResult.quantityToProduce = itemCell.quantityToProduceCell
             .value as number;

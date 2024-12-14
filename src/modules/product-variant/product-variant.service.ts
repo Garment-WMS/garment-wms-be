@@ -79,6 +79,66 @@ interface ProductVariantIncludeQuery
 
 @Injectable()
 export class ProductVariantService {
+  async findAllDisposed(
+    filterOption: GeneratedFindOptions<Prisma.ProductVariantScalarWhereInput>,
+  ) {
+    const { skip, take, ...rest } = filterOption;
+    const page = filterOption?.skip || Constant.DEFAULT_OFFSET;
+    const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.productVariant.findMany({
+        skip: page,
+        take: limit,
+        where: {
+          ...rest?.where,
+        },
+        orderBy: filterOption?.orderBy,
+        include: this.includeQueryAny,
+      }),
+      this.prismaService.productVariant.count({
+        where: {
+          ...rest?.where,
+        },
+      }),
+    ]);
+
+    let processedProduct = data.map((product: ProductStock) => {
+      // Initialize product properties
+      product.onHand = 0;
+      product.numberOfProductSize = product.productSize.length;
+
+      // Process each product size
+      product.productSize.forEach((productSize) => {
+        // Filter receipts with DISCARDED status and calculate onHand
+        productSize.productReceipt = productSize.productReceipt.filter(
+          (productReceipt) => {
+            if (productReceipt.status === ProductReceiptStatus.DISCARDED) {
+              product.onHand += productReceipt.remainQuantityByUom; // Accumulate onHand directly
+              return true; // Retain the receipt
+            }
+            return false; // Discard the receipt
+          },
+        );
+
+        // Add inventory stock quantity for each size to onHand
+        const variantTotal = productSize?.inventoryStock?.quantityByUom || 0;
+        product.onHand += variantTotal;
+      });
+
+      return product;
+    });
+
+    processedProduct = processedProduct.filter((product) => product.onHand > 0);
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: data,
+        pageMeta: getPageMeta(total, page, limit),
+      },
+      'List of Purchase Order',
+    );
+  }
   constructor(
     private prismaService: PrismaService,
     private readonly productSizeService: ProductSizeService,
@@ -202,6 +262,18 @@ export class ProductVariantService {
             updatedAt: receiptAdjustment.updatedAt,
           });
         });
+        if (productReceipt.status === ProductReceiptStatus.DISCARDED) {
+          result.history.push({
+            productReceiptId: productReceipt.id,
+            importReceiptId: productReceipt.importReceipt?.id,
+            quantityByPack: -productReceipt.quantityByUom,
+            code: productReceipt.importReceipt?.code,
+            isDefect: productReceipt.isDefect,
+            type: 'DISCARDED',
+            createdAt: productReceipt.createdAt,
+            updatedAt: productReceipt.updatedAt,
+          });
+        }
       });
     });
 

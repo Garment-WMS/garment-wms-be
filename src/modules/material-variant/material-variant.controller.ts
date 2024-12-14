@@ -54,6 +54,27 @@ export class MaterialVariantController {
     return this.materialVariantService.search(filterOptions.findOptions);
   }
 
+  @Get('disposed')
+  searchDisposed(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialVariantScalarWhereInput>(
+        ['material.name', 'material.code', 'material.materialUom.name'],
+        [
+          { createdAt: 'desc' },
+          { id: 'asc' },
+          { name: 'asc' },
+          { materialId: 'asc' },
+          { code: 'asc' },
+          { reorderLevel: 'asc' },
+          { updatedAt: 'asc' },
+        ],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.MaterialVariantScalarWhereInput>,
+  ) {
+    return this.materialVariantService.searchDisposed(filterOptions.findOptions);
+  }
+
   @Post()
   @UsePipes(new ValidationPipe({}))
   create(@Body('createMaterialDto') createMaterialDto: any) {

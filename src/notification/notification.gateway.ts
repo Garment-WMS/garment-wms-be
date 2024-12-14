@@ -31,7 +31,6 @@ export class NotificationGateway
 
   async handleConnection(client: Socket, ...args: any[]) {
     const jwtToken = client.handshake.headers['token'] as string;
-    console.log('jwt', jwtToken);
     if (!jwtToken) {
       client.disconnect();
       return;
@@ -39,8 +38,7 @@ export class NotificationGateway
 
     try {
       const user = await this.authService.validateJwt(jwtToken);
-      console.log('user', user);
-      console.log('user', user.userId);
+      console.log(this.userSockets);
       this.userSockets.set(user.userId, client.id);
       client.data.user = user; // Store user info on the socket
     } catch (errors) {
@@ -56,6 +54,7 @@ export class NotificationGateway
 
   @SubscribeMessage('newNotification')
   create(@MessageBody() notification: Notification) {
+    console.log(this.userSockets);
     const recipientSocketId = this.userSockets.get(notification.accountId);
     console.log('recipientSocketId', recipientSocketId);
     if (recipientSocketId) {
@@ -63,5 +62,4 @@ export class NotificationGateway
     }
     return notification;
   }
-
 }

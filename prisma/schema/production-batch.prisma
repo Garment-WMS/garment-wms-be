@@ -9,10 +9,10 @@ model ProductionBatch {
   cancelledBy                    String?                          @map("cancelled_by") @db.Uuid
   cancelledReason                String?                          @map("cancelled_reason") @db.VarChar
   status                         ProductionBatchStatus            @default(PENDING) @map("status")
-  startDate                      DateTime?                        @map("start_date") @db.Time(6)
-  finishedDate                   DateTime?                        @map("finished_date") @db.Time(6)
-  expectedFinishDate             DateTime?                        @map("expected_finish_date") @db.Time(6)
-  expectedStartDate              DateTime?                        @map("expected_start_date") @db.Time(6)
+  startDate                      DateTime?                        @map("start_date") @db.Timestamptz(6)
+  finishedDate                   DateTime?                        @map("finished_date") @db.Timestamptz(6)
+  expectedFinishDate             DateTime?                        @map("expected_finish_date") @db.Timestamptz(6)
+  expectedStartDate              DateTime?                        @map("expected_start_date") @db.Timestamptz(6)
   createdAt                      DateTime?                        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                      DateTime?                        @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                      DateTime?                        @map("deleted_at") @db.Timestamptz(6)

@@ -74,26 +74,26 @@ export class PrismaService
           const existingRecord = await this[params.model].findUnique({
             where: params.args.where,
           });
-
-          // Proceed with the update
           const result = await next(params);
-          // Compare old and new values
           if (params.model === 'ImportRequest') {
             const changes = {};
             const updatedRecord = result as ImportRequest;
-
             for (const key of Object.keys(updatedRecord)) {
               if (updatedRecord[key] !== existingRecord[key]) {
                 changes[key] = {
                   before: existingRecord[key],
                   after: updatedRecord[key],
                 };
+                console.log('key', key);
+                console.log('changes', changes);
+                if (key === 'status') {
+                  this.eventEmitter.emit('notification.importRequest.updated', {
+                    changes,
+                    importRequestId: updatedRecord.id,
+                  });
+                }
               }
             }
-            this.eventEmitter.emit('notification.importRequest.updated', {
-              changes,
-              importRequestId: updatedRecord.id,
-            });
           } else if (params.model === 'MaterialExportRequest') {
             const updatedRecord = result as MaterialExportRequest;
             const changes = {};
@@ -143,14 +143,12 @@ export class PrismaService
               inventoryReportPlanId: updatedRecord.id,
             });
           }
-
           return result;
         } catch (e) {
           console.error(e);
           return next(params);
         }
       }
-
       return next(params);
     });
 

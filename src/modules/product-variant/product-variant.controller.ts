@@ -60,6 +60,21 @@ export class ProductVariantController {
     return this.productVariantService.findAll(filterOptions.findOptions);
   }
 
+  @Get('disposed')
+  @UseInterceptors(HttpCacheInterceptor)
+  findAllDisposed(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ProductVariantScalarWhereInput>(
+        ['product.name'],
+        [],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.ProductVariantScalarWhereInput>,
+  ) {
+    return this.productVariantService.findAllDisposed(filterOptions.findOptions);
+  }
+
+
   @Get('has-receipt')
   @UseInterceptors(HttpCacheInterceptor)
   findAllHasReceipt(

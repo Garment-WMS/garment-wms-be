@@ -76,6 +76,74 @@ export interface MaterialVariant
 
 @Injectable()
 export class MaterialVariantService {
+  async searchDisposed(
+    findOptions: GeneratedFindOptions<Prisma.MaterialVariantScalarWhereInput>,
+  ) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.materialVariant.findMany({
+        skip: offset,
+        take: limit,
+        where: findOptions?.where,
+        orderBy: findOptions?.orderBy,
+        include: this.materialStockInclude,
+      }),
+      this.prismaService.materialVariant.count({
+        where: findOptions?.where,
+      }),
+    ]);
+    let processedMaterials = data.map((material: MaterialStock) => {
+      let onHand = 0; // Initialize the total onHand quantity
+      material.onHand = 0;
+      material.onHandUom = 0;
+
+      // Filter and process material packages
+      material.materialPackage = material.materialPackage.filter(
+        (materialPackage) => {
+          let materialPackageOnHand = 0; // On-hand quantity for this package
+
+          // Filter receipts with DISPOSED status
+          materialPackage.materialReceipt =
+            materialPackage.materialReceipt.filter((materialReceipt) => {
+              if (materialReceipt.status === MaterialReceiptStatus.DISPOSED) {
+                materialPackageOnHand += materialReceipt.remainQuantityByPack; // Add the quantity to the package onHand
+                onHand += materialReceipt.remainQuantityByPack; // Add to material's total onHand
+                material.onHandUom +=
+                  materialReceipt.remainQuantityByPack *
+                  materialPackage.uomPerPack; // Update total onHandUom
+                return true; // Keep this receipt
+              }
+              return false; // Discard this receipt
+            });
+
+          // Update inventory stock with the calculated on-hand quantity
+          if (materialPackage.inventoryStock) {
+            materialPackage.inventoryStock.quantityByPack =
+              materialPackageOnHand;
+          }
+
+          return materialPackage.materialReceipt.length > 0; // Keep the package if it has at least one DISPOSED receipt
+        },
+      );
+
+      // Update the material's calculated fields
+      material.numberOfMaterialPackage = material.materialPackage.length; // Number of remaining packages
+      material.onHand = onHand; // Total onHand quantity
+      return material;
+    });
+
+    processedMaterials = processedMaterials.filter(
+      (material) => material.onHand > 0,
+    );
+
+    const dataResponse: DataResponse = {
+      data: processedMaterials,
+      pageMeta: getPageMeta(total, offset, limit),
+    };
+
+    return apiSuccess(HttpStatus.OK, dataResponse, 'List of Material');
+  }
   async updateReorderAlert(
     id: string,
     currentQuantityByUom: number,
@@ -259,6 +327,15 @@ export class MaterialVariantService {
               createdAt: receiptAdjustment.createdAt,
               updatedAt: receiptAdjustment.updatedAt,
             });
+          });
+        } else if (materialReceipt.status == MaterialReceiptStatus.DISPOSED) {
+          result.history.push({
+            materialReceiptId: materialReceipt.id,
+            quantityByPack: -materialReceipt.quantityByPack,
+            code: materialReceipt.importReceipt.code,
+            type: 'DISPOSED',
+            createdAt: materialReceipt.createdAt,
+            updatedAt: materialReceipt.updatedAt,
           });
         }
       });
