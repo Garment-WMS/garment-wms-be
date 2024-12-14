@@ -1204,6 +1204,7 @@ export class MaterialVariantService {
     });
     return result;
   }
+  
 
   async findByMaterialType(materialType: string) {
     const result = await this.prismaService.materialVariant.findMany({

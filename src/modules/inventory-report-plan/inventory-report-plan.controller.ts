@@ -141,6 +141,19 @@ export class InventoryReportPlanController {
     );
   }
 
+  @Patch(':id/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER)
+  cancelInventoryReportPlan(
+    @Param('id', CustomUUIDPipe) id: string,
+    @GetUser() user: AuthenUser,
+  ) {
+    return this.inventoryReportPlanService.cancelInventoryReportPlan(
+      id,
+      user.warehouseManagerId,
+    );
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.inventoryReportPlanService.findOne(id);

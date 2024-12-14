@@ -71,7 +71,6 @@ export class PrismaService
         (params.action === 'update' || params.action === 'updateMany') &&
         this.modelsNeedNotification.includes(params.model)
       ) {
-        console.log('Update', params.args.where);
         // Fetch the existing record before the update
         try {
           const existingRecord = await this[params.model].findUnique({
@@ -130,7 +129,7 @@ export class PrismaService
               changes,
               inventoryStockId: updatedRecord.id,
             });
-          }else if (params.model === 'InventoryReportPlan') {
+          } else if (params.model === 'InventoryReportPlan') {
             const changes = {};
             const updatedRecord = result as InventoryReportPlan;
             for (const key of Object.keys(updatedRecord)) {
@@ -182,9 +181,16 @@ export class PrismaService
             );
             break;
         }
+
         if (params.model === 'Task') {
           const createdEntity = result as Task;
           this.eventEmitter.emit('notification.task.created', createdEntity);
+        } else if (params.model === 'InventoryReportPlan') {
+          const createdEntity = result as InventoryReportPlan;
+          this.eventEmitter.emit(
+            'notification.inventoryReportPlan.created',
+            createdEntity,
+          );
         }
         return result;
       }

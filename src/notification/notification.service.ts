@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
   ImportRequestStatus,
+  InventoryReportPlan,
   InventoryReportPlanStatus,
   MaterialExportRequest,
   NotificationType,
@@ -14,6 +15,7 @@ import {
   RenameAndNestPayloadKeys,
 } from '@prisma/client/runtime/library';
 import { PrismaService } from 'prisma/prisma.service';
+import { formatDate } from 'src/common/utils/utils';
 import { InventoryStockService } from 'src/modules/inventory-stock/inventory-stock.service';
 import { MaterialVariantService } from 'src/modules/material-variant/material-variant.service';
 import { UserService } from 'src/modules/user/user.service';
@@ -60,7 +62,7 @@ export class NotificationService {
         (detail) => detail.warehouseStaff,
       ),
     );
-    if (changeField.status.before === InventoryReportPlanStatus.IN_PROGRESS) {
+    if (changeField?.status.before === InventoryReportPlanStatus.IN_PROGRESS) {
       const createNotificationPromises = Array.from(warehouseStaffSet).map(
         async (warehouseStaff) => {
           return this.prismaService.notification.create({
@@ -79,6 +81,54 @@ export class NotificationService {
         this.notificationGateway.create(createNotificationPromises);
       });
     }
+  }
+
+  @OnEvent('notification.inventoryReportPlan.created')
+  async inventoryReportPlanCreatedEvent(
+    inventoryReportPlan: InventoryReportPlan,
+  ) {
+    let allAccount = [];
+    const warehouseStaffs = await this.userService.getAllUserByRole(
+      RoleCode.WAREHOUSE_STAFF,
+    );
+    const purchasingStaffs = await this.userService.getAllUserByRole(
+      RoleCode.PURCHASING_STAFF,
+    );
+    const warehouseManager = await this.userService.getAllUserByRole(
+      RoleCode.WAREHOUSE_MANAGER,
+    );
+    const productionDepartment = await this.userService.getAllUserByRole(
+      RoleCode.PRODUCTION_DEPARTMENT,
+    );
+    const factoryDirector = await this.userService.getAllUserByRole(
+      RoleCode.FACTORY_DIRECTOR,
+    );
+    const inspectionDepartment = await this.userService.getAllUserByRole(
+      RoleCode.INSPECTION_DEPARTMENT,
+    );
+    allAccount = [
+      ...warehouseStaffs.data,
+      ...purchasingStaffs.data,
+      ...warehouseManager.data,
+      ...productionDepartment.data,
+      ...factoryDirector.data,
+      ...inspectionDepartment.data,
+    ];
+    const createNotificationPromises = allAccount.map(async (account) => {
+      return this.prismaService.notification.create({
+        data: {
+          title: `New Inventory Report Plan ${inventoryReportPlan.code} has been created`,
+          message: `New Inventory Report Plan ${inventoryReportPlan.code} has been created, take place from ${formatDate(inventoryReportPlan.from)} to ${formatDate(inventoryReportPlan.to)}`,
+          accountId: account.accountId,
+          path: `/stocktaking/plan/${inventoryReportPlan.id}`,
+          type: 'INVENTORY_REPORT',
+        },
+      });
+    });
+    const result = await Promise.all(createNotificationPromises);
+    result.map((createNotificationPromises) => {
+      this.notificationGateway.create(createNotificationPromises);
+    });
   }
 
   @OnEvent('notification.inventoryStock.updated')

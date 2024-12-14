@@ -5,6 +5,8 @@ import { isUUID } from 'class-validator';
 import { productFormulaInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { ApiResponse } from 'src/common/dto/response.dto';
+import { ExcelService } from '../excel/excel.service';
 import { NestedCreateProductFormulaMaterialDto } from '../product-formula-material/dto/nested-product-formula-material.dto';
 import { ProductFormulaMaterialService } from '../product-formula-material/product-formula-material.service';
 import { CreateProductFormulaDto } from './dto/create-product-formula.dto';
@@ -15,6 +17,7 @@ export class ProductFormulaService {
   constructor(
     private prismaService: PrismaService,
     private productFormulaMaterialService: ProductFormulaMaterialService,
+    private excelService: ExcelService,
   ) {}
 
   queryInclude: Prisma.ProductFormulaInclude = {
@@ -33,6 +36,14 @@ export class ProductFormulaService {
     },
   };
 
+  async createByExcel(file: Express.Multer.File) {
+    const excelData = await this.excelService.readProductFormulaExcel(file);
+    if (excelData instanceof ApiResponse) {
+      return excelData;
+    }
+    
+
+  }
   async findById(value: string) {
     if (!isUUID(value)) return null;
     const productFormula = await this.prismaService.productFormula.findUnique({
@@ -200,9 +211,9 @@ export class ProductFormulaService {
           productionPlanDetail: {
             some: {
               productionBatch: {
-                  some:{
-                    id: productBatchId,
-                  }
+                some: {
+                  id: productBatchId,
+                },
               },
             },
           },
