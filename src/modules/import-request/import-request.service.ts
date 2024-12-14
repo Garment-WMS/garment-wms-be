@@ -673,6 +673,22 @@ export class ImportRequestService {
           message: Constant.ARRIVED_TO_CANCELED,
         };
         await this.chatService.createWithoutResponse(chat2, account);
+        //reverse po delivery status to pending status
+        if (importRequest.status.startsWith('MATERIAL')) {
+          await this.prismaService.poDelivery.update({
+            where: { id: importRequest.poDeliveryId },
+            data: {
+              status: $Enums.PoDeliveryStatus.PENDING,
+            },
+          });
+        } else if (importRequest.status.startsWith('PRODUCT')) {
+          await this.prismaService.productionBatch.update({
+            where: { id: importRequest.productionBatchId },
+            data: {
+              status: $Enums.ProductionBatchStatus.PENDING,
+            },
+          });
+        }
         return result;
       default:
         throw new BadRequestException(
