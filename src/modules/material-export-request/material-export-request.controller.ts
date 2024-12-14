@@ -6,6 +6,7 @@ import {
   Get,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -173,6 +174,17 @@ export class MaterialExportRequestController {
         productionDepartment,
       ),
       'Production department approve material export request successfully',
+    );
+  }
+
+  @Get('check-quantity/:id')
+  async checkQuantity(@Param('id', ParseUUIDPipe) id: string) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportRequestService.checkQuantityEnoughForExportRequest(
+        id,
+      ),
+      'Check quantity successfully',
     );
   }
 }

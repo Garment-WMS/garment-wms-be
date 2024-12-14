@@ -14,6 +14,7 @@ import {
 } from '@prisma/client';
 import {
   discussionInclude,
+  materialExportRequestDetailInclude,
   materialExportRequestInclude,
   materialPackageInclude,
 } from 'prisma/prisma-include';
@@ -566,5 +567,63 @@ export class MaterialExportRequestService {
       default:
         throw new BadRequestException('Invalid action');
     }
+  }
+
+  async checkQuantityEnoughForExportRequest(exportRequestId: string) {
+    const materialExportRequest =
+      await this.prismaService.materialExportRequest.findUnique({
+        where: {
+          id: exportRequestId,
+        },
+        include: {
+          materialExportRequestDetail: {
+            include: materialExportRequestDetailInclude,
+          },
+        },
+      });
+    if (!materialExportRequest) {
+      throw new NotFoundException('Material Export Request not found');
+    }
+
+    let result = [];
+
+    for (const exportRequestDetail of materialExportRequest.materialExportRequestDetail) {
+      const materialReceipts =
+        await this.prismaService.materialReceipt.findMany({
+          where: {
+            materialPackage: {
+              materialVariantId: exportRequestDetail.materialVariantId,
+            },
+            status: {
+              in: [$Enums.MaterialReceiptStatus.AVAILABLE],
+            },
+            remainQuantityByPack: {
+              gt: 0,
+            },
+          },
+          include: {
+            materialPackage: true,
+          },
+        });
+      const availableQuantity = materialReceipts.reduce(
+        (sum, receipt) => sum + receipt.remainQuantityByPack,
+        0,
+      );
+      result.push({
+        materialVariantId: exportRequestDetail.materialVariantId,
+        // materialReceipts,
+        requiredQuantity: exportRequestDetail.quantityByUom,
+        availableQuantity,
+        fullFilledPercentage:
+          (availableQuantity / exportRequestDetail.quantityByUom) * 100,
+        isFullFilled: availableQuantity >= exportRequestDetail.quantityByUom,
+      });
+    }
+
+    return {
+      result,
+      isFullFilled: result.every((item) => item.isFullFilled),
+      missingMaterials: result.filter((item) => !item.isFullFilled),
+    };
   }
 }

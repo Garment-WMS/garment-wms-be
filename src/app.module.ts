@@ -38,6 +38,7 @@ import { InventoryUpdateStatusModule } from './modules/inventory-update-status/i
 import { MaterialAttributeModule } from './modules/material-attribute/material-attribute.module';
 import { MaterialExportReceiptDetailModule } from './modules/material-export-receipt-detail/material-export-receipt-detail.module';
 import { MaterialExportReceiptModule } from './modules/material-export-receipt/material-export-receipt.module';
+import { MaterialExportRequestDetailModule } from './modules/material-export-request-detail/material-export-request-detail.module';
 import { MaterialExportRequestModule } from './modules/material-export-request/material-export-request.module';
 import { MaterialPackageModule } from './modules/material-package/material-package.module';
 import { MaterialReceiptModule } from './modules/material-receipt/material-receipt.module';
@@ -67,8 +68,8 @@ import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
 import { UtilModule } from './modules/util/util.module';
 import { WarehouseStaffModule } from './modules/warehouse-staff/warehouse-staff.module';
-import { ProductAttributeModule } from './product-attribute/product-attribute.module';
 import { NotificationModule } from './notification/notification.module';
+import { ProductAttributeModule } from './product-attribute/product-attribute.module';
 
 @Module({
   imports: [
@@ -150,6 +151,7 @@ import { NotificationModule } from './notification/notification.module';
       port: process.env.REDIS_PORT,
     }),
     MaterialExportRequestModule,
+    MaterialExportRequestDetailModule,
     ReceiptAdjustmentModule,
     InventoryUpdateStatusModule,
     ProductionBatchModule,

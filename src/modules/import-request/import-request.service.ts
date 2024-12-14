@@ -549,31 +549,42 @@ export class ImportRequestService {
     id: string,
     purchasingStaffProcessDto: PurchasingStaffProcessDto,
   ) {
-    const importRequest = await this.prismaService.importRequest.findUnique({
-      where: { id },
-      select: { status: true },
-    });
+    const importRequestCheck =
+      await this.prismaService.importRequest.findUnique({
+        where: { id },
+      });
     if (
       purchasingStaffProcessDto.action == $Enums.ImportRequestStatus.CANCELLED
     ) {
       const allowCancel: $Enums.ImportRequestStatus[] = [
         $Enums.ImportRequestStatus.ARRIVED,
       ];
-      if (!allowCancel.includes(importRequest.status)) {
+      if (!allowCancel.includes(importRequestCheck.status)) {
         throw new BadRequestException(
           `Purchasing staff only can cancel import request with status ${allowCancel.join(
             ', ',
           )}`,
         );
       }
-      return await this.prismaService.importRequest.update({
-        where: { id: id },
-        data: {
-          status: $Enums.ImportRequestStatus.CANCELLED,
-          cancelReason: purchasingStaffProcessDto.cancelReason,
-          cancelledAt: new Date(),
-        },
-      });
+      const [importRequest, poDelivery] = await this.prismaService.$transaction(
+        [
+          this.prismaService.importRequest.update({
+            where: { id: id },
+            data: {
+              status: $Enums.ImportRequestStatus.CANCELLED,
+              cancelReason: purchasingStaffProcessDto.cancelReason,
+              cancelledAt: new Date(),
+            },
+          }),
+          this.prismaService.poDelivery.update({
+            where: { id: importRequestCheck.poDeliveryId },
+            data: {
+              status: $Enums.PoDeliveryStatus.PENDING,
+            },
+          }),
+        ],
+      );
+      return { importRequest, poDelivery };
     } else {
       throw new BadRequestException(
         `Allowed action is ${$Enums.ImportRequestStatus.CANCELLED}`,
