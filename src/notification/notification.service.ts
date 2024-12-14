@@ -3,6 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import {
   ImportRequestStatus,
   InventoryReportPlanStatus,
+  MaterialExportRequest,
   NotificationType,
   Prisma,
   RoleCode,
@@ -163,7 +164,7 @@ export class NotificationService {
   }) {
     const importRequest = await this.findUniqueForNotification(importRequestId);
 
-    if (changeField.status.after === ImportRequestStatus.INSPECTED) {
+    if (changeField?.status.after === ImportRequestStatus.INSPECTED) {
       const notification =
         await this.prismaService.notification.createManyAndReturn({
           data: [
@@ -195,7 +196,7 @@ export class NotificationService {
       notification.map((notification) => {
         this.notificationGateway.create(notification);
       });
-    } else if (changeField.status.after === ImportRequestStatus.IMPORTING) {
+    } else if (changeField?.status.after === ImportRequestStatus.IMPORTING) {
       const notification =
         await this.prismaService.notification.createManyAndReturn({
           data: [
@@ -220,7 +221,7 @@ export class NotificationService {
       notification.map((notification) => {
         this.notificationGateway.create(notification);
       });
-    } else if (changeField.status.after === ImportRequestStatus.IMPORTED) {
+    } else if (changeField?.status.after === ImportRequestStatus.IMPORTED) {
       const notification =
         await this.prismaService.notification.createManyAndReturn({
           data: [
@@ -245,7 +246,7 @@ export class NotificationService {
       notification.map((notification) => {
         this.notificationGateway.create(notification);
       });
-    } else if (changeField.status.after === ImportRequestStatus.CANCELLED) {
+    } else if (changeField?.status.after === ImportRequestStatus.CANCELLED) {
       let message = `Import Request ${importRequest.code} has been cancelled`;
       let title = importRequest?.inspectionRequest
         ? `Import Request ${importRequest.code} has been cancelled because there is no approved materials`
@@ -348,7 +349,6 @@ export class NotificationService {
       RenameAndNestPayloadKeys<Prisma.$TaskPayload<DefaultArgs>>
     >[],
   ) {
-    console.log('tasks', tasks);
     const createNotificationPromises = tasks.map((task) => {
       let message;
       let path;
