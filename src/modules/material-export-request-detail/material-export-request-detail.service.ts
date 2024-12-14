@@ -36,19 +36,19 @@ export class MaterialExportRequestDetailService {
         materialPackage: true,
       },
     });
-    const availableQuantity = materialReceipts.reduce(
-      (sum, receipt) => sum + receipt.remainQuantityByPack,
+    const remainQuantity = materialReceipts.reduce(
+      (sum, receipt) =>
+        sum + receipt.remainQuantityByPack * receipt.materialPackage.uomPerPack,
       0,
     );
     return {
       materialVariantId: materialExportRequestDetail.materialVariantId,
       // materialReceipts,
       requiredQuantity: materialExportRequestDetail.quantityByUom,
-      availableQuantity,
+      availableQuantity: remainQuantity,
       fullFilledPercentage:
-        (availableQuantity / materialExportRequestDetail.quantityByUom) * 100,
-      isFullFilled:
-        availableQuantity >= materialExportRequestDetail.quantityByUom,
+        (remainQuantity / materialExportRequestDetail.quantityByUom) * 100,
+      isFullFilled: remainQuantity >= materialExportRequestDetail.quantityByUom,
     };
   }
 
