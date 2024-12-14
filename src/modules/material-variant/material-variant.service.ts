@@ -870,7 +870,8 @@ export class MaterialVariantService {
     ]);
     let onHand = 0;
     data.forEach((material: MaterialStock) => {
-      material.onHand = onHand;
+      onHand = 0;
+      material.onHand = 0;
       material.onHandUom = 0;
       material.materialPackage.forEach((materialPackage) => {
         let materialPackageOnHand = 0;
@@ -888,8 +889,6 @@ export class MaterialVariantService {
             materialPackage.inventoryStock.quantityByPack =
               materialPackageOnHand;
           }
-        } else {
-          onHand = 0;
         }
       });
 
@@ -1204,7 +1203,6 @@ export class MaterialVariantService {
     });
     return result;
   }
-  
 
   async findByMaterialType(materialType: string) {
     const result = await this.prismaService.materialVariant.findMany({
