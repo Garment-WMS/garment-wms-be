@@ -35,7 +35,7 @@ export class MaterialExportRequestDetailService {
         materialPackage: true,
       },
     });
-    const availableQuantity = materialReceipts.reduce(
+    const remainQuantityByPack = materialReceipts.reduce(
       (sum, receipt) => sum + receipt.remainQuantityByPack,
       0,
     );
@@ -43,13 +43,15 @@ export class MaterialExportRequestDetailService {
       materialVariantId: materialExportRequestDetail.materialVariantId,
       // materialReceipts,
       requiredQuantity: materialExportRequestDetail.quantityByUom,
-      availableQuantity,
+      remainQuantityByPack: remainQuantityByPack,
       fullFilledPercentage:
-        (availableQuantity / materialExportRequestDetail.quantityByUom) * 100,
+        (remainQuantityByPack / materialExportRequestDetail.quantityByUom) *
+        100,
       isFullFilled:
-        availableQuantity >= materialExportRequestDetail.quantityByUom,
+        remainQuantityByPack >= materialExportRequestDetail.quantityByUom,
     };
   }
+
   create(
     createMaterialExportRequestDetailDto: CreateMaterialExportRequestDetailDto,
   ) {
