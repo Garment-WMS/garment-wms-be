@@ -80,6 +80,7 @@ export class MaterialVariantController {
   getAllReorderLevel() {
     return this.materialVariantService.findAllOpenReOrderAlert();
   }
+
   @Get('all')
   getAllMaterial() {
     return this.materialVariantService.findAll();
