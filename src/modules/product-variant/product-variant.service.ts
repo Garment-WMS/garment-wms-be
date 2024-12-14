@@ -109,10 +109,13 @@ export class ProductVariantService {
 
       // Process each product size
       product.productSize.forEach((productSize) => {
+        // Initialize product size properties
+        let productSizePackageOnHand = 0;
         // Filter receipts with DISCARDED status and calculate onHand
         productSize.productReceipt = productSize.productReceipt.filter(
           (productReceipt) => {
             if (productReceipt.status === ProductReceiptStatus.DISCARDED) {
+              productSizePackageOnHand += productReceipt.remainQuantityByUom; // Accumulate onHand directly
               product.onHand += productReceipt.remainQuantityByUom; // Accumulate onHand directly
               return true; // Retain the receipt
             }
@@ -120,9 +123,10 @@ export class ProductVariantService {
           },
         );
 
-        // Add inventory stock quantity for each size to onHand
-        const variantTotal = productSize?.inventoryStock?.quantityByUom || 0;
-        product.onHand += variantTotal;
+        if (productSize.inventoryStock) {
+          productSize.inventoryStock.quantityByUom = productSizePackageOnHand;
+        }
+        
       });
 
       return product;
@@ -133,7 +137,7 @@ export class ProductVariantService {
     return apiSuccess(
       HttpStatus.OK,
       {
-        data: data,
+        data: processedProduct,
         pageMeta: getPageMeta(total, page, limit),
       },
       'List of Purchase Order',
