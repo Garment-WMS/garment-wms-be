@@ -3,6 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import {
   ImportRequestStatus,
   InventoryReportPlanStatus,
+  MaterialExportRequest,
   NotificationType,
   Prisma,
   RoleCode,
