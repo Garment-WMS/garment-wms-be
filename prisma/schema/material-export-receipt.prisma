@@ -33,7 +33,7 @@ enum ExportReceiptStatus {
 
 enum MaterialExportReceiptType {
   PRODUCTION
-  DISCHARGED
+  DISPOSED
 
   @@map("material_export_receipt_type")
 }

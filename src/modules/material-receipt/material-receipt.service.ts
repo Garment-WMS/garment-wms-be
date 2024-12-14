@@ -22,6 +22,7 @@ export class MaterialReceiptService {
     private readonly inventoryStockService: InventoryStockService,
     private readonly materialPackagesService: MaterialPackageService,
   ) {}
+
   async findByCode(code: string) {
     const result = await this.prismaService.materialReceipt.findFirst({
       where: {

@@ -59,8 +59,6 @@ export class PrismaService
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-    const eventEmitter = this.eventEmitter;
-    Logger.debug(`Event emitted: ${JSON.stringify(eventEmitter)}`);
 
     this.$use(this.softDeleteMiddleware);
     this.$use(this.findNotDeletedMiddleware);

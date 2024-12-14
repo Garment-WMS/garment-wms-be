@@ -105,7 +105,10 @@ export class MaterialExportReceiptService {
           type: createMaterialExportReceiptDto.type,
           note: createMaterialExportReceiptDto.note,
           warehouseStaffId: createMaterialExportReceiptDto.warehouseStaffId,
-          status: $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT,
+          status:
+            createMaterialExportReceiptDto.type === 'PRODUCTION'
+              ? $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT
+              : $Enums.ExportReceiptStatus.EXPORTED,
           expectedStartedAt: createMaterialExportReceiptDto.expectedStartedAt,
           expectedFinishedAt: createMaterialExportReceiptDto.expectedFinishedAt,
           materialExportReceiptDetail: {
