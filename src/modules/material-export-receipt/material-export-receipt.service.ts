@@ -90,7 +90,10 @@ export class MaterialExportReceiptService {
   //   });
   // }
 
-  async create(createMaterialExportReceiptDto: CreateMaterialExportReceiptDto) {
+  async create(
+    createMaterialExportReceiptDto: CreateMaterialExportReceiptDto,
+    warehouseManager?: AuthenUser,
+  ) {
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const input: Prisma.MaterialExportReceiptUncheckedCreateInput = {
@@ -99,6 +102,7 @@ export class MaterialExportReceiptService {
           type: createMaterialExportReceiptDto.type,
           note: createMaterialExportReceiptDto.note,
           warehouseStaffId: createMaterialExportReceiptDto.warehouseStaffId,
+          warehouseManagerId: warehouseManager?.warehouseManagerId,
           status:
             createMaterialExportReceiptDto.type === 'PRODUCTION'
               ? $Enums.ExportReceiptStatus.AWAIT_TO_EXPORT

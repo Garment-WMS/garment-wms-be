@@ -6,6 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   $Enums,
   MaterialExportRequestStatus,
@@ -37,7 +38,6 @@ import {
   ProductionStaffDepartmentProcessDto,
 } from './dto/production-department-approve.dto';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class MaterialExportRequestService {
@@ -378,21 +378,24 @@ export class MaterialExportRequestService {
         } = await this.prismaService.$transaction(
           async (prismaInstance: PrismaService) => {
             const { materialExportReceipt, inventoryStock, materialReceipt } =
-              await this.materialExportReceiptService.create({
-                note: dto.materialExportReceipt.note,
-                type: dto.materialExportReceipt.type,
-                materialExportRequestId: materialExportRequestId,
-                warehouseStaffId: dto.warehouseStaffId,
-                expectedStartedAt: dto.exportExpectedStartedAt,
-                expectedFinishedAt: dto.exportExpectedFinishedAt,
-                materialExportReceiptDetail:
-                  dto.materialExportReceipt.materialExportReceiptDetail.map(
-                    (detail) => ({
-                      materialReceiptId: detail.materialReceiptId,
-                      quantityByPack: detail.quantityByPack,
-                    }),
-                  ),
-              });
+              await this.materialExportReceiptService.create(
+                {
+                  note: dto.materialExportReceipt.note,
+                  type: dto.materialExportReceipt.type,
+                  materialExportRequestId: materialExportRequestId,
+                  warehouseStaffId: dto.warehouseStaffId,
+                  expectedStartedAt: dto.exportExpectedStartedAt,
+                  expectedFinishedAt: dto.exportExpectedFinishedAt,
+                  materialExportReceiptDetail:
+                    dto.materialExportReceipt.materialExportReceiptDetail.map(
+                      (detail) => ({
+                        materialReceiptId: detail.materialReceiptId,
+                        quantityByPack: detail.quantityByPack,
+                      }),
+                    ),
+                },
+                warehouseManager,
+              );
             const materialExportRequest =
               await prismaInstance.materialExportRequest.update({
                 where: {

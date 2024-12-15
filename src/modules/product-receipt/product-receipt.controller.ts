@@ -8,9 +8,15 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, RoleCode } from '@prisma/client';
+import { GetUser } from 'src/common/decorator/get_user.decorator';
+import { Roles } from 'src/common/decorator/roles.decorator';
 import { FilterDto } from 'src/common/dto/filter-query.dto';
+import { RolesGuard } from 'src/common/guard/roles.guard';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { CreateProductReceiptDto } from './dto/create-product-receipt.dto';
 import { ProductReceiptDisposeArrayDto } from './dto/product-receipt-dispose.dto';
 import { UpdateProductReceiptDto } from './dto/update-product-receipt.dto';
@@ -20,12 +26,16 @@ import { ProductReceiptService } from './product-receipt.service';
 export class ProductReceiptController {
   constructor(private readonly productReceiptService: ProductReceiptService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER)
   @Post('/dispose')
   async dispose(
     @Body() ProductReceiptDisposeArrayDto: ProductReceiptDisposeArrayDto,
+    @GetUser() warehouseManager: AuthenUser,
   ) {
     return this.productReceiptService.dispose(
       ProductReceiptDisposeArrayDto.productReceipts,
+      warehouseManager,
     );
   }
 

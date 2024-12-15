@@ -5,6 +5,7 @@ import {
   InventoryReportPlan,
   InventoryReportPlanStatus,
   MaterialExportRequest,
+  MaterialExportRequestStatus,
   NotificationType,
   Prisma,
   RoleCode,
@@ -515,6 +516,74 @@ export class NotificationService {
       'notification.materialExportRequest.updated',
       materialExportRequestChanges,
     );
+    if (!materialExportRequestChanges.status) return;
+    const status = materialExportRequestChanges.status
+      .after as MaterialExportRequestStatus;
+    switch (status) {
+      case 'APPROVED':
+      case 'REJECTED':
+        const productionDepartment =
+          await this.prismaService.productionDepartment.findUnique({
+            where: {
+              id: materialExportRequest.productionDepartmentId,
+            },
+            select: {
+              accountId: true,
+            },
+          });
+        const notification = await this.prismaService.notification.create({
+          data: {
+            title: `Material Export Request ${materialExportRequest.code} has been ${materialExportRequestChanges.status.after}`,
+            message: `Material Export Request ${materialExportRequest.code} has been ${materialExportRequestChanges.status.after}`,
+            path: `/export-request/${materialExportRequest.id}`,
+            accountId: productionDepartment.accountId,
+          },
+        });
+        this.notificationGateway.create(notification);
+        break;
+      case 'EXPORTED':
+        const productionDepartment2 =
+          await this.prismaService.productionDepartment.findUnique({
+            where: {
+              id: materialExportRequest.productionDepartmentId,
+            },
+            select: {
+              accountId: true,
+            },
+          });
+        const notification2 = await this.prismaService.notification.create({
+          data: {
+            title: `Material Export Request ${materialExportRequest.code} has been ${materialExportRequestChanges.status.after}`,
+            message: `Material Export Request ${materialExportRequest.code} has been ${materialExportRequestChanges.status.after}`,
+            path: `/export-request/${materialExportRequest.id}`,
+            accountId: productionDepartment2.accountId,
+          },
+        });
+        this.notificationGateway.create(notification2);
+        break;
+      case 'PRODUCTION_APPROVED':
+      case 'PRODUCTION_REJECTED':
+      case 'RETURNED':
+        const warehouseManager =
+          await this.prismaService.warehouseManager.findUnique({
+            where: {
+              id: materialExportRequest.warehouseManagerId,
+            },
+            select: {
+              accountId: true,
+            },
+          });
+        const notification3 = await this.prismaService.notification.create({
+          data: {
+            title: `Material Export Request ${materialExportRequest.code} has been ${materialExportRequestChanges.status.after}`,
+            message: `Material Export Request ${materialExportRequest.code} has been ${materialExportRequestChanges.status.after}`,
+            path: `/export-request/${materialExportRequest.id}`,
+            accountId: warehouseManager.accountId,
+          },
+        });
+        this.notificationGateway.create(notification3);
+      default:
+    }
   }
 
   // async create(

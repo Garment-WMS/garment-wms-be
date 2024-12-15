@@ -11,8 +11,10 @@ model WarehouseManager {
   // ReceiptAdjustment     ReceiptAdjustment[]
   MaterialExportRequest MaterialExportRequest[]
   InspectionRequest     InspectionRequest[]
+  InventoryReportPlan   InventoryReportPlan[]
+  ReceiptAdjustment     ReceiptAdjustment[]
+  MaterialExportReceipt MaterialExportReceipt[]
+  ProductReceipt        ProductReceipt[]
 
   @@map("warehouse_manager")
-  InventoryReportPlan InventoryReportPlan[]
-  ReceiptAdjustment ReceiptAdjustment[]
 }

@@ -12,6 +12,7 @@ import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { InventoryStockService } from '../inventory-stock/inventory-stock.service';
 import { CreateProductReceiptDto } from './dto/create-product-receipt.dto';
 import { ProductReceiptDisposeDto } from './dto/product-receipt-dispose.dto';
@@ -24,7 +25,10 @@ export class ProductReceiptService {
     private readonly inventoryStockService: InventoryStockService,
   ) {}
 
-  async dispose(productReceiptDisposeDtos: ProductReceiptDisposeDto[]) {
+  async dispose(
+    productReceiptDisposeDtos: ProductReceiptDisposeDto[],
+    warehouseManager: AuthenUser,
+  ) {
     let result = [];
     for (let productReceiptDisposeDto of productReceiptDisposeDtos) {
       const prevProductReceipt =
@@ -63,6 +67,7 @@ export class ProductReceiptService {
           await this.prismaService.$transaction([
             this.prismaService.productReceipt.create({
               data: {
+                warehouseManagerId: warehouseManager.warehouseManagerId,
                 expireDate: prevProductReceipt.expireDate,
                 importDate: prevProductReceipt.importDate,
                 importReceiptId: prevProductReceipt.importReceiptId,
@@ -90,9 +95,7 @@ export class ProductReceiptService {
           await this.prismaService.productReceipt.update({
             where: {
               id: productReceiptDisposeDto.productReceiptId,
-              remainQuantityByUom:
-                prevProductReceipt.remainQuantityByUom -
-                productReceiptDisposeDto.quantityByUom,
+              warehouseManagerId: warehouseManager.warehouseManagerId,
             },
             data: {
               status: ProductReceiptStatus.DISPOSED,

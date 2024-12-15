@@ -12,6 +12,8 @@ model ProductReceipt {
   importDate            DateTime?               @map("import_date") @db.Timestamptz(6)
   quantityByUom         Float?                  @map("quantity_by_uom")
   remainQuantityByUom   Float?                  @map("remain_quantity_by_uom")
+  warehouseManagerId    String?                 @map("warehouse_manager_id") @db.Uuid
+  warehouseManager      WarehouseManager?       @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   InventoryReportDetail InventoryReportDetail[]
   importReceipt         ImportReceipt           @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   productSize           ProductSize             @relation(fields: [productSizeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
