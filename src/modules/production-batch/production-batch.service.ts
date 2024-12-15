@@ -392,7 +392,16 @@ export class ProductionBatchService {
   ) {
     const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
-    const [data, total] = await this.prismaService.$transaction([
+    const [
+      data,
+      total,
+      totalPending,
+      totalExecuting,
+      totalManufacturing,
+      totalImporting,
+      totalFinished,
+      totalCancelled,
+    ] = await this.prismaService.$transaction([
       this.prismaService.productionBatch.findMany({
         skip: offset,
         take: limit,
@@ -403,10 +412,50 @@ export class ProductionBatchService {
       this.prismaService.productionBatch.count({
         where: findOptions?.where,
       }),
+      this.prismaService.productionBatch.count({
+        where: {
+          status: ProductionBatchStatus.PENDING,
+        },
+      }),
+      this.prismaService.productionBatch.count({
+        where: {
+          status: ProductionBatchStatus.EXECUTING,
+        },
+      }),
+      this.prismaService.productionBatch.count({
+        where: {
+          status: ProductionBatchStatus.MANUFACTURING,
+        },
+      }),
+      this.prismaService.productionBatch.count({
+        where: {
+          status: ProductionBatchStatus.IMPORTING,
+        },
+      }),
+      this.prismaService.productionBatch.count({
+        where: {
+          status: ProductionBatchStatus.FINISHED,
+        },
+      }),
+      this.prismaService.productionBatch.count({
+        where: {
+          status: ProductionBatchStatus.CANCELLED,
+        },
+      }),
     ]);
+
     const dataResponse: DataResponse = {
       data,
       pageMeta: getPageMeta(total, offset, limit),
+      statistics: {
+        total,
+        totalPending,
+        totalExecuting,
+        totalManufacturing,
+        totalImporting,
+        totalFinished,
+        totalCancelled,
+      },
     };
     return dataResponse;
   }
