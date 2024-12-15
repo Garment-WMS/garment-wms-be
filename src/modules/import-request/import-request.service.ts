@@ -404,7 +404,7 @@ export class ImportRequestService {
 
   async productionDepartmentCreateReturnImportRequest(
     dto: ProductionDepartmentCreateReturnImportRequestDto,
-    productionDepartmentId: string,
+    productionDepartment: AuthenUser,
   ) {
     const materialExportRequest =
       await this.prismaService.materialExportRequest.findUnique({
@@ -461,7 +461,7 @@ export class ImportRequestService {
     );
     const createImportRequestInput: Prisma.ImportRequestCreateInput = {
       productionDepartment: {
-        connect: { id: productionDepartmentId },
+        connect: { id: productionDepartment.productionDepartmentId },
       },
       status: $Enums.ImportRequestStatus.ARRIVED,
       description: 'Import request for return material',
@@ -479,6 +479,12 @@ export class ImportRequestService {
       data: createImportRequestInput,
       include: importRequestInclude,
     });
+
+    result.discussion =
+      await this.autoCreateDiscussionAfterImportRequestCreated(
+        result,
+        productionDepartment.userId,
+      );
     return result;
   }
 

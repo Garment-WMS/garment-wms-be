@@ -81,7 +81,7 @@ export class ImportRequestController {
       HttpStatus.CREATED,
       await this.importRequestService.productionDepartmentCreateReturnImportRequest(
         dto,
-        productionDepartment.productionDepartmentId,
+        productionDepartment,
       ),
       'Import request created successfully',
     );
