@@ -1,10 +1,5 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import {
-  BadRequestException,
-  HttpStatus,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, PrismaClient, ProductReceiptStatus } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { isUUID } from 'class-validator';
@@ -56,14 +51,14 @@ export class ProductReceiptService {
         productReceiptDisposeDto.quantityByUom <
         prevProductReceipt.remainQuantityByUom
       ) {
-        Logger.debug(
-          'productReceiptDisposeDto.quantityByUom',
-          productReceiptDisposeDto.quantityByUom,
-        );
-        Logger.debug(
-          'prevProductReceipt.remainQuantityByUom',
-          prevProductReceipt.remainQuantityByUom,
-        );
+        // Logger.debug(
+        //   'productReceiptDisposeDto.quantityByUom',
+        //   productReceiptDisposeDto.quantityByUom,
+        // );
+        // Logger.debug(
+        //   'prevProductReceipt.remainQuantityByUom',
+        //   prevProductReceipt.remainQuantityByUom,
+        // );
         const [disposedProductReceipt, productReceipt] =
           await this.prismaService.$transaction([
             this.prismaService.productReceipt.create({
@@ -88,7 +83,7 @@ export class ProductReceiptService {
               },
             }),
           ]);
-        Logger.debug(disposedProductReceipt, productReceipt);
+        // Logger.debug(disposedProductReceipt, productReceipt);
         disposedProductReceiptResult = disposedProductReceipt;
       } else {
         const disposedProductReceipt =

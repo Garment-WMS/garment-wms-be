@@ -4,7 +4,6 @@ import {
   Controller,
   Delete,
   Get,
-  Logger,
   Param,
   Patch,
   Post,
@@ -25,13 +24,6 @@ export class ProductReceiptController {
   async dispose(
     @Body() ProductReceiptDisposeArrayDto: ProductReceiptDisposeArrayDto,
   ) {
-    ProductReceiptDisposeArrayDto.productReceipts.forEach(
-      (productReceiptDisposeDto) => {
-        Logger.debug(
-          `Dispose product receipt ${productReceiptDisposeDto.productReceiptId} with quantity ${productReceiptDisposeDto.quantityByUom}`,
-        );
-      },
-    );
     return this.productReceiptService.dispose(
       ProductReceiptDisposeArrayDto.productReceipts,
     );

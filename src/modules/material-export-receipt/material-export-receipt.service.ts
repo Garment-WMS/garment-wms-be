@@ -3,7 +3,6 @@ import {
   ForbiddenException,
   HttpStatus,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { $Enums, Prisma, RoleCode } from '@prisma/client';
@@ -92,11 +91,6 @@ export class MaterialExportReceiptService {
   // }
 
   async create(createMaterialExportReceiptDto: CreateMaterialExportReceiptDto) {
-    Logger.debug(
-      'createMaterialExportReceiptDto',
-      createMaterialExportReceiptDto,
-    );
-
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         const input: Prisma.MaterialExportReceiptUncheckedCreateInput = {
@@ -196,7 +190,6 @@ export class MaterialExportReceiptService {
         };
       },
     );
-    Logger.debug('result', result);
 
     return result;
   }
@@ -746,9 +739,9 @@ export class MaterialExportReceiptService {
     //     });
     //   },
     // );
-    Logger.debug(collisionMaterialVariant);
-    Logger.debug(JSON.stringify(collisionMaterialVariant));
-    Logger.debug(JSON.stringify(inventoryReportPlanInProgress));
+    // Logger.debug(collisionMaterialVariant);
+    // Logger.debug(JSON.stringify(collisionMaterialVariant));
+    // Logger.debug(JSON.stringify(inventoryReportPlanInProgress));
     return {
       inventoryReportPlan: inventoryReportPlanInProgress,
       collisionMaterialVariant,
