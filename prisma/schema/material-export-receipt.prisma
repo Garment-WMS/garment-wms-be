@@ -7,7 +7,7 @@ model MaterialExportReceipt {
   status                      ExportReceiptStatus           @default(AWAIT_TO_EXPORT) @map("status")
   note                        String?                       @map("note") @db.Text
   expectedStartedAt           DateTime?                     @map("expected_started_at") @db.Timestamptz(6)
-  startedAt                   DateTime?                     @default(now()) @map("started_at") @db.Timestamptz(6)
+  startedAt                   DateTime?                     @map("started_at") @db.Timestamptz(6)
   expectedFinishedAt          DateTime?                     @map("expected_finished_at") @db.Timestamptz(6)
   finishedAt                  DateTime?                     @map("finished_at") @db.Timestamptz(6)
   createdAt                   DateTime?                     @default(now()) @map("created_at") @db.Timestamptz(6)
