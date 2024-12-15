@@ -179,10 +179,60 @@ export class ProductionBatchService {
 
     qualityRate =
       totalProducedProduct / (totalProducedProduct + totalDefectProduct);
+
+    const [
+      total,
+      totalPending,
+      totalExecuting,
+      totalManufacturing,
+      totalImporting,
+      totalFinished,
+      totalCancelled,
+    ] = await this.prismaService.$transaction([
+      this.prismaService.productionBatch.count({}),
+      this.prismaService.productionBatch.count({
+        where: {
+          status: ProductionBatchStatus.PENDING,
+        },
+      }),
+      this.prismaService.productionBatch.count({
+        where: {
+          status: ProductionBatchStatus.EXECUTING,
+        },
+      }),
+      this.prismaService.productionBatch.count({
+        where: {
+          status: ProductionBatchStatus.MANUFACTURING,
+        },
+      }),
+      this.prismaService.productionBatch.count({
+        where: {
+          status: ProductionBatchStatus.IMPORTING,
+        },
+      }),
+      this.prismaService.productionBatch.count({
+        where: {
+          status: ProductionBatchStatus.FINISHED,
+        },
+      }),
+      this.prismaService.productionBatch.count({
+        where: {
+          status: ProductionBatchStatus.CANCELLED,
+        },
+      }),
+    ]);
     return apiSuccess(
       HttpStatus.OK,
       {
-        // monthlyData,
+        productionBatchStatistic: {
+          total,
+          totalPending,
+          totalExecuting,
+          totalManufacturing,
+          totalImporting,
+          totalFinished,
+          totalCancelled,
+        },
         qualityRate,
         totalDefectProduct,
         totalProducedProduct,
