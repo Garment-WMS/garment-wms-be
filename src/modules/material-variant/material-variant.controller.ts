@@ -248,6 +248,30 @@ export class MaterialVariantController {
     );
   }
 
+  @Get(':id/material-receipt/disposed')
+  getDisposedMaterialReceipt(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialReceiptScalarWhereInput>(
+        [
+          'material.name',
+          'material.code',
+          'material.materialUom.name',
+          'materialPackage.code',
+          'materialPackage.name',
+        ],
+        [{ createdAt: 'desc' }],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.MaterialReceiptScalarWhereInput>,
+
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.materialVariantService.findDisposedMaterialImportReceipt(
+      id,
+      filterOptions.findOptions,
+    );
+  }
+
   @Patch(':id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   updateMaterial(

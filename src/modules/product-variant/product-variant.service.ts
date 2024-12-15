@@ -79,6 +79,48 @@ interface ProductVariantIncludeQuery
 
 @Injectable()
 export class ProductVariantService {
+  async findDisposedProductImportReceipt(
+    id: string,
+    findOptions: GeneratedFindOptions<Prisma.ProductReceiptScalarWhereInput>,
+  ) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const whereCondition = {
+      ...findOptions?.where,
+      status: {
+        in: [ProductReceiptStatus.DISPOSED],
+      },
+      productSize: {
+        productVariantId: id,
+      },
+    };
+
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.productReceipt.findMany({
+        skip: offset,
+        take: limit,
+        where: whereCondition,
+        include: {
+          productSize: true,
+        },
+        orderBy: findOptions?.orderBy,
+      }),
+      this.prismaService.productReceipt.count({
+        where: whereCondition,
+      }),
+    ]);
+
+    const dataResponse: DataResponse = {
+      data,
+      pageMeta: getPageMeta(total, offset, limit),
+    };
+
+    return apiSuccess(
+      HttpStatus.OK,
+      dataResponse,
+      'List of import product receipt',
+    );
+  }
   async findByIdDisposeWithResponse(id: string) {
     const result = await this.findAllDisposed({
       where: {
@@ -155,7 +197,7 @@ export class ProductVariantService {
       HttpStatus.OK,
       {
         data: processedProduct,
-        pageMeta: getPageMeta(total, page, limit),
+        pageMeta: getPageMeta(processedProduct.length, page, limit),
       },
       'List of Purchase Order',
     );
@@ -498,16 +540,6 @@ export class ProductVariantService {
         skip: offset,
         take: limit,
         where: whereCondition,
-        // where: {
-        //   ...findOptions?.where,
-        //   status: {
-        //     notIn: [ProductReceiptStatus.DISPOSED],
-        //     ...findOptions?.where?.status,
-        //   },
-        //   productSize: {
-        //     productVariantId: id,
-        //   },
-        // },
         include: {
           productSize: true,
         },

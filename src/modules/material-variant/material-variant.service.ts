@@ -153,7 +153,7 @@ export class MaterialVariantService {
 
     const dataResponse: DataResponse = {
       data: processedMaterials,
-      pageMeta: getPageMeta(total, offset, limit),
+      pageMeta: getPageMeta(processedMaterials.length, offset, limit),
     };
 
     return apiSuccess(HttpStatus.OK, dataResponse, 'List of Material');
@@ -614,6 +614,41 @@ export class MaterialVariantService {
             materialVariantId: id,
           },
         },
+      }),
+    ]);
+
+    const dataResponse: DataResponse = {
+      data,
+      pageMeta: getPageMeta(total, offset, limit),
+    };
+
+    return apiSuccess(HttpStatus.OK, dataResponse, 'List of Material Receipt');
+  }
+
+  async findDisposedMaterialImportReceipt(id: string, findOptions: any) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const whereCondition = {
+      ...findOptions?.where,
+      status: {
+        in: [MaterialReceiptStatus.DISPOSED],
+      },
+      materialPackage: {
+        materialVariantId: id,
+      },
+    };
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.materialReceipt.findMany({
+        skip: offset,
+        take: limit,
+        orderBy: findOptions?.orderBy,
+        where: whereCondition,
+        include: {
+          materialPackage: true,
+        },
+      }),
+      this.prismaService.materialReceipt.count({
+        where: whereCondition,
       }),
     ]);
 

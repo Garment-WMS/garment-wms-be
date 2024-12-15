@@ -190,6 +190,24 @@ export class ProductVariantController {
     );
   }
 
+  @Get(':id/product-receipt/disposed')
+  getDisposedProductImportReceipt(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ProductReceiptScalarWhereInput>(
+        [],
+        [{ createdAt: 'desc' }],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.ProductReceiptScalarWhereInput>,
+
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.productVariantService.findDisposedProductImportReceipt(
+      id,
+      filterOptions.findOptions,
+    );
+  }
+
   @Delete(':id')
   remove(@Param('id', CustomUUIDPipe) id: string) {
     return this.productVariantService.remove(id);
