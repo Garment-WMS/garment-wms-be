@@ -76,6 +76,20 @@ export interface MaterialVariant
 
 @Injectable()
 export class MaterialVariantService {
+  async getOneDisposed(id: string) {
+    const result = await this.searchDisposed({
+      orderBy: undefined,
+      skip: undefined,
+      take: undefined,
+      where: {
+        id,
+      },
+    });
+    if (result.data.data.length === 0) {
+      return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
+    }
+    return apiSuccess(HttpStatus.OK, result.data.data[0], 'Material found');
+  }
   async searchDisposed(
     findOptions: GeneratedFindOptions<Prisma.MaterialVariantScalarWhereInput>,
   ) {
@@ -571,22 +585,25 @@ export class MaterialVariantService {
     );
   }
 
-  async findMaterialImportReceipt(
-    id: string,
-    findOptions: GeneratedFindOptions<Prisma.MaterialReceiptScalarWhereInput>,
-  ) {
+  async findMaterialImportReceipt(id: string, findOptions: any) {
     const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const whereCondition = {
+      ...findOptions?.where,
+      status: {
+        notIn: [MaterialReceiptStatus.DISPOSED],
+        ...findOptions?.where?.status,
+      },
+      materialPackage: {
+        materialVariantId: id,
+      },
+    };
     const [data, total] = await this.prismaService.$transaction([
       this.prismaService.materialReceipt.findMany({
         skip: offset,
         take: limit,
         orderBy: findOptions?.orderBy,
-        where: {
-          materialPackage: {
-            materialVariantId: id,
-          },
-        },
+        where: whereCondition,
         include: {
           materialPackage: true,
         },
@@ -1242,18 +1259,6 @@ export class MaterialVariantService {
         ? result.materialPackage.length
         : 0;
       result.onHand = onHand;
-
-      // result.onHand = result?.materialPackage?.reduce(
-      //   (totalAcc, materialVariantEl) => {
-      //     let variantTotal = 0;
-      //     //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
-      //     if (materialVariantEl.inventoryStock) {
-      //       variantTotal = materialVariantEl.inventoryStock.quantityByPack;
-      //     }
-      //     return totalAcc + variantTotal;
-      //   },
-      //   0,
-      // );
     } else {
       result.numberOfMaterialPackage = 0;
       result.onHand = 0;

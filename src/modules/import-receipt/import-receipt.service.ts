@@ -715,16 +715,24 @@ export class ImportReceiptService {
           }
         } else if (importReceipt?.productReceipt.length > 0) {
           for (const detail of importReceipt.productReceipt) {
-            await this.productReceiptService.updateProductReceiptStatus(
-              detail.id,
-              $Enums.ProductReceiptStatus.AVAILABLE,
-              prismaInstance,
-            );
-            await this.inventoryStockService.updateProductStock(
-              detail.productSizeId,
-              detail.quantityByUom,
-              prismaInstance,
-            );
+            if (!detail.isDefect) {
+              await this.productReceiptService.updateProductReceiptStatus(
+                detail.id,
+                $Enums.ProductReceiptStatus.AVAILABLE,
+                prismaInstance,
+              );
+              await this.inventoryStockService.updateProductStock(
+                detail.productSizeId,
+                detail.quantityByUom,
+                prismaInstance,
+              );
+            } else {
+              await this.productReceiptService.updateProductReceiptStatus(
+                detail.id,
+                $Enums.ProductReceiptStatus.DISPOSED,
+                prismaInstance,
+              );
+            }
             if (
               !importReceipt?.inspectionReport?.inspectionRequest
                 .importRequestId

@@ -71,9 +71,16 @@ export class ProductVariantController {
     )
     filterOptions: FilterDto<Prisma.ProductVariantScalarWhereInput>,
   ) {
-    return this.productVariantService.findAllDisposed(filterOptions.findOptions);
+    return this.productVariantService.findAllDisposed(
+      filterOptions.findOptions,
+    );
   }
 
+  @Get('disposed/:id')
+  @UseInterceptors(HttpCacheInterceptor)
+  getOneDisposed(@Param('id', CustomUUIDPipe) id: string) {
+    return this.productVariantService.findByIdDisposeWithResponse(id);
+  }
 
   @Get('has-receipt')
   @UseInterceptors(HttpCacheInterceptor)
@@ -113,7 +120,6 @@ export class ProductVariantController {
     )
     filterOptions: FilterDto<Prisma.ProductVariantScalarWhereInput>,
   ) {
-    console.log(sortBy);
     return this.productVariantService.findHistoryByIdWithResponse(
       id,
       sortBy,
