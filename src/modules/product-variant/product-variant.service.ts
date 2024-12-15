@@ -111,10 +111,10 @@ export class ProductVariantService {
       product.productSize.forEach((productSize) => {
         // Initialize product size properties
         let productSizePackageOnHand = 0;
-        // Filter receipts with DISCARDED status and calculate onHand
+        // Filter receipts with DISPOSED status and calculate onHand
         productSize.productReceipt = productSize.productReceipt.filter(
           (productReceipt) => {
-            if (productReceipt.status === ProductReceiptStatus.DISCARDED) {
+            if (productReceipt.status === ProductReceiptStatus.DISPOSED) {
               productSizePackageOnHand += productReceipt.remainQuantityByUom; // Accumulate onHand directly
               product.onHand += productReceipt.remainQuantityByUom; // Accumulate onHand directly
               return true; // Retain the receipt
@@ -126,7 +126,6 @@ export class ProductVariantService {
         if (productSize.inventoryStock) {
           productSize.inventoryStock.quantityByUom = productSizePackageOnHand;
         }
-        
       });
 
       return product;
@@ -266,14 +265,14 @@ export class ProductVariantService {
             updatedAt: receiptAdjustment.updatedAt,
           });
         });
-        if (productReceipt.status === ProductReceiptStatus.DISCARDED) {
+        if (productReceipt.status === ProductReceiptStatus.DISPOSED) {
           result.history.push({
             productReceiptId: productReceipt.id,
             importReceiptId: productReceipt.importReceipt?.id,
             quantityByPack: -productReceipt.quantityByUom,
             code: productReceipt.importReceipt?.code,
             isDefect: productReceipt.isDefect,
-            type: 'DISCARDED',
+            type: 'DISPOSED',
             createdAt: productReceipt.createdAt,
             updatedAt: productReceipt.updatedAt,
           });
