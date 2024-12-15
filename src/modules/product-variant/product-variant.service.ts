@@ -79,6 +79,24 @@ interface ProductVariantIncludeQuery
 
 @Injectable()
 export class ProductVariantService {
+  async findByIdDisposeWithResponse(id: string) {
+    const result = await this.findAllDisposed({
+      where: {
+        id: id,
+      },
+      orderBy: undefined,
+      skip: undefined,
+      take: undefined,
+    });
+    if (result.data.data.length > 0) {
+      return apiSuccess(
+        HttpStatus.OK,
+        result.data.data[0],
+        'Product retrieved successfully',
+      );
+    }
+    return apiFailed(HttpStatus.NOT_FOUND, 'Product not found');
+  }
   async findAllDisposed(
     filterOption: GeneratedFindOptions<Prisma.ProductVariantScalarWhereInput>,
   ) {
@@ -461,21 +479,35 @@ export class ProductVariantService {
     return result;
   }
 
-  async findProductImportReceipt(
-    id: string,
-    findOptions: GeneratedFindOptions<Prisma.ProductReceiptScalarWhereInput>,
-  ) {
+  async findProductImportReceipt(id: string, findOptions: any) {
     const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const whereCondition = {
+      ...findOptions?.where,
+      status: {
+        notIn: [ProductReceiptStatus.DISPOSED],
+        ...findOptions?.where?.status,
+      },
+      productSize: {
+        productVariantId: id,
+      },
+    };
+
     const [data, total] = await this.prismaService.$transaction([
       this.prismaService.productReceipt.findMany({
         skip: offset,
         take: limit,
-        where: {
-          productSize: {
-            productVariantId: id,
-          },
-        },
+        where: whereCondition,
+        // where: {
+        //   ...findOptions?.where,
+        //   status: {
+        //     notIn: [ProductReceiptStatus.DISPOSED],
+        //     ...findOptions?.where?.status,
+        //   },
+        //   productSize: {
+        //     productVariantId: id,
+        //   },
+        // },
         include: {
           productSize: true,
         },
@@ -801,6 +833,57 @@ export class ProductVariantService {
           }
           if (
             productReceipt.status === ProductReceiptStatus.AVAILABLE &&
+            productReceipt.isDefect === true
+          ) {
+            result.onHandDisqualified += productReceipt.remainQuantityByUom;
+          }
+        });
+      });
+      result.numberOfProductSize = result.productSize
+        ? result.productSize.length
+        : 0;
+
+      result.onHand = result?.productSize?.reduce((totalAcc, productSizeEl) => {
+        let variantTotal = 0;
+        //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
+        if (productSizeEl.inventoryStock) {
+          variantTotal = productSizeEl.inventoryStock.quantityByUom;
+        }
+        return totalAcc + variantTotal;
+      }, 0);
+    } else {
+      result.numberOfProductSize = 0;
+      result.onHand = 0;
+    }
+
+    return result;
+  }
+  async findDisposedById(id: string) {
+    if (!isUUID(id)) {
+      return null;
+    }
+    const result: any = await this.prismaService.productVariant.findUnique({
+      where: {
+        id: id,
+      },
+      include: this.includeQuery,
+    });
+
+    if (result.productSize) {
+      result.onHandQualified = 0;
+      result.onHandDisqualified = 0;
+      result.productSize.forEach((productSize) => {
+        productSize.productReceipt.forEach((productReceipt) => {
+          if (
+            productReceipt.status === ProductReceiptStatus.DISPOSED &&
+            productReceipt.isDefect === false
+          ) {
+            console.log(productReceipt.remainQuantityByUom);
+
+            result.onHandQualified += productReceipt.remainQuantityByUom;
+          }
+          if (
+            productReceipt.status === ProductReceiptStatus.DISPOSED &&
             productReceipt.isDefect === true
           ) {
             result.onHandDisqualified += productReceipt.remainQuantityByUom;
