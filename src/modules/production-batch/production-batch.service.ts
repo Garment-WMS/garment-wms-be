@@ -181,6 +181,7 @@ export class ProductionBatchService {
       totalProducedProduct / (totalProducedProduct + totalDefectProduct);
 
     const [
+      productionBatchOfProductionPlan,
       total,
       totalPending,
       totalExecuting,
@@ -189,34 +190,65 @@ export class ProductionBatchService {
       totalFinished,
       totalCancelled,
     ] = await this.prismaService.$transaction([
-      this.prismaService.productionBatch.count({}),
+      this.prismaService.productionBatch.findMany({
+        where: {
+          productionPlanDetail: {
+            productionPlanId: productionPlan.id,
+          },
+        },
+      }),
       this.prismaService.productionBatch.count({
         where: {
+          productionPlanDetail: {
+            productionPlanId: productionPlan.id,
+          },
+        },
+      }),
+      this.prismaService.productionBatch.count({
+        where: {
+          productionPlanDetail: {
+            productionPlanId: productionPlan.id,
+          },
           status: ProductionBatchStatus.PENDING,
         },
       }),
       this.prismaService.productionBatch.count({
         where: {
+          productionPlanDetail: {
+            productionPlanId: productionPlan.id,
+          },
           status: ProductionBatchStatus.EXECUTING,
         },
       }),
       this.prismaService.productionBatch.count({
         where: {
+          productionPlanDetail: {
+            productionPlanId: productionPlan.id,
+          },
           status: ProductionBatchStatus.MANUFACTURING,
         },
       }),
       this.prismaService.productionBatch.count({
         where: {
+          productionPlanDetail: {
+            productionPlanId: productionPlan.id,
+          },
           status: ProductionBatchStatus.IMPORTING,
         },
       }),
       this.prismaService.productionBatch.count({
         where: {
+          productionPlanDetail: {
+            productionPlanId: productionPlan.id,
+          },
           status: ProductionBatchStatus.FINISHED,
         },
       }),
       this.prismaService.productionBatch.count({
         where: {
+          productionPlanDetail: {
+            productionPlanId: productionPlan.id,
+          },
           status: ProductionBatchStatus.CANCELLED,
         },
       }),
@@ -224,6 +256,7 @@ export class ProductionBatchService {
     return apiSuccess(
       HttpStatus.OK,
       {
+        productionBatchOfProductionPlan,
         productionBatchStatistic: {
           total,
           totalPending,
