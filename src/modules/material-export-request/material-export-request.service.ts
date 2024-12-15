@@ -563,6 +563,10 @@ export class MaterialExportRequestService {
           chat2,
           productionDepartment,
         );
+        await this.productionBatchService.updateStatus(
+          result2.productionBatchId,
+          $Enums.ProductionBatchStatus.PENDING,
+        );
         return result2;
       default:
         throw new BadRequestException('Invalid action');
