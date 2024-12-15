@@ -158,7 +158,7 @@ export class MaterialVariantController {
       new AllFilterPipeUnsafe<any, Prisma.MaterialVariantScalarWhereInput>(
         ['material.name', 'material.code', 'material.materialUom.name'],
         [
-          { createdAt: 'desc' },
+          { createdAt: 'asc' },
           { id: 'asc' },
           { name: 'asc' },
           { materialId: 'asc' },

@@ -343,10 +343,10 @@ export class ProductVariantService {
     let length = result.history.length;
     result.history = result?.history
       ?.sort((a, b) => {
-        if (sortBy === 'desc') {
-          return b.createdAt.getTime() - a.createdAt.getTime();
+        if (sortBy === 'asc') {
+          return a.createdAt.getTime() - b.createdAt.getTime();
         }
-        return a.createdAt.getTime() - b.createdAt.getTime();
+        return b.createdAt.getTime() - a.createdAt.getTime();
       })
       .slice(offset, offset + limit);
 
