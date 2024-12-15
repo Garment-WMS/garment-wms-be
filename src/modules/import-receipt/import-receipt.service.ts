@@ -329,11 +329,13 @@ export class ImportReceiptService {
               $Enums.ImportRequestStatus.REJECTED,
               prismaInstance,
             );
-            await this.poDeliveryService.updatePoDeliveryMaterialStatus(
-              importRequest.poDeliveryId,
-              PoDeliveryStatus.CANCELLED,
-              prismaInstance,
-            );
+            if(importRequest?.poDelivery){
+              await this.poDeliveryService.updatePoDeliveryMaterialStatus(
+                importRequest.poDeliveryId,
+                PoDeliveryStatus.CANCELLED,
+                prismaInstance,
+              );
+            }
           } else {
             await this.importRequestService.updateImportRequestStatus(
               inspectionReport.inspectionRequest.importRequestId,

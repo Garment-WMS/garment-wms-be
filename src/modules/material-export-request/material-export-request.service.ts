@@ -37,6 +37,7 @@ import {
   ProductionStaffDepartmentProcessDto,
 } from './dto/production-department-approve.dto';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class MaterialExportRequestService {
@@ -47,6 +48,7 @@ export class MaterialExportRequestService {
     private readonly chatService: ChatService,
     private readonly materialExportReceiptService: MaterialExportReceiptService,
     private readonly productionBatchService: ProductionBatchService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async getByUserToken(
@@ -541,6 +543,8 @@ export class MaterialExportRequestService {
           chat,
           productionDepartment,
         );
+        this.eventEmitter.emit('start-await-inventory-report-plan');
+
         return result;
       case ProductionDepartmentApproveAction.PRODUCTION_REJECTED:
         const result2 = await this.prismaService.materialExportRequest.update({

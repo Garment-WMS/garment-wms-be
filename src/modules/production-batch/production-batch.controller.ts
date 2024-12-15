@@ -57,7 +57,11 @@ export class ProductionBatchController {
   async search(
     @Query(
       new AllFilterPipeUnsafe(
-        ['productionPlanDetail.id', 'productionPlanDetail.code'],
+        [
+          'productionPlanDetail.id',
+          'productionPlanDetail.code',
+          'productionPlanDetail.productionPlanId',
+        ],
         [{ createdAt: 'desc' }],
       ),
     )
