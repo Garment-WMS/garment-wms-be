@@ -27,7 +27,7 @@ export class NotificationGateway
   @WebSocketServer()
   server: Server;
 
-  private userSockets: Map<string, string> = new Map();
+  private userSockets: Map<string, string[]> = new Map();
 
   async handleConnection(client: Socket, ...args: any[]) {
     const jwtToken = client.handshake.headers['token'] as string;
@@ -39,27 +39,37 @@ export class NotificationGateway
     try {
       const user = await this.authService.validateJwt(jwtToken);
       console.log(this.userSockets);
-      this.userSockets.set(user.userId, client.id);
+      const existingSockets = this.userSockets.get(user.userId) || [];
+      this.userSockets.set(user.userId, [...existingSockets, client.id]);
       client.data.user = user; // Store user info on the socket
     } catch (errors) {
       client.disconnect();
     }
   }
+
   handleDisconnect(client: Socket) {
     const user = client.data.user;
     if (user) {
-      this.userSockets.delete(user.id);
+      const existingSockets = this.userSockets.get(user.userId) || [];
+      const updatedSockets = existingSockets.filter(
+        (socketId) => socketId !== client.id,
+      );
+      if (updatedSockets.length > 0) {
+        this.userSockets.set(user.userId, updatedSockets);
+      } else {
+        this.userSockets.delete(user.userId);
+      }
     }
   }
 
   @SubscribeMessage('newNotification')
   create(@MessageBody() notification: Notification) {
     console.log(this.userSockets);
-    const recipientSocketId = this.userSockets.get(notification.accountId);
-    console.log('recipientSocketId', recipientSocketId);
-    if (recipientSocketId) {
-      this.server.to(recipientSocketId).emit('newNotification', notification);
-    }
+    const recipientSocketIds =
+      this.userSockets.get(notification.accountId) || [];
+    recipientSocketIds.forEach((socketId) => {
+      this.server.to(socketId).emit('newNotification', notification);
+    });
     return notification;
   }
 }
