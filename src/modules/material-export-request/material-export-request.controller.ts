@@ -60,7 +60,7 @@ export class MaterialExportRequestController {
   async search(
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.MaterialExportRequestWhereInput>(
-        [],
+        ['productionBatch.code', 'productionBatch.id'],
         [{ createdAt: 'desc' }],
       ),
     )
