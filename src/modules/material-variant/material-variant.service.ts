@@ -363,54 +363,26 @@ export class MaterialVariantService {
 
     result.materialPackage.forEach((materialPackage) => {
       materialPackage?.materialReceipt?.forEach((materialReceipt) => {
-        if (materialReceipt.status == MaterialReceiptStatus.AVAILABLE) {
-          result.history.push({
-            materialReceiptId: materialReceipt.id,
-            importReceiptId: materialReceipt.importReceiptId,
-            quantityByPack: materialReceipt.quantityByPack,
-            code: materialReceipt.importReceipt.code,
-            type: 'IMPORT_RECEIPT',
-            createdAt: materialReceipt.createdAt,
-            updatedAt: materialReceipt.updatedAt,
-          });
+        if (materialReceipt.status) {
           materialReceipt?.materialExportReceiptDetail?.forEach(
             (materialExportReceiptDetail) => {
-              result.history.push({
-                materialExportReceiptDetailId: materialExportReceiptDetail.id,
-                materialExportReceiptId:
-                  materialExportReceiptDetail.materialExportReceiptId,
-                quantityByPack: -materialExportReceiptDetail.quantityByPack,
-                code: materialExportReceiptDetail?.materialExportReceipt.code,
-                type: 'EXPORT_RECEIPT',
-                createdAt: materialExportReceiptDetail.createdAt,
-                updatedAt: materialExportReceiptDetail.updatedAt,
-              });
+              if (
+                materialExportReceiptDetail.materialExportReceipt.type ===
+                'DISPOSED'
+              ) {
+                result.history.push({
+                  materialExportReceiptDetailId: materialExportReceiptDetail.id,
+                  materialExportReceiptId:
+                    materialExportReceiptDetail.materialExportReceiptId,
+                  quantityByPack: materialExportReceiptDetail.quantityByPack,
+                  code: materialExportReceiptDetail?.materialExportReceipt.code,
+                  type: 'EXPORT_RECEIPT',
+                  createdAt: materialExportReceiptDetail.createdAt,
+                  updatedAt: materialExportReceiptDetail.updatedAt,
+                });
+              }
             },
           );
-          materialReceipt?.receiptAdjustment?.forEach((receiptAdjustment) => {
-            result.history.push({
-              receiptAdjustmentId: receiptAdjustment.id,
-              inventoryReportId:
-                receiptAdjustment?.inventoryReportDetail.inventoryReportId,
-              quantityByPack:
-                receiptAdjustment.afterAdjustQuantity -
-                receiptAdjustment.beforeAdjustQuantity,
-              code: receiptAdjustment?.inventoryReportDetail?.inventoryReport
-                .code,
-              type: 'RECEIPT_ADJUSTMENT',
-              createdAt: receiptAdjustment.createdAt,
-              updatedAt: receiptAdjustment.updatedAt,
-            });
-          });
-        } else if (materialReceipt.status == MaterialReceiptStatus.DISPOSED) {
-          result.history.push({
-            materialReceiptId: materialReceipt.id,
-            quantityByPack: -materialReceipt.quantityByPack,
-            code: materialReceipt.importReceipt.code,
-            type: 'DISPOSED',
-            createdAt: materialReceipt.createdAt,
-            updatedAt: materialReceipt.updatedAt,
-          });
         }
       });
     });
