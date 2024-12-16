@@ -374,7 +374,7 @@ export class MaterialVariantService {
                   materialExportReceiptDetailId: materialExportReceiptDetail.id,
                   materialExportReceiptId:
                     materialExportReceiptDetail.materialExportReceiptId,
-                  quantityByPack: materialExportReceiptDetail.quantityByPack,
+                  quantityByPack: -materialExportReceiptDetail.quantityByPack,
                   code: materialExportReceiptDetail?.materialExportReceipt.code,
                   type: 'EXPORT_RECEIPT',
                   createdAt: materialExportReceiptDetail.createdAt,
