@@ -243,9 +243,6 @@ export class InspectionReportService {
               inspectionReportDetail.defectQuantityByPack !==
             importRequestDetail.quantityByPack
           ) {
-            console.log(inspectionReportDetail.approvedQuantityByPack);
-            console.log(inspectionReportDetail.defectQuantityByPack);
-            console.log(importRequestDetail.quantityByPack);
             errorInspectionReportDetail.push(inspectionReportDetail);
           }
         }

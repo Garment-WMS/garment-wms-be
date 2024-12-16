@@ -292,7 +292,7 @@ export class MaterialVariantController {
     filterOptions: FilterDto<Prisma.MaterialVariantScalarWhereInput>,
     @Param('id', new CustomUUIDPipe()) id: string,
   ) {
-    return this.materialVariantService.findHistoryByIdWithResponse(
+    return this.materialVariantService.findHistoryDisposedByIdWithResponse(
       id,
       sortBy,
       filterOptions.findOptions,
