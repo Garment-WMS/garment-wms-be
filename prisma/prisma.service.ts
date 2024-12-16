@@ -75,26 +75,26 @@ export class PrismaService
             where: params.args.where,
           });
           const result = await next(params);
-          if (params.model === 'ImportRequest') {
-            const changes = {};
-            const updatedRecord = result as ImportRequest;
-            for (const key of Object.keys(updatedRecord)) {
-              if (updatedRecord[key] !== existingRecord[key]) {
-                changes[key] = {
-                  before: existingRecord[key],
-                  after: updatedRecord[key],
-                };
-                console.log('key', key);
-                console.log('changes', changes);
-                if (key === 'status') {
-                  this.eventEmitter.emit('notification.importRequest.updated', {
-                    changes,
-                    importRequestId: updatedRecord.id,
-                  });
-                }
-              }
-            }
-          } else if (params.model === 'MaterialExportRequest') {
+          // if (params.model === 'ImportRequest') {
+          //   const changes = {};
+          //   const updatedRecord = result as ImportRequest;
+          //   for (const key of Object.keys(updatedRecord)) {
+          //     if (updatedRecord[key] !== existingRecord[key]) {
+          //       changes[key] = {
+          //         before: existingRecord[key],
+          //         after: updatedRecord[key],
+          //       };
+          //       if (key === 'status') {
+          //         this.eventEmitter.emit('notification.importRequest.updated', {
+          //           changes,
+          //           importRequestId: updatedRecord.id,
+          //         });
+          //       }
+          //     }
+          //   }
+          // } 
+          
+           if (params.model === 'MaterialExportRequest') {
             const updatedRecord = result as MaterialExportRequest;
             const changes = {};
             for (const key of Object.keys(updatedRecord)) {
