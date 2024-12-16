@@ -387,7 +387,10 @@ export class MaterialVariantService {
 
     result.materialPackage.forEach((materialPackage) => {
       materialPackage?.materialReceipt?.forEach((materialReceipt) => {
-        if (materialReceipt.status == MaterialReceiptStatus.AVAILABLE) {
+        if (
+          materialReceipt.status == MaterialReceiptStatus.AVAILABLE ||
+          materialReceipt.status == MaterialReceiptStatus.USED||
+        ) {
           result.history.push({
             materialReceiptId: materialReceipt.id,
             quantityByPack: materialReceipt.quantityByPack,
