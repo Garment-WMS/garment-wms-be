@@ -78,6 +78,7 @@ export class ImportReceiptController {
         [
           'inspectionReport.inspectionRequest.importRequestId',
           'inspectionReport.inspectionRequest.importRequest.poDelivery.purchaseOrder.code',
+          'inspectionReport.inspectionRequest.importRequest.poDelivery.purchaseOrder.id',
         ],
         [
           { createdAt: 'desc' },

@@ -211,11 +211,7 @@ export class NotificationService {
     importRequestId: string;
   }) {
     const { changeField, importRequestId } = payload;
-    console.log('changeField', changeField);
-    console.log('importRequestId', importRequestId);
     const importRequest = await this.findUniqueForNotification(importRequestId);
-    console.log('importRequest', importRequest);
-    console.log('changeField', changeField);
     if (changeField?.status.after === ImportRequestStatus.INSPECTED) {
       const notification =
         await this.prismaService.notification.createManyAndReturn({
@@ -232,7 +228,6 @@ export class NotificationService {
               message: `Import Request ${importRequest.code} has been inspected and waiting for importing`,
               path: `/import-request/${importRequest.id}`,
               type: 'IMPORT_REQUEST',
-
               accountId: importRequest.warehouseStaff.accountId,
             },
             {
@@ -265,7 +260,6 @@ export class NotificationService {
               message: `Import Request ${importRequest.code} is importing`,
               path: `/import-request/${importRequest.id}`,
               type: 'IMPORT_REQUEST',
-
               accountId: importRequest.purchasingStaff.accountId,
             },
           ],
@@ -282,7 +276,6 @@ export class NotificationService {
               message: `Import Request ${importRequest.code} has been imported`,
               path: `/import-request/${importRequest.id}`,
               type: 'IMPORT_REQUEST',
-
               accountId: importRequest.warehouseManager.accountId,
             },
             {
@@ -290,7 +283,6 @@ export class NotificationService {
               message: `Import Request ${importRequest.code} has been imported`,
               path: `/import-request/${importRequest.id}`,
               type: 'IMPORT_REQUEST',
-
               accountId: importRequest.purchasingStaff.accountId,
             },
           ],

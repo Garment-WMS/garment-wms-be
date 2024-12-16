@@ -104,16 +104,30 @@ export class MaterialVariantService {
 
     result.materialPackage.forEach((materialPackage) => {
       materialPackage?.materialReceipt?.forEach((materialReceipt) => {
-        if (materialReceipt.status == MaterialReceiptStatus.DISPOSED) {
-          result.history.push({
-            materialReceiptId: materialReceipt.id,
-            quantityByPack: materialReceipt.quantityByPack,
-            code: materialReceipt.importReceipt.code,
-            type: 'DISPOSED',
-            createdAt: materialReceipt.createdAt,
-            updatedAt: materialReceipt.updatedAt,
-          });
-        }
+        materialReceipt.materialExportReceiptDetail.forEach(
+          (materialExportReceiptDetail) => {
+            if (
+              materialExportReceiptDetail.materialExportReceipt.status ===
+              ExportReceiptStatus.EXPORTED
+            ) {
+              if (
+                materialExportReceiptDetail.materialExportReceipt.type ===
+                'DISPOSED'
+              ) {
+                result.history.push({
+                  materialExportReceiptId:
+                    materialExportReceiptDetail.materialExportReceipt.id,
+                  materialExportReceiptDetailId: materialExportReceiptDetail.id,
+                  quantityByPack: materialExportReceiptDetail.quantityByPack,
+                  code: materialExportReceiptDetail.materialExportReceipt.code,
+                  type: 'DISPOSED',
+                  createdAt: materialExportReceiptDetail.createdAt,
+                  updatedAt: materialExportReceiptDetail.updatedAt,
+                });
+              }
+            }
+          },
+        );
       });
     });
 
@@ -389,6 +403,8 @@ export class MaterialVariantService {
                 ExportReceiptStatus.EXPORTED
               ) {
                 result.history.push({
+                  materialExportReceiptId:
+                    materialExportReceiptDetail.materialExportReceipt.id,
                   materialExportReceiptDetailId: materialExportReceiptDetail.id,
                   quantityByPack: -materialExportReceiptDetail.quantityByPack,
                   code: materialExportReceiptDetail.materialExportReceipt.code,
@@ -402,6 +418,8 @@ export class MaterialVariantService {
           materialReceipt.receiptAdjustment.forEach((receiptAdjustment) => {
             if (receiptAdjustment.status === 'ADJUSTED') {
               result.history.push({
+                inventoryReportId:
+                  receiptAdjustment.inventoryReportDetail.inventoryReport.id,
                 receiptAdjustmentId: receiptAdjustment.id,
                 quantityByPack:
                   receiptAdjustment.afterAdjustQuantity -
@@ -415,28 +433,6 @@ export class MaterialVariantService {
             }
           });
         }
-        // materialReceipt.materialExportReceiptDetail.forEach(
-        //   (materialExportReceiptDetail) => {
-        //     if (
-        //       materialExportReceiptDetail.materialExportReceipt.status ===
-        //       ExportReceiptStatus.EXPORTED
-        //     ) {
-        //       if (
-        //         materialExportReceiptDetail.materialExportReceipt.type ===
-        //         'DISPOSED'
-        //       ) {
-        //         result.history.push({
-        //           materialExportReceiptDetailId: materialExportReceiptDetail.id,
-        //           quantityByPack: -materialExportReceiptDetail.quantityByPack,
-        //           code: materialExportReceiptDetail.materialExportReceipt.code,
-        //           type: 'DISPOSED',
-        //           createdAt: materialExportReceiptDetail.createdAt,
-        //           updatedAt: materialExportReceiptDetail.updatedAt,
-        //         });
-        //       } 
-        //     }
-        //   },
-        // );
       });
     });
 
@@ -725,25 +721,52 @@ export class MaterialVariantService {
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
     const whereCondition = {
       ...findOptions?.where,
-      status: {
-        in: [MaterialReceiptStatus.DISPOSED],
-      },
+
       materialPackage: {
         materialVariantId: id,
       },
     };
     const [data, total] = await this.prismaService.$transaction([
-      this.prismaService.materialReceipt.findMany({
+      this.prismaService.materialExportReceiptDetail.findMany({
         skip: offset,
         take: limit,
         orderBy: findOptions?.orderBy,
-        where: whereCondition,
+        where: {
+          materialReceipt: {
+            materialPackage: {
+              materialVariantId: id,
+            },
+          },
+          materialExportReceipt: {
+            type: 'DISPOSED',
+            status: ExportReceiptStatus.EXPORTED,
+          },
+        },
         include: {
-          materialPackage: true,
+          materialExportReceipt: true,
+          materialReceipt: {
+            include: {
+              materialPackage: {
+                include: {
+                  materialVariant: true,
+                },
+              },
+            },
+          },
         },
       }),
-      this.prismaService.materialReceipt.count({
-        where: whereCondition,
+      this.prismaService.materialExportReceiptDetail.count({
+        where: {
+          materialReceipt: {
+            materialPackage: {
+              materialVariantId: id,
+            },
+          },
+          materialExportReceipt: {
+            type: 'DISPOSED',
+            status: ExportReceiptStatus.EXPORTED,
+          },
+        },
       }),
     ]);
 

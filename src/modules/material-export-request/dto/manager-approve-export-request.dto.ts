@@ -33,12 +33,14 @@ export class ManagerApproveExportRequestDto {
   managerNote: string;
 
   @ApiProperty({ required: false })
+  @ValidateIf((o) => o.action === ManagerAction.APPROVED)
   @IsUserRoleExist(RoleCode.WAREHOUSE_STAFF)
   @IsUUID()
   @IsNotEmpty()
   warehouseStaffId: string;
 
   @ApiProperty({ required: false })
+  @ValidateIf((o) => o.action === ManagerAction.APPROVED)
   @Type(() => CreateMaterialExportReceiptDto)
   @ValidateNested({ each: true })
   @IsNotEmpty()

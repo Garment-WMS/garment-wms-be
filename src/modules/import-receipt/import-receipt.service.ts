@@ -9,6 +9,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   $Enums,
   ImportReceipt,
@@ -34,6 +35,7 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { getPageMeta } from 'src/common/utils/utils';
+import { ChangeFieldDto } from 'src/notification/dto/change-field.dto';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ChatService } from '../chat/chat.service';
 import { CreateChatDto } from '../chat/dto/create-chat.dto';
@@ -64,6 +66,7 @@ export class ImportReceiptService {
     private readonly productionBatchService: ProductionBatchService,
     private readonly taskService: TaskService,
     private readonly chatService: ChatService,
+    private readonly eventEmitter: EventEmitter2,
     @InjectQueue('import-receipt') private importReceiptQueue: Queue,
   ) {}
 
@@ -232,6 +235,16 @@ export class ImportReceiptService {
           discussionId: importRequest?.discussion.id,
           message: Constant.IMPORT_RECEIPT_INSPECTED_TO_AWAIT_TO_IMPORT,
         };
+        const changes: ChangeFieldDto = {
+          status: {
+            after: $Enums.ImportRequestStatus.IMPORTING,
+            before: $Enums.ImportRequestStatus.INSPECTED,
+          },
+        };
+        this.eventEmitter.emit('notification.importRequest.updated', {
+          changes,
+          importRequestId: importRequest.id,
+        });
         await this.chatService.createBySystemWithoutResponse(chat);
         await this.updateTaskByImportReceipt(result);
         await this.discussionService.updateImportReceiptDiscussion(
@@ -325,6 +338,7 @@ export class ImportReceiptService {
               $Enums.ImportRequestStatus.REJECTED,
               prismaInstance,
             );
+
             if (importRequest?.poDeliveryId) {
               await this.poDeliveryService.updatePoDeliveryMaterialStatus(
                 importRequest.poDeliveryId,
@@ -703,6 +717,20 @@ export class ImportReceiptService {
               prismaInstance,
             );
 
+            const changes: ChangeFieldDto = {
+              status: {
+                after: $Enums.ImportRequestStatus.IMPORTED,
+                before: $Enums.ImportRequestStatus.INSPECTED,
+              },
+            };
+
+            this.eventEmitter.emit('notification.importRequest.updated', {
+              changes,
+              importRequestId:
+                importReceipt.inspectionReport.inspectionRequest.importRequest
+                  .id,
+            });
+
             if (
               importReceipt.inspectionReport.inspectionRequest.importRequest
                 .poDeliveryId
@@ -746,6 +774,19 @@ export class ImportReceiptService {
               $Enums.ImportRequestStatus.IMPORTED,
               prismaInstance,
             );
+            const changes: ChangeFieldDto = {
+              status: {
+                after: $Enums.ImportRequestStatus.IMPORTED,
+                before: $Enums.ImportRequestStatus.INSPECTED,
+              },
+            };
+
+            this.eventEmitter.emit('notification.importRequest.updated', {
+              changes,
+              importRequestId:
+                importReceipt.inspectionReport.inspectionRequest.importRequest
+                  .id,
+            });
           }
           await this.productionBatchService.updateProductBatchStatus(
             importReceipt.inspectionReport.inspectionRequest.importRequest
