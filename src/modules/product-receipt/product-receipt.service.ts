@@ -274,7 +274,7 @@ export class ProductReceiptService {
       DefaultArgs
     >,
   ) {
-    return prismaInstance.productReceipt.update({
+    const result = await prismaInstance.productReceipt.update({
       where: {
         id,
       },
@@ -282,7 +282,34 @@ export class ProductReceiptService {
         importDate: new Date(),
         status,
       },
+      include:{
+        importReceipt:{
+          include:{
+            inspectionReport:{
+              include:{
+                inspectionRequest:{
+                  include:{
+                    importRequest:true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     });
+
+    if(result.importReceipt.inspectionReport.inspectionRequest.importRequest?.productionBatchId){
+      await prismaInstance.productionBatch.update({
+        where:{
+          id:result.importReceipt.inspectionReport.inspectionRequest.importRequest.productionBatchId
+        },
+        data:{
+        }
+      })
+    }
+
+    return result
   }
 
   async getAllProductReceiptOfProductVariant(productVariantId: string) {

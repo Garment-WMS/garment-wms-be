@@ -301,8 +301,6 @@ export class ProductionBatchService {
     if (productBatch.status !== 'PENDING') {
       throw new BadRequestException('Production Batch is not pending');
     }
-
-    console.log('user', user.productionDepartmentId);
     const result = await this.prismaService.productionBatch.update({
       where: { id: id },
       data: {
@@ -343,9 +341,28 @@ export class ProductionBatchService {
     status: ProductionBatchStatus,
     prismaInstance: PrismaService = this.prismaService,
   ) {
-    const productionBatchInput: Prisma.ProductionBatchUpdateInput = {
+    let productionBatchInput: Prisma.ProductionBatchUpdateInput = {
       status: status,
     };
+    if (status === ProductionBatchStatus.FINISHED) {
+      productionBatchInput = {
+        ...productionBatchInput,
+        finishedDate: new Date(),
+      };
+    }
+    if (status === ProductionBatchStatus.EXECUTING) {
+      productionBatchInput = {
+        ...productionBatchInput,
+        startDate: new Date(),
+      };
+    }
+    if (status === ProductionBatchStatus.CANCELLED) {
+      productionBatchInput = {
+        ...productionBatchInput,
+        cancelledAt: new Date(),
+      };
+    }
+
     return prismaInstance.productionBatch.update({
       where: { id: productionBatchId },
       data: productionBatchInput,
@@ -526,6 +543,50 @@ export class ProductionBatchService {
         },
       }),
     ]);
+
+    data.forEach((data: any) => {
+      data.numberOfProducedProduct = 0;
+      data?.importRequest.forEach((request: ImportRequestWithInclude) => {
+        if (request.inspectionRequest) {
+          request.inspectionRequest.forEach((inspectionRequest: any) => {
+            if (inspectionRequest.inspectionReport) {
+              if (
+                inspectionRequest.inspectionReport?.importReceipt &&
+                inspectionRequest.inspectionReport.importReceipt.status ===
+                  'IMPORTED'
+              ) {
+                data.numberOfProducedProduct =
+                  inspectionRequest.inspectionReport.importReceipt.productReceipt.reduce(
+                    (acc, current) => {
+                      if (current.status !== 'DISPOSED') {
+                        return acc + current.quantityByUom;
+                      }
+                      return acc; // Ensure the accumulator is returned if the condition is not met
+                    },
+                    0,
+                  );
+              }
+            }
+          });
+        }
+      });
+      let actualExportMateiralQuantity = [];
+      data?.materialExportRequest?.forEach((request: any) => {
+        if (request?.materialExportReceipt) {
+          request.materialExportReceipt.materialExportReceiptDetail.forEach(
+            (detail: any) => {
+              actualExportMateiralQuantity.push({
+                materialVariantId:
+                  detail.materialReceipt.materialPackage.materialVariantId,
+                quantity:
+                  detail.quantityByPack *
+                  detail.materialReceipt.materialPackage.uomPerPack,
+              });
+            },
+          );
+        }
+      });
+    });
 
     const dataResponse: DataResponse = {
       data,

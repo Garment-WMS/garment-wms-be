@@ -574,6 +574,7 @@ export class MaterialExportRequestService {
           result2.productionBatchId,
           $Enums.ProductionBatchStatus.PENDING,
         );
+        this.eventEmitter.emit('start-await-inventory-report-plan');
         return result2;
       default:
         throw new BadRequestException('Invalid action');
