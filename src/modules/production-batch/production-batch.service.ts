@@ -310,7 +310,6 @@ export class ProductionBatchService {
         cancelledBy: user.productionDepartmentId,
       },
     });
-    console.log(result);
     if (!result) {
       return apiFailed(
         HttpStatus.INTERNAL_SERVER_ERROR,
