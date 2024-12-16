@@ -3,8 +3,10 @@ import {
   ForbiddenException,
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { $Enums, Prisma, RoleCode } from '@prisma/client';
 import {
   materialExportReceiptInclude,
@@ -19,6 +21,7 @@ import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { DataResponse } from 'src/common/dto/data-response';
 import { CustomHttpException } from 'src/common/filter/custom-http.exception';
 import { getPageMeta } from 'src/common/utils/utils';
+import { NotificationService } from 'src/notification/notification.service';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ChatService } from '../chat/chat.service';
 import { CreateChatDto } from '../chat/dto/create-chat.dto';
@@ -43,6 +46,8 @@ export class MaterialExportReceiptService {
     private readonly taskService: TaskService,
     private readonly chatService: ChatService,
     private readonly inventoryStockService: InventoryStockService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async getByUserToken(
@@ -636,7 +641,19 @@ export class MaterialExportReceiptService {
           message: Constant.EXPORT_RECEIPT_AWAIT_TO_EXPORT_TO_EXPORTED,
         };
         await this.chatService.createWithoutResponse(chat2, warehouseStaff);
-
+        try {
+          await this.notificationService.handleNotificationMaterialExportRequestUpdatedEvent(
+            {
+              status: {
+                before: $Enums.MaterialExportRequestStatus.EXPORTING,
+                after: $Enums.MaterialExportRequestStatus.EXPORTED,
+              },
+            },
+            materialExportRequest2,
+          );
+        } catch (error: any) {
+          Logger.error(error?.stack || error);
+        }
         return {
           materialExportReceipt: materialExportReceipt2,
           materialExportRequest: materialExportRequest2,

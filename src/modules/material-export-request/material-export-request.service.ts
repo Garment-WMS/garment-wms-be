@@ -23,6 +23,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { NotificationService } from 'src/notification/notification.service';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ChatService } from '../chat/chat.service';
 import { CreateChatDto } from '../chat/dto/create-chat.dto';
@@ -50,6 +51,7 @@ export class MaterialExportRequestService {
     private readonly materialExportReceiptService: MaterialExportReceiptService,
     private readonly productionBatchService: ProductionBatchService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async getByUserToken(
@@ -619,20 +621,21 @@ export class MaterialExportRequestService {
 
         return result;
       case ProductionDepartmentApproveAction.PRODUCTION_REJECTED:
-        const result2 = await this.prismaService.materialExportRequest.update({
-          where: {
-            id: productionStaffApproveDto.materialExportRequestId,
-          },
-          data: {
-            status: MaterialExportRequestStatus.PRODUCTION_REJECTED,
-            productionRejectReason:
-              productionStaffApproveDto.productionRejectReason,
-          },
-          include: materialExportRequestInclude,
-        });
+        const materialExportRequest =
+          await this.prismaService.materialExportRequest.update({
+            where: {
+              id: productionStaffApproveDto.materialExportRequestId,
+            },
+            data: {
+              status: MaterialExportRequestStatus.PRODUCTION_REJECTED,
+              productionRejectReason:
+                productionStaffApproveDto.productionRejectReason,
+            },
+            include: materialExportRequestInclude,
+          });
         //create import request MATERIAL_RETURN
         const chat2: CreateChatDto = {
-          discussionId: result2.discussion.id,
+          discussionId: materialExportRequest.discussion.id,
           message: Constant.EXPORT_REQUEST_EXPORTED_PRODUCTION_REJECTED,
         };
         await this.chatService.createWithoutResponse(
@@ -640,11 +643,25 @@ export class MaterialExportRequestService {
           productionDepartment,
         );
         await this.productionBatchService.updateStatus(
-          result2.productionBatchId,
+          materialExportRequest.productionBatchId,
           $Enums.ProductionBatchStatus.PENDING,
         );
+        //noti for manager
+        try {
+          await this.notificationService.handleNotificationMaterialExportRequestUpdatedEvent(
+            {
+              status: {
+                before: $Enums.MaterialExportRequestStatus.EXPORTED,
+                after: $Enums.MaterialExportRequestStatus.PRODUCTION_REJECTED,
+              },
+            },
+            materialExportRequest,
+          );
+        } catch (error) {
+          Logger.error('Cannot create task', error, error.stack);
+        }
         this.eventEmitter.emit('start-await-inventory-report-plan');
-        return result2;
+        return materialExportRequest;
       default:
         throw new BadRequestException('Invalid action');
     }
