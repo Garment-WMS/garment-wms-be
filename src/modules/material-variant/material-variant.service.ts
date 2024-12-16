@@ -107,7 +107,7 @@ export class MaterialVariantService {
         if (materialReceipt.status == MaterialReceiptStatus.DISPOSED) {
           result.history.push({
             materialReceiptId: materialReceipt.id,
-            quantityByPack: -materialReceipt.quantityByPack,
+            quantityByPack: materialReceipt.quantityByPack,
             code: materialReceipt.importReceipt.code,
             type: 'DISPOSED',
             createdAt: materialReceipt.createdAt,

@@ -124,7 +124,7 @@ export class ProductVariantService {
           result.history.push({
             productReceiptId: productReceipt.id,
             importReceiptId: productReceipt.importReceipt?.id,
-            quantityByPack: -productReceipt.quantityByUom,
+            quantityByPack: productReceipt.quantityByUom,
             code: productReceipt.importReceipt?.code,
             isDefect: productReceipt.isDefect,
             type: 'DISPOSED',
