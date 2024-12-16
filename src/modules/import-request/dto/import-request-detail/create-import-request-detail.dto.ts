@@ -23,6 +23,6 @@ export class CreateImportRequestDetailDto {
 
   @ApiProperty({ required: true })
   @IsInt()
-  @Min(1)
+  @Min(0)
   quantityByPack: number;
 }
