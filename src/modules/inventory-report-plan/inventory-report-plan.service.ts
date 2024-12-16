@@ -164,10 +164,16 @@ export class InventoryReportPlanService {
       );
     }
 
+    const inventoryReportPlan = await this.findById(id);
+
     const isAnyImportingImportRequest =
-      await this.importRequestService.isAnyImportingImportRequest();
+      await this.importRequestService.isAnyImportingImportRequest(
+        inventoryReportPlan,
+      );
     const isAnyExportingExportRequest =
-      await this.materialExportRequestService.isAnyExportingExportRequest();
+      await this.materialExportRequestService.isAnyExportingExportRequest(
+        inventoryReportPlan,
+      );
     // const isAnyImportingImportReceipt = await this.importReceiptService.isAnyImportingImportReceipt();
     if (
       isAnyImportingImportRequest.length > 0 ||
@@ -181,7 +187,6 @@ export class InventoryReportPlanService {
       );
     }
 
-    const inventoryReportPlan = await this.findById(id);
     if (!inventoryReportPlan) {
       throw new BadRequestException('Inventory report plan not found');
     }

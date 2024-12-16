@@ -72,6 +72,25 @@ export class MaterialExportRequestController {
     );
   }
 
+  @Get('/return')
+  async searchReturn(
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialExportRequestWhereInput>(
+        [],
+        [{ createdAt: 'desc' }],
+      ),
+    )
+    filterDto: FilterDto<Prisma.MaterialExportRequestWhereInput>,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportRequestService.searchReturn(
+        filterDto.findOptions,
+      ),
+      'Search material export requests successfully',
+    );
+  }
+
   @Get('/enum')
   async getEnum() {
     return apiSuccess(
@@ -109,7 +128,7 @@ export class MaterialExportRequestController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return apiSuccess(
       HttpStatus.OK,
       await this.materialExportRequestService.findUnique(id),

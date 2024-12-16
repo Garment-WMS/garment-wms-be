@@ -96,10 +96,44 @@ export class ImportRequestService {
     );
   }
 
-  async isAnyImportingImportRequest() {
+  async isAnyImportingImportRequest(
+    inventoryReportPlan: Prisma.InventoryReportPlanGetPayload<{
+      include: {
+        inventoryReportPlanDetail: true;
+      };
+    }>,
+  ) {
+    const materialVariantIds = [];
+    const productVariantIds = [];
+    inventoryReportPlan.inventoryReportPlanDetail.forEach(
+      (inventoryReportPlanDetail) => {
+        materialVariantIds.push(inventoryReportPlanDetail.materialVariantId);
+        productVariantIds.push(inventoryReportPlanDetail.productVariantId);
+      },
+    );
     const result = await this.prismaService.importRequest.findMany({
       where: {
         status: ImportRequestStatus.IMPORTING,
+        OR: [
+          {
+            importRequestDetail: {
+              some: {
+                materialPackage: {
+                  materialVariantId: { in: materialVariantIds },
+                },
+              },
+            },
+          },
+          {
+            importRequestDetail: {
+              some: {
+                productSize: {
+                  productVariantId: { in: productVariantIds },
+                },
+              },
+            },
+          },
+        ],
       },
     });
     return result;

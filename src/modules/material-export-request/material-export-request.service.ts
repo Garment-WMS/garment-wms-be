@@ -87,10 +87,31 @@ export class MaterialExportRequestService {
   //   });
   // }
 
-  async isAnyExportingExportRequest() {
+  async isAnyExportingExportRequest(
+    inventoryReportPlan: Prisma.InventoryReportPlanGetPayload<{
+      include: {
+        inventoryReportPlanDetail: true;
+      };
+    }>,
+  ) {
+    const materialVariantIds = [];
+    const productVariantIds = [];
+    inventoryReportPlan.inventoryReportPlanDetail.forEach(
+      (inventoryReportPlanDetail) => {
+        materialVariantIds.push(inventoryReportPlanDetail.materialVariantId);
+        productVariantIds.push(inventoryReportPlanDetail.productVariantId);
+      },
+    );
     const result = await this.prismaService.materialExportRequest.findMany({
       where: {
         status: MaterialExportRequestStatus.EXPORTING,
+        materialExportRequestDetail: {
+          some: {
+            materialVariantId: {
+              in: materialVariantIds,
+            },
+          },
+        },
       },
     });
     return result;
@@ -238,6 +259,53 @@ export class MaterialExportRequestService {
         skip: offset,
         take: limit,
         where: findOptions?.where,
+        orderBy: findOptions?.orderBy,
+        include: materialExportRequestInclude,
+      }),
+      this.prismaService.materialExportRequest.count(
+        findOptions?.where
+          ? {
+              where: findOptions.where,
+            }
+          : undefined,
+      ),
+    ]);
+
+    const dataResponse: DataResponse = {
+      data,
+      pageMeta: getPageMeta(total, offset, limit),
+    };
+    return dataResponse;
+  }
+
+  async searchReturn(
+    findOptions: GeneratedFindOptions<Prisma.MaterialExportRequestWhereInput>,
+  ) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.materialExportRequest.findMany({
+        skip: offset,
+        take: limit,
+        where: {
+          status: MaterialExportRequestStatus.RETURNED,
+          OR: [
+            {
+              importRequestProductionReject: undefined,
+            },
+            {
+              importRequestProductionReject: {
+                every: {
+                  status: {
+                    in: ['CANCELLED'],
+                  },
+                },
+              },
+            },
+          ],
+
+          ...findOptions?.where,
+        },
         orderBy: findOptions?.orderBy,
         include: materialExportRequestInclude,
       }),
