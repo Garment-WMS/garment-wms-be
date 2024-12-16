@@ -161,6 +161,13 @@ export const importRequestInclude: Prisma.ImportRequestInclude = {
 
   importRequestDetail: {
     include: importRequestDetailInclude,
+    where: {
+      quantityByPack: {
+        not: {
+          equals: 0,
+        },
+      },
+    },
   },
   warehouseManager: {
     include: warehouseManagerInclude,
@@ -282,6 +289,13 @@ export const inspectionRequestInclude: Prisma.InspectionRequestInclude = {
     include: {
       importRequestDetail: {
         include: importRequestDetailInclude,
+        where: {
+          quantityByPack: {
+            not: {
+              equals: 0,
+            },
+          },
+        },
       },
     },
   },
