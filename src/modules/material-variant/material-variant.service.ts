@@ -373,19 +373,25 @@ export class MaterialVariantService {
 
     result.materialPackage.forEach((materialPackage) => {
       materialPackage?.materialReceipt?.forEach((materialReceipt) => {
-        if (materialReceipt.status) {
-          materialReceipt?.materialExportReceiptDetail?.forEach(
+        if (materialReceipt.status == MaterialReceiptStatus.AVAILABLE) {
+          result.history.push({
+            materialReceiptId: materialReceipt.id,
+            quantityByPack: materialReceipt.quantityByPack,
+            code: materialReceipt.importReceipt.code,
+            type: 'IMPORT_RECEIPT',
+            createdAt: materialReceipt.createdAt,
+            updatedAt: materialReceipt.updatedAt,
+          });
+          materialReceipt.materialExportReceiptDetail.forEach(
             (materialExportReceiptDetail) => {
               if (
-                materialExportReceiptDetail.materialExportReceipt.type ===
-                'DISPOSED'
+                materialExportReceiptDetail.materialExportReceipt.status ===
+                ExportReceiptStatus.EXPORTED
               ) {
                 result.history.push({
                   materialExportReceiptDetailId: materialExportReceiptDetail.id,
-                  materialExportReceiptId:
-                    materialExportReceiptDetail.materialExportReceiptId,
-                  quantityByPack: materialExportReceiptDetail.quantityByPack,
-                  code: materialExportReceiptDetail?.materialExportReceipt.code,
+                  quantityByPack: -materialExportReceiptDetail.quantityByPack,
+                  code: materialExportReceiptDetail.materialExportReceipt.code,
                   type: 'EXPORT_RECEIPT',
                   createdAt: materialExportReceiptDetail.createdAt,
                   updatedAt: materialExportReceiptDetail.updatedAt,
@@ -393,7 +399,44 @@ export class MaterialVariantService {
               }
             },
           );
+          materialReceipt.receiptAdjustment.forEach((receiptAdjustment) => {
+            if (receiptAdjustment.status === 'ADJUSTED') {
+              result.history.push({
+                receiptAdjustmentId: receiptAdjustment.id,
+                quantityByPack:
+                  receiptAdjustment.afterAdjustQuantity -
+                  receiptAdjustment.beforeAdjustQuantity,
+                code: receiptAdjustment.inventoryReportDetail.inventoryReport
+                  .code,
+                type: 'RECEIPT_ADJUSTMENT',
+                createdAt: receiptAdjustment.createdAt,
+                updatedAt: receiptAdjustment.updatedAt,
+              });
+            }
+          });
         }
+        // materialReceipt.materialExportReceiptDetail.forEach(
+        //   (materialExportReceiptDetail) => {
+        //     if (
+        //       materialExportReceiptDetail.materialExportReceipt.status ===
+        //       ExportReceiptStatus.EXPORTED
+        //     ) {
+        //       if (
+        //         materialExportReceiptDetail.materialExportReceipt.type ===
+        //         'DISPOSED'
+        //       ) {
+        //         result.history.push({
+        //           materialExportReceiptDetailId: materialExportReceiptDetail.id,
+        //           quantityByPack: -materialExportReceiptDetail.quantityByPack,
+        //           code: materialExportReceiptDetail.materialExportReceipt.code,
+        //           type: 'DISPOSED',
+        //           createdAt: materialExportReceiptDetail.createdAt,
+        //           updatedAt: materialExportReceiptDetail.updatedAt,
+        //         });
+        //       } 
+        //     }
+        //   },
+        // );
       });
     });
 
