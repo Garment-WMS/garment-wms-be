@@ -310,16 +310,17 @@ export class ProductionBatchService {
         cancelledBy: user.productionDepartmentId,
       },
     });
-    if (result) {
-      return apiSuccess(
-        HttpStatus.OK,
-        result,
-        'Production Batch cancelled successfully',
+    console.log(result);
+    if (!result) {
+      return apiFailed(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        'Failed to cancel Production Batch',
       );
     }
-    return apiFailed(
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      'Failed to cancel Production Batch',
+    return apiSuccess(
+      HttpStatus.OK,
+      result,
+      'Production Batch cancelled successfully',
     );
   }
 
