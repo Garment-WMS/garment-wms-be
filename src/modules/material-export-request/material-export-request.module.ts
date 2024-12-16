@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from 'prisma/prisma.module';
+import { NotificationModule } from 'src/notification/notification.module';
 import { ChatModule } from '../chat/chat.module';
 import { DiscussionModule } from '../discussion/discussion.module';
 import { MaterialExportReceiptModule } from '../material-export-receipt/material-export-receipt.module';
@@ -17,6 +18,7 @@ import { IsMaterialExportRequestExistValidator } from './validator/is-material-e
     DiscussionModule,
     ChatModule,
     ProductionBatchModule,
+    NotificationModule,
   ],
   controllers: [MaterialExportRequestController],
   providers: [
