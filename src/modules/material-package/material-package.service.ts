@@ -12,6 +12,29 @@ import { UpdateMaterialVariantDto } from './dto/update-material-variant.dto';
 
 @Injectable()
 export class MaterialPackageService {
+  async findByQuery(query: any) {
+    return this.prismaService.materialPackage.findFirst({
+      where: query,
+      include: {
+        materialVariant: {
+          include: {
+            materialAttribute: true,
+            materialPackage: {
+              include: {
+                materialReceipt: true,
+                inventoryStock: true,
+              },
+            },
+            material: {
+              include: {
+                materialUom: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
   constructor(private readonly prismaService: PrismaService) {}
 
   includeQuery: Prisma.MaterialPackageInclude = {

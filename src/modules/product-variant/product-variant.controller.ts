@@ -192,6 +192,8 @@ export class ProductVariantController {
 
   @Get(':id/product-receipt/disposed')
   getDisposedProductImportReceipt(
+    @Query('sortBy') sortBy: string,
+
     @Query(
       new AllFilterPipeUnsafe<any, Prisma.ProductReceiptScalarWhereInput>(
         [],
@@ -204,6 +206,25 @@ export class ProductVariantController {
   ) {
     return this.productVariantService.findDisposedProductImportReceipt(
       id,
+      filterOptions.findOptions,
+    );
+  }
+
+  @Get(':id/history/disposed')
+  getHistoryDisposed(
+    @Param('id', CustomUUIDPipe) id: string,
+    @Query('sortBy') sortBy: string,
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.ProductVariantScalarWhereInput>(
+        ['product.name'],
+        [],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.ProductVariantScalarWhereInput>,
+  ) {
+    return this.productVariantService.findHistoryDisposedByIdWithResponse(
+      id,
+      sortBy,
       filterOptions.findOptions,
     );
   }

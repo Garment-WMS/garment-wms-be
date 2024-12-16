@@ -6,6 +6,8 @@ import { MaterialReceiptModule } from '../material-receipt/material-receipt.modu
 import { MaterialVariantModule } from '../material-variant/material-variant.module';
 import { ProductReceiptModule } from '../product-receipt/product-receipt.module';
 import { ProductVariantModule } from '../product-variant/product-variant.module';
+import { MaterialPackageModule } from '../material-package/material-package.module';
+import { ProductSizeModule } from '../product-size/product-size.module';
 
 @Module({
   controllers: [GeneralSearchController],
@@ -15,6 +17,8 @@ import { ProductVariantModule } from '../product-variant/product-variant.module'
     ImportReceiptModule,
     MaterialReceiptModule,
     ProductReceiptModule,
+    MaterialPackageModule,
+    ProductSizeModule
   ],
   providers: [GeneralSearchService],
 })

@@ -79,6 +79,82 @@ interface ProductVariantIncludeQuery
 
 @Injectable()
 export class ProductVariantService {
+  async findHistoryDisposedByIdWithResponse(
+    id: string,
+    sortBy: string,
+    filterOption?: GeneratedFindOptions<Prisma.ProductVariantWhereInput>,
+  ) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid id');
+    }
+    const offset = filterOption?.skip || Constant.DEFAULT_OFFSET;
+    const limit = filterOption?.take || Constant.DEFAULT_LIMIT;
+    const result = (await this.prismaService.productVariant.findFirst({
+      where: {
+        id: id,
+      },
+      include: {
+        productSize: {
+          include: {
+            productReceipt: {
+              include: {
+                importReceipt: true,
+                receiptAdjustment: {
+                  include: {
+                    productReceipt: true,
+                    inventoryReportDetail: {
+                      include: {
+                        inventoryReport: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    })) as ProductVariantIncludeQuery;
+
+    result.history = [];
+
+    result.productSize.forEach((productSize) => {
+      productSize?.productReceipt?.forEach((productReceipt) => {
+        if (productReceipt.status === ProductReceiptStatus.DISPOSED) {
+          result.history.push({
+            productReceiptId: productReceipt.id,
+            importReceiptId: productReceipt.importReceipt?.id,
+            quantityByPack: -productReceipt.quantityByUom,
+            code: productReceipt.importReceipt?.code,
+            isDefect: productReceipt.isDefect,
+            type: 'DISPOSED',
+            createdAt: productReceipt.createdAt,
+            updatedAt: productReceipt.updatedAt,
+          });
+        }
+      });
+    });
+
+    let length = result.history.length;
+    result.history = result?.history
+      ?.sort((a, b) => {
+        if (sortBy === 'asc') {
+          return a.createdAt.getTime() - b.createdAt.getTime();
+        }
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      })
+      .slice(offset, offset + limit);
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: result.history,
+        pageMeta: getPageMeta(length, offset, limit),
+      },
+      'Product history found',
+    );
+  }
+
   async findDisposedProductImportReceipt(
     id: string,
     findOptions: GeneratedFindOptions<Prisma.ProductReceiptScalarWhereInput>,
@@ -325,7 +401,10 @@ export class ProductVariantService {
             updatedAt: receiptAdjustment.updatedAt,
           });
         });
-        if (productReceipt.status === ProductReceiptStatus.DISPOSED) {
+        if (
+          productReceipt.status === ProductReceiptStatus.DISPOSED &&
+          !productReceipt.isDefect
+        ) {
           result.history.push({
             productReceiptId: productReceipt.id,
             importReceiptId: productReceipt.importReceipt?.id,

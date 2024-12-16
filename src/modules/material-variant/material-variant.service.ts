@@ -76,6 +76,66 @@ export interface MaterialVariant
 
 @Injectable()
 export class MaterialVariantService {
+  async findHistoryDisposedByIdWithResponse(
+    id: string,
+    sortBy: string,
+    findOptions: GeneratedFindOptions<Prisma.MaterialVariantScalarWhereWithAggregatesInput>,
+  ) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Id is invalid');
+    }
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+
+    const [result, total] = (await this.prismaService.$transaction([
+      this.prismaService.materialVariant.findFirst({
+        where: { id },
+        include: this.materialHistoryInclude,
+      }),
+      this.prismaService.materialVariant.count({
+        where: { id },
+      }),
+    ])) as [MaterialVariant, number];
+
+    if (!result) {
+      return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
+    }
+    result.history = [];
+
+    result.materialPackage.forEach((materialPackage) => {
+      materialPackage?.materialReceipt?.forEach((materialReceipt) => {
+        if (materialReceipt.status == MaterialReceiptStatus.DISPOSED) {
+          result.history.push({
+            materialReceiptId: materialReceipt.id,
+            quantityByPack: -materialReceipt.quantityByPack,
+            code: materialReceipt.importReceipt.code,
+            type: 'DISPOSED',
+            createdAt: materialReceipt.createdAt,
+            updatedAt: materialReceipt.updatedAt,
+          });
+        }
+      });
+    });
+
+    let length = result.history.length;
+    result.history = result?.history
+      ?.sort((a, b) => {
+        if (sortBy === 'asc') {
+          return a.createdAt.getTime() - b.createdAt.getTime();
+        }
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      })
+      .slice(offset, offset + limit);
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: result.history,
+        pageMeta: getPageMeta(length, offset, limit),
+      },
+      'Material History found',
+    );
+  }
   async getOneDisposed(id: string) {
     const result = await this.searchDisposed({
       orderBy: undefined,

@@ -272,6 +272,33 @@ export class MaterialVariantController {
     );
   }
 
+  @Get(':id/history/disposed')
+  getMaterialHistoryDisposedById(
+    @Query('sortBy') sortBy: string,
+    @Query(
+      new AllFilterPipeUnsafe<any, Prisma.MaterialVariantScalarWhereInput>(
+        ['material.name', 'material.code', 'material.materialUom.name'],
+        [
+          { createdAt: 'asc' },
+          { id: 'asc' },
+          { name: 'asc' },
+          { materialId: 'asc' },
+          { code: 'asc' },
+          { reorderLevel: 'asc' },
+          { updatedAt: 'asc' },
+        ],
+      ),
+    )
+    filterOptions: FilterDto<Prisma.MaterialVariantScalarWhereInput>,
+    @Param('id', new CustomUUIDPipe()) id: string,
+  ) {
+    return this.materialVariantService.findHistoryDisposedByIdWithResponse(
+      id,
+      sortBy,
+      filterOptions.findOptions,
+    );
+  }
+
   @Patch(':id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   updateMaterial(
