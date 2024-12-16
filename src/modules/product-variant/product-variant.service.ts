@@ -625,11 +625,7 @@ export class ProductVariantService {
         orderBy: findOptions?.orderBy,
       }),
       this.prismaService.productReceipt.count({
-        where: {
-          productSize: {
-            productVariantId: id,
-          },
-        },
+        where: whereCondition,
       }),
     ]);
 
