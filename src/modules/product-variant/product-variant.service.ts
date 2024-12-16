@@ -821,9 +821,10 @@ export class ProductVariantService {
         (totalAcc, productSizeEl) => {
           let variantTotal = 0;
           //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
-          if (productSizeEl?.inventoryStock) {
-            variantTotal = productSizeEl.inventoryStock.quantityByUom;
-          }
+          // if (productSizeEl?.inventoryStock) {
+          //   variantTotal = productSizeEl.inventoryStock.quantityByUom;
+          // }
+
           return totalAcc + variantTotal;
         },
         0,
@@ -887,9 +888,18 @@ export class ProductVariantService {
         (totalAcc, productSizeEl) => {
           let variantTotal = 0;
           //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
-          if (productSizeEl?.inventoryStock) {
-            variantTotal = productSizeEl.inventoryStock.quantityByUom;
-          }
+          // if (productSizeEl?.inventoryStock) {
+          //   variantTotal = productSizeEl.inventoryStock.quantityByUom;
+          // }
+          productSizeEl.productReceipt.forEach((productReceipt) => {
+            if (
+              productReceipt.status === ProductReceiptStatus.AVAILABLE &&
+              productReceipt.isDefect === false
+            ) {
+              variantTotal += productReceipt.remainQuantityByUom;
+            }
+          });
+
           return totalAcc + variantTotal;
         },
         0,

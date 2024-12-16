@@ -10,7 +10,15 @@ export type MaterialStock = Prisma.MaterialVariantGetPayload<{
     };
     materialPackage: {
       include: {
-        materialReceipt: true;
+        materialReceipt: {
+          include: {
+            materialExportReceiptDetail: {
+              include: {
+                materialExportReceipt: true;
+              };
+            };
+          };
+        };
         inventoryStock: true;
       };
     };

@@ -180,17 +180,27 @@ export class MaterialVariantService {
           // Filter receipts with DISPOSED status
           materialPackage.materialReceipt =
             materialPackage.materialReceipt.filter((materialReceipt) => {
-              if (materialReceipt.status === MaterialReceiptStatus.DISPOSED) {
-                materialPackageOnHand += materialReceipt.remainQuantityByPack; // Add the quantity to the package onHand
-                onHand += materialReceipt.remainQuantityByPack; // Add to material's total onHand
-                material.onHandUom +=
-                  materialReceipt.remainQuantityByPack *
-                  materialPackage.uomPerPack; // Update total onHandUom
-                return true; // Keep this receipt
-              }
-              return false; // Discard this receipt
-            });
+              let keepReceipt = false;
 
+              materialReceipt.materialExportReceiptDetail.forEach(
+                (materialExportReceiptDetail) => {
+                  if (
+                    materialExportReceiptDetail.materialExportReceipt.type ===
+                    'DISPOSED'
+                  ) {
+                    materialPackageOnHand +=
+                      materialExportReceiptDetail.quantityByPack; // Add the quantity to the package onHand
+                    onHand += materialExportReceiptDetail.quantityByPack; // Add to material's total onHand
+                    material.onHandUom +=
+                      materialExportReceiptDetail.quantityByPack *
+                      materialPackage.uomPerPack; // Update total onHandUom
+                    keepReceipt = true; // Keep this receipt
+                  }
+                },
+              );
+
+              return keepReceipt; // Keep the receipt if it has DISPOSED status
+            });
           // Update inventory stock with the calculated on-hand quantity
           if (materialPackage.inventoryStock) {
             materialPackage.inventoryStock.quantityByPack =
@@ -439,7 +449,11 @@ export class MaterialVariantService {
       include: {
         materialReceipt: {
           include: {
-            materialExportReceiptDetail: true,
+            materialExportReceiptDetail: {
+              include: {
+                materialExportReceipt: true,
+              },
+            },
             receiptAdjustment: true,
             importReceipt: true,
           },
@@ -550,9 +564,15 @@ export class MaterialVariantService {
         (totalAcc, materialVariantEl) => {
           let variantTotal = 0;
           //Invenotory stock is 1 - 1 now, if 1 - n then need to change to use reduce
-          if (materialVariantEl.inventoryStock) {
-            variantTotal = materialVariantEl.inventoryStock.quantityByPack;
-          }
+          // if (materialVariantEl.inventoryStock) {
+          //   variantTotal = materialVariantEl.inventoryStock.quantityByPack;
+          // }
+          materialVariantEl?.materialReceipt.forEach((materialReceipt) => {
+            if (materialReceipt.status === 'AVAILABLE') {
+              variantTotal += materialReceipt.remainQuantityByPack;
+            }
+          });
+
           return totalAcc + variantTotal;
         },
         0,
@@ -844,7 +864,6 @@ export class MaterialVariantService {
 
     // console.log(exportMaterialReceipt.materialReceiptDetail);
     exportMaterialReceipt.reduce((acc, el) => {
-      console.log(el);
       const materialVariant =
         el.materialReceipt.materialPackage.materialVariant;
       const materialVariantId = materialVariant.id;
