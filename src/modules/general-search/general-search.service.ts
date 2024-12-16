@@ -1,9 +1,11 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { ImportReceiptService } from '../import-receipt/import-receipt.service';
+import { MaterialPackageService } from '../material-package/material-package.service';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
 import { MaterialVariantService } from '../material-variant/material-variant.service';
 import { ProductReceiptService } from '../product-receipt/product-receipt.service';
+import { ProductSizeService } from '../product-size/product-size.service';
 import { ProductVariantService } from '../product-variant/product-variant.service';
 import { CreateGeneralSearchDto } from './dto/create-general-search.dto';
 import { UpdateGeneralSearchDto } from './dto/update-general-search.dto';
@@ -16,15 +18,28 @@ export class GeneralSearchService {
     private readonly importReceiptService: ImportReceiptService,
     private readonly materialReceiptService: MaterialReceiptService,
     private readonly productReceiptService: ProductReceiptService,
+    private readonly productSizeService: ProductSizeService,
+    private readonly materialPackageService: MaterialPackageService,
   ) {}
 
   async findMaterialOrProductByCode(code: string) {
-    const materialVariant = await this.materialVariantService.findByQuery({
+    let materialVariant = await this.materialVariantService.findByQuery({
       code: code,
     });
-    const productVariant = await this.productVariantService.findByQuery({
+    let productVariant = await this.productVariantService.findByQuery({
       code: code,
     });
+    const materialPackage:any = await this.materialPackageService.findByQuery({
+      code: code,
+    });
+    const productSize:any = await this.productSizeService.findQuery({
+      code: code,
+    });
+    if(materialPackage && materialVariant===null){
+      materialVariant = materialPackage.materialVariant
+    }else if(productSize && productVariant===null){
+      productVariant = productSize.productVariant
+    }
     return apiSuccess(
       HttpStatus.OK,
       {

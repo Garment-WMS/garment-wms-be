@@ -259,8 +259,6 @@ export class ImportReceiptService {
     createImportReceiptDto: CreateImportReceiptDto,
     managerId: string,
   ) {
-    //Check is there any inventory report plan
-
     const importRequest = await this.validateImportRequest(
       createImportReceiptDto.importRequestId,
     );
@@ -299,7 +297,6 @@ export class ImportReceiptService {
     };
 
     let poDeliveryExtra;
-    const poDeliveryExtraEl = [];
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         let importReceipt = await prismaInstance.importReceipt.create({
@@ -344,83 +341,86 @@ export class ImportReceiptService {
           }
 
           // Compare number of imported materials with number of approved material
-          for (
-            let i = 0;
-            i < inspectionReport.inspectionReportDetail.length;
-            i++
-          ) {
-            await this.prismaService.poDeliveryDetail.updateMany({
-              where: {
-                AND: [
-                  {
-                    poDeliveryId: importRequest.poDeliveryId,
-                  },
-                  {
-                    materialPackageId:
-                      inspectionReport.inspectionReportDetail[i]
-                        .materialPackageId,
-                  },
-                ],
-              },
-              data: {
-                actualImportQuantity:
-                  inspectionReport.inspectionReportDetail[i]
-                    .approvedQuantityByPack,
-              },
-            });
-
-            //Create the extra PO delivery for the rejected material
-            //TODO: Can use job queue to handle this to avoid bottleneck issues
-            let poDelivery: any = importRequest.poDelivery;
-            //Has to cast to any because issue with includeQuery ( Typescript error not mine, if include raw still work )
-            let poDeliveryDetail = poDelivery.poDeliveryDetail as any;
-            let expectedImportQuantity = poDeliveryDetail.find(
-              (detail) =>
-                detail.materialPackageId ===
-                inspectionReport.inspectionReportDetail[i].materialPackageId,
-            ).quantityByPack;
-            if (
-              inspectionReport.inspectionReportDetail[i]
-                .approvedQuantityByPack !== expectedImportQuantity
+          if (importRequest?.poDeliveryId) {
+            for (
+              let i = 0;
+              i < inspectionReport.inspectionReportDetail.length;
+              i++
             ) {
-              poDeliveryExtra =
-                await this.poDeliveryService.findExtraPoDelivery(
-                  importRequest.poDelivery.purchaseOrderId,
-                );
-              if (!poDeliveryExtra) {
-                poDeliveryExtra = await this.poDeliveryService.createPoDelivery(
+              await this.prismaService.poDeliveryDetail.updateMany({
+                where: {
+                  AND: [
+                    {
+                      poDeliveryId: importRequest.poDeliveryId,
+                    },
+                    {
+                      materialPackageId:
+                        inspectionReport.inspectionReportDetail[i]
+                          .materialPackageId,
+                    },
+                  ],
+                },
+                data: {
+                  actualImportQuantity:
+                    inspectionReport.inspectionReportDetail[i]
+                      .approvedQuantityByPack,
+                },
+              });
+
+              //Create the extra PO delivery for the rejected material
+              //TODO: Can use job queue to handle this to avoid bottleneck issues
+              let poDelivery: any = importRequest.poDelivery;
+              //Has to cast to any because issue with includeQuery ( Typescript error not mine, if include raw still work )
+              let poDeliveryDetail = poDelivery.poDeliveryDetail as any;
+              let expectedImportQuantity = poDeliveryDetail.find(
+                (detail) =>
+                  detail.materialPackageId ===
+                  inspectionReport.inspectionReportDetail[i].materialPackageId,
+              ).quantityByPack;
+              if (
+                inspectionReport.inspectionReportDetail[i]
+                  .approvedQuantityByPack !== expectedImportQuantity
+              ) {
+                poDeliveryExtra =
+                  await this.poDeliveryService.findExtraPoDelivery(
+                    importRequest.poDelivery.purchaseOrderId,
+                  );
+                if (!poDeliveryExtra) {
+                  poDeliveryExtra =
+                    await this.poDeliveryService.createPoDelivery(
+                      {
+                        purchaseOrderId:
+                          importRequest.poDelivery.purchaseOrderId,
+                        isExtra: true,
+                        status: PoDeliveryStatus.PENDING,
+                      },
+                      prismaInstance,
+                    );
+                }
+                await this.poDeliveryDetailsService.createPoDeliveryMaterial(
                   {
-                    purchaseOrderId: importRequest.poDelivery.purchaseOrderId,
-                    isExtra: true,
-                    status: PoDeliveryStatus.PENDING,
+                    poDelivery: {
+                      connect: { id: poDeliveryExtra.id },
+                    },
+                    materialPackage: {
+                      connect: {
+                        id: inspectionReport.inspectionReportDetail[i]
+                          .materialPackageId,
+                      },
+                    },
+                    quantityByPack:
+                      expectedImportQuantity -
+                      inspectionReport.inspectionReportDetail[i]
+                        .approvedQuantityByPack,
+                    totalAmount: 0,
                   },
+                  poDeliveryExtra.id,
+                  inspectionReport.inspectionReportDetail[i].materialPackageId,
                   prismaInstance,
                 );
               }
-              await this.poDeliveryDetailsService.createPoDeliveryMaterial(
-                {
-                  poDelivery: {
-                    connect: { id: poDeliveryExtra.id },
-                  },
-                  materialPackage: {
-                    connect: {
-                      id: inspectionReport.inspectionReportDetail[i]
-                        .materialPackageId,
-                    },
-                  },
-                  quantityByPack:
-                    expectedImportQuantity -
-                    inspectionReport.inspectionReportDetail[i]
-                      .approvedQuantityByPack,
-                  totalAmount: 0,
-                },
-                poDeliveryExtra.id,
-                inspectionReport.inspectionReportDetail[i].materialPackageId,
-                prismaInstance,
-              );
             }
           }
-
           // const updatePromises = inspectionReport.inspectionReportDetail.map(
           //   async (detail) => {
           //     // Perform the updateMany operation

@@ -76,6 +76,66 @@ export interface MaterialVariant
 
 @Injectable()
 export class MaterialVariantService {
+  async findHistoryDisposedByIdWithResponse(
+    id: string,
+    sortBy: string,
+    findOptions: GeneratedFindOptions<Prisma.MaterialVariantScalarWhereWithAggregatesInput>,
+  ) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Id is invalid');
+    }
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+
+    const [result, total] = (await this.prismaService.$transaction([
+      this.prismaService.materialVariant.findFirst({
+        where: { id },
+        include: this.materialHistoryInclude,
+      }),
+      this.prismaService.materialVariant.count({
+        where: { id },
+      }),
+    ])) as [MaterialVariant, number];
+
+    if (!result) {
+      return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
+    }
+    result.history = [];
+
+    result.materialPackage.forEach((materialPackage) => {
+      materialPackage?.materialReceipt?.forEach((materialReceipt) => {
+        if (materialReceipt.status == MaterialReceiptStatus.DISPOSED) {
+          result.history.push({
+            materialReceiptId: materialReceipt.id,
+            quantityByPack: materialReceipt.quantityByPack,
+            code: materialReceipt.importReceipt.code,
+            type: 'DISPOSED',
+            createdAt: materialReceipt.createdAt,
+            updatedAt: materialReceipt.updatedAt,
+          });
+        }
+      });
+    });
+
+    let length = result.history.length;
+    result.history = result?.history
+      ?.sort((a, b) => {
+        if (sortBy === 'asc') {
+          return a.createdAt.getTime() - b.createdAt.getTime();
+        }
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      })
+      .slice(offset, offset + limit);
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: result.history,
+        pageMeta: getPageMeta(length, offset, limit),
+      },
+      'Material History found',
+    );
+  }
   async getOneDisposed(id: string) {
     const result = await this.searchDisposed({
       orderBy: undefined,
@@ -303,54 +363,26 @@ export class MaterialVariantService {
 
     result.materialPackage.forEach((materialPackage) => {
       materialPackage?.materialReceipt?.forEach((materialReceipt) => {
-        if (materialReceipt.status == MaterialReceiptStatus.AVAILABLE) {
-          result.history.push({
-            materialReceiptId: materialReceipt.id,
-            importReceiptId: materialReceipt.importReceiptId,
-            quantityByPack: materialReceipt.quantityByPack,
-            code: materialReceipt.importReceipt.code,
-            type: 'IMPORT_RECEIPT',
-            createdAt: materialReceipt.createdAt,
-            updatedAt: materialReceipt.updatedAt,
-          });
+        if (materialReceipt.status) {
           materialReceipt?.materialExportReceiptDetail?.forEach(
             (materialExportReceiptDetail) => {
-              result.history.push({
-                materialExportReceiptDetailId: materialExportReceiptDetail.id,
-                materialExportReceiptId:
-                  materialExportReceiptDetail.materialExportReceiptId,
-                quantityByPack: -materialExportReceiptDetail.quantityByPack,
-                code: materialExportReceiptDetail?.materialExportReceipt.code,
-                type: 'EXPORT_RECEIPT',
-                createdAt: materialExportReceiptDetail.createdAt,
-                updatedAt: materialExportReceiptDetail.updatedAt,
-              });
+              if (
+                materialExportReceiptDetail.materialExportReceipt.type ===
+                'DISPOSED'
+              ) {
+                result.history.push({
+                  materialExportReceiptDetailId: materialExportReceiptDetail.id,
+                  materialExportReceiptId:
+                    materialExportReceiptDetail.materialExportReceiptId,
+                  quantityByPack: -materialExportReceiptDetail.quantityByPack,
+                  code: materialExportReceiptDetail?.materialExportReceipt.code,
+                  type: 'EXPORT_RECEIPT',
+                  createdAt: materialExportReceiptDetail.createdAt,
+                  updatedAt: materialExportReceiptDetail.updatedAt,
+                });
+              }
             },
           );
-          materialReceipt?.receiptAdjustment?.forEach((receiptAdjustment) => {
-            result.history.push({
-              receiptAdjustmentId: receiptAdjustment.id,
-              inventoryReportId:
-                receiptAdjustment?.inventoryReportDetail.inventoryReportId,
-              quantityByPack:
-                receiptAdjustment.afterAdjustQuantity -
-                receiptAdjustment.beforeAdjustQuantity,
-              code: receiptAdjustment?.inventoryReportDetail?.inventoryReport
-                .code,
-              type: 'RECEIPT_ADJUSTMENT',
-              createdAt: receiptAdjustment.createdAt,
-              updatedAt: receiptAdjustment.updatedAt,
-            });
-          });
-        } else if (materialReceipt.status == MaterialReceiptStatus.DISPOSED) {
-          result.history.push({
-            materialReceiptId: materialReceipt.id,
-            quantityByPack: -materialReceipt.quantityByPack,
-            code: materialReceipt.importReceipt.code,
-            type: 'DISPOSED',
-            createdAt: materialReceipt.createdAt,
-            updatedAt: materialReceipt.updatedAt,
-          });
         }
       });
     });
