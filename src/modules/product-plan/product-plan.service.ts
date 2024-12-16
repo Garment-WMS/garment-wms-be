@@ -660,35 +660,59 @@ function getProductPlanStatistics(productPlan: any) {
                   totalManufacturingQuantity += batch.quantityToProduce;
                 } else if (batch.status === ProductionBatchStatus.FINISHED) {
                   importedBatch++;
-                  batch.importRequest.forEach((request) => {
-                    request.inspectionRequest.forEach((inspectionRequest) => {
-                      if (inspectionRequest.inspectionReport) {
-                        if (
-                          inspectionRequest.inspectionReport?.importReceipt &&
-                          inspectionRequest.inspectionReport.importReceipt
-                            .status === 'IMPORTED'
-                        ) {
-                          inspectionRequest.inspectionReport.importReceipt.productReceipt.forEach(
-                            (productReceipt) => {
-                              if (productReceipt.isDefect) {
-                                productPlanDetailDefectQuantity +=
-                                  productReceipt.quantityByUom;
-                                totalDefectQuantity +=
-                                  productReceipt.quantityByUom;
-                                // totalDefectProduct += productReceipt.quantityByUom;
-                              } else {
-                                productPlanDetailProducedQuantity +=
-                                  productReceipt.quantityByUom;
-                                totalProducedQuantity +=
-                                  productReceipt.quantityByUom;
-                                // numberOfProducedProduct += productReceipt.quantityByUom;
-                              }
-                            },
-                          );
-                        }
-                      }
-                    });
-                  });
+                  {
+                    console.log(productReceipt);
+                    if (
+                      productReceipt.isDefect &&
+                      productReceipt.status === 'DISPOSED'
+                    ) {
+                      productPlanDetailDefectQuantity +=
+                        productReceipt.quantityByUom;
+                      totalDefectQuantity +=
+                        productReceipt.quantityByUom;
+                      // totalDefectProduct += productReceipt.quantityByUom;
+                    } else {
+                      productPlanDetailProducedQuantity +=
+                        productReceipt.quantityByUom;
+                      totalProducedQuantity +=
+                        productReceipt.quantityByUom;
+                      // numberOfProducedProduct += productReceipt.quantityByUom;
+                    }
+                  }
+                  // batch.importRequest.forEach((request) => {
+                  //   request.inspectionRequest.forEach((inspectionRequest) => {
+                  //     if (inspectionRequest.inspectionReport) {
+                  //       if (
+                  //         inspectionRequest.inspectionReport?.importReceipt &&
+                  //         inspectionRequest.inspectionReport.importReceipt
+                  //           .status === 'IMPORTED'
+                  //       ) {
+                  //         inspectionRequest.inspectionReport.importReceipt.productReceipt.forEach(
+                  //           (productReceipt) => 
+                  //             {
+                  //             console.log(productReceipt);
+                  //             if (
+                  //               productReceipt.isDefect &&
+                  //               productReceipt.status === 'DISPOSED'
+                  //             ) {
+                  //               productPlanDetailDefectQuantity +=
+                  //                 productReceipt.quantityByUom;
+                  //               totalDefectQuantity +=
+                  //                 productReceipt.quantityByUom;
+                  //               // totalDefectProduct += productReceipt.quantityByUom;
+                  //             } else {
+                  //               productPlanDetailProducedQuantity +=
+                  //                 productReceipt.quantityByUom;
+                  //               totalProducedQuantity +=
+                  //                 productReceipt.quantityByUom;
+                  //               // numberOfProducedProduct += productReceipt.quantityByUom;
+                  //             }
+                  //           },
+                  //         );
+                  //       }
+                  //     }
+                  //   });
+                  // });
                 } else if (batch.status === ProductionBatchStatus.CANCELLED) {
                   canceledBatch++;
                   productPlanDetailCancelledBatch += batch.quantityToProduce;
