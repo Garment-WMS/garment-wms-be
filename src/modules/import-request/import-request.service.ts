@@ -460,6 +460,9 @@ export class ImportRequestService {
       },
     );
     const createImportRequestInput: Prisma.ImportRequestCreateInput = {
+      materialExportRequest: {
+        connect: { id: dto.materialExportRequestId },
+      },
       productionDepartment: {
         connect: { id: productionDepartment.productionDepartmentId },
       },
