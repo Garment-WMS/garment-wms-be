@@ -243,10 +243,11 @@ export class ProductVariantService {
       product.onHand = 0;
       product.numberOfProductSize = product.productSize.length;
 
-      // Process each product size
-      product.productSize.forEach((productSize) => {
+      // Filter and process product sizes
+      product.productSize = product.productSize.filter((productSize) => {
         // Initialize product size properties
         let productSizePackageOnHand = 0;
+
         // Filter receipts with DISPOSED status and calculate onHand
         productSize.productReceipt = productSize.productReceipt.filter(
           (productReceipt) => {
@@ -262,6 +263,9 @@ export class ProductVariantService {
         if (productSize.inventoryStock) {
           productSize.inventoryStock.quantityByUom = productSizePackageOnHand;
         }
+
+        // Return true to keep the productSize if productSizePackageOnHand is greater than 0
+        return productSizePackageOnHand > 0;
       });
 
       return product;
