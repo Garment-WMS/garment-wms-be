@@ -25,6 +25,7 @@ import { CheckQuantityVariantDto } from './dto/check-quantity-variant.dto';
 import { CreateMaterialExportRequestDto } from './dto/create-material-export-request.dto';
 import { ManagerApproveExportRequestDto } from './dto/manager-approve-export-request.dto';
 import { ProductionStaffDepartmentProcessDto } from './dto/production-department-approve.dto';
+import { ReassignMaterialExportRequestDto } from './dto/reassign-material-export-request';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
 import { MaterialExportRequestService } from './material-export-request.service';
 import { IsMaterialExportRequestExistPipe } from './validator/is-material-export-request-exist.pipe';
@@ -219,6 +220,22 @@ export class MaterialExportRequestController {
         checkQuantityVariantDto.quantityByUom,
       ),
       'Check quantity successfully',
+    );
+  }
+
+  @Post('reassign')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleCode.WAREHOUSE_MANAGER)
+  async reassignToAnotherWarehouseStaff(
+    @Body() dto: ReassignMaterialExportRequestDto,
+    @GetUser() warehouseStaff: AuthenUser,
+  ) {
+    return apiSuccess(
+      HttpStatus.OK,
+      await this.materialExportRequestService.reassignToAnotherWarehouseStaff(
+        dto,
+      ),
+      'Reassign material export request successfully',
     );
   }
 }

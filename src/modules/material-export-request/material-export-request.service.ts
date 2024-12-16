@@ -37,6 +37,7 @@ import {
   ProductionDepartmentApproveAction,
   ProductionStaffDepartmentProcessDto,
 } from './dto/production-department-approve.dto';
+import { ReassignMaterialExportRequestDto } from './dto/reassign-material-export-request';
 import { UpdateMaterialExportRequestDto } from './dto/update-material-export-request.dto';
 
 @Injectable()
@@ -749,6 +750,54 @@ export class MaterialExportRequestService {
       remainQuantityByPack: remainQuantityByUom,
       fullFilledPercentage: (remainQuantityByUom / quantityByUom) * 100,
       isFullFilled: remainQuantityByUom >= quantityByUom,
+    };
+  }
+
+  async reassignToAnotherWarehouseStaff(dto: ReassignMaterialExportRequestDto) {
+    const warehouseStaffId = dto.warehouseStaffId;
+    const materialExportRequestId = dto.materialExportRequestId;
+    const materialExportRequest =
+      await this.prismaService.materialExportRequest.findUnique({
+        where: {
+          id: materialExportRequestId,
+        },
+      });
+    if (!materialExportRequest) {
+      throw new NotFoundException('Material Export Request not found');
+    }
+    const allowReassignExportRequestStatus: MaterialExportRequestStatus[] = [
+      'APPROVED',
+      'AWAIT_TO_EXPORT',
+    ];
+    if (
+      !allowReassignExportRequestStatus.includes(materialExportRequest.status)
+    ) {
+      throw new BadRequestException(
+        `Cannot reassign material export request with status ${materialExportRequest.status}`,
+      );
+    }
+    const [updatedMaterialExportRequest, materialExportReceipt] =
+      await this.prismaService.$transaction([
+        this.prismaService.materialExportRequest.update({
+          where: {
+            id: materialExportRequestId,
+          },
+          data: {
+            warehouseStaffId: warehouseStaffId,
+          },
+        }),
+        this.prismaService.materialExportReceipt.update({
+          where: {
+            materialExportRequestId: materialExportRequestId,
+          },
+          data: {
+            warehouseStaffId: warehouseStaffId,
+          },
+        }),
+      ]);
+    return {
+      materialExportRequest: updatedMaterialExportRequest,
+      materialExportReceipt,
     };
   }
 }
