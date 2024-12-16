@@ -107,8 +107,11 @@ export class ImportRequestService {
     const productVariantIds = [];
     inventoryReportPlan.inventoryReportPlanDetail.forEach(
       (inventoryReportPlanDetail) => {
-        materialVariantIds.push(inventoryReportPlanDetail.materialVariantId);
-        productVariantIds.push(inventoryReportPlanDetail.productVariantId);
+        if (inventoryReportPlanDetail.materialVariantId) {
+          materialVariantIds.push(inventoryReportPlanDetail.materialVariantId);
+        } else {
+          productVariantIds.push(inventoryReportPlanDetail.productVariantId);
+        }
       },
     );
     const result = await this.prismaService.importRequest.findMany({
