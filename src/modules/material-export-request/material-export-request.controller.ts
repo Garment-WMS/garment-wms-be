@@ -228,7 +228,6 @@ export class MaterialExportRequestController {
   @Roles(RoleCode.WAREHOUSE_MANAGER)
   async reassignToAnotherWarehouseStaff(
     @Body() dto: ReassignMaterialExportRequestDto,
-    @GetUser() warehouseStaff: AuthenUser,
   ) {
     return apiSuccess(
       HttpStatus.OK,

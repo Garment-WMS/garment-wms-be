@@ -756,15 +756,29 @@ export class MaterialExportRequestService {
   async reassignToAnotherWarehouseStaff(dto: ReassignMaterialExportRequestDto) {
     const warehouseStaffId = dto.warehouseStaffId;
     const materialExportRequestId = dto.materialExportRequestId;
+
     const materialExportRequest =
       await this.prismaService.materialExportRequest.findUnique({
         where: {
           id: materialExportRequestId,
         },
+        select: {
+          status: true,
+        },
       });
     if (!materialExportRequest) {
       throw new NotFoundException('Material Export Request not found');
     }
+
+    const warehouseStaff = await this.prismaService.warehouseStaff.count({
+      where: {
+        id: warehouseStaffId,
+      },
+    });
+    if (warehouseStaff === 0) {
+      throw new NotFoundException('Warehouse Staff not found');
+    }
+
     const allowReassignExportRequestStatus: MaterialExportRequestStatus[] = [
       'APPROVED',
       'AWAIT_TO_EXPORT',
