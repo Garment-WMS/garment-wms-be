@@ -171,8 +171,8 @@ export class MaterialVariantService {
     const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
     const [data, total] = await this.prismaService.$transaction([
       this.prismaService.materialVariant.findMany({
-        skip: offset,
-        take: limit,
+        // skip: offset,
+        // take: limit,
         where: findOptions?.where,
         orderBy: findOptions?.orderBy,
         include: this.materialStockInclude,
@@ -190,18 +190,17 @@ export class MaterialVariantService {
       material.materialPackage = material.materialPackage.filter(
         (materialPackage) => {
           let materialPackageOnHand = 0; // On-hand quantity for this package
-
           // Filter receipts with DISPOSED status
           materialPackage.materialReceipt =
             materialPackage.materialReceipt.filter((materialReceipt) => {
               let keepReceipt = false;
-
               materialReceipt.materialExportReceiptDetail.forEach(
                 (materialExportReceiptDetail) => {
                   if (
                     materialExportReceiptDetail.materialExportReceipt.type ===
                     'DISPOSED'
                   ) {
+                    console.log('DISPOSED', materialExportReceiptDetail);
                     materialPackageOnHand +=
                       materialExportReceiptDetail.quantityByPack; // Add the quantity to the package onHand
                     onHand += materialExportReceiptDetail.quantityByPack; // Add to material's total onHand
@@ -212,7 +211,6 @@ export class MaterialVariantService {
                   }
                 },
               );
-
               return keepReceipt; // Keep the receipt if it has DISPOSED status
             });
           // Update inventory stock with the calculated on-hand quantity
@@ -220,20 +218,21 @@ export class MaterialVariantService {
             materialPackage.inventoryStock.quantityByPack =
               materialPackageOnHand;
           }
-
+          console.log(onHand);
           return materialPackage.materialReceipt.length > 0; // Keep the package if it has at least one DISPOSED receipt
         },
       );
-
       // Update the material's calculated fields
       material.numberOfMaterialPackage = material.materialPackage.length; // Number of remaining packages
       material.onHand = onHand; // Total onHand quantity
       return material;
     });
-
     processedMaterials = processedMaterials.filter(
       (material) => material.onHand > 0,
     );
+
+    // Apply offset and limit
+    processedMaterials = processedMaterials.slice(offset, offset + limit);
 
     const dataResponse: DataResponse = {
       data: processedMaterials,
