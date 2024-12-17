@@ -23,6 +23,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { DataResponse } from 'src/common/dto/data-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { ChangeFieldDto } from 'src/notification/dto/change-field.dto';
 import { NotificationService } from 'src/notification/notification.service';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ChatService } from '../chat/chat.service';
@@ -429,18 +430,20 @@ export class MaterialExportRequestService {
     const materialExportRequest = await this.findUnique(
       materialExportRequestId,
     );
+    console.log(materialExportRequest);
     if (!allowApproveStatus.includes(materialExportRequest.status)) {
       throw new BadRequestException(
         `Cannot approve material export request with status ${materialExportRequest.status}`,
       );
     }
-    dto.warehouseManagerId = warehouseManager.warehouseManagerId;
-    dto.materialExportReceipt.materialExportRequestId = materialExportRequestId;
-    dto.materialExportReceipt.warehouseStaffId = dto.warehouseStaffId;
-    dto.materialExportReceipt.type =
-      $Enums.MaterialExportReceiptType.PRODUCTION;
     switch (dto.action) {
       case ManagerAction.APPROVED:
+        dto.warehouseManagerId = warehouseManager.warehouseManagerId;
+        dto.materialExportReceipt.materialExportRequestId =
+          materialExportRequestId;
+        dto.materialExportReceipt.warehouseStaffId = dto.warehouseStaffId;
+        dto.materialExportReceipt.type =
+          $Enums.MaterialExportReceiptType.PRODUCTION;
         const {
           materialExportRequest,
           materialExportReceipt,
@@ -542,11 +545,28 @@ export class MaterialExportRequestService {
               },
             },
           });
+        await this.productionBatchService.updateStatus(
+          rejectedMaterialExportRequest.productionBatchId,
+          'PENDING',
+        );
         const chat: CreateChatDto = {
-          discussionId: materialExportRequest.discussion.id,
+          discussionId: rejectedMaterialExportRequest.discussion.id,
           message: Constant.PENDING_TO_REJECT,
         };
         await this.chatService.createWithoutResponse(chat, warehouseManager);
+        const changeFieldDto: ChangeFieldDto = {
+          status: {
+            after: MaterialExportRequestStatus.REJECTED,
+            before: MaterialExportRequestStatus.PENDING,
+          },
+        };
+        await this.eventEmitter.emit(
+          'notification.materialExportRequest.updated',
+          {
+            changeFieldDto,
+            materialExportRequest: rejectedMaterialExportRequest,
+          },
+        );
         return rejectedMaterialExportRequest;
       default:
         throw new BadRequestException('Invalid manager action');

@@ -50,10 +50,21 @@ export class DashboardService {
               productReceipt: {
                 where: {
                   status: 'AVAILABLE',
-                  createdAt: {
-                    ...(from ? { gte: fromDate } : {}),
-                    ...(to ? { lte: toDate } : {}),
-                  },
+
+                  OR: [
+                    {
+                      createdAt: {
+                        ...(from ? { gte: fromDate } : {}),
+                        ...(to ? { lte: toDate } : {}),
+                      },
+                    },
+                    {
+                      importDate: {
+                        ...(from ? { gte: fromDate } : {}),
+                        ...(to ? { lte: toDate } : {}),
+                      },
+                    },
+                  ],
                 },
               },
             },
