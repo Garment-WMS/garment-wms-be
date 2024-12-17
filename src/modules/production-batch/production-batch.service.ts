@@ -428,8 +428,6 @@ export class ProductionBatchService {
     if (excelData instanceof ApiResponse) {
       return excelData;
     }
-    Logger.log(excelData);
-    console.log(excelData);
     // throw new BadRequestException('Method not implemented.');
     const createProductBatchData = excelData as CreateProductionBatchDto;
     const createProductionBatchInput: any = createProductBatchData;

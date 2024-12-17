@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ProductionBatchStatus } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateProductPlanDetailDto } from './dto/create-product-plan-detail.dto';
 import { UpdateProductPlanDetailDto } from './dto/update-product-plan-detail.dto';
@@ -23,7 +23,10 @@ export class ProductPlanDetailService {
 
     let numberOfProduce = result.productionBatch.reduce(
       (accumulator, productionBatch) => {
-        return accumulator + productionBatch.quantityToProduce;
+        if (productionBatch.status !== ProductionBatchStatus.CANCELLED) {
+          return accumulator + productionBatch.quantityToProduce;
+        }
+        return accumulator;
       },
       0,
     );
