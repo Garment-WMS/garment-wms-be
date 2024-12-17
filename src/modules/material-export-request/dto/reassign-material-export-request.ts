@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsUUID } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 export class ReassignMaterialExportRequestDto {
   @ApiProperty()
@@ -11,4 +11,14 @@ export class ReassignMaterialExportRequestDto {
   @IsNotEmpty()
   @IsUUID()
   materialExportRequestId: string;
+
+  @ApiProperty()
+  @IsDateString()
+  @IsOptional()
+  expectedStartedAt: Date;
+
+  @ApiProperty()
+  @IsDateString()
+  @IsOptional()
+  expectedFinishedAt: Date;
 }
