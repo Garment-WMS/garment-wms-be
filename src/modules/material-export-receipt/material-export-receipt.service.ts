@@ -127,7 +127,7 @@ export class MaterialExportReceiptService {
           },
         };
 
-        const [materialExportReceipt, materialReceipt] = await Promise.all([
+        const materialExportReceipt = await Promise.all([
           prismaInstance.materialExportReceipt.create({
             data: input,
             include: {
@@ -144,26 +144,27 @@ export class MaterialExportReceiptService {
               },
             },
           }),
-          Promise.all(
-            createMaterialExportReceiptDto.materialExportReceiptDetail.map(
-              (detail) =>
-                prismaInstance.materialReceipt.update({
-                  where: {
-                    id: detail.materialReceiptId,
-                  },
-                  data: {
-                    remainQuantityByPack: {
-                      decrement: detail.quantityByPack,
-                    },
-                  },
-                  select: {
-                    id: true,
-                    remainQuantityByPack: true,
-                  },
-                }),
-            ),
-          ),
         ]);
+
+        const materialReceipt = await Promise.all(
+          createMaterialExportReceiptDto.materialExportReceiptDetail.map(
+            (detail) =>
+              prismaInstance.materialReceipt.update({
+                where: {
+                  id: detail.materialReceiptId,
+                },
+                data: {
+                  remainQuantityByPack: {
+                    decrement: detail.quantityByPack,
+                  },
+                },
+                select: {
+                  id: true,
+                  remainQuantityByPack: true,
+                },
+              }),
+          ),
+        );
 
         //update status to USED if remainQuantityByPack = 0
         await Promise.all(
