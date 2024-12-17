@@ -730,14 +730,14 @@ export class ImportRequestService {
         };
         await this.chatService.createWithoutResponse(chat2, account);
         //reverse po delivery status to pending status
-        if (rejectedImportRequest.status.startsWith('MATERIAL')) {
+        if (rejectedImportRequest.type.startsWith('MATERIAL')) {
           await this.prismaService.poDelivery.update({
             where: { id: rejectedImportRequest.poDeliveryId },
             data: {
               status: $Enums.PoDeliveryStatus.PENDING,
             },
           });
-        } else if (rejectedImportRequest.status.startsWith('PRODUCT')) {
+        } else if (rejectedImportRequest.type.startsWith('PRODUCT')) {
           await this.prismaService.productionBatch.update({
             where: { id: rejectedImportRequest.productionBatchId },
             data: {
