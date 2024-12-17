@@ -50,7 +50,6 @@ export class DashboardService {
               productReceipt: {
                 where: {
                   status: 'AVAILABLE',
-
                   OR: [
                     {
                       createdAt: {
@@ -105,8 +104,12 @@ export class DashboardService {
       quantityProduct = 0;
       item.productSize.forEach((productSize) => {
         productSize.productReceipt.forEach((productReceipt) => {
-          quantityProduct += productReceipt.quantityByUom;
-          numberOfProductStock += productReceipt.quantityByUom;
+          {
+            if (productReceipt.status === 'AVAILABLE') {
+              quantityProduct += productReceipt?.remainQuantityByUom;
+              numberOfProductStock += productReceipt?.remainQuantityByUom;
+            }
+          }
         });
       });
       item.quantity = quantityProduct;
@@ -116,8 +119,10 @@ export class DashboardService {
       quantity = 0;
       item.materialPackage.forEach((materialPackage) => {
         materialPackage.materialReceipt.forEach((materialReceipt) => {
-          quantity += materialReceipt.quantityByPack;
-          numberOfMaterialStock += materialReceipt.quantityByPack;
+          if (materialReceipt.status === 'AVAILABLE') {
+            quantity += materialReceipt?.remainQuantityByPack;
+            numberOfMaterialStock += materialReceipt?.remainQuantityByPack;
+          }
         });
       });
       item.quantity = quantity;

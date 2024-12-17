@@ -13,7 +13,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import { RoleCode } from '@prisma/client';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
-import { NotificationService } from 'src/notification/notification.service';
 import { GetUser } from '../../common/decorator/get_user.decorator';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
@@ -22,9 +21,7 @@ import { UserService } from './user.service';
 @Controller('account')
 @ApiTags('Account')
 export class UserController {
-  constructor(
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   @Get(':id')
   getAccountById(@Param('id') id: string) {
@@ -84,5 +81,14 @@ export class UserController {
       }
       return apiFailed(500, e, 'Internal server error');
     }
+  }
+
+  @Post('/avatar/:id')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadAvatarForUser(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id') id: string,
+  ) {
+    return this.userService.addAvatarAccount(file, id);
   }
 }

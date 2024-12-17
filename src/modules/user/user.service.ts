@@ -1,8 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
-import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { Account, Prisma, RoleCode } from '@prisma/client';
-import { Queue } from 'bullmq';
 import { userInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
@@ -10,7 +8,6 @@ import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
 import { ImageService } from '../image/image.service';
-import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class UserService {
@@ -253,6 +250,49 @@ export class UserService {
     try {
       //Get the user
       const user: Account = await this.findOneByUserId(userInput.userId);
+      const imageUrl = await this.imageService.addImageToFirebase(
+        file,
+        user.id,
+        PathConstants.USER_PATH,
+      );
+      if (!imageUrl) {
+        return apiFailed(404, 'Upload avatar failed');
+      }
+
+      //Delete the current image in firebase
+      if (user.avatarUrl !== null) {
+        try {
+          await this.imageService.deleteImage(
+            user.id,
+            user.avatarUrl,
+            PathConstants.USER_PATH,
+          );
+        } catch (error) {
+          console.error('Error deleting image:', error);
+          // Continue execution even if there is an error
+        }
+      }
+
+      //Update avatar url
+      const newUser = await this.prisma.account.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          avatarUrl: imageUrl,
+        },
+      });
+
+      return apiSuccess(200, newUser, 'Update avatar successfully');
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async addAvatarAccount(file: Express.Multer.File, id: string) {
+    try {
+      //Get the user
+      const user: Account = await this.findOneByUserId(id);
       const imageUrl = await this.imageService.addImageToFirebase(
         file,
         user.id,
