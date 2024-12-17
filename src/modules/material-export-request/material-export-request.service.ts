@@ -836,12 +836,30 @@ export class MaterialExportRequestService {
         this.prismaService.materialExportReceipt.update({
           where: {
             materialExportRequestId: materialExportRequestId,
+            expectedStartedAt: dto.expectedStartedAt,
+            expectedFinishedAt: dto.expectedFinishedAt,
           },
           data: {
             warehouseStaffId: warehouseStaffId,
           },
         }),
       ]);
+    //update task
+    try {
+      const task = await this.prismaService.task.updateMany({
+        where: {
+          materialExportReceiptId: materialExportReceipt.id,
+        },
+        data: {
+          warehouseStaffId: warehouseStaffId,
+          expectedStartedAt: dto.expectedStartedAt,
+          expectedFinishedAt: dto.expectedFinishedAt,
+        },
+      });
+    } catch (error) {
+      Logger.error('Cannot update task', error, error.stack);
+    }
+
     return {
       materialExportRequest: updatedMaterialExportRequest,
       materialExportReceipt,
