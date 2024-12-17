@@ -499,7 +499,7 @@ export class NotificationService {
     });
   }
 
-  @OnEvent('notification.materialExportRequest.updated')
+  // @OnEvent('notification.materialExportRequest.updated')
   async handleNotificationMaterialExportRequestUpdatedEvent(
     materialExportRequestChanges: ChangeFieldDto,
     materialExportRequest: MaterialExportRequest,
