@@ -63,7 +63,13 @@ export class NotificationService {
         (detail) => detail.warehouseStaff,
       ),
     );
-    if (changeField?.status.before === InventoryReportPlanStatus.IN_PROGRESS) {
+    console.log('warehouseStaffSet', warehouseStaffSet);
+    console.log('changeField', changeField);
+    console.log('inventoryReportPlan', inventoryReportPlan);
+    if (
+      changeField?.status.after === InventoryReportPlanStatus.IN_PROGRESS ||
+      changeField?.status.before === InventoryReportPlanStatus.IN_PROGRESS
+    ) {
       const createNotificationPromises = Array.from(warehouseStaffSet).map(
         async (warehouseStaff) => {
           return this.prismaService.notification.create({
@@ -82,6 +88,40 @@ export class NotificationService {
         this.notificationGateway.create(createNotificationPromises);
       });
     }
+  }
+  @OnEvent('notification.inventoryReport.record')
+  async inventoryReportRecordEvent(inventoryReportId: string) {
+    const inventoryReport = await this.prismaService.inventoryReport.findUnique(
+      {
+        where: {
+          id: inventoryReportId,
+        },
+        include: {
+          inventoryReportPlanDetail: {
+            include: {
+              inventoryReportPlan: {
+                include: {
+                  warehouseManager: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    );
+    const createNotificationPromises =
+      await this.prismaService.notification.create({
+        data: {
+          title: ` Inventory Report ${inventoryReport.code} has been recorded`,
+          message: ` Inventory Report ${inventoryReport.code} has been recorded`,
+          path: `/stocktaking/${inventoryReport.id}`,
+          accountId:
+            inventoryReport.inventoryReportPlanDetail[0].inventoryReportPlan
+              .warehouseManager.accountId,
+          type: 'INVENTORY_REPORT',
+        },
+      });
+    return await this.notificationGateway.create(createNotificationPromises);
   }
 
   @OnEvent('notification.inventoryReportPlan.created')
@@ -457,7 +497,7 @@ export class NotificationService {
         return this.prismaService.notification.create({
           data: {
             title: `New Import Request ${importRequest.code}`,
-            message: `New Import Request ${importRequest.code} has been created by purchasing staff and waiting for approval`,
+            message: `New Import Request ${importRequest.code} has been created by ${importRequest?.poDeliveryId ? 'purchasing staff' : 'production department'} and waiting for approval`,
             path: `/import-request/${importRequest.id}`,
             accountId: warehouseManager.accountId,
           },

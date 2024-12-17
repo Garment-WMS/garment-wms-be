@@ -1,5 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InventoryReportStatus, Prisma, PrismaClient } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
@@ -7,17 +8,12 @@ import { Constant } from 'src/common/constant/constant';
 import { apiSuccess } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
 import { getPageMeta } from 'src/common/utils/utils';
-import { ImportReceiptService } from '../import-receipt/import-receipt.service';
-import { ImportRequestService } from '../import-request/import-request.service';
 import { CreateInventoryReportDetailDto } from '../inventory-report-detail/dto/create-inventory-report-detail.dto';
 import { WarehouseManagerQuantityReportDetails } from '../inventory-report-detail/dto/warehouse-manager-quantity-report.dto';
 import { WarehouseStaffQuantityReportDetails } from '../inventory-report-detail/dto/warehouse-staff-quantity-report.dto';
 import { InventoryReportDetailService } from '../inventory-report-detail/inventory-report-detail.service';
 import { InventoryReportPlanDto } from '../inventory-report-plan/dto/inventory-report-plan.dto';
-import { MaterialExportReceiptService } from '../material-export-receipt/material-export-receipt.service';
-import { MaterialExportRequestService } from '../material-export-request/material-export-request.service';
 import { MaterialReceiptService } from '../material-receipt/material-receipt.service';
-import { MaterialVariantService } from '../material-variant/material-variant.service';
 import { ProductReceiptService } from '../product-receipt/product-receipt.service';
 import { TaskService } from '../task/task.service';
 import { CreateInventoryReportDto } from './dto/create-inventory-report.dto';
@@ -31,6 +27,7 @@ export class InventoryReportService {
     private readonly materialReceiptService: MaterialReceiptService,
     private readonly productReceiptService: ProductReceiptService,
     private readonly taskService: TaskService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   includeQuery: Prisma.InventoryReportInclude = {
@@ -204,7 +201,6 @@ export class InventoryReportService {
     if (!inventoryReport) {
       throw new BadRequestException('Inventory report not found');
     }
-
     const result = await Promise.all(
       updateInventoryReportDetailDto.details.map((inventoryRecordDetail) =>
         this.inventoryReportDetailService.handleRecordInventoryReportDetail(
@@ -214,7 +210,6 @@ export class InventoryReportService {
         ),
       ),
     );
-
     const isInventoryReportDetailDone =
       await this.inventoryReportDetailService.checkLastInventoryReport(id);
 
@@ -230,7 +225,10 @@ export class InventoryReportService {
           inventoryReport?.inventoryReportPlanDetail[0].inventoryReportPlanId,
       });
     }
-
+    await this.eventEmitter.emit(
+      'notification.inventoryReport.record',
+      inventoryReport.id,
+    );
     return apiSuccess(
       HttpStatus.OK,
       result,

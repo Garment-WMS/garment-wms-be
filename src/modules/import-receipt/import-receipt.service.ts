@@ -272,6 +272,7 @@ export class ImportReceiptService {
     createImportReceiptDto: CreateImportReceiptDto,
     managerId: string,
   ) {
+    console.log('createImportReceiptDto', createImportReceiptDto);
     const importRequest = await this.validateImportRequest(
       createImportReceiptDto.importRequestId,
     );
@@ -309,12 +310,14 @@ export class ImportReceiptService {
       finishedAt: createImportReceiptDto.finishAt,
     };
 
+    console.log('importReceiptInput', importReceiptInput);
     let poDeliveryExtra;
     const result = await this.prismaService.$transaction(
       async (prismaInstance: PrismaService) => {
         let importReceipt = await prismaInstance.importReceipt.create({
           data: importReceiptInput,
         });
+        console.log('importReceipt', importReceipt);
         if (importReceipt) {
           const result =
             await this.materialReceiptService.createMaterialReceipts(
@@ -644,11 +647,11 @@ export class ImportReceiptService {
       );
     }
 
-    if (importRequest.status !== $Enums.ImportRequestStatus.INSPECTED) {
-      throw new BadRequestException(
-        'Import receipt cannot be created. The import request must be inspected before creating an import receipt.',
-      );
-    }
+    // if (importRequest.status !== $Enums.ImportRequestStatus.INSPECTED) {
+    //   throw new BadRequestException(
+    //     'Import receipt cannot be created. The import request must be inspected before creating an import receipt.',
+    //   );
+    // }
     return importRequest;
   }
 

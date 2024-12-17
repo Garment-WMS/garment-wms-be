@@ -138,10 +138,10 @@ export class PrismaService
                 };
               }
             }
-            this.eventEmitter.emit('notification.inventoryReportPlan.updated', {
-              changes,
-              inventoryReportPlanId: updatedRecord.id,
-            });
+            // this.eventEmitter.emit('notification.inventoryReportPlan.updated', {
+            //   changes,
+            //   inventoryReportPlanId: updatedRecord.id,
+            // });
           }
           return result;
         } catch (e) {

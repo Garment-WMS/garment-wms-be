@@ -1,6 +1,6 @@
 import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import {
   InventoryReportPlanStatus,
   InventoryReportPlanType,
@@ -13,6 +13,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { getPageMeta } from 'src/common/utils/utils';
+import { ChangeFieldDto } from 'src/notification/dto/change-field.dto';
 import { ImportRequestService } from '../import-request/import-request.service';
 import { InventoryReportPlanDetailService } from '../inventory-report-plan-detail/inventory-report-plan-detail.service';
 import { InventoryReportService } from '../inventory-report/inventory-report.service';
@@ -80,6 +81,7 @@ export class InventoryReportPlanService {
     private readonly importRequestService: ImportRequestService,
     private readonly materialExportRequestService: MaterialExportRequestService,
     private readonly taskService: TaskService,
+    private readonly eventEmitter: EventEmitter2,
     // private readonly importReceiptService: ImportReceiptService,
     private readonly materialExportReceiptService: MaterialExportReceiptService,
   ) {}
@@ -265,6 +267,16 @@ export class InventoryReportPlanService {
     );
 
     await this.taskService.updateManyTaskStatusToInProgress({
+      inventoryReportPlanId: id,
+    });
+    const changeFieldDto: ChangeFieldDto = {
+      status: {
+        before: InventoryReportPlanStatus.NOT_YET,
+        after: InventoryReportPlanStatus.IN_PROGRESS,
+      },
+    };
+    await this.eventEmitter.emit('notification.inventoryReportPlan.updated', {
+      changeField: changeFieldDto,
       inventoryReportPlanId: id,
     });
 
