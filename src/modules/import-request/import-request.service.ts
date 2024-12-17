@@ -1026,6 +1026,8 @@ export class ImportRequestService {
       where: { id: dto.importRequestId },
       data: {
         warehouseStaffId: dto.warehouseStaffId,
+        importExpectedStartedAt: dto.importExpectedStartedAt,
+        importExpectedFinishedAt: dto.importExpectedFinishedAt,
       },
     });
     const importReceipt = await this.prismaService.importReceipt.findFirst({
@@ -1052,7 +1054,7 @@ export class ImportRequestService {
     //reassign import task
     const importTask = await this.taskService.reassignImportRequestTask(
       importRequest.id,
-      importRequest.warehouseStaffId,
+      dto.warehouseStaffId,
       dto.importExpectedStartedAt,
       dto.importExpectedFinishedAt,
     );
@@ -1091,7 +1093,7 @@ export class ImportRequestService {
       });
       inspectionTask = await this.taskService.reassignInspectionRequestTask(
         inspectionRequest.id,
-        inspectionRequest.inspectionDepartmentId,
+        dto.inspectionDepartmentId,
         dto.inspectExpectedStartedAt,
         dto.inspectExpectedFinishedAt,
       );
