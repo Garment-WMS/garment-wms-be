@@ -825,6 +825,14 @@ export class ProductVariantService {
           //   variantTotal = productSizeEl.inventoryStock.quantityByUom;
           // }
 
+          productSizeEl.productReceipt.forEach((productReceipt) => {
+            if (
+              productReceipt.status === ProductReceiptStatus.AVAILABLE &&
+              productReceipt.isDefect === false
+            ) {
+              variantTotal += productReceipt.remainQuantityByUom;
+            }
+          });
           return totalAcc + variantTotal;
         },
         0,

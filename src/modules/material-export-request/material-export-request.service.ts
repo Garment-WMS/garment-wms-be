@@ -430,7 +430,6 @@ export class MaterialExportRequestService {
     const materialExportRequest = await this.findUnique(
       materialExportRequestId,
     );
-    console.log(materialExportRequest);
     if (!allowApproveStatus.includes(materialExportRequest.status)) {
       throw new BadRequestException(
         `Cannot approve material export request with status ${materialExportRequest.status}`,

@@ -365,11 +365,6 @@ export class InspectionReportService {
       : $Enums.InspectionReportType.PRODUCT;
 
     //log inspection report detail
-    dto.inspectionReportDetail.forEach((inspectionReportDetail) => {
-      Logger.log(
-        `Inspection report detail: ${JSON.stringify(inspectionReportDetail)}`,
-      );
-    });
     const inspectionReportCreateInput: Prisma.InspectionReportUncheckedCreateInput =
       {
         code: dto.code,
@@ -383,7 +378,6 @@ export class InspectionReportService {
         const inspectionReport = await prismaInstance.inspectionReport.create({
           data: inspectionReportCreateInput,
         });
-
         const inspectionReportDetails =
           await this.createInspectionReportDetails(
             dto.inspectionReportDetail,
