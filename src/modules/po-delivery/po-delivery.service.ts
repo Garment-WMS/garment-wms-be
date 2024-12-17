@@ -62,6 +62,24 @@ export class PoDeliveryService {
         cancelledReason: cancelPoDeliveryDto.cancelReason || undefined,
       },
     });
+    const isLastPoDelivery = await this.pirsmaService.poDelivery.findMany({
+      where: {
+        purchaseOrderId: poDelivery.purchaseOrderId,
+        status: {
+          in: [PoDeliveryStatus.PENDING],
+        },
+      },
+    });
+    if (isLastPoDelivery.length === 0) {
+      await this.pirsmaService.purchaseOrder.update({
+        where: {
+          id: poDelivery.purchaseOrderId,
+        },
+        data: {
+          status: $Enums.PurchaseOrderStatus.FINISHED,
+        },
+      });
+    }
     return apiSuccess(HttpStatus.OK, result, 'Cancel po delivery successfully');
   }
 
@@ -138,7 +156,7 @@ export class PoDeliveryService {
     }
     return poDelivery;
   }
-  
+
   updateStatus(poDeliveryId: string, PoDeliveryStatus: PoDeliveryStatus) {
     return this.pirsmaService.poDelivery.update({
       where: {

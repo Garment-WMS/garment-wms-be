@@ -100,12 +100,18 @@ export class MaterialExportRequestService {
   ) {
     const materialVariantIds = [];
     const productVariantIds = [];
+    console.log(inventoryReportPlan);
     inventoryReportPlan.inventoryReportPlanDetail.forEach(
       (inventoryReportPlanDetail) => {
-        materialVariantIds.push(inventoryReportPlanDetail.materialVariantId);
-        productVariantIds.push(inventoryReportPlanDetail.productVariantId);
+        if (inventoryReportPlanDetail?.materialVariantId) {
+          materialVariantIds.push(inventoryReportPlanDetail.materialVariantId);
+        } else if (inventoryReportPlanDetail?.productVariantId) {
+          productVariantIds.push(inventoryReportPlanDetail.productVariantId);
+        }
       },
     );
+    console.log(materialVariantIds);
+    console.log(productVariantIds);
     const result = await this.prismaService.materialExportRequest.findMany({
       where: {
         status: MaterialExportRequestStatus.EXPORTING,
