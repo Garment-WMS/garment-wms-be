@@ -391,7 +391,7 @@ export class MaterialVariantService {
           materialReceipt.status == MaterialReceiptStatus.USED
         ) {
           result.history.push({
-            materialReceiptId: materialReceipt.id,
+            importReceiptId: materialReceipt.importReceipt.id,
             quantityByPack: materialReceipt.quantityByPack,
             code: materialReceipt.importReceipt.code,
             type: 'IMPORT_RECEIPT',
