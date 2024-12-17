@@ -1052,8 +1052,8 @@ export class ImportRequestService {
     }
 
     //reassign import task
-    const importTask = await this.taskService.reassignImportRequestTask(
-      importRequest.id,
+    const importTask = await this.taskService.reassignImportReceiptTask(
+      importReceipt.id,
       dto.warehouseStaffId,
       dto.importExpectedStartedAt,
       dto.importExpectedFinishedAt,

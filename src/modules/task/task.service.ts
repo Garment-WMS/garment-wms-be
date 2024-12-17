@@ -304,7 +304,7 @@ export class TaskService {
     }
   }
 
-  async reassignImportRequestTask(
+  async reassignImportReceiptTask(
     importReceiptId: string,
     warehouseStaffId: string,
     expectedStartedAt: Date,
