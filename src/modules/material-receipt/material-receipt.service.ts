@@ -233,11 +233,7 @@ export class MaterialReceiptService {
     prismaInstance: PrismaClient = this.prismaService,
     // materialReceipts: CreateMaterialReceiptDto[],
   ) {
-    if (
-      poDeliveryId === undefined &&
-      importRequest.type === 'MATERIAL_RETURN' &&
-      importRequest.materialExportRequestId !== null
-    ) {
+    if (poDeliveryId === null && importRequest.type === 'MATERIAL_RETURN') {
       const materialExportRequest =
         await prismaInstance.materialExportRequest.findUnique({
           where: {
