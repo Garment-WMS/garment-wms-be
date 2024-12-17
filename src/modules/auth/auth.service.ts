@@ -217,6 +217,7 @@ export class AuthService {
             inspectionDepartment: true,
             productionDepartment: true,
             purchasingStaff: true,
+            Admin: true,
           },
         });
         if (!userResult) {
@@ -341,6 +342,14 @@ export class AuthService {
         }
         case RoleCode.PURCHASING_STAFF: {
           result = await prisma.purchasingStaff.create({
+            data: {
+              ...schema,
+            },
+          });
+          break;
+        }
+        case RoleCode.ADMIN: {
+          result = await prisma.admin.create({
             data: {
               ...schema,
             },
