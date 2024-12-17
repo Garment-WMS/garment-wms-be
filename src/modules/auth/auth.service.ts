@@ -172,6 +172,14 @@ export class AuthService {
         });
         break;
       }
+      case RoleCode.ADMIN: {
+        checkRoleSchema = await this.prisma.admin.findFirst({
+          where: {
+            accountId: userId,
+          },
+        });
+        break;
+      }
     }
 
     return checkRoleSchema;
