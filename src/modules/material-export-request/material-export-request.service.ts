@@ -447,11 +447,10 @@ export class MaterialExportRequestService {
         const {
           materialExportRequest,
           materialExportReceipt,
-          inventoryStock,
           materialReceipt,
         } = await this.prismaService.$transaction(
           async (prismaInstance: PrismaService) => {
-            const { materialExportReceipt, inventoryStock, materialReceipt } =
+            const { materialExportReceipt, materialReceipt } =
               await this.materialExportReceiptService.create(
                 {
                   note: dto.materialExportReceipt.note,
@@ -488,7 +487,6 @@ export class MaterialExportRequestService {
             return {
               materialExportRequest,
               materialExportReceipt,
-              inventoryStock,
               materialReceipt,
             };
           },
@@ -523,7 +521,6 @@ export class MaterialExportRequestService {
         return {
           materialExportRequest,
           materialExportReceipt,
-          inventoryStock,
           materialReceipt,
         };
       case ManagerAction.REJECTED:
@@ -560,13 +557,10 @@ export class MaterialExportRequestService {
             before: MaterialExportRequestStatus.PENDING,
           },
         };
-        await this.eventEmitter.emit(
-          'notification.materialExportRequest.updated',
-          {
-            changeFieldDto,
-            materialExportRequest: rejectedMaterialExportRequest,
-          },
-        );
+        this.eventEmitter.emit('notification.materialExportRequest.updated', {
+          changeFieldDto,
+          materialExportRequest: rejectedMaterialExportRequest,
+        });
         return rejectedMaterialExportRequest;
       default:
         throw new BadRequestException('Invalid manager action');

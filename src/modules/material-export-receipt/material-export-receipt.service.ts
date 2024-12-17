@@ -127,8 +127,8 @@ export class MaterialExportReceiptService {
           },
         };
 
-        const materialExportReceipt = await Promise.all([
-          prismaInstance.materialExportReceipt.create({
+        const materialExportReceipt =
+          await prismaInstance.materialExportReceipt.create({
             data: input,
             include: {
               materialExportReceiptDetail: {
@@ -143,8 +143,7 @@ export class MaterialExportReceiptService {
                 },
               },
             },
-          }),
-        ]);
+          });
 
         const materialReceipt = await Promise.all(
           createMaterialExportReceiptDto.materialExportReceiptDetail.map(
@@ -182,20 +181,48 @@ export class MaterialExportReceiptService {
           }),
         );
 
-        const inventoryStock = await Promise.all(
-          materialExportReceipt.materialExportReceiptDetail.map((detail) =>
-            this.inventoryStockService.updateMaterialStock(
-              detail.materialReceipt.materialPackageId,
-              //minus quantity by pack
-              -detail.quantityByPack,
-              prismaInstance,
-            ),
+        //update inventory stock
+        await Promise.all(
+          createMaterialExportReceiptDto.materialExportReceiptDetail.map(
+            async (detail) => {
+              const materialReceipt =
+                await prismaInstance.materialReceipt.findUnique({
+                  where: {
+                    id: detail.materialReceiptId,
+                  },
+                  include: {
+                    materialPackage: {
+                      include: {
+                        materialVariant: true,
+                      },
+                    },
+                  },
+                });
+              const inventoryStock =
+                await prismaInstance.inventoryStock.findFirst({
+                  where: {
+                    materialPackageId: materialReceipt.materialPackageId,
+                  },
+                });
+              if (!inventoryStock) {
+                throw new Error('Inventory stock not found');
+              }
+              await prismaInstance.inventoryStock.update({
+                where: {
+                  id: inventoryStock.id,
+                },
+                data: {
+                  quantityByUom: {
+                    decrement: detail.quantityByPack,
+                  },
+                },
+              });
+            },
           ),
         );
 
         return {
           materialExportReceipt,
-          inventoryStock,
           materialReceipt,
         };
       },
