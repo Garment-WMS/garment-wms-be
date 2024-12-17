@@ -17,7 +17,6 @@ export class UserService {
   constructor(
     private prisma: PrismaService,
     private readonly imageService: ImageService,
-    @InjectQueue('receipt-adjustment') private readonly testQueue: Queue,
   ) {}
   async getAccountById(id: string) {
     const result = await this.prisma.account.findFirst({

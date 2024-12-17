@@ -100,7 +100,6 @@ export class MaterialExportRequestService {
   ) {
     const materialVariantIds = [];
     const productVariantIds = [];
-    console.log(inventoryReportPlan);
     inventoryReportPlan.inventoryReportPlanDetail.forEach(
       (inventoryReportPlanDetail) => {
         if (inventoryReportPlanDetail?.materialVariantId) {
@@ -110,8 +109,6 @@ export class MaterialExportRequestService {
         }
       },
     );
-    console.log(materialVariantIds);
-    console.log(productVariantIds);
     const result = await this.prismaService.materialExportRequest.findMany({
       where: {
         status: MaterialExportRequestStatus.EXPORTING,
@@ -535,7 +532,7 @@ export class MaterialExportRequestService {
               id: materialExportRequestId,
             },
             data: {
-              warehouseManagerId: dto.warehouseManagerId,
+              warehouseManagerId: warehouseManager.warehouseManagerId,
               status: $Enums.MaterialExportRequestStatus.REJECTED,
               managerNote: dto.managerNote,
               rejectAt: new Date(),
