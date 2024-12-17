@@ -131,12 +131,12 @@ export class InventoryReportDetailService {
       );
     }
 
-    if (
-      inventoryReportDetail.recoredAt &&
-      inventoryReportDetail.actualQuantity
-    ) {
-      throw new BadRequestException('Inventory Report Detail already recorded');
-    }
+    // if (
+    //   inventoryReportDetail.recoredAt &&
+    //   inventoryReportDetail.actualQuantity
+    // ) {
+    //   throw new BadRequestException('Inventory Report Detail already recorded');
+    // }
     const result = await this.prismaService.inventoryReportDetail.update({
       where: {
         id,
