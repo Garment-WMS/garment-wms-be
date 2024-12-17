@@ -5,7 +5,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsUUID,
-  MinDate,
   ValidateIf,
 } from 'class-validator';
 import { IsUserRoleExist } from 'src/modules/user/validator/is-user-of-role-exist.validator';
@@ -37,7 +36,6 @@ export class ReassignImportRequestDto {
 
   @ApiProperty({ required: true, type: 'date' })
   @IsDateString()
-  @MinDate(new Date())
   @IsNotEmpty()
   @ValidateIf((o) => !!o.inspectionDepartmentId)
   inspectExpectedFinishedAt?: Date;
