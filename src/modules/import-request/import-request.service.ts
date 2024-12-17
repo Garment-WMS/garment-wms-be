@@ -668,24 +668,26 @@ export class ImportRequestService {
 
     switch (managerProcess.action) {
       case $Enums.ImportRequestStatus.APPROVED:
-        const importRequest = await this.prismaService.importRequest.update({
-          where: { id: id },
-          data: {
-            status: $Enums.ImportRequestStatus.INSPECTING,
-            managerNote: managerProcess.managerNote,
-            warehouseStaffId: managerProcess.warehouseStaffId,
-            warehouseManagerId: account.warehouseManagerId,
-            inspectExpectedStartedAt: managerProcess.inspectExpectedStartedAt,
-            inspectExpectedFinishedAt: managerProcess.inspectExpectedFinishedAt,
-            importExpectedStartedAt: managerProcess.importExpectedStartedAt,
-            importExpectedFinishedAt: managerProcess.importExpectedFinishedAt,
-          },
-          include: {
-            discussion: true,
-          },
-        });
+        const approvedImportRequest =
+          await this.prismaService.importRequest.update({
+            where: { id: id },
+            data: {
+              status: $Enums.ImportRequestStatus.INSPECTING,
+              managerNote: managerProcess.managerNote,
+              warehouseStaffId: managerProcess.warehouseStaffId,
+              warehouseManagerId: account.warehouseManagerId,
+              inspectExpectedStartedAt: managerProcess.inspectExpectedStartedAt,
+              inspectExpectedFinishedAt:
+                managerProcess.inspectExpectedFinishedAt,
+              importExpectedStartedAt: managerProcess.importExpectedStartedAt,
+              importExpectedFinishedAt: managerProcess.importExpectedFinishedAt,
+            },
+            include: {
+              discussion: true,
+            },
+          });
         const chat: CreateChatDto = {
-          discussionId: importRequest.discussion.id,
+          discussionId: approvedImportRequest.discussion.id,
           message: Constant.ARRIVED_TO_APPROVED,
         };
         await this.chatService.createWithoutResponse(chat, account);
@@ -694,48 +696,56 @@ export class ImportRequestService {
           await this.inspectionRequestService.createInspectionRequestByImportRequest(
             account.warehouseManagerId,
             managerProcess,
-            importRequest,
+            approvedImportRequest,
           );
 
         const task = await this.createTaskByImportRequestAfterApproved(
-          importRequest,
+          approvedImportRequest,
           managerProcess.warehouseStaffId,
         );
 
-        return { importRequest, inspectionRequest, task };
-
+        return {
+          importRequest: approvedImportRequest,
+          inspectionRequest,
+          task,
+        };
+        break;
       case $Enums.ImportRequestStatus.REJECTED:
-        const result = await this.prismaService.importRequest.update({
-          where: { id },
-          data: {
-            status: $Enums.ImportRequestStatus.REJECTED,
-            rejectAt: new Date(),
-            warehouseManagerId: account.warehouseManagerId,
-            managerNote: managerProcess.managerNote,
-          },
-        });
+        const rejectedImportRequest =
+          await this.prismaService.importRequest.update({
+            where: { id },
+            data: {
+              status: $Enums.ImportRequestStatus.REJECTED,
+              rejectAt: new Date(),
+              warehouseManagerId: account.warehouseManagerId,
+              managerNote: managerProcess.managerNote,
+            },
+            include: {
+              discussion: true,
+            },
+          });
         const chat2: CreateChatDto = {
-          discussionId: importRequest.discussion.id,
+          discussionId: rejectedImportRequest.discussion.id,
           message: Constant.ARRIVED_TO_CANCELED,
         };
         await this.chatService.createWithoutResponse(chat2, account);
         //reverse po delivery status to pending status
-        if (importRequest.status.startsWith('MATERIAL')) {
+        if (rejectedImportRequest.status.startsWith('MATERIAL')) {
           await this.prismaService.poDelivery.update({
-            where: { id: importRequest.poDeliveryId },
+            where: { id: rejectedImportRequest.poDeliveryId },
             data: {
               status: $Enums.PoDeliveryStatus.PENDING,
             },
           });
-        } else if (importRequest.status.startsWith('PRODUCT')) {
+        } else if (rejectedImportRequest.status.startsWith('PRODUCT')) {
           await this.prismaService.productionBatch.update({
-            where: { id: importRequest.productionBatchId },
+            where: { id: rejectedImportRequest.productionBatchId },
             data: {
               status: $Enums.ProductionBatchStatus.PENDING,
             },
           });
         }
-        return result;
+        return rejectedImportRequest;
       default:
         throw new BadRequestException(
           `Allowed action is ${$Enums.ImportRequestStatus.APPROVED} or ${$Enums.ImportRequestStatus.REJECTED}`,
