@@ -1,0 +1,10 @@
+model Admin {
+    id        String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+    accountId String    @unique @map("account_id") @db.Uuid
+    createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+    updatedAt DateTime? @updatedAt @map("updated_at") @db.Timestamp(6)
+    deletedAt DateTime? @map("deleted_at") @db.Timestamp(6)
+    account   Account   @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    @@map("admin")
+}

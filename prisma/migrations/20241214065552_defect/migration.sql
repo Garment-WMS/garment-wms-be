@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "DefectType" AS ENUM ('MATERIAL_FABRIC', 'MATERIAL_ACCESSORIES', 'PRODUCT');
+
+-- AlterTable
+ALTER TABLE "defect" ADD COLUMN     "type" "DefectType" DEFAULT 'MATERIAL_FABRIC';

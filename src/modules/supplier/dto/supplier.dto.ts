@@ -3,7 +3,7 @@ import { Supplier } from '@prisma/client';
 export class SupplierDto implements Supplier {
   id: string;
   supplierName: string;
-  supplierCode: string;
+  code: string;
   address: string;
   representativeName: string;
   email: string;

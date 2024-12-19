@@ -1,24 +1,22 @@
 model MaterialVariant {
-  id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  materialId                  String                        @map("material_id") @db.Uuid
-  name                        String                        @map("name") @db.VarChar
-  code                        String                        @unique @map("code") @db.VarChar
-  packUnit                    String                        @map("pack_unit") @db.VarChar
-  uomPerPack                  Float                         @map("uom_per_pack_unit")
-  packedWidth                 Float                         @map("packed_width")
-  packedLength                Float                         @map("packed_length")
-  packedHeight                Float                         @map("packed_height")
-  createdAt                   DateTime?                     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                   DateTime?                     @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt                   DateTime?                     @map("deleted_at") @db.Timestamptz(6)
-  packedWeight                Float                         @map("packed_weight")
-  ImportRequestDetail         ImportRequestDetail[]
-  material                    Material                      @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  PoDeliveryDetail            PoDeliveryDetail[]
-  inspectionReportDetail      InspectionReportDetail[]
-  materialExportDetail        MaterialExportDetail[]
-  materialReceipt             MaterialReceipt[]
-  ExportMaterialRequestDetail ExportMaterialRequestDetail[]
+  id                             String                           @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialId                     String                           @map("material_id") @db.Uuid
+  image                          String?                          @map("image") @db.VarChar
+  name                           String                           @map("name") @db.VarChar
+  code                           String?                          @map("code") @db.VarChar
+  reorderLevel                   Float?                           @default(0) @map("reorder_level")
+  createdAt                      DateTime?                        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                      DateTime?                        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                      DateTime?                        @map("deleted_at") @db.Timestamptz(6)
+  material                       Material                         @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  materialAttribute              MaterialAttribute[]
+  materialInspectionCriteria     MaterialInspectionCriteria[]
+  productFormulaMaterial         ProductFormulaMaterial[]
+  materialPackage                MaterialPackage[]
+  materialExportRequestDetail    MaterialExportRequestDetail[]
+  InventoryReportPlanDetail      InventoryReportPlanDetail[]
+  productionBatchMaterialVariant ProductionBatchMaterialVariant[]
+  ReorderAlert                   ReorderAlert[]
 
   @@map("material_variant")
 }

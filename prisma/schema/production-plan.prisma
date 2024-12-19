@@ -1,0 +1,28 @@
+model ProductionPlan {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  factoryDirectorId    String                 @map("factory_director_id") @db.Uuid
+  name                 String                 @map("name") @db.VarChar
+  code                 String?                @map("code") @db.VarChar
+  note                 String?                @map("note") @db.VarChar
+  status               ProductionStatus       @default(PLANNING) @map("status")
+  expectedStartDate    DateTime               @map("expected_start_date") @db.Date
+  expectedEndDate      DateTime               @map("expected_end_date") @db.Date
+  startDate            DateTime?              @map("start_date") @db.Date
+  finishDate           DateTime?              @map("finish_date") @db.Date
+  createdAt            DateTime?              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime?              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt            DateTime?              @map("deleted_at") @db.Timestamptz(6)
+  purchaseOrder        PurchaseOrder[]
+  productionPlanDetail ProductionPlanDetail[]
+  factoryDirector      FactoryDirector        @relation(fields: [factoryDirectorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("production_plan")
+}
+
+enum ProductionStatus {
+  PLANNING
+  IN_PROGRESS
+  FINISHED
+
+  @@map("production_status")
+}

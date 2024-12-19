@@ -3,16 +3,14 @@ import {
   Controller,
   Get,
   Param,
-  Patch,
   Post,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
-import { CreateMaterialDto } from './dto/create-material.dto';
+import { CreateMaterialTypeDto } from './dto/create-material-type.dto';
 import { MaterialService } from './material.service';
-import { UpdateMaterialDto } from './dto/update-material.dto';
 
 @Controller('material')
 @ApiTags('Material')
@@ -21,26 +19,43 @@ export class MaterialController {
 
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  create(@Body() createMaterialDto: CreateMaterialDto) {
-    return this.materialService.create(createMaterialDto);
+  @ApiResponse({
+    status: 201,
+    description: 'Material Type created successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Material Type not created' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiResponse({
+    status: 409,
+    description: 'Material code duplicate',
+    example: {
+      statusCode: 409,
+      data: null,
+      message: 'A unique constraint was violated on a record',
+      errors: [
+        {
+          property: ['code'],
+          contexts: {},
+          children: [],
+        },
+      ],
+    },
+  })
+  async create(@Body() createMaterialTypeDto: CreateMaterialTypeDto) {
+    return await this.materialService.create(createMaterialTypeDto);
   }
 
   @Get()
-  getAllMaterial() {
-    return this.materialService.findAll();
+  @ApiResponse({ status: 200, description: 'List of Material Type' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async findAll() {
+    return await this.materialService.findAll();
   }
 
   @Get(':id')
-  getMaterialById(@Param('id', CustomUUIDPipe) id: string) {
-    return this.materialService.findByIdWithResponse(id);
-  }
-
-  @Patch(':id')
-  @UsePipes(new ValidationPipe({ whitelist: true }))
-  updateMaterial(
-    @Param('id', new CustomUUIDPipe()) id: string,
-    @Body() updateMaterialDto: UpdateMaterialDto,
-  ) {
-    return this.materialService.update(id, updateMaterialDto);
+  @ApiResponse({ status: 200, description: 'Material Type found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  findOne(@Param('id', CustomUUIDPipe) id: string) {
+    return this.materialService.findOne(id);
   }
 }

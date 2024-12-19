@@ -1,0 +1,38 @@
+model PurchaseOrder {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  poNumber           String?             @map("PO_number") @db.VarChar
+  code               String?             @map("code") @db.VarChar
+  productionPlanId   String?             @map("production_plan_id") @db.Uuid
+  purchasingStaffId  String?             @map("purchasing_staff_id") @db.Uuid
+  supplierId         String              @map("supplier_id") @db.Uuid
+  status             PurchaseOrderStatus @default(IN_PROGRESS) @map("status")
+  currency           String              @db.VarChar
+  subTotalAmount     Float?              @default(0) @map("sub_total_amount")
+  taxAmount          Float               @map("tax_amount")
+  shippingAmount     Float?              @default(0) @map("shipping_amount")
+  otherAmount        Float?              @default(0) @map("other_amount")
+  orderDate          DateTime            @map("order_date") @db.Date
+  note               String?             @map("note") @db.VarChar
+  expectedFinishDate DateTime            @map("expected_finish_date") @db.Date
+  finishDate         DateTime?           @map("finish_date") @db.Timestamptz(6)
+  cancelledAt        DateTime?           @map("cancelled_at") @db.Timestamptz(6)
+  cancelledReason    String?             @map("cancelled_reason") @db.VarChar
+  cancelledBy        String?             @map("cancelled_by") @db.Uuid
+  createdAt          DateTime?           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime?           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime?           @map("deleted_at") @db.Timestamptz(6)
+  poDelivery         PoDelivery[]
+  purchasingStaff    PurchasingStaff?    @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productionPlan     ProductionPlan?     @relation(fields: [productionPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  supplier           Supplier            @relation(fields: [supplierId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("purchase_order")
+}
+
+enum PurchaseOrderStatus {
+  IN_PROGRESS
+  CANCELLED
+  FINISHED
+
+  @@map("purchase_order_status")
+}

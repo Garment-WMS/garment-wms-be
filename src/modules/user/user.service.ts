@@ -1,6 +1,9 @@
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { Injectable } from '@nestjs/common';
-import { Prisma, RoleCode, User } from '@prisma/client';
+import { Account, Prisma, RoleCode } from '@prisma/client';
+import { userInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
 import { AuthenUser } from '../auth/dto/authen-user.dto';
@@ -8,6 +11,182 @@ import { ImageService } from '../image/image.service';
 
 @Injectable()
 export class UserService {
+  constructor(
+    private prisma: PrismaService,
+    private readonly imageService: ImageService,
+  ) {}
+  async getAccountById(id: string) {
+    const result = await this.prisma.account.findFirst({
+      where: {
+        id: id,
+      },
+      include: {
+        factoryDirector: true,
+        warehouseStaff: true,
+        inspectionDepartment: true,
+        purchasingStaff: true,
+        productionDepartment: true,
+        warehouseManager: true,
+      },
+    });
+    if (!result) {
+      return apiFailed(404, 'User not found');
+    }
+    return apiSuccess(200, result, 'Get user by id successfully');
+  }
+  async getUserById(id: string, role: string) {
+    let result;
+    switch (role) {
+      case RoleCode.FACTORY_DIRECTOR:
+        result = await this.prisma.factoryDirector.findFirst({
+          where: {
+            accountId: id,
+          },
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.WAREHOUSE_STAFF:
+        result = await this.prisma.warehouseStaff.findFirst({
+          where: {
+            accountId: id,
+          },
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.INSPECTION_DEPARTMENT:
+        result = await this.prisma.inspectionDepartment.findFirst({
+          where: {
+            accountId: id,
+          },
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.PURCHASING_STAFF:
+        result = await this.prisma.purchasingStaff.findFirst({
+          where: {
+            accountId: id,
+          },
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.PRODUCTION_DEPARTMENT:
+        result = await this.prisma.productionDepartment.findFirst({
+          where: {
+            accountId: id,
+          },
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.WAREHOUSE_MANAGER:
+        result = await this.prisma.warehouseManager.findFirst({
+          where: {
+            accountId: id,
+          },
+          include: {
+            account: true,
+          },
+        });
+        break;
+      default:
+        break;
+    }
+
+    if (!result) {
+      return apiFailed(404, 'User not found');
+    }
+    return apiSuccess(200, result, 'Get all user by role successfully');
+  }
+  async search(findOptions: GeneratedFindOptions<Prisma.AccountWhereInput>) {
+    const offset = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.account.findMany({
+        skip: offset,
+        take: limit,
+        where: findOptions?.where,
+        orderBy: findOptions?.orderBy,
+        include: userInclude,
+      }),
+      this.prisma.account.count(
+        findOptions?.where
+          ? {
+              where: findOptions.where,
+            }
+          : undefined,
+      ),
+    ]);
+    return {
+      data,
+      total,
+    };
+  }
+  async getAllUserByRole(role: RoleCode) {
+    let result;
+    switch (role) {
+      case RoleCode.FACTORY_DIRECTOR:
+        result = await this.prisma.factoryDirector.findMany({
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.WAREHOUSE_STAFF:
+        result = await this.prisma.warehouseStaff.findMany({
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.INSPECTION_DEPARTMENT:
+        result = await this.prisma.inspectionDepartment.findMany({
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.PURCHASING_STAFF:
+        result = await this.prisma.purchasingStaff.findMany({
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.PRODUCTION_DEPARTMENT:
+        result = await this.prisma.productionDepartment.findMany({
+          include: {
+            account: true,
+          },
+        });
+        break;
+      case RoleCode.WAREHOUSE_MANAGER:
+        result = await this.prisma.warehouseManager.findMany({
+          include: {
+            account: true,
+          },
+        });
+        break;
+      default:
+        break;
+    }
+
+    if (!result) {
+      return apiFailed(404, 'Role not found');
+    }
+    return apiSuccess(200, result, 'Get all user by role successfully');
+  }
+
+  async update() {}
+
   async IsUserRoleExist(value: any, role: RoleCode) {
     console.log(value, role);
     switch (role) {
@@ -52,13 +231,9 @@ export class UserService {
         return null;
     }
   }
-  constructor(
-    private prisma: PrismaService,
-    private readonly imageService: ImageService,
-  ) {}
 
-  async findOne(query: Prisma.UserWhereInput): Promise<User | undefined> {
-    return await this.prisma.user.findFirst({
+  async findOne(query: Prisma.AccountWhereInput): Promise<Account | undefined> {
+    return await this.prisma.account.findFirst({
       where: query,
       include: {
         factoryDirector: true,
@@ -74,7 +249,7 @@ export class UserService {
   async addAvatar(file: Express.Multer.File, userInput: AuthenUser) {
     try {
       //Get the user
-      const user: User = await this.findOneByUserId(userInput.userId);
+      const user: Account = await this.findOneByUserId(userInput.userId);
       const imageUrl = await this.imageService.addImageToFirebase(
         file,
         user.id,
@@ -99,7 +274,50 @@ export class UserService {
       }
 
       //Update avatar url
-      const newUser = await this.prisma.user.update({
+      const newUser = await this.prisma.account.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          avatarUrl: imageUrl,
+        },
+      });
+
+      return apiSuccess(200, newUser, 'Update avatar successfully');
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async addAvatarAccount(file: Express.Multer.File, id: string) {
+    try {
+      //Get the user
+      const user: Account = await this.findOneByUserId(id);
+      const imageUrl = await this.imageService.addImageToFirebase(
+        file,
+        user.id,
+        PathConstants.USER_PATH,
+      );
+      if (!imageUrl) {
+        return apiFailed(404, 'Upload avatar failed');
+      }
+
+      //Delete the current image in firebase
+      if (user.avatarUrl !== null) {
+        try {
+          await this.imageService.deleteImage(
+            user.id,
+            user.avatarUrl,
+            PathConstants.USER_PATH,
+          );
+        } catch (error) {
+          console.error('Error deleting image:', error);
+          // Continue execution even if there is an error
+        }
+      }
+
+      //Update avatar url
+      const newUser = await this.prisma.account.update({
         where: {
           id: user.id,
         },
@@ -116,7 +334,7 @@ export class UserService {
 
   async findOneByUserId(userId: string) {
     console.log(userId);
-    return await this.prisma.user.findUniqueOrThrow({
+    return await this.prisma.account.findUniqueOrThrow({
       where: {
         id: userId,
       },
@@ -132,7 +350,7 @@ export class UserService {
   }
 
   findOneByUserName(usernameInput: string) {
-    return this.prisma.user.findFirstOrThrow({
+    return this.prisma.account.findFirstOrThrow({
       where: {
         username: usernameInput,
       },
@@ -143,7 +361,7 @@ export class UserService {
   }
 
   async validateUser(username: string, password: string) {
-    return await this.prisma.user.findFirst({
+    return await this.prisma.account.findFirst({
       where: {
         AND: [
           {
@@ -156,7 +374,7 @@ export class UserService {
   }
 
   async findOneByEmail(email: string) {
-    return await this.prisma.user.findFirst({
+    return await this.prisma.account.findFirst({
       where: {
         email: email,
       },
@@ -167,7 +385,7 @@ export class UserService {
   }
 
   async updatePassword(id: string, newPassword: string) {
-    return await this.prisma.user.update({
+    return await this.prisma.account.update({
       where: {
         id: id,
       },

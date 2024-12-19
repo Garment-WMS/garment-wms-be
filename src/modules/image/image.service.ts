@@ -1,25 +1,19 @@
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { FirebaseError } from 'firebase/app';
 import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
-import { UpdateImageDto } from './dto/update-image.dto';
-import { FirebaseService } from '../firebase/firebase.service';
-import {
+  deleteObject,
+  getDownloadURL,
   getStorage,
   ref,
   uploadBytes,
-  getDownloadURL,
-  deleteObject,
 } from 'firebase/storage';
-import { AuthenUser } from '../auth/dto/authen-user.dto';
+import { Constant } from 'src/common/constant/constant';
+import { PathConstants } from 'src/common/constant/path.constant';
 import { apiFailed, apiGeneral } from 'src/common/dto/api-response';
 import { ApiResponse } from 'src/common/dto/response.dto';
-import { FirebaseError } from 'firebase/app';
-import { Constant } from 'src/common/constant/constant';
+import { FirebaseService } from '../firebase/firebase.service';
 import { ImageResponse } from './dto/image-response.dto';
-import { PathConstants } from 'src/common/constant/path.constant';
+import { UpdateImageDto } from './dto/update-image.dto';
 
 @Injectable()
 export class ImageService {
@@ -55,9 +49,9 @@ export class ImageService {
       const snapshot = await uploadBytes(storageRef, file.buffer, {
         contentType: file.mimetype,
       });
-      return snapshot.metadata.name;
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      return downloadURL;
     } catch (error) {
-      console.error('Error uploading file:', error);
       return error;
     }
   }
@@ -219,7 +213,22 @@ export class ImageService {
       throw error;
     }
   }
+  async deleteImageUrl(imageUrl: string): Promise<void> {
+    try {
+      const storage = getStorage();
+      const decodedUrl = decodeURIComponent(imageUrl);
+      console.log('Decoded URL:', decodedUrl);
+      const baseUrl =
+        'https://firebasestorage.googleapis.com/v0/b/tro-tot.appspot.com/o/';
+      const filePath = decodedUrl.replace(baseUrl, '').split('?')[0];
 
+      const fileRef = ref(storage, filePath);
+      await deleteObject(fileRef);
+      console.log('Image deleted successfully');
+    } catch (error) {
+      console.error('Error deleting image:', error);
+    }
+  }
   async getImageWithPathAndImageName(
     id: string,
     fileName: string,

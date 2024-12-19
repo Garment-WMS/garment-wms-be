@@ -1,15 +1,17 @@
 model PoDeliveryDetail {
-  id                String          @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  poDeliveryId      String          @map("po_delivery_id") @db.Uuid
-  createdAt         DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime?       @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt         DateTime?       @map("deleted_at") @db.Timestamptz(6)
-  quantityByPack    Float           @map("quantity_by_pack")
-  materialVariantId String          @map("material_variant_id") @db.Uuid
-  expiredDate       DateTime?       @map("expired_date") @db.Timestamptz(6)
-  totalAmount       Float           @map("total_amount")
-  materialVariant   MaterialVariant @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  poDelivery        PoDelivery      @relation(fields: [poDeliveryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  poDeliveryId         String          @map("po_delivery_id") @db.Uuid
+  materialPackageId    String          @map("material_package_id") @db.Uuid
+  quantityByPack       Float           @map("quantity_by_pack")
+  expiredDate          DateTime?       @map("expired_date") @db.Timestamptz(6)
+  actualImportQuantity Float?          @default(0) @map("actual_import_quantity")
+  totalAmount          Float           @map("total_amount")
+  createdAt            DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime?       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt            DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  materialPackage      MaterialPackage @relation(fields: [materialPackageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  poDelivery           PoDelivery      @relation(fields: [poDeliveryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  @@unique([poDeliveryId, materialPackageId])
   @@map("po_delivery_detail")
 }

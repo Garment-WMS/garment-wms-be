@@ -7,5 +7,6 @@ import { MaterialAttributeService } from './material-attribute.service';
   controllers: [MaterialAttributeController],
   imports: [PrismaModule],
   providers: [MaterialAttributeService],
+  exports: [MaterialAttributeService],
 })
 export class MaterialAttributeModule {}

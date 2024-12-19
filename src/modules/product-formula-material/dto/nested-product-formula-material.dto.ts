@@ -1,18 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsUUID } from 'class-validator';
-import { IsMaterialExist } from 'src/modules/material/validation/is-material-exist.validation';
+import { Prisma } from '@prisma/client';
+import { IsNumber, IsOptional, IsUUID, Min } from 'class-validator';
+import { IsMaterialVariantExist } from 'src/modules/material-variant/validation/is-material-exist.validation';
+import { IsProductFormulaExist } from 'src/modules/product-formula/validator/is-product-formula-exist.validator';
 
-export class NestedCreateProductFormulaMaterialDto {
+export class NestedCreateProductFormulaMaterialDto
+  implements Prisma.ProductFormulaMaterialUncheckedCreateInput
+{
   @ApiProperty()
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID()
-  @IsMaterialExist()
-  materialId: string;
+  @IsProductFormulaExist()
+  productFormulaId: string;
 
   @ApiProperty()
-  @IsNotEmpty()
-  @IsNumber()
-  quantityByUom: number;
+  @IsUUID()
+  @IsMaterialVariantExist()
+  materialVariantId: string;
 
-  productFormulaId: string;
+  @ApiProperty()
+  @IsNumber()
+  @Min(1)
+  quantityByUom: number;
 }

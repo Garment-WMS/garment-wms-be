@@ -1,17 +1,13 @@
 model Product {
-  id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  productTypeId             String                      @map("product_type") @db.Uuid
-  productUomId              String                      @map("product_uom_id") @db.Uuid
-  name                      String                      @map("name") @db.VarChar
-  code                      String?                     @unique @map("code") @db.VarChar
-  createdAt                 DateTime?                   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                 DateTime?                   @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt                 DateTime?                   @map("deleted_at") @db.Timestamptz(6)
-  productType               ProductType                 @relation(fields: [productTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productUom                ProductUom                  @relation(fields: [productUomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productAttribute          ProductAttribute[]
-  productInspectionCriteria ProductInspectionCriteria[]
-  ProductVariant            ProductVariant[]
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  productUomId   String?          @map("product_uom_id") @db.Uuid
+  name           String           @map("name") @db.VarChar
+  code           String?          @map("code") @db.VarChar
+  createdAt      DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime?        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  productUom     ProductUom?      @relation(fields: [productUomId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productVariant ProductVariant[]
 
   @@map("product")
 }

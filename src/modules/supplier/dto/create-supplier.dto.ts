@@ -10,7 +10,7 @@ export class CreateSupplierDto {
   @ApiProperty({})
   @IsNotEmpty()
   @IsString()
-  supplierCode: string;
+  code: string;
 
   @ApiProperty({})
   @IsNotEmpty()

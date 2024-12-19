@@ -1,0 +1,14 @@
+model Todo {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  taskId    String    @map("task_id") @db.Uuid
+  task      Task      @relation(fields: [taskId], references: [id])
+  code      String?   @map("code") @db.VarChar
+  title     String
+  seqNumber Int       @default(0) @map("seq_number")
+  isChecked Boolean   @default(false) @map("is_checked")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@map("todo")
+}

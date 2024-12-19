@@ -1,0 +1,24 @@
+model MaterialPackage {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  materialVariantId      String                   @map("material_variant_id") @db.Uuid
+  SKU                    String                   @default("") @map("sku") @db.VarChar
+  name                   String                   @map("name") @db.VarChar
+  code                   String?                  @unique @map("code") @db.VarChar
+  packUnit               String                   @map("pack_unit") @db.VarChar
+  uomPerPack             Float                    @map("uom_per_pack_unit")
+  packedWidth            Float                    @map("packed_width")
+  packedLength           Float                    @map("packed_length")
+  packedHeight           Float                    @map("packed_height")
+  createdAt              DateTime?                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime?                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt              DateTime?                @map("deleted_at") @db.Timestamptz(6)
+  packedWeight           Float                    @map("packed_weight")
+  importRequestDetail    ImportRequestDetail[]
+  materialVariant        MaterialVariant          @relation(fields: [materialVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  poDeliveryDetail       PoDeliveryDetail[]
+  inspectionReportDetail InspectionReportDetail[]
+  materialReceipt        MaterialReceipt[]
+  inventoryStock         InventoryStock?
+
+  @@map("material_package")
+}

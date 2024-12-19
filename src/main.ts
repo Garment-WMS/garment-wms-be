@@ -25,6 +25,10 @@ async function bootstrap() {
     new CustomValidationPipe({
       transform: true,
       whitelist: true,
+      validationError: {
+        target: false,
+        value: true,
+      },
       stopAtFirstError: true,
     }),
   );

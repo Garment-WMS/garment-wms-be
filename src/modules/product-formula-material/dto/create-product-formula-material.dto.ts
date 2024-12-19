@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsUUID } from 'class-validator';
-import { IsMaterialExist } from 'src/modules/material/validation/is-material-exist.validation';
+import { IsInt, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsMaterialVariantExist } from 'src/modules/material-variant/validation/is-material-exist.validation';
 
 export class CreateProductFormulaMaterialDto {
   @ApiProperty()
@@ -11,11 +11,11 @@ export class CreateProductFormulaMaterialDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsUUID()
-  @IsMaterialExist()
-  materialId: string;
+  @IsMaterialVariantExist()
+  materialVariantId: string;
 
   @ApiProperty()
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   quantityByUom: number;
 }

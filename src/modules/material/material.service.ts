@@ -1,108 +1,72 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
-import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
-import { CreateMaterialDto } from './dto/create-material.dto';
-import { UpdateMaterialDto } from './dto/update-material.dto';
+import { apiSuccess } from 'src/common/dto/api-response';
+import { CreateMaterialTypeDto } from './dto/create-material-type.dto';
+import { UpdateMaterialTypeDto } from './dto/update-material-type.dto';
 
 @Injectable()
 export class MaterialService {
-  async update(id: string, updateMaterialDto: UpdateMaterialDto) {
-    const material = await this.findById(id);
-    if (!material) {
-      return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
-    }
-
-    const result = await this.prismaService.material.update({
-      where: { id },
-      data: updateMaterialDto,
-    });
-
-    if (result) {
-      return apiSuccess(HttpStatus.OK, result, 'Material updated successfully');
-    }
-    return apiFailed(HttpStatus.BAD_REQUEST, 'Material not updated');
-  }
   constructor(private readonly prismaService: PrismaService) {}
-
-  async create(createMaterialDto: CreateMaterialDto) {
-    const { materialTypeId, materialUomId, ...rest } = createMaterialDto;
-
-    const materialInput: Prisma.MaterialCreateInput = {
-      ...rest,
-      materialType: {
-        connect: {
-          id: materialTypeId,
-        },
-      },
-      materialUom: {
-        connect: {
-          id: materialUomId,
-        },
-      },
-    };
-
+  async create(createMaterialTypeDto: CreateMaterialTypeDto) {
     const result = await this.prismaService.material.create({
-      data: materialInput,
+      data: createMaterialTypeDto,
     });
+
     if (result) {
       return apiSuccess(
         HttpStatus.CREATED,
         result,
-        'Material created successfully',
+        'Material Type created successfully',
+      );
+    } else {
+      return apiSuccess(
+        HttpStatus.BAD_REQUEST,
+        result,
+        'Material Type not created',
       );
     }
-
-    return apiFailed(HttpStatus.BAD_REQUEST, 'Material not created');
-  }
-
-  async findAll() {
-    const result = await this.prismaService.material.findMany({
-      include: {
-        materialAttribute: true,
-        materialType: true,
-        materialUom: true,
-      },
-    });
-    return apiSuccess(HttpStatus.OK, result, 'List of Material');
-  }
-
-  async findByIdWithResponse(id: string) {
-    const result = await this.findById(id);
-    if (result) {
-      return apiSuccess(HttpStatus.OK, result, 'Material found');
-    }
-    return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
   }
 
   async findById(id: string) {
     if (!isUUID(id)) {
       return null;
     }
-    const result = await this.prismaService.material.findFirst({
+    const result = await this.prismaService.material.findUnique({
       where: { id },
     });
     return result;
   }
 
-  async findByMaterialCode(materialCode: string) {
-    const result = await this.prismaService.material.findFirst({
-      where: { code: materialCode },
+  async findAll() {
+    const result = await this.prismaService.material.findMany({
+      include: {
+        _count: {
+          select: { materialVariant: true },
+        },
+      },
     });
-    if (result) {
-      return apiSuccess(HttpStatus.OK, result, 'Material found');
-    }
-    return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
+    // const { _count, ...rest } = result as any;
+    const formattedResult = result.map(({ _count, ...material }) => ({
+      ...material,
+      numberOfMaterialVariants: _count.materialVariant,
+    }));
+    return apiSuccess(HttpStatus.OK, formattedResult, 'List of Material Type');
   }
 
-  async findByMaterialType(materialType: string) {
-    const result = await this.prismaService.material.findMany({
-      where: { materialType: { id: materialType } },
-    });
+  async findOne(id: string) {
+    const result = await this.findById(id);
     if (result) {
-      return apiSuccess(HttpStatus.OK, result, 'Material found');
+      return apiSuccess(HttpStatus.OK, result, 'Material Type found');
     }
-    return apiFailed(HttpStatus.NOT_FOUND, 'Material not found');
+    return apiSuccess(HttpStatus.NOT_FOUND, result, 'Material Type not found');
+  }
+
+  update(id: number, updateMaterialTypeDto: UpdateMaterialTypeDto) {
+    return `This action updates a #${id} materialType`;
+  }
+
+  remove(id: number) {
+    return `This action removes a #${id} materialType`;
   }
 }

@@ -1,26 +1,44 @@
 model InspectionRequest {
   id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  purchasingStaffId      String                  @map("purchasing_staff_id") @db.Uuid
+  code                   String                  @map("code")
+  purchasingStaffId      String?                 @map("purchasing_staff_id") @db.Uuid
+  warehouseManagerId     String?                 @map("warehouse_manager_id") @db.Uuid
+  productionDeparmentId  String?                 @map("production_deparment_id") @db.Uuid
   inspectionDepartmentId String                  @map("inspection_department_id") @db.Uuid
   importRequestId        String?                 @map("import_request_id") @db.Uuid
-  note                   String?                 @map("note")
-  status                 InspectionRequestStatus @default(PENDING) @map("status")
+  status                 InspectionRequestStatus @default(INSPECTING) @map("status")
+  type                   InspectionRequestType   @default(MATERIAL) @map("type")
   createdAt              DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime?               @map("deleted_at") @db.Timestamptz(6)
-  inspectionDepartment   InspectionDepartment    @relation(fields: [inspectionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  purchasingStaff        PurchasingStaff         @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  note                   String?                 @map("note")
+  expectedStartedAt      DateTime?               @map("expected_started_at") @db.Timestamptz(6)
+  startedAt              DateTime?               @map("started_at") @db.Timestamptz(6)
+  expectedFinishedAt     DateTime?               @map("expected_finished_at") @db.Timestamptz(6)
+  finishedAt             DateTime?               @map("finished_at") @db.Timestamptz(6)
+  inspectionReport       InspectionReport?
   importRequest          ImportRequest?          @relation(fields: [importRequestId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  inspectionReport       InspectionReport[]
+  inspectionDepartment   InspectionDepartment    @relation(fields: [inspectionDepartmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  purchasingStaff        PurchasingStaff?        @relation(fields: [purchasingStaffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productionDeparment    ProductionDepartment?   @relation(fields: [productionDeparmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouseManager       WarehouseManager?       @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  task                   Task[]
 
   @@map("inspection_request")
 }
 
 enum InspectionRequestStatus {
-  PENDING
+  AWAIT_TO_INSPECT
   CANCELLED
   INSPECTING
   INSPECTED
 
   @@map("inspection_request_status")
+}
+
+enum InspectionRequestType {
+  MATERIAL
+  PRODUCT
+
+  @@map("inspection_request_type")
 }

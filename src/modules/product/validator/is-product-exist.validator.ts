@@ -11,15 +11,14 @@ import { ProductService } from '../product.service';
 @Injectable()
 @ValidatorConstraint({ async: true })
 export class IsProductExistValidator implements ValidatorConstraintInterface {
-  constructor(private readonly productSerice: ProductService) {}
+  constructor(private readonly productService: ProductService) {}
   async validate(
     value: string,
     validationArguments?: ValidationArguments,
   ): Promise<boolean> {
     if (!value) return false;
-
-    const product = await this.productSerice.findById(value);
-    return !!product;
+    const productType = await this.productService.findById(value);
+    return !!productType;
   }
   defaultMessage?(validationArguments?: ValidationArguments): string {
     return "Product doesn't exist";

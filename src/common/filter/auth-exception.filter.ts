@@ -9,7 +9,7 @@ import { HttpAdapterHost } from '@nestjs/core';
 import iterate from 'iterare';
 import { apiFailed } from '../dto/api-response';
 import { ApiResponse } from '../dto/response.dto';
-import { CustomAuthException } from './custom-http.exception';
+import { CustomAuthException } from './custom-auth-http.exception';
 
 @Catch(CustomAuthException)
 export class AuthExceptionFilter implements ExceptionFilter {
@@ -31,7 +31,11 @@ export class AuthExceptionFilter implements ExceptionFilter {
     let code = exception.getCode();
     switch (exception.message) {
       default:
-        responseBody = apiFailed(exception.getStatus(), message, code);
+        responseBody = apiFailed(
+          exception.getStatusCode(),
+          message,
+          exception.getCode(),
+        );
         break;
     }
 

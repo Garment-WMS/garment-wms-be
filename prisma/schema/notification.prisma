@@ -1,0 +1,25 @@
+model Notification {
+    id        String           @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+    accountId String           @map("account_id") @db.Uuid
+    title     String           @map("title") @db.VarChar()
+    message   String           @map("message") @db.VarChar()
+    path      String           @map("path") @db.VarChar()
+    type      NotificationType @default(ANY) @map("type")
+    isRead    Boolean          @default(false) @map("is_read")
+    readAt    DateTime?        @map("read_at") @db.Timestamptz(6)
+    createdAt DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt DateTime?        @updatedAt @map("updated_at") @db.Timestamptz(6)
+    deletedAt DateTime?        @map("deleted_at") @db.Timestamptz(6)
+    account   Account          @relation(fields: [accountId], references: [id]) // Relation to User model
+}
+
+enum NotificationType {
+    IMPORT_REQUEST
+    IMPORT_RECEIPT
+    INSPECTION_REQUEST
+    MATERIAL_EXPORT_REQUEST
+    MATERIAL_EXPORT_RECEIPT
+    INVENTORY_REPORT
+    REORDER_LEVEL
+    ANY
+}

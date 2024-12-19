@@ -1,0 +1,46 @@
+model Task {
+  id                      String                 @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  code                    String?                @map("code") @db.VarChar
+  importRequestId         String?                @map("import_requestId") @db.Uuid
+  importRequest           ImportRequest?         @relation(fields: [importRequestId], references: [id])
+  importReceiptId         String?                @map("import_receipt_id") @db.Uuid
+  importReceipt           ImportReceipt?         @relation(fields: [importReceiptId], references: [id])
+  exportReceiptId         String?                @map("export_receipt_id") @db.Uuid
+  materialExportReceiptId String?                @map("material_export_receipt_id") @db.Uuid
+  materialExportReceipt   MaterialExportReceipt? @relation(fields: [materialExportReceiptId], references: [id])
+  inspectionRequestId     String?                @map("inspection_request_id") @db.Uuid
+  inspectionRequest       InspectionRequest?     @relation(fields: [inspectionRequestId], references: [id])
+  inventoryReportId       String?                @map("inventory_report_id") @db.Uuid
+  inventoryReport         InventoryReport?       @relation(fields: [inventoryReportId], references: [id])
+  inventoryReportPlanId   String?                @map("inventory_report_plan_id") @db.Uuid
+  inventoryReportPlan     InventoryReportPlan?   @relation(fields: [inventoryReportPlanId], references: [id])
+  warehouseStaffId        String?                @map("warehouse_staff_id") @db.Uuid
+  warehouseStaff          WarehouseStaff?        @relation(fields: [warehouseStaffId], references: [id])
+  inspectionDepartmentId  String?                @map("inspection_department_id") @db.Uuid
+  inspectionDepartment    InspectionDepartment?  @relation(fields: [inspectionDepartmentId], references: [id])
+  taskType                TaskType               @map("task_type_id")
+  staffNote               String?                @map("staff_note") @db.Text
+  status                  TaskStatus             @map("status")
+  expectedStartedAt       DateTime?              @map("expected_started_at") @db.Timestamptz(6)
+  startedAt               DateTime?              @map("started_at") @db.Timestamptz(6)
+  expectedFinishedAt      DateTime?              @map("expect_finished_at") @db.Timestamptz(6)
+  finishedAt              DateTime?              @map("finished_at") @db.Timestamptz(6)
+  createdAt               DateTime?              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime?              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt               DateTime?              @map("deleted_at") @db.Timestamptz(6)
+  todo                    Todo[]
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum TaskType {
+  IMPORT
+  EXPORT
+  INSPECTION
+  INVENTORY
+}

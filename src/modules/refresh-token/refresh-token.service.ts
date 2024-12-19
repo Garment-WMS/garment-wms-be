@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
+import { CreateRefreshTokenDto } from './dto/create-refresh-token.dto';
 
 @Injectable()
 export class RefreshTokenService {
@@ -11,6 +12,34 @@ export class RefreshTokenService {
     private config: ConfigService,
     private jwtService: JwtService,
   ) {}
+  async test(createRefreshTokenDto: CreateRefreshTokenDto) {
+    await this.prisma.$transaction(async (prismaInstance) => {
+      const result = await prismaInstance.refreshToken.create({
+        data: {
+          accountId: 'ce30e8ea-ab23-4d89-81b2-9b660a13dbc7',
+          refreshToken: 'createRefreshTokenDto.refreshToken',
+          expiredAt: new Date(),
+          status: true,
+        },
+      });
+
+      const many = await this.prisma.refreshToken.findMany();
+      console.log(many);
+      const reulst3 = await prismaInstance.refreshToken.findUnique({
+        where: {
+          refreshToken: result.refreshToken,
+        },
+      });
+      const reulst2 = await this.prisma.refreshToken.findUnique({
+        where: {
+          refreshToken: result.refreshToken,
+        },
+      });
+      console.log(reulst3);
+      console.log(reulst2);
+      throw new Error('Error');
+    });
+  }
 
   updateRefreshTokenStatus(refreshTokenInput: string, arg1: boolean) {
     return this.prisma.refreshToken.update({
@@ -38,7 +67,7 @@ export class RefreshTokenService {
 
     if (refreshTokenResult) {
       const refreshToken: Prisma.RefreshTokenCreateInput = {
-        userId: user.id,
+        accountId: user.id,
         refreshToken: refreshTokenResult,
         expiredAt: expiredAtTake,
       };
@@ -56,7 +85,7 @@ export class RefreshTokenService {
     try {
       const refreshTokenResult = await this.prisma.refreshToken.findFirst({
         where: {
-          userId: userIdInput,
+          accountId: userIdInput,
           refreshToken: refreshTokenInput,
           status: true,
           expiredAt: {

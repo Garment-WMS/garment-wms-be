@@ -1,20 +1,39 @@
 model InventoryReportPlan {
-  id              String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  createdAt       DateTime?             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime?             @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt       DateTime?             @map("deleted_at") @db.Timestamptz(6)
-  endTime         DateTime?             @map("end_time") @db.Time(6)
-  planEndTime     DateTime              @map("plan_end_time") @db.Time(6)
-  planStartTime   DateTime              @map("plan_start_time") @db.Time(6)
-  startTime       DateTime?             @map("start_time") @db.Time(6)
-  status          InventoryReportStatus @default(PLANNING) @map("status")
-  InventoryReport InventoryReport?
+    id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+    warehouseManagerId        String                      @map("warehouse_manager_id") @db.Uuid
+    type                      InventoryReportPlanType?    @default(OVERALL) @map("type")
+    title                     String                      @map("title") @db.VarChar()
+    code                      String?                     @map("code") @db.VarChar()
+    status                    InventoryReportPlanStatus   @default(NOT_YET) @map("status")
+    note                      String?                     @map("note") @db.VarChar()
+    from                      DateTime?                   @map("from") @db.Timestamptz(6)
+    to                        DateTime?                   @map("to") @db.Timestamptz(6)
+    startedAt                 DateTime?                   @map("started_at") @db.Timestamptz(6)
+    finishedAt                DateTime?                   @map("finished_at") @db.Timestamptz(6)
+    cancelledAt               DateTime?                   @map("cancelledAt") @db.Timestamptz(6)
+    cancelledBy               String?                     @map("canceled_by") @db.VarChar()
+    cancelledReason           String?                     @map("cancelled_reason") @db.VarChar()
+    createdAt                 DateTime                    @default(now())
+    updatedAt                 DateTime                    @updatedAt
+    deletedAt                 DateTime?                   @map("deleted_at") @db.Timestamptz(6)
+    warehouseManager          WarehouseManager            @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    inventoryReportPlanDetail InventoryReportPlanDetail[]
+    Task                      Task[]
 
-  @@map("inventory_report_plan")
+    @@map("inventory_report_plan")
 }
 
-enum InventoryReportStatus {
-  PLANNING
-  EXECUTING
-  FINISHED
+enum InventoryReportPlanType {
+    OVERALL
+    PARTIAL
+}
+
+enum InventoryReportPlanStatus {
+    NOT_YET
+    AWAIT
+    IN_PROGRESS
+    FINISHED
+    CANCELLED
+
+    @@map("inventory_report_plan_status")
 }

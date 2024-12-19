@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsInt, IsOptional } from 'class-validator';
 
 export class UpdateProductFormulaMaterialDto {
   @ApiProperty()
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   quantityByUom: number;
 }

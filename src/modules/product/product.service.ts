@@ -1,52 +1,95 @@
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { PrismaService } from 'prisma/prisma.service';
+import { Constant } from 'src/common/constant/constant';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { getPageMeta } from 'src/common/utils/utils';
+import { CreateProductTypeDto } from './dto/create-product-type.dto';
+import { UpdateProductTypeDto } from './dto/update-product-type.dto';
 
 @Injectable()
 export class ProductService {
   constructor(private prismaService: PrismaService) {}
-
-  includeQuery: Prisma.ProductInclude = {
-    productType: true,
-    productUom: true,
-  };
-
-  async create(createProductDto: CreateProductDto) {
+  async create(createProductTypeDto: CreateProductTypeDto) {
     const result = await this.prismaService.product.create({
-      data: createProductDto,
+      data: createProductTypeDto,
     });
+
     if (result) {
       return apiSuccess(
         HttpStatus.CREATED,
         result,
-        'Product created successfully',
+        'Product Type created successfully',
       );
     }
-    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product');
+    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to create Product Type');
   }
 
-  async findAll() {
-    const result = await this.prismaService.product.findMany({
-      include: this.includeQuery,
+  async findAll(findOptions?: GeneratedFindOptions<Prisma.ProductWhereInput>) {
+    const { skip, take, ...rest } = findOptions;
+    const page = findOptions?.skip || Constant.DEFAULT_OFFSET;
+    const limit = findOptions?.take || Constant.DEFAULT_LIMIT;
+
+    const [result, total] = await this.prismaService.$transaction([
+      this.prismaService.product.findMany({
+        where: rest?.where,
+        include: {
+          productUom: true,
+          _count: {
+            select: {
+              productVariant: true,
+            },
+          },
+        },
+        skip: page,
+        take: limit,
+        orderBy: findOptions?.orderBy,
+      }) as any,
+      this.prismaService.product.count({
+        where: rest?.where,
+      }),
+    ]);
+
+    result.forEach((element) => {
+      element.numberOfProductVariants = element._count.productVariant;
+      delete element._count;
     });
-    return result;
+
+    return apiSuccess(
+      HttpStatus.OK,
+      {
+        data: result,
+        pageMeta: getPageMeta(total, page, limit),
+      },
+      'Get all product successfully',
+    );
   }
+
+  //TODO : Add filterOptions
+  // async findAllWithResponse() {
+  //   const result = await this.findAll();
+  //   if (result) {
+  //     return apiSuccess(
+  //       HttpStatus.OK,
+  //       result,
+  //       'Product Type retrieved successfully',
+  //     );
+  //   }
+  //   return apiFailed(HttpStatus.NOT_FOUND, 'Product Type not found');
+  // }
 
   async findByIdWithResponse(id: string) {
     const result = await this.findById(id);
-
     if (result) {
       return apiSuccess(
         HttpStatus.OK,
         result,
-        'Product retrieved successfully',
+        'Product Type retrieved successfully',
       );
     }
-    return apiFailed(HttpStatus.NOT_FOUND, 'Product not found');
+    return apiFailed(HttpStatus.NOT_FOUND, 'Product Type not found');
   }
 
   async findById(id: string) {
@@ -61,31 +104,11 @@ export class ProductService {
     return result;
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
-    const result = await this.prismaService.product.update({
-      where: {
-        id: id,
-      },
-      data: updateProductDto,
-    });
-    if (result) {
-      return apiSuccess(HttpStatus.OK, result, 'Product updated successfully');
-    }
-    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to update Product');
+  update(id: number, updateProductTypeDto: UpdateProductTypeDto) {
+    return `This action updates a #${id} product`;
   }
 
-  async remove(id: string) {
-    const result = await this.prismaService.product.update({
-      where: {
-        id: id,
-      },
-      data: {
-        deletedAt: new Date(),
-      },
-    });
-    if (result) {
-      return apiSuccess(HttpStatus.OK, result, 'Product deleted successfully');
-    }
-    return apiFailed(HttpStatus.BAD_REQUEST, 'Failed to delete Product');
+  remove(id: number) {
+    return `This action removes a #${id} product`;
   }
 }

@@ -1,4 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { RoleCode } from '@prisma/client';
+import { Transform } from 'class-transformer';
 import {
   IsDateString,
   IsEmail,
@@ -57,6 +59,7 @@ export class SignUpDTO {
   @ApiProperty()
   @IsNotEmpty()
   @IsDateString()
+  @Transform(({ value }) => new Date(value).toISOString())
   dateOfBirth: Date;
 
   @ApiProperty()
@@ -83,4 +86,9 @@ export class SignUpDTO {
   @IsOptional()
   @IsUUID()
   cidId?: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsEnum(RoleCode)
+  role: RoleCode;
 }

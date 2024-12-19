@@ -8,5 +8,6 @@ import { IsProductExistValidator } from './validator/is-product-exist.validator'
   controllers: [ProductController],
   imports: [PrismaModule],
   providers: [ProductService, IsProductExistValidator],
+  exports: [ProductService, IsProductExistValidator],
 })
 export class ProductModule {}

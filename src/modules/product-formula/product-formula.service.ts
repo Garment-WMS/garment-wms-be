@@ -1,8 +1,12 @@
+import { GeneratedFindOptions } from '@chax-at/prisma-filter';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUUID } from 'class-validator';
+import { productFormulaInclude } from 'prisma/prisma-include';
 import { PrismaService } from 'prisma/prisma.service';
 import { apiFailed, apiSuccess } from 'src/common/dto/api-response';
+import { ApiResponse } from 'src/common/dto/response.dto';
+import { ExcelService } from '../excel/excel.service';
 import { NestedCreateProductFormulaMaterialDto } from '../product-formula-material/dto/nested-product-formula-material.dto';
 import { ProductFormulaMaterialService } from '../product-formula-material/product-formula-material.service';
 import { CreateProductFormulaDto } from './dto/create-product-formula.dto';
@@ -13,25 +17,38 @@ export class ProductFormulaService {
   constructor(
     private prismaService: PrismaService,
     private productFormulaMaterialService: ProductFormulaMaterialService,
+    private excelService: ExcelService,
   ) {}
 
   queryInclude: Prisma.ProductFormulaInclude = {
     productFormulaMaterial: {
       include: {
-        material: {
+        materialVariant: {
           include: {
-            materialType: true,
-            materialUom: true,
+            material: {
+              include: {
+                materialUom: true,
+              },
+            },
           },
         },
       },
     },
   };
 
+  async createByExcel(file: Express.Multer.File) {
+    const excelData = await this.excelService.readProductFormulaExcel(file);
+    if (excelData instanceof ApiResponse) {
+      return excelData;
+    }
+    
+
+  }
   async findById(value: string) {
     if (!isUUID(value)) return null;
     const productFormula = await this.prismaService.productFormula.findUnique({
       where: { id: value },
+      include: this.queryInclude,
     });
     return productFormula;
   }
@@ -55,28 +72,37 @@ export class ProductFormulaService {
   }
 
   async create(createProductFormulaDto: CreateProductFormulaDto) {
-    const { productFormulaMaterials, ...rest } = createProductFormulaDto;
-
-    if (rest.quantityRangeStart > rest.quantityRangeEnd) {
+    if (
+      createProductFormulaDto.quantityRangeStart >
+      createProductFormulaDto.quantityRangeEnd
+    ) {
       return apiFailed(
         HttpStatus.BAD_REQUEST,
-        'Quantity range start must be less than quantity range end',
+        'Quantity range start must be less than or equal to quantity range end',
       );
     }
 
-    const result = await this.prismaService.$transaction(async (prisma) => {
-      const result = await prisma.productFormula.create({
-        data: rest,
-      });
-      if (result) {
-        await this.productFormulaMaterialService.createNested(
-          productFormulaMaterials,
-          result.id,
-          prisma,
-        );
-        return result;
-      }
+    const result = await this.prismaService.productFormula.create({
+      data: {
+        productSizeId: createProductFormulaDto.productSizeId,
+        name: createProductFormulaDto.name,
+        quantityRangeStart: createProductFormulaDto.quantityRangeStart,
+        quantityRangeEnd: createProductFormulaDto.quantityRangeEnd,
+        isBaseFormula: createProductFormulaDto.isBaseFormula,
+        productFormulaMaterial: {
+          createMany: {
+            data: createProductFormulaDto.productFormulaMaterials.map(
+              (productFormulaMaterial) => ({
+                materialVariantId: productFormulaMaterial.materialVariantId,
+                quantityByUom: productFormulaMaterial.quantityByUom,
+              }),
+            ),
+          },
+        },
+      },
+      include: productFormulaInclude,
     });
+
     if (result) {
       return apiSuccess(
         HttpStatus.CREATED,
@@ -90,8 +116,12 @@ export class ProductFormulaService {
     );
   }
 
-  async findAll() {
+  async search(
+    findOptions: GeneratedFindOptions<Prisma.ProductFormulaWhereInput>,
+  ) {
     const result = await this.prismaService.productFormula.findMany({
+      where: findOptions.where,
+      orderBy: findOptions.orderBy,
       include: this.queryInclude,
     });
     return apiSuccess(HttpStatus.OK, result, 'List of Product Formula');
@@ -172,5 +202,26 @@ export class ProductFormulaService {
       HttpStatus.BAD_REQUEST,
       'Failed to delete Product Formula',
     );
+  }
+
+  async getByProductBatchId(productBatchId: string) {
+    const productFormula = await this.prismaService.productFormula.findMany({
+      where: {
+        productSize: {
+          productionPlanDetail: {
+            some: {
+              productionBatch: {
+                some: {
+                  id: productBatchId,
+                },
+              },
+            },
+          },
+        },
+      },
+      include: this.queryInclude,
+    });
+
+    return productFormula;
   }
 }

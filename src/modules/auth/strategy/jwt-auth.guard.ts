@@ -4,7 +4,7 @@ import { JsonWebTokenError } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 import { ValidationError } from 'class-validator';
 import { Observable } from 'rxjs';
-import { CustomAuthException } from 'src/common/filter/custom-http.exception';
+import { CustomAuthException } from 'src/common/filter/custom-auth-http.exception';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {

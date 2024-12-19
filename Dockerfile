@@ -10,8 +10,6 @@ COPY . .
 
 COPY .env ./
 
-RUN npx prisma generate
-
 RUN npm run build
 
 EXPOSE 8000

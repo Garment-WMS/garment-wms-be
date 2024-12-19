@@ -3,33 +3,38 @@ import {
   Controller,
   Delete,
   Get,
-  HttpStatus,
   Param,
   Patch,
   Post,
+  Query,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { apiSuccess } from 'src/common/dto/api-response';
+import { Prisma } from '@prisma/client';
+import { FilterDto } from 'src/common/dto/filter-query.dto';
 import { CustomUUIDPipe } from 'src/common/pipe/custom-uuid.pipe';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { CreateProductTypeDto } from './dto/create-product-type.dto';
+import { UpdateProductTypeDto } from './dto/update-product-type.dto';
 import { ProductService } from './product.service';
+import { AllFilterPipeUnsafe } from '@chax-at/prisma-filter';
 
 @Controller('product')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Post()
-  @UsePipes(new ValidationPipe({ whitelist: true }))
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productService.create(createProductDto);
+  @UsePipes(new ValidationPipe({ stopAtFirstError: true }))
+  create(@Body() createProductTypeDto: CreateProductTypeDto) {
+    console.log(createProductTypeDto);
+    return this.productService.create(createProductTypeDto);
   }
 
   @Get()
-  async findAll() {
-    const result = await this.productService.findAll();
-    return apiSuccess(HttpStatus.OK, result, 'Get all products successfully');
+  findAll(
+    @Query(new AllFilterPipeUnsafe<any, Prisma.ProductWhereInput>([]))
+    filterOptions: FilterDto<Prisma.ProductWhereInput>,
+  ) {
+    return this.productService.findAll(filterOptions.findOptions);
   }
 
   @Get(':id')
@@ -38,16 +43,15 @@ export class ProductController {
   }
 
   @Patch(':id')
-  @UsePipes(new ValidationPipe({ whitelist: true }))
   update(
-    @Param('id', CustomUUIDPipe) id: string,
-    @Body() updateProductDto: UpdateProductDto,
+    @Param('id') id: string,
+    @Body() updateProductTypeDto: UpdateProductTypeDto,
   ) {
-    return this.productService.update(id, updateProductDto);
+    return this.productService.update(+id, updateProductTypeDto);
   }
 
   @Delete(':id')
-  remove(@Param('id', CustomUUIDPipe) id: string) {
-    return this.productService.remove(id);
+  remove(@Param('id') id: string) {
+    return this.productService.remove(+id);
   }
 }

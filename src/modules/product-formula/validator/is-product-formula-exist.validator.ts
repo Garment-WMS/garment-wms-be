@@ -10,7 +10,9 @@ import { ProductFormulaService } from '../product-formula.service';
 
 @Injectable()
 @ValidatorConstraint({ async: true })
-export class IsMaterialExistValidator implements ValidatorConstraintInterface {
+export class IsProductFormulaExistValidator
+  implements ValidatorConstraintInterface
+{
   constructor(private readonly productFormulaService: ProductFormulaService) {}
   async validate(
     value: string,
@@ -25,14 +27,14 @@ export class IsMaterialExistValidator implements ValidatorConstraintInterface {
   }
 }
 
-export function IsMaterialExist(validationOptions?: ValidationOptions) {
+export function IsProductFormulaExist(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: IsMaterialExistValidator,
+      validator: IsProductFormulaExistValidator,
       async: true,
     });
   };

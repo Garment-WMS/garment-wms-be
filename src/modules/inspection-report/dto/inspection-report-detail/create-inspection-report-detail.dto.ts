@@ -1,50 +1,73 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Prisma } from '@prisma/client';
-import { IsNumber, IsOptional, IsUUID, ValidateIf } from 'class-validator';
-import { IsMaterialVariantExist } from 'src/modules/material-variant/validator/is-material-variant-exist.validator';
-import { IsProductVariantExist } from 'src/modules/product-variant/validator/is-product-variant-exist.validator';
+import { Type } from 'class-transformer';
+import {
+  ArrayNotEmpty,
+  ArrayUnique,
+  IsArray,
+  IsInt,
+  IsOptional,
+  IsUUID,
+  Min,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
+import { AtLeastOneExists } from 'src/common/pipe/at-least-one-exist.pipe';
+import { IsMaterialPackageExist } from 'src/modules/material-package/validator/is-material-package-exist.validator';
+import { IsProductSizeExist } from 'src/modules/product-size/validator/is-product-size-exist.validator';
+import { IsInspectionReportNotExist } from '../../validator/is-inspection-report-not-exist.validator';
+import { CreateInspectionReportDetailDefectDto } from '../inspection-report-detail-defect/inspection-report-detail-defect.dto';
 
-export class CreateInspectionReportDetailDto
-  implements Prisma.InspectionReportDetailCreateWithoutInspectionReportInput
-{
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsUUID()
-  id: string;
-
+export class CreateInspectionReportDetailDto {
   @ApiProperty({ required: true, type: 'string', format: 'uuid' })
   @IsOptional()
   @IsUUID()
-  inspectionReportId: string;
+  @IsInspectionReportNotExist()
+  inspectionReportId?: string;
 
   @ApiProperty({ required: true, type: 'number' })
-  @IsNumber()
-  quantityByPack?: number;
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  quantityByPack: number;
 
   @ApiProperty({ required: true, type: 'number' })
-  @IsNumber()
+  @IsInt()
   approvedQuantityByPack: number;
 
   @ApiProperty({ required: true, type: 'number' })
-  @IsNumber()
+  @IsInt()
   defectQuantityByPack: number;
 
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsOptional()
   @ValidateIf(
-    (o: CreateInspectionReportDetailDto, v) => o.productVariantId === undefined,
+    (o: CreateInspectionReportDetailDto, v) => o.productSizeId === undefined,
   )
   @IsUUID()
-  @IsMaterialVariantExist()
-  materialVariantId: string;
+  @IsMaterialPackageExist()
+  @AtLeastOneExists(['materialPackageId', 'productSizeId'])
+  materialPackageId?: string;
 
   @ApiProperty({ required: false, type: 'string', format: 'uuid' })
   @IsOptional()
   @ValidateIf(
     (o: CreateInspectionReportDetailDto, v) =>
-      o.materialVariantId === undefined,
+      o.materialPackageId === undefined,
   )
   @IsUUID()
-  @IsProductVariantExist()
-  productVariantId: string;
+  @IsProductSizeExist()
+  productSizeId?: string;
+
+  @ApiProperty({ required: false, type: 'array', items: { type: 'object' } })
+  @ValidateNested({ each: true })
+  @Type(() => CreateInspectionReportDetailDefectDto)
+  @ArrayUnique((o) => o.defectId)
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsOptional()
+  //this does not work because of the condition count for other item in array
+  // @ValidateIf(
+  //   (o: CreateInspectionReportDetailDto) => o.defectQuantityByPack > 0,
+  // )
+  inspectionReportDetailDefect?: CreateInspectionReportDetailDefectDto[];
 }

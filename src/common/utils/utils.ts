@@ -1,4 +1,4 @@
-export const formatDate = (dateString: string | undefined) => {
+export const formatDate = (dateString: string | Date | undefined) => {
   if (!dateString) return '';
   const date = new Date(dateString);
   return new Intl.DateTimeFormat('en-US', {
@@ -18,11 +18,16 @@ export const generateOTP = (length: number = 6): string => {
   return otp;
 };
 
+export function getDatePart(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
 export const isValidEmail = (email: string): boolean => {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
 };
 
+import { PoDeliveryStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { isDate } from 'class-validator';
 import { Constant } from '../constant/constant';
@@ -62,11 +67,16 @@ export const compareArray = (arr1: any[], arr2: any[]): boolean => {
 
   const frequencyMap = new Map();
 
-  for (const item of arr1) {
+  const normalize = (item: any) =>
+    typeof item === 'string' ? item.toLowerCase() : item;
+
+  for (let item of arr1) {
+    item = normalize(item);
     frequencyMap.set(item, (frequencyMap.get(item) || 0) + 1);
   }
 
-  for (const item of arr2) {
+  for (let item of arr2) {
+    item = normalize(item);
     if (!frequencyMap.has(item)) {
       return false;
     }
@@ -95,7 +105,8 @@ export function addMissingStartCharacter(
   return value;
 }
 
-export function validateDate(date: string): boolean {
+export function validateDate(date: any): boolean {
+  console.log(date);
   return isDate(date);
 }
 
@@ -124,3 +135,80 @@ export function getPageMeta(
   };
   return pageMeta;
 }
+
+export const nonExistUUID: string = '00000000-0000-0000-0000-000000000000';
+
+export const getPurchaseOrderStatistic = (purchaseOrder) => {
+  let totalImportQuantity = 0;
+  let totalQuantityToImport = 0;
+  let totalFailImportQuantity = 0;
+
+  const poDeliveryStats = purchaseOrder.poDelivery.reduce(
+    (acc, poDelivery) => {
+      acc.totalPoDelivery++;
+
+      switch (poDelivery.status) {
+        case PoDeliveryStatus.FINISHED:
+          acc.totalFinishedPoDelivery++;
+          break;
+        case PoDeliveryStatus.IMPORTING:
+          acc.totalInProgressPoDelivery++;
+          break;
+        case PoDeliveryStatus.CANCELLED:
+          acc.totalCancelledPoDelivery++;
+          break;
+        case PoDeliveryStatus.PENDING:
+          acc.totalPendingPoDelivery++;
+          break;
+      }
+
+      poDelivery.poDeliveryDetail.forEach((poDeliveryDetail) => {
+        if (
+          poDelivery.status === PoDeliveryStatus.FINISHED &&
+          !poDelivery.isExtra
+        ) {
+          totalFailImportQuantity +=
+            poDeliveryDetail.quantityByPack -
+            poDeliveryDetail.actualImportQuantity;
+        }
+        if (!poDelivery.isExtra) {
+          totalImportQuantity += poDeliveryDetail.actualImportQuantity;
+          totalQuantityToImport += poDeliveryDetail.quantityByPack;
+        }
+      });
+
+      return acc;
+    },
+    {
+      totalPoDelivery: 0,
+      totalFinishedPoDelivery: 0,
+      totalInProgressPoDelivery: 0,
+      totalCancelledPoDelivery: 0,
+      totalPendingPoDelivery: 0,
+    },
+  );
+
+  purchaseOrder.totalImportQuantity = totalImportQuantity;
+  purchaseOrder.totalFailImportQuantity = totalFailImportQuantity;
+  purchaseOrder.totalQuantityToImport = totalQuantityToImport;
+
+  purchaseOrder.totalPoDelivery = poDeliveryStats.totalPoDelivery;
+  purchaseOrder.totalFinishedPoDelivery =
+    poDeliveryStats.totalFinishedPoDelivery;
+  purchaseOrder.totalInProgressPoDelivery =
+    poDeliveryStats.totalInProgressPoDelivery;
+  purchaseOrder.totalPendingPoDelivery = poDeliveryStats.totalPendingPoDelivery;
+  purchaseOrder.totalCancelledPoDelivery =
+    poDeliveryStats.totalCancelledPoDelivery;
+
+  return [
+    totalImportQuantity,
+    totalFailImportQuantity,
+    totalQuantityToImport,
+    poDeliveryStats.totalPoDelivery,
+    poDeliveryStats.totalFinishedPoDelivery,
+    poDeliveryStats.totalInProgressPoDelivery,
+    poDeliveryStats.totalCancelledPoDelivery,
+    poDeliveryStats.totalPendingPoDelivery,
+  ];
+};

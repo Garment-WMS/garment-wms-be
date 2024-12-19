@@ -1,0 +1,18 @@
+model Discussion {
+    id                String                 @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+    importRequestId   String?                @unique @map("import_request_id") @db.Uuid
+    exportRequestId   String?                @unique @map("export_request_id") @db.Uuid
+    importReceiptId   String?                @unique @map("import_receipt_id") @db.Uuid
+    exportReceiptId   String?                @unique @map("export_receipt_id") @db.Uuid
+    inventoryReportId String?                @map("inventory_report_id") @db.Uuid
+    createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt         DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+    deletedAt         DateTime?              @map("deleted_at") @db.Timestamptz(6)
+    importRequest     ImportRequest?         @relation(fields: [importRequestId], references: [id])
+    exportRequest     MaterialExportRequest? @relation(fields: [exportRequestId], references: [id])
+    importReceipt     ImportReceipt?         @relation(fields: [importReceiptId], references: [id])
+    exportReceipt     MaterialExportReceipt? @relation(fields: [exportReceiptId], references: [id])
+    chat              Chat[]
+
+    @@map("discussion")
+}

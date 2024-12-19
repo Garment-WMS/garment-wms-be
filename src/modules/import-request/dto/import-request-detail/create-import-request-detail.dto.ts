@@ -1,12 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  ArrayUnique,
-  IsNumber,
-  IsOptional,
-  IsUUID,
-  ValidateIf,
-} from 'class-validator';
-import { IsMaterialVariantExist } from 'src/modules/material-variant/validator/is-material-variant-exist.validator';
+import { IsInt, IsOptional, IsUUID, Min, ValidateIf } from 'class-validator';
+import { IsMaterialPackageExist } from 'src/modules/material-package/validator/is-material-package-exist.validator';
+import { IsProductSizeExist } from 'src/modules/product-size/validator/is-product-size-exist.validator';
 
 export class CreateImportRequestDetailDto {
   @ApiProperty({ required: false })
@@ -15,18 +10,19 @@ export class CreateImportRequestDetailDto {
   importRequestId: string;
 
   @ApiProperty({ required: false })
-  @ValidateIf((o) => o.productId === undefined)
+  @ValidateIf((o) => o.productIdSizeId === undefined)
   @IsUUID()
-  @IsMaterialVariantExist()
-  materialVariantId?: string;
+  @IsMaterialPackageExist()
+  materialPackageId?: string;
 
   @ApiProperty({ required: false })
-  @ValidateIf((o) => o.materialVariantId === undefined)
+  @ValidateIf((o) => o.materialPackageId === undefined)
   @IsUUID()
-  @ArrayUnique()
-  productIdVariantId?: string;
+  @IsProductSizeExist()
+  productIdSizeId?: string;
 
-  @ApiProperty()
-  @IsNumber()
-  quantityByPack?: number;
+  @ApiProperty({ required: true })
+  @IsInt()
+  @Min(0)
+  quantityByPack: number;
 }

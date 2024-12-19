@@ -1,11 +1,8 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { HttpException } from '@nestjs/common';
+import { ApiResponse } from '../dto/response.dto';
 
-export class CustomAuthException extends UnauthorizedException {
-  constructor(statusCode: number, message: string, code: any) {
-    super({ statusCode, message, code });
-  }
-
-  getCode(): string {
-    return (this.getResponse() as any).code;
+export class CustomHttpException extends HttpException {
+  constructor(status: number, response: ApiResponse) {
+    super(response, status);
   }
 }

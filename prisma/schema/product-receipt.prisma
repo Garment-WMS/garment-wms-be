@@ -1,16 +1,30 @@
 model ProductReceipt {
   id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  productVariantId      String                  @map("product_variant_id") @db.Uuid
+  productSizeId         String                  @map("product_size_id") @db.Uuid
   importReceiptId       String                  @map("import_receipt_id") @db.Uuid
+  code                  String?                 @map("code") @db.VarChar
+  status                ProductReceiptStatus    @default(AVAILABLE) @map("status")
+  isDefect              Boolean                 @default(false) @map("is_defect") @db.Boolean
   expireDate            DateTime?               @map("expire_date") @db.Timestamptz(6)
   createdAt             DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime?               @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt             DateTime?               @map("deleted_at") @db.Timestamptz(6)
   importDate            DateTime?               @map("import_date") @db.Timestamptz(6)
   quantityByUom         Float?                  @map("quantity_by_uom")
+  remainQuantityByUom   Float?                  @map("remain_quantity_by_uom")
+  warehouseManagerId    String?                 @map("warehouse_manager_id") @db.Uuid
+  warehouseManager      WarehouseManager?       @relation(fields: [warehouseManagerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   InventoryReportDetail InventoryReportDetail[]
   importReceipt         ImportReceipt           @relation(fields: [importReceiptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  productVariant        ProductVariant          @relation(fields: [productVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  productSize           ProductSize             @relation(fields: [productSizeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  receiptAdjustment     ReceiptAdjustment[]
 
   @@map("product_receipt")
+}
+
+enum ProductReceiptStatus {
+  IMPORTING
+  AVAILABLE
+  USED
+  DISPOSED
 }

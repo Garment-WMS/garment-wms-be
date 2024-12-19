@@ -9,10 +9,15 @@ export class CustomValidationPipe extends ValidationPipe {
 
   public createExceptionFactory() {
     return (validationErrors: ValidationError[] = []) => {
-      console.log('validationErrors', validationErrors);
+      const firstError = validationErrors[0];
+      const firstConstraintValue =
+        firstError && firstError.constraints
+          ? Object.values(firstError.constraints)[0]
+          : 'Validation failed';
+
       return new CustomValidationException(
         400,
-        'Validation failed',
+        firstConstraintValue,
         validationErrors,
       );
     };
