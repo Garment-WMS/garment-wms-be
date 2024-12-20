@@ -66,7 +66,6 @@ import { SupplierModule } from './modules/supplier/supplier.module';
 import { TaskModule } from './modules/task/task.module';
 import { UomModule } from './modules/uom/uom.module';
 import { UserModule } from './modules/user/user.module';
-import { ExcelModule } from './excel/excel.module';
 
 @Module({
   imports: [
@@ -129,7 +128,6 @@ import { ExcelModule } from './excel/excel.module';
     InventoryReportModule,
     InventoryStockModule,
     InspectionDepartmentModule,
-    WarehouseStaffModule,
     InventoryReportDetailModule,
     ProductPlanDetailModule,
     InventoryReportPlanModule,
@@ -162,9 +160,6 @@ import { ExcelModule } from './excel/excel.module';
     ChatModule,
     DefectModule,
     DashboardModule,
-    UtilModule,
-    ProductAttributeModule,
-    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService, rolesGuard.RolesGuard],
